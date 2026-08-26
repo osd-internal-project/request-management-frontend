@@ -33,6 +33,11 @@ export const ROUTES = {
   /** REQ-09 — รายงานคอขวด */
   bottleneckReport: `${HOME_PATH}/reports/bottleneck`,
 
+  /** CD-92 — แดชบอร์ด Metabase ฝังผ่าน signed embed URL. */
+  biDashboard: (key: string) => `${HOME_PATH}/bi/${key}`,
+  /** CD-92 — ลิงก์เข้าหน้า setting ของ Metabase (แอดมิน BI). */
+  adminBi: `${HOME_PATH}/admin/bi`,
+
   /** Screen A1 — ตารางอำนาจอนุมัติ */
   adminApprovalMatrix: `${HOME_PATH}/admin/approval-matrix`,
   /** Screen A2 — ประเภทคำขอ */

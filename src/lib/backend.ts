@@ -36,6 +36,7 @@ export function backendUrl(path: string): string {
  */
 const CORE_SERVICE_PREFIXES = [
   "/approvals",
+  "/bi",
   "/notifications",
   "/requests",
   "/request-types",

@@ -24,3 +24,4 @@ export { default as orgUnits } from "./org-units";
 export { default as audit } from "./audit";
 export { default as admin } from "./admin";
 export { default as notifications } from "./notifications";
+export { default as bi } from "./bi";

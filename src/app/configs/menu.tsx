@@ -37,6 +37,27 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     permissions: ["report.request.read"],
   },
 
+  // CD-92 — Metabase dashboards, embedded behind the app's own login. The
+  // key segment must match `dashboards[].key` from `GET /bi/menu`.
+  {
+    label: messages.nav.biRequestOverview,
+    href: ROUTES.biDashboard("requestOverview"),
+    permissions: ["report.dashboard.read"],
+    group: messages.nav.biGroup,
+  },
+  {
+    label: messages.nav.biApproval,
+    href: ROUTES.biDashboard("approval"),
+    permissions: ["report.dashboard.read"],
+    group: messages.nav.biGroup,
+  },
+  {
+    label: messages.nav.biSla,
+    href: ROUTES.biDashboard("sla"),
+    permissions: ["report.dashboard.read"],
+    group: messages.nav.biGroup,
+  },
+
   {
     label: messages.nav.adminApprovalMatrix,
     href: ROUTES.adminApprovalMatrix,
@@ -65,6 +86,12 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     label: messages.nav.adminAudit,
     href: ROUTES.adminAudit,
     permissions: ["audit.read"],
+    group: messages.nav.adminGroup,
+  },
+  {
+    label: messages.nav.adminBi,
+    href: ROUTES.adminBi,
+    permissions: ["admin.bi.manage"],
     group: messages.nav.adminGroup,
   },
 ];

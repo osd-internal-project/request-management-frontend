@@ -56,6 +56,11 @@ export const messages = {
     adminOrg: "ผังทีมและสิทธิ์",
     adminUsers: "ผู้ใช้",
     adminAudit: "Audit Log",
+    biGroup: "แดชบอร์ดผู้บริหาร",
+    biRequestOverview: "ภาพรวมคำขอ",
+    biApproval: "การอนุมัติ",
+    biSla: "SLA",
+    adminBi: "ตั้งค่า Metabase",
     logout: "ออกจากระบบ",
     company: "บริษัท",
     switchFailed: "สลับบริษัทไม่สำเร็จ",
@@ -217,6 +222,17 @@ export const messages = {
     comingSoon: "ยังไม่เปิดใช้งานใน sprint นี้",
     sprintNote: (sprint: string, requirement: string) =>
       `หน้าจอนี้ส่งมอบใน ${sprint} (${requirement}) — เส้นทาง URL และสิทธิ์ถูกกำหนดไว้แล้ว`,
+  },
+
+  bi: {
+    loadFailed: "โหลดแดชบอร์ดไม่สำเร็จ",
+    notConfigured:
+      "ยังไม่ได้ตั้งค่าการเชื่อมต่อ Metabase — ผู้ดูแลระบบต้องกำหนด METABASE_SITE_URL, METABASE_EMBED_SECRET และรหัสแดชบอร์ดใน .env ของ core-service",
+    notFound: "ไม่พบแดชบอร์ดที่ระบุ",
+    settingsTitle: "ตั้งค่า Metabase",
+    settingsBody:
+      "จัดการ connection, คำถาม (question), แดชบอร์ด และสิทธิ์ผู้ใช้ BI ได้จากหน้าผู้ดูแลของ Metabase — เปิดในแท็บใหม่",
+    settingsOpen: "เปิด Metabase",
   },
 
   common: {
