@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+.login-marketing-content {
+  top: 30.4%;
+}
+
+@media (min-width: 1024px) and (max-height: 800px) {
+  .login-marketing-content {
+    top: 24%;
+  }
+}

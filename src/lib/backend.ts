@@ -1,0 +1,114 @@
+/**
+ * Base URL of the backend user-service (NestJS + Keycloak).
+ * Server-side only — never exposed to the browser.
+ */
+export const USER_SERVICE_URL =
+  process.env.USER_SERVICE_URL ?? "http://localhost:3001";
+
+/** Base URL of core-service — request, approval, SLA, notification. */
+export const CORE_SERVICE_URL =
+  process.env.CORE_SERVICE_URL ?? "http://localhost:3002";
+
+/**
+ * The backend's own prefix, from §11.1: `Base URL: /api/v1`.
+ *
+ * Kept in one constant because it appears on every outbound call — the BFF
+ * proxies, `apiGet`, the session lookup and each auth route. Scattering the
+ * literal is how half of them get left behind on the next version bump.
+ *
+ * This is **not** the prefix of the Next routes under `src/app/api/…`; those
+ * are this app's own namespace and stay at `/api`.
+ */
+export const BACKEND_PREFIX = "/api/v1";
+
+/** The full backend URL for a path, e.g. `/requests` → `…/api/v1/requests`. */
+export function backendUrl(path: string): string {
+  return `${serviceUrlFor(path)}${BACKEND_PREFIX}${path}`;
+}
+
+/**
+ * Path prefixes core-service owns. Everything else is user-service.
+ *
+ * The split is by domain, not by URL shape, which is why
+ * `/admin/approval-matrix` sits here while the other `/admin/*` paths do not:
+ * the authority matrix belongs to the Approval Engine (D-31), even though it
+ * is administered from an admin screen.
+ */
+const CORE_SERVICE_PREFIXES = [
+  "/approvals",
+  "/notifications",
+  "/requests",
+  "/request-types",
+  "/admin/approval-matrix",
+  "/admin/request-types",
+  "/admin/sla",
+  "/reports",
+];
+
+/** Which backend serves this path. One place to look when a route 404s. */
+export function serviceUrlFor(path: string): string {
+  const normalised = path.startsWith("/") ? path : `/${path}`;
+
+  return CORE_SERVICE_PREFIXES.some((prefix) =>
+    normalised.startsWith(prefix),
+  )
+    ? CORE_SERVICE_URL
+    : USER_SERVICE_URL;
+}
+
+export const AUTH_COOKIE = "access_token";
+export const REFRESH_COOKIE = "refresh_token";
+
+/**
+ * The company the user is currently working in (AUTH-05, D-11).
+ *
+ * Held in a cookie rather than in component state because the backend resolves
+ * the active company from the `X-Company-Id` header of *each* request — a
+ * choice kept only in memory would be lost on the next navigation, and every
+ * page would silently fall back to the primary company.
+ *
+ * httpOnly like the auth cookies: nothing in the browser needs to read it, and
+ * the value only ever travels back out through the BFF.
+ */
+export const COMPANY_COOKIE = "active_company";
+
+/** The §11.1 header naming the company a request works in. */
+export const COMPANY_HEADER = "X-Company-Id";
+
+/**
+ * The company header for a request, or nothing when no company is selected.
+ *
+ * Omitting the header is a valid state, not a failure: the backend reads it as
+ * "use my primary company", which is exactly right before the first switch.
+ */
+export function companyHeader(
+  companyId: string | undefined,
+): Record<string, string> {
+  return companyId ? { [COMPANY_HEADER]: companyId } : {};
+}
+
+/**
+ * PKCE leg-1 state, held between the redirect to Keycloak and the callback.
+ *
+ * Both are httpOnly so page scripts cannot read them: the verifier is what
+ * proves the callback belongs to the browser that started the login, and the
+ * state is the CSRF check. They are cleared as soon as the callback runs.
+ */
+export const PKCE_VERIFIER_COOKIE = "pkce_verifier";
+export const PKCE_STATE_COOKIE = "pkce_state";
+
+/** How long a login may sit half-finished before the verifier expires. */
+export const PKCE_TTL_SECONDS = 600;
+
+export const isProduction = process.env.NODE_ENV === "production";
+
+/** The cookie options every auth cookie shares. */
+export function authCookieOptions(maxAge: number) {
+  return {
+    httpOnly: true,
+    sameSite: "lax" as const,
+    secure: isProduction,
+    path: "/",
+    maxAge,
+  };
+}
