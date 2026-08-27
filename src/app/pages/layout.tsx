@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
-import { accessMenuItems } from "../configs/menu";
+import { accessMenuItems, type BiMenuDashboard } from "../configs/menu";
 import { AppShell } from "@/components/app-shell";
+import { apiGet } from "@/lib/api/core";
 import { LOGOUT_PATH } from "@/lib/routes";
 import { getSession } from "@/lib/session";
 
@@ -28,6 +29,16 @@ export default async function DashboardLayout({
   // unauthenticated and /login renders.
   if (!session) redirect(`${LOGOUT_PATH}?reason=session_expired`);
 
+  // CD-92 v2: the BI entries come from configuration, already filtered per
+  // caller (team visibility) by the backend. A failed fetch just renders the
+  // menu without the BI group — the dashboards themselves still load their
+  // own data when opened.
+  let biDashboards: BiMenuDashboard[] = [];
+  if (session.permissions.includes("report.dashboard.read")) {
+    const menu = await apiGet<{ dashboards: BiMenuDashboard[] }>("/bi/menu");
+    if (menu.ok) biDashboards = menu.data.dashboards;
+  }
+
   return (
     <AppShell
       user={{
@@ -41,7 +52,7 @@ export default async function DashboardLayout({
           name: company.name,
         })),
       }}
-      menus={accessMenuItems(session)}
+      menus={accessMenuItems(session, biDashboards)}
     >
       {children}
     </AppShell>
