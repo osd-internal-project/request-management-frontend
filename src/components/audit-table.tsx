@@ -1,6 +1,7 @@
 "use client";
 
 import { Table, Tag } from "antd";
+import { useRouter, useSearchParams } from "next/navigation";
 import { messages } from "@/lib/messages";
 
 import type {
@@ -18,6 +19,10 @@ export type {
  * render with "Functions cannot be passed directly to Client Components".
  * Keeping the column definitions on this side of the boundary is the fix; the
  * server page passes plain data only.
+ *
+ * Paging writes `?page=` and lets the server component re-query, matching the
+ * filters. Without it the pager rendered the right numbers and did nothing when
+ * clicked, which reads as a frozen screen rather than a missing handler.
  */
 export function AuditTable({
   rows,
@@ -30,12 +35,27 @@ export function AuditTable({
   pageSize: number;
   total: number;
 }) {
+  const router = useRouter();
+  const params = useSearchParams();
+
+  function goTo(next: number) {
+    const query = new URLSearchParams(params.toString());
+    query.set("page", String(next));
+    router.push(`?${query.toString()}`);
+  }
+
   return (
     <Table
       rowKey="id"
       size="small"
       dataSource={rows}
-      pagination={{ current: page, pageSize, total }}
+      pagination={{
+        current: page,
+        pageSize,
+        total,
+        showSizeChanger: false,
+        onChange: goTo,
+      }}
       scroll={{ x: true }}
       columns={[
         {

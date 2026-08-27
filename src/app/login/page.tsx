@@ -23,11 +23,11 @@ export default async function LoginPage({
     : "/api/auth/login";
 
   return (
-    <main className="min-h-screen bg-[#fdfcfb] text-[14px] text-[#26323e]">
+    <main className="min-h-screen bg-[#f6f8fc] text-[14px] text-[#26323e]">
       <div className="grid min-h-screen lg:grid-cols-[40.7%_59.3%]">
         <aside className="relative hidden min-h-screen flex-col bg-[#24313d] px-[52px] py-16 text-white lg:flex">
           <div className="flex items-center gap-4 text-[18px] font-bold tracking-tight">
-            <span className="size-[14px] rounded-full bg-[#e99855]" aria-hidden="true" />
+            <span className="size-[14px] rounded-full bg-[#3B82F6]" aria-hidden="true" />
             <span>{messages.app.name}</span>
           </div>
 
@@ -41,7 +41,7 @@ export default async function LoginPage({
             <ul className="mt-10 space-y-5 text-[14px] font-medium text-[#d6dbe0]">
               {messages.login.highlights.map((highlight) => (
                 <li key={highlight} className="flex items-center gap-4">
-                  <Check className="size-5 shrink-0 text-[#e99855]" strokeWidth={2.5} aria-hidden="true" />
+                  <Check className="size-5 shrink-0 text-[#3B82F6]" strokeWidth={2.5} aria-hidden="true" />
                   <span>{highlight}</span>
                 </li>
               ))}
@@ -75,7 +75,7 @@ export default async function LoginPage({
 
             <a
               href={loginHref}
-              className="flex min-h-[58px] w-full items-center justify-center gap-4 rounded-xl bg-[#ba5d2d] px-6 text-[18px] font-bold text-white transition-colors hover:bg-[#a95126] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ba5d2d]"
+              className="flex min-h-[58px] w-full items-center justify-center gap-4 rounded-xl bg-[#3B82F6] px-6 text-[18px] font-bold text-white transition-colors hover:bg-[#2563EB] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3B82F6]"
             >
               <LockKeyhole className="size-6" strokeWidth={2.25} aria-hidden="true" />
               <span>{messages.login.ssoButton}</span>

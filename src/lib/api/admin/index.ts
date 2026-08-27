@@ -6,7 +6,11 @@
  */
 
 import { apiGet, type ApiResult } from "../core";
-import { type ApprovalMatrixVersion } from "../types";
+import {
+  type ApprovalMatrixVersion,
+  type RequestType,
+  type SlaConfigRow,
+} from "../types";
 
 /** Get approval matrix versions */
 export async function getApprovalMatrix(): Promise<
@@ -22,18 +26,25 @@ export async function getApprovalMatrixVersion(
   return apiGet<ApprovalMatrixVersion>(`/admin/approval-matrix/${id}`);
 }
 
-/** Get request types (admin view) */
+/**
+ * REQ-01 (screen A2) — every type, **including inactive ones**.
+ *
+ * Not the same list as `/request-types`, which only returns what can be
+ * raised: A2 has to show a type that is still being set up, which is exactly
+ * the one a requester must not see.
+ */
 export async function getAdminRequestTypes(): Promise<
-  ApiResult<ApprovalMatrixVersion[]>
+  ApiResult<RequestType[]>
 > {
-  return apiGet<ApprovalMatrixVersion[]>("/admin/request-types");
+  return apiGet<RequestType[]>("/admin/request-types");
 }
 
-/** Get SLA configuration */
-export async function getSLAConfig(): Promise<
-  ApiResult<ApprovalMatrixVersion>
+/** SUP-01 / D-09 — the clock per request type for one company. */
+export async function getSLAConfig(companyId?: string): Promise<
+  ApiResult<SlaConfigRow[]>
 > {
-  return apiGet<ApprovalMatrixVersion>("/admin/sla");
+  const query = companyId ? `?company_id=${encodeURIComponent(companyId)}` : "";
+  return apiGet<SlaConfigRow[]>(`/admin/sla-configs${query}`);
 }
 
 /** Grouped for `import adminApi from …` at call sites. */

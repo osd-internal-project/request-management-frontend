@@ -76,9 +76,123 @@ export interface OrgMember {
 /* -------------------------------------------------------------------------- */
 
 /** A configured request type from `GET /request-types` (REQ-01). */
+/** One field declared by a type's `formSchema` (REQ-01). */
+export interface FormSchemaProperty {
+  type?: string;
+  title?: string;
+  description?: string;
+  enum?: string[];
+  minimum?: number;
+  maximum?: number;
+  /** SCOPE-04 — rendered with the "เห็นเฉพาะสายอนุมัติ" badge. */
+  sensitive?: boolean;
+  /** A long answer; rendered as a textarea rather than a single line. */
+  multiline?: boolean;
+}
+
+export interface FormSchema {
+  required?: string[];
+  properties?: Record<string, FormSchemaProperty>;
+}
+
+/** One entry of `requiredDocs` / `returnReasonCodes`. */
+export interface CodedLabel {
+  code: string;
+  name: string;
+}
+
 export interface RequestType {
   code: string;
   name: string;
+  /** The form is data, not code — §16 หน้าที่ 3 renders straight from this. */
+  formSchema?: FormSchema;
+  requiredDocs?: CodedLabel[];
+  returnReasonCodes?: CodedLabel[];
+  slaHours?: number | null;
+  slaBusinessHours?: boolean;
+  active?: boolean;
+}
+
+/**
+ * REQ-07 — one line of the append-only timeline.
+ *
+ * `actorLabel` is set instead of `actorId` when the system acted (an
+ * escalation, an auto-transition): §16 หน้าที่ 4 prints those rows as `ระบบ`,
+ * and putting a person's name on them would credit somebody who did nothing.
+ */
+export interface RequestEventRow {
+  id: string;
+  seq: number;
+  type: string;
+  actorId: string | null;
+  actorLabel: string | null;
+  fromStatus: string | null;
+  toStatus: string | null;
+  data: Record<string, unknown> | null;
+  createdAt: string;
+  /** Joined so the timeline can print a name instead of an id. */
+  actor?: { displayName: string } | null;
+}
+
+/** One rung as หน้าที่ 4 draws it, with the decision already made or not. */
+export interface RequestDetailStep {
+  stepNo: number;
+  approverRole: string;
+  approverUserId: string | null;
+  status: string;
+  decision: string | null;
+  decidedAt: string | null;
+  approver: { displayName: string } | null;
+}
+
+/** The full request as หน้าที่ 4 needs it. */
+export interface RequestDetail extends Omit<RequestRow, "approvalCases"> {
+  approvalCases?: {
+    currentStep: number;
+    matrixVersion: number;
+    amount: string | null;
+    steps: RequestDetailStep[];
+  }[];
+  formData?: Record<string, unknown>;
+  companyId?: string;
+  requesterId?: string;
+  submittedAt?: string | null;
+  cancelReason?: string | null;
+  requestType?: { name: string; formSchema?: FormSchema };
+  attachments?: RequestAttachment[];
+  events?: RequestEventRow[];
+}
+
+/** REQ-03 — recorded metadata; there is no file behind it yet. */
+export interface RequestAttachment {
+  id: string;
+  docCode: string | null;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  deletedAt: string | null;
+}
+
+/**
+ * APV-02 — the route a request would take, computed before it is submitted.
+ *
+ * Amounts stay strings: they are money, and rounding them into JavaScript
+ * numbers on the way to the screen is how a displayed ceiling starts
+ * disagreeing with the one the engine routed under.
+ */
+export interface ChainPreview {
+  amount: string | null;
+  currency: string;
+  tier_index: number;
+  tier_upto: string | null;
+  exceeded_upto: string | null;
+  steps: {
+    step_no: number;
+    position: string;
+    user_id: string | null;
+    display_name: string | null;
+  }[];
+  excluded: { position: string; appears_above: string | null }[];
 }
 
 /**
@@ -147,6 +261,8 @@ export interface MatrixTier {
 }
 
 export interface ApprovalMatrixVersion {
+  /** Who published it — a userId; A1 resolves it to a name for display. */
+  createdBy?: string | null;
   id: string;
   subjectType: string;
   currency: string;
@@ -168,4 +284,72 @@ export interface AuditLogRow {
   eventType: string;
   resourceType: string | null;
   resourceId: string | null;
+}
+
+/** SUP-01 / D-09 — one request type's clock in one company. */
+export interface SlaConfigRow {
+  id: string;
+  companyId: string;
+  requestTypeCode: string;
+  hours: number;
+  businessHours: boolean;
+  warnBeforeHours: number;
+}
+
+/** §5.4 — one entry of the code-declared permission catalog. */
+export interface PermissionRow {
+  code: string;
+  /** `request` · `approval` · `report` · `user` · `audit` · `admin` · `integration` */
+  module: string;
+}
+
+export interface RolePermissionRow {
+  permissionCode: string;
+}
+
+/** Screen A4's left-hand list. `_count.users` is scoped to the active company. */
+export interface RoleRow {
+  id: string;
+  companyId: string | null;
+  code: string;
+  name: string;
+  description: string | null;
+  isSystem: boolean;
+  active: boolean;
+  updatedAt: string;
+  permissions: RolePermissionRow[];
+  _count: { users: number };
+}
+
+/**
+ * Screen A4's right-hand panel.
+ *
+ * `KEYCLOAK_MAPPING` earns the `จาก Keycloak` badge and cannot be revoked
+ * here — that grant is replaced wholesale on every login (ROLE-03), so undoing
+ * it belongs in Keycloak. `MANUAL` is the emergency binding an admin made, and
+ * the only one this screen offers to withdraw.
+ */
+export interface RoleHolder {
+  userId: string;
+  username: string;
+  displayName: string;
+  source: "KEYCLOAK_MAPPING" | "MANUAL";
+  grantedAt: string;
+  grantedByDisplayName: string | null;
+}
+
+/** SCOPE-01 — (role, resource) → how far that role sees. */
+export interface ScopeRuleRow {
+  id: string;
+  roleId: string;
+  resource: string;
+  scope: "own" | "team" | "department" | "company" | "all";
+}
+
+/** ROLE-03 — a Keycloak realm role bound to a system role, per company. */
+export interface KeycloakRoleMappingRow {
+  id: string;
+  companyId: string;
+  keycloakRole: string;
+  roleId: string;
 }

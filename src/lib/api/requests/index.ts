@@ -6,7 +6,12 @@
  */
 
 import { apiGet, type ApiResult } from "../core";
-import { type Paginated, type RequestRow, type RequestType } from "../types";
+import {
+  type Paginated,
+  type RequestDetail,
+  type RequestRow,
+  type RequestType,
+} from "../types";
 
 /** Get requests with filtering */
 export async function getRequests(options?: {
@@ -38,8 +43,8 @@ export async function getInvolvedRequests(
 /** Get a single request by ID */
 export async function getRequest(
   requestId: string,
-): Promise<ApiResult<RequestRow>> {
-  return apiGet<RequestRow>(`/requests/${requestId}`);
+): Promise<ApiResult<RequestDetail>> {
+  return apiGet<RequestDetail>(`/requests/${requestId}`);
 }
 
 /** Get all available request types */

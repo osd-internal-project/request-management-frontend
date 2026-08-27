@@ -16,24 +16,42 @@ import { messages } from "@/lib/messages";
  */
 export default function BiDashboardPage() {
   const { key } = useParams<{ key: string }>();
-  const [menu, setMenu] = useState<BiMenu | null>(null);
-  const [error, setError] = useState<string | null>(null);
+
+  /**
+   * The answer is stored together with the key it was fetched for.
+   *
+   * Clearing state imperatively when `key` changes would mean writing state
+   * during the effect, which React now rejects — pairing the two lets
+   * staleness be *derived* instead, and the spinner returns on its own while
+   * the next dashboard's signed URL is being fetched.
+   */
+  const [loaded, setLoaded] = useState<{
+    key: string;
+    menu: BiMenu | null;
+    error: string | null;
+  } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    setMenu(null);
-    setError(null);
 
     getBiMenu().then((result) => {
       if (cancelled) return;
-      if (result.ok) setMenu(result.data);
-      else setError(result.message);
+
+      setLoaded(
+        result.ok
+          ? { key, menu: result.data, error: null }
+          : { key, menu: null, error: result.message },
+      );
     });
 
     return () => {
       cancelled = true;
     };
   }, [key]);
+
+  const current = loaded?.key === key ? loaded : null;
+  const menu = current?.menu ?? null;
+  const error = current?.error ?? null;
 
   if (error) {
     return <Alert type="error" showIcon message={messages.bi.loadFailed} description={error} />;

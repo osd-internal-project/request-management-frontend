@@ -5,260 +5,385 @@ import {
   Alert,
   Button,
   Card,
+  Checkbox,
   Empty,
   Input,
-  List,
-  Modal,
   Space,
   Tag,
   message,
 } from "antd";
 import Text from "antd/es/typography/Text";
 import Paragraph from "antd/es/typography/Paragraph";
-import { messages } from "@/lib/messages";
-
-import type { ApprovalCase } from "@/lib/api/types";
+import Link from "next/link";
 import { appApi } from "@/lib/api/client";
-export type {
-  ApprovalStep,
-  ApprovalCase,
-} from "@/lib/api/types";
+import type { ApprovalCase } from "@/lib/api/types";
+import { messages } from "@/lib/messages";
+import { ROUTES } from "@/lib/routes";
 
-type Decision = "approve" | "reject" | "return";
+export type { ApprovalStep, ApprovalCase } from "@/lib/api/types";
 
-function money(amount: string | null, currency: string | null) {
+/** REQ-04 — a bounce must name a standard cause so bounces can be counted. */
+const RETURN_REASONS = [
+  { code: "DOC_INCOMPLETE", label: "เอกสารไม่ครบ" },
+  { code: "MARGIN_WRONG", label: "ตัวเลข margin ไม่ถูกต้อง" },
+  { code: "REASON_INSUFFICIENT", label: "เหตุผลไม่เพียงพอ" },
+  { code: "OTHER", label: "อื่น ๆ (ระบุ)" },
+];
+
+function money(amount: string | null, currency: string | null): string {
   if (amount === null) return "—";
   return `${Number(amount).toLocaleString("th-TH")} ${currency ?? ""}`.trim();
 }
 
+/** One line of the queue row, as §16 writes it. */
+function summary(approvalCase: ApprovalCase): string {
+  const payload = approvalCase.payload ?? {};
+  const discount = payload.discount_pct;
+  const deal = approvalCase.subjectId;
+
+  return [
+    discount !== undefined ? `ขอส่วนลด ${String(discount)}%` : approvalCase.subjectType,
+    deal ? `ดีล ${deal}` : null,
+    money(approvalCase.amount, approvalCase.currency),
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
 /**
- * The approval inbox and decision view (§8, APV-02).
+ * Screen §16 หน้าที่ 5 — อนุมัติ (มุมมอง CFO).
  *
- * §8 is specific about the order: requester, amount, reason, attachments and
- * margin come **before** the decision buttons. An approver who has to click to
- * see what they are approving is being asked to approve blind.
+ * **Two-pane, not list + modal.** An approver works a queue: they compare the
+ * next item against the one they just decided, and a dialog that hides the
+ * queue each time makes that impossible. The mockup is explicit about this,
+ * and the earlier build got it wrong.
  *
- * The margin is absent from the payload entirely when the caller lacks
- * `request.sensitive.read` — the backend removes it (SCOPE-04), so this shows
- * a note rather than an empty value.
+ * The margin is *absent* from the payload when the caller lacks
+ * `request.sensitive.read` — the backend removes the field (SCOPE-04) — so a
+ * missing value is reported as "no permission", never as zero.
  */
 export function ApprovalInbox({
   cases: initial,
   total,
+  delegation,
 }: {
   cases: ApprovalCase[];
   total: number;
+  /** Set while this person is covering for somebody (APV-03). */
+  delegation?: { name: string; window: string } | null;
 }) {
   const [cases, setCases] = useState(initial);
   const [count, setCount] = useState(total);
-  const [open, setOpen] = useState<ApprovalCase | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(
+    initial[0]?.id ?? null,
+  );
+  const [batch, setBatch] = useState<string[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const selected = cases.find((entry) => entry.id === selectedId) ?? null;
 
   async function refresh() {
     const result = await appApi<{ data: ApprovalCase[]; total: number }>(
       "approvals/inbox",
     );
+
     if (result.ok) {
       setCases(result.data.data);
       setCount(result.data.total);
+      setSelectedId(result.data.data[0]?.id ?? null);
+      setBatch([]);
     }
   }
 
-  return (
-    <Card title={`${messages.approvals.title} · ${count}`}>
-      {cases.length === 0 ? (
-        <Empty description={messages.approvals.empty} />
-      ) : (
-        <List>
-          {cases.map((item) => (
-            <List.Item
-              key={item.id}
-              actions={[
-                <Button key="open" size="small" type="primary" onClick={() => setOpen(item)}>
-                  เปิดดู
-                </Button>,
-              ]}
-            >
-              <List.Item.Meta
-                title={
-                  <Space size={6}>
-                    <Text strong>{item.subjectId}</Text>
-                    <Tag>{item.subjectType}</Tag>
-                    <Tag color="geekblue">
-                      {messages.approvals.step} {item.currentStep}{" "}
-                      {messages.approvals.of} {item.steps.length}
-                    </Tag>
-                  </Space>
-                }
-                description={
-                  <span className="text-xs">
-                    {messages.approvals.amount}:{" "}
-                    {money(item.amount, item.currency)} ·{" "}
-                    {new Date(item.createdAt).toLocaleString("th-TH")}
-                  </span>
-                }
-              />
-            </List.Item>
-          ))}
-        </List>
-      )}
-
-      <DecisionDialog
-        approvalCase={open}
-        onClose={() => setOpen(null)}
-        onDone={async () => {
-          setOpen(null);
-          void message.success(messages.approvals.decided);
-          await refresh();
-        }}
-      />
-    </Card>
-  );
-}
-
-function DecisionDialog({
-  approvalCase,
-  onClose,
-  onDone,
-}: {
-  approvalCase: ApprovalCase | null;
-  onClose: () => void;
-  onDone: () => void;
-}) {
-  const [note, setNote] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState<Decision | null>(null);
-
-  async function decide(decision: Decision) {
-    if (!approvalCase) return;
-
-    // §8: rejection always requires a reason. Checked here so the approver is
-    // told before the round trip; the backend enforces it regardless.
-    if (decision !== "approve" && !note.trim()) {
-      setError(messages.approvals.reasonRequired);
-      return;
-    }
-
-    setSaving(decision);
+  async function decide(
+    caseId: string,
+    decision: "approve" | "reject" | "return",
+    note: string,
+    reasonCodes: string[],
+  ) {
+    setBusy(true);
     setError(null);
 
-    const result = await appApi(`approvals/${approvalCase.id}/decide`, {
+    const result = await appApi(`approvals/${caseId}/decide`, {
       method: "POST",
-      body: JSON.stringify({ decision, note: note.trim() || undefined }),
+      body: JSON.stringify({
+        decision,
+        note: note || undefined,
+        reason_codes: reasonCodes.length ? reasonCodes : undefined,
+      }),
     });
 
-    setSaving(null);
+    setBusy(false);
+
     if (result.ok) {
-      setNote("");
-      onDone();
+      void message.success(messages.approvals.decided);
+      await refresh();
     } else setError(result.message);
   }
 
-  const payload = approvalCase?.payload ?? {};
-  const hasMargin = "est_margin_pct" in payload;
+  /** APV-04 — one transaction each, so nineteen good decisions survive a bad one. */
+  async function approveBatch() {
+    setBusy(true);
+    setError(null);
+
+    const result = await appApi("approvals/batch-decide", {
+      method: "POST",
+      body: JSON.stringify({ case_ids: batch, decision: "approve" }),
+    });
+
+    setBusy(false);
+
+    if (result.ok) {
+      void message.success(messages.approvals.decided);
+      await refresh();
+    } else setError(result.message);
+  }
+
+  /** Two requests naming the same deal — the mockup flags them for batching. */
+  function sameDealAs(approvalCase: ApprovalCase): string | null {
+    const twin = cases.find(
+      (other) =>
+        other.id !== approvalCase.id &&
+        other.subjectId === approvalCase.subjectId,
+    );
+
+    return twin ? (twin.subjectId ?? null) : null;
+  }
 
   return (
-    <Modal
-      open={Boolean(approvalCase)}
-      title={approvalCase?.subjectId ?? ""}
-      onCancel={onClose}
-      width={620}
-      footer={
-        // Decision buttons last, after everything the approver must read.
-        <Space>
-          <Button onClick={onClose}>ปิด</Button>
+    <div className="space-y-4">
+      {delegation && (
+        <Alert
+          type="info"
+          showIcon
+          message={messages.approvals.delegationBanner(
+            delegation.name,
+            delegation.window,
+          )}
+        />
+      )}
+
+      {error && <Alert type="error" showIcon message={error} />}
+
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
+        <Card
+          title={messages.approvals.queueTitle(count)}
+          extra={
+            <Button
+              size="small"
+              disabled={!batch.length || busy}
+              onClick={() => void approveBatch()}
+            >
+              {messages.approvals.batchApprove}
+              {batch.length ? ` · ${batch.length}` : ""}
+            </Button>
+          }
+        >
+          {cases.length ? (
+            <ul className="divide-y divide-black/5">
+              {cases.map((entry) => {
+                const twin = sameDealAs(entry);
+
+                return (
+                  <li key={entry.id} className="flex gap-2 py-2">
+                    <Checkbox
+                      checked={batch.includes(entry.id)}
+                      onChange={(event) =>
+                        setBatch((current) =>
+                          event.target.checked
+                            ? [...current, entry.id]
+                            : current.filter((id) => id !== entry.id),
+                        )
+                      }
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setSelectedId(entry.id)}
+                      className={`min-w-0 grow cursor-pointer rounded px-2 py-1 text-left hover:bg-black/5 ${
+                        entry.id === selectedId ? "bg-black/5 font-medium" : ""
+                      }`}
+                    >
+                      <div className="truncate">{entry.subjectId}</div>
+                      <Text type="secondary" className="text-xs">
+                        {summary(entry)}
+                      </Text>
+                      <div>
+                        <Text type="secondary" className="text-xs">
+                          {messages.approvals.step}{" "}
+                          {entry.currentStep}/{entry.steps.length}
+                        </Text>
+                        {twin && (
+                          <Tag color="blue" className="ml-1">
+                            {messages.approvals.sameDeal(twin)}
+                          </Tag>
+                        )}
+                      </div>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <Empty description={messages.approvals.empty} />
+          )}
+        </Card>
+
+        {selected ? (
+          <DecisionPane
+            approvalCase={selected}
+            busy={busy}
+            onDecide={(decision, note, reasons) =>
+              void decide(selected.id, decision, note, reasons)
+            }
+          />
+        ) : (
+          <Card title={messages.approvals.detailTitle}>
+            <Empty description={messages.approvals.selectFromQueue} />
+          </Card>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** The right-hand pane: what is being decided, then the decision. */
+function DecisionPane({
+  approvalCase,
+  busy,
+  onDecide,
+}: {
+  approvalCase: ApprovalCase;
+  busy: boolean;
+  onDecide: (
+    decision: "approve" | "reject" | "return",
+    note: string,
+    reasonCodes: string[],
+  ) => void;
+}) {
+  const [note, setNote] = useState("");
+  const [reasons, setReasons] = useState<string[]>([]);
+
+  const payload = approvalCase.payload ?? {};
+  const margin = payload.est_margin_pct;
+  const decided = approvalCase.steps.filter((step) => step.decision);
+
+  return (
+    <Card title={messages.approvals.detailTitle}>
+      <Space direction="vertical" size="middle" className="flex">
+        <div className="space-y-1 text-sm">
+          <div>
+            <Text strong>{messages.approvals.amount}: </Text>
+            {money(approvalCase.amount, approvalCase.currency)}
+          </div>
+
+          <div>
+            <Text strong>{messages.approvals.marginAfter}: </Text>
+            {margin === undefined ? (
+              // Absent, not zero: the field was removed before it left the
+              // server, so there is nothing here to reveal.
+              <Text type="secondary">{messages.approvals.marginHidden}</Text>
+            ) : (
+              <>
+                {String(margin)}%{" "}
+                <Text type="secondary">
+                  {messages.approvals.marginFloor("15")}
+                </Text>
+              </>
+            )}
+          </div>
+
+          {decided.map((step) => (
+            <div key={step.stepNo}>
+              <Text type="secondary">
+                {messages.approvals.previousStep(step.stepNo)}
+              </Text>
+            </div>
+          ))}
+
+          {typeof payload.reason === "string" && (
+            <div>
+              <Text strong>{messages.approvals.requesterReason}: </Text>
+              {payload.reason}
+            </div>
+          )}
+
+          {approvalCase.requestId && (
+            <Link
+              href={ROUTES.requestDetail(approvalCase.requestId)}
+              className="text-blue-600"
+            >
+              {messages.approvals.openFull(0)}
+            </Link>
+          )}
+        </div>
+
+        {/* APV-05 — stated before the buttons, because it governs them. */}
+        <Alert type="info" showIcon message={messages.approvals.snapshotNote} />
+
+        <label className="block">
+          <Text strong>{messages.approvals.commentLabel}</Text>
+          <Input.TextArea
+            className="mt-1"
+            rows={3}
+            value={note}
+            placeholder={messages.approvals.commentPlaceholder}
+            onChange={(event) => setNote(event.target.value)}
+          />
+        </label>
+
+        <div>
+          <Text strong>{messages.approvals.returnReasonsLabel}</Text>
+          <div className="mt-1 flex flex-wrap gap-3">
+            {RETURN_REASONS.map((reason) => (
+              <Checkbox
+                key={reason.code}
+                checked={reasons.includes(reason.code)}
+                onChange={(event) =>
+                  setReasons((current) =>
+                    event.target.checked
+                      ? [...current, reason.code]
+                      : current.filter((code) => code !== reason.code),
+                  )
+                }
+              >
+                {reason.label}
+              </Checkbox>
+            ))}
+          </div>
+        </div>
+
+        <Space className="justify-end flex">
           <Button
             danger
-            loading={saving === "reject"}
-            onClick={() => void decide("reject")}
+            loading={busy}
+            // The backend refuses a rejection with no reason; disabling the
+            // button says so before the round trip rather than after it.
+            disabled={!note.trim()}
+            onClick={() => onDecide("reject", note, reasons)}
           >
             {messages.approvals.reject}
           </Button>
           <Button
-            loading={saving === "return"}
-            onClick={() => void decide("return")}
+            loading={busy}
+            disabled={!note.trim() || !reasons.length}
+            onClick={() => onDecide("return", note, reasons)}
           >
             {messages.approvals.returnForEdit}
           </Button>
           <Button
             type="primary"
-            loading={saving === "approve"}
-            onClick={() => void decide("approve")}
+            loading={busy}
+            onClick={() => onDecide("approve", note, [])}
           >
             {messages.approvals.approve}
           </Button>
         </Space>
-      }
-    >
-      {error && <Alert type="error" showIcon title={error} className="mb-3!" />}
 
-      {approvalCase && (
-        <div className="space-y-3">
-          <div className="text-sm">
-            <div>
-              <Text strong>{messages.approvals.amount}: </Text>
-              <Text>{money(approvalCase.amount, approvalCase.currency)}</Text>
-            </div>
-            <div>
-              <Text strong>{messages.approvals.margin}: </Text>
-              {hasMargin ? (
-                <Text>{String(payload.est_margin_pct)}%</Text>
-              ) : (
-                <Text type="secondary">{messages.approvals.marginHidden}</Text>
-              )}
-            </div>
-            {typeof payload.reason === "string" && (
-              <div>
-                <Text strong>{messages.approvals.reason}: </Text>
-                <Text>{payload.reason}</Text>
-              </div>
-            )}
-          </div>
-
-          <div>
-            <Text strong className="text-xs">
-              {messages.approvals.chain}
-            </Text>
-            <ol className="ml-4 list-decimal text-xs">
-              {approvalCase.steps.map((step) => (
-                <li key={step.id}>
-                  <Tag>{step.approverRole}</Tag>
-                  <Tag
-                    color={
-                      step.status === "approved"
-                        ? "green"
-                        : step.status === "pending"
-                          ? "blue"
-                          : undefined
-                    }
-                  >
-                    {step.status}
-                  </Tag>
-                  {step.delegationId && (
-                    <Tag color="gold">{messages.approvals.viaDelegation}</Tag>
-                  )}
-                  {step.note && <Text type="secondary"> — {step.note}</Text>}
-                </li>
-              ))}
-            </ol>
-          </div>
-
-          <div>
-            <Text strong className="text-xs">
-              {messages.approvals.reason}
-            </Text>
-            <Input.TextArea
-              rows={3}
-              value={note}
-              onChange={(event) => setNote(event.target.value)}
-              placeholder={messages.approvals.reasonRequired}
-            />
-          </div>
-
-          <Paragraph type="secondary" className="mb-0! text-xs">
-            ทุกการตัดสินใจถูกบันทึกใน Audit Log พร้อมชื่อผู้ตัดสิน
-          </Paragraph>
-        </div>
-      )}
-    </Modal>
+        <Paragraph type="secondary" className="mb-0! text-xs">
+          {messages.approvals.reasonRequired}
+        </Paragraph>
+      </Space>
+    </Card>
   );
 }

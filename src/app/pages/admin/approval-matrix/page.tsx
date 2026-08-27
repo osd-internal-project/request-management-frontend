@@ -3,8 +3,18 @@ import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
 import { ApprovalMatrixAdmin } from "@/components/approval-matrix-admin";
 import admin from "@/lib/api/admin";
+import { apiGet } from "@/lib/api/core";
 import { messages } from "@/lib/messages";
 import { getSession } from "@/lib/session";
+
+interface Paginated<T> {
+  data: T[];
+}
+
+interface DirectoryUser {
+  id: string;
+  displayName: string;
+}
 
 /**
  * Screen §16 A1 — ตารางอำนาจอนุมัติ (APV-01, APV-02).
@@ -16,7 +26,24 @@ import { getSession } from "@/lib/session";
  */
 export default async function ApprovalMatrixPage() {
   const session = await getSession();
-  const result = await admin.getApprovalMatrix();
+
+  /**
+   * The directory is fetched so the version header can say *who* published a
+   * ladder. `createdBy` is stored as an id and core-service owns no identity
+   * tables, so the name is resolved here — on an admin screen whose viewer
+   * already holds `user.read` — rather than by a cross-service call per row.
+   */
+  const [result, users] = await Promise.all([
+    admin.getApprovalMatrix(),
+    apiGet<Paginated<DirectoryUser>>("/users?page_size=100"),
+  ]);
+
+  const userNames = Object.fromEntries(
+    (users.ok ? users.data.data : []).map((user) => [
+      user.id,
+      user.displayName,
+    ]),
+  );
 
   return (
     <div className="space-y-4">
@@ -30,13 +57,18 @@ export default async function ApprovalMatrixPage() {
       {result.ok ? (
         <ApprovalMatrixAdmin
           versions={result.data}
+          companies={(session?.companies ?? []).map((company) => ({
+            id: company.id,
+            name: company.name,
+          }))}
           companyId={session?.active_company_id ?? ""}
+          userNames={userNames}
         />
       ) : (
         <Alert
           type="error"
           showIcon
-          title={messages.common.loadError}
+          message={messages.common.loadError}
           description={result.error.message}
         />
       )}

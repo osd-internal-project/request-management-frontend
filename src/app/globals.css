@@ -1,11 +1,413 @@
+/* app.css */
 @import "tailwindcss";
 
-.login-marketing-content {
-  top: 30.4%;
+:root {
+  --app-primary: #2f6fed;
+  --app-primary-soft: #eef4ff;
+  --app-primary-pale: #f5f8ff;
+
+  --app-bg: #f7f9fc;
+  --app-surface: #ffffff;
+
+  --app-text: #17243a;
+  --app-text-secondary: #66758a;
+  --app-text-muted: #91a0b4;
+
+  --app-border: #e3e9f2;
+  --app-border-soft: #edf1f6;
+
+  --app-success: #48a868;
+  --app-warning: #d99a32;
+  --app-danger: #d9535f;
+
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+
+  --shadow-card:
+    0 1px 3px rgba(23, 36, 58, 0.03),
+    0 8px 24px rgba(23, 36, 58, 0.035);
 }
 
-@media (min-width: 1024px) and (max-height: 800px) {
-  .login-marketing-content {
-    top: 24%;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--app-bg);
+  color: var(--app-text);
+
+  font-family:
+    Inter,
+    "Noto Sans Thai",
+    "Noto Sans",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  -webkit-font-smoothing: antialiased;
+}
+
+/* --------------------------------
+   Layout
+-------------------------------- */
+
+.app-layout {
+  min-height: 100vh;
+  background: var(--app-bg);
+}
+
+.app-header {
+  height: 68px;
+  padding: 0 24px;
+
+  background: rgba(255, 255, 255, 0.94);
+  border-bottom: 1px solid var(--app-border-soft);
+
+  display: flex;
+  align-items: center;
+
+  position: sticky;
+  top: 0;
+  z-index: 20;
+
+  backdrop-filter: blur(12px);
+}
+
+.app-content {
+  min-height: calc(100vh - 68px);
+  padding: 32px 36px;
+
+  background:
+    radial-gradient(
+      circle at 85% 0%,
+      rgba(47, 111, 237, 0.055),
+      transparent 280px
+    ),
+    var(--app-bg);
+}
+
+/* --------------------------------
+   Sidebar
+-------------------------------- */
+
+.app-sider {
+  background: #fff !important;
+  border-right: 1px solid var(--app-border-soft);
+
+  position: sticky !important;
+  top: 0;
+  height: 100vh;
+
+  z-index: 30;
+}
+
+.app-logo {
+  height: 68px;
+  padding: 0 24px;
+
+  display: flex;
+  align-items: center;
+
+  color: var(--app-text);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.app-logo-accent {
+  color: var(--app-primary);
+}
+
+.app-menu {
+  border-inline-end: none !important;
+  padding: 14px 10px;
+}
+
+.app-menu .ant-menu-item {
+  margin: 3px 0;
+  width: 100%;
+  height: 44px;
+  line-height: 44px;
+
+  border-radius: 10px;
+}
+
+.app-menu .ant-menu-item-selected {
+  font-weight: 600;
+}
+
+.app-menu .ant-menu-item-selected::after {
+  display: none;
+}
+
+/* --------------------------------
+   Page Header
+-------------------------------- */
+
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+
+  margin-bottom: 24px;
+}
+
+.page-title {
+  margin: 0;
+
+  color: var(--app-text);
+
+  font-size: 24px;
+  line-height: 1.25;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.page-description {
+  margin-top: 6px;
+
+  color: var(--app-text-muted);
+  font-size: 14px;
+}
+
+/* --------------------------------
+   Surface / Card
+-------------------------------- */
+
+.app-surface {
+  background: var(--app-surface);
+
+  border: 1px solid var(--app-border-soft);
+  border-radius: var(--radius-lg);
+
+  box-shadow: var(--shadow-card);
+}
+
+.app-surface-header {
+  min-height: 54px;
+  padding: 0 20px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  border-bottom: 1px solid var(--app-border-soft);
+}
+
+.app-surface-title {
+  color: var(--app-text);
+  font-size: 15px;
+  font-weight: 650;
+}
+
+/* --------------------------------
+   Ant Card
+-------------------------------- */
+
+.ant-card {
+  border-color: var(--app-border-soft);
+  box-shadow: var(--shadow-card);
+}
+
+.ant-card-head {
+  min-height: 54px;
+  padding-inline: 20px;
+
+  border-bottom-color: var(--app-border-soft);
+}
+
+.ant-card-head-title {
+  font-weight: 650;
+}
+
+/* --------------------------------
+   Inputs
+-------------------------------- */
+
+.ant-input,
+.ant-input-affix-wrapper,
+.ant-select-selector,
+.ant-picker {
+  box-shadow: none !important;
+}
+
+.ant-input:hover,
+.ant-input-affix-wrapper:hover,
+.ant-select:hover .ant-select-selector {
+  border-color: #aec4ef !important;
+}
+
+.ant-input:focus,
+.ant-input-focused,
+.ant-input-affix-wrapper-focused,
+.ant-select-focused .ant-select-selector {
+  border-color: #6d9af5 !important;
+  box-shadow: 0 0 0 3px rgba(47, 111, 237, 0.09) !important;
+}
+
+/* --------------------------------
+   Buttons
+-------------------------------- */
+
+.ant-btn {
+  font-weight: 500;
+  box-shadow: none !important;
+}
+
+.ant-btn-primary {
+  border: none;
+}
+
+.ant-btn-default {
+  background: #fff;
+}
+
+/* --------------------------------
+   Tables
+-------------------------------- */
+
+.ant-table-wrapper {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.ant-table {
+  background: transparent;
+}
+
+.ant-table-thead > tr > th {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: none;
+
+  color: var(--app-text-secondary);
+
+  border-bottom: 1px solid var(--app-border-soft) !important;
+}
+
+.ant-table-tbody > tr > td {
+  border-bottom: 1px solid var(--app-border-soft) !important;
+}
+
+.ant-table-tbody > tr:last-child > td {
+  border-bottom: none !important;
+}
+
+/* --------------------------------
+   Status
+-------------------------------- */
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  padding: 4px 9px;
+
+  border-radius: 999px;
+
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.status-success {
+  color: #378752;
+  background: #edf9f1;
+}
+
+.status-success::before {
+  background: #48a868;
+}
+
+.status-warning {
+  color: #a56d16;
+  background: #fff7e8;
+}
+
+.status-warning::before {
+  background: #d99a32;
+}
+
+.status-danger {
+  color: #b53d48;
+  background: #fff0f1;
+}
+
+.status-danger::before {
+  background: #d9535f;
+}
+
+/* --------------------------------
+   Form schema rows
+-------------------------------- */
+
+.schema-row {
+  padding: 12px;
+
+  background: #fbfcfe;
+
+  border: 1px solid var(--app-border-soft);
+  border-radius: 10px;
+
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.schema-row:hover {
+  background: #f8faff;
+  border-color: #d7e2f5;
+}
+
+.schema-row + .schema-row {
+  margin-top: 8px;
+}
+
+/* --------------------------------
+   Info box
+-------------------------------- */
+
+.info-box {
+  display: flex;
+  gap: 10px;
+
+  padding: 12px 14px;
+
+  color: #46627f;
+  background: #f1f7ff;
+
+  border: 1px solid #cfe1fa;
+  border-radius: 10px;
+
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* --------------------------------
+   Footer
+-------------------------------- */
+
+.app-footer {
+  padding: 28px 0;
+
+  text-align: center;
+
+  color: var(--app-text-muted);
+  font-size: 12px;
 }

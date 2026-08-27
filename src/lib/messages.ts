@@ -111,6 +111,145 @@ export const messages = {
       `scope กำหนดต่อ (role, ชนิดข้อมูล) ตาม SCOPE-01 — การแก้ตรงนี้มีผลกับทุกคนที่ถือ role "${role}" ในบริษัทนี้ (${holders} คน)`,
     extraRoles: "role เพิ่มเติมในระบบ",
     addRole: "ผูก role เพิ่ม",
+
+    /** §16 — A3 and A4 are tabs of one screen. */
+    tabs: {
+      tree: "ผังทีม",
+      roles: "Role และ Permission",
+      scope: "Scope Rules",
+      keycloak: "Keycloak Mapping",
+    },
+  },
+
+  /** Screen §16 A4 — Role และ Permission. */
+  roleAdmin: {
+    listTitle: (count: number) => `Role ทั้งหมด · ${count}`,
+    newRole: "+ สร้าง role",
+    active: "เปิดใช้",
+    inactive: "ปิดใช้งาน",
+    everyone: "ทุกคน · อัตโนมัติ",
+    holders: (count: number) => `${count} คน`,
+    mappedFrom: (keycloakRole: string) => `map จาก Keycloak: ${keycloakRole}`,
+    unmapped: "ยังไม่ได้ map กับ Keycloak",
+    edit: (name: string) => `แก้ไข role: ${name}`,
+    company: (name: string) => `บริษัท ${name}`,
+    undeletable: (count: number) => `ลบไม่ได้ — มีผู้ใช้ ${count} คน`,
+    deletableNote: "ลบไม่ได้ — role ปิดใช้งานได้อย่างเดียว (ROLE-02)",
+    disable: "ปิดใช้งาน",
+    enable: "เปิดใช้งาน",
+    save: "บันทึก",
+    saved: "บันทึกแล้ว — มีผลทันทีกับ API call ถัดไป",
+    selectFirst: "เลือก role ทางซ้ายเพื่อแก้ไข",
+
+    membershipNote: (keycloakRole: string | null) =>
+      keycloakRole
+        ? `สมาชิก role จัดการที่ Keycloak (map: ${keycloakRole}) — หน้านี้กำหนดเฉพาะว่า role ทำอะไรได้ · แก้แล้วมีผลทันทีกับ API call ถัดไป`
+        : "สมาชิก role จัดการที่ Keycloak — หน้านี้กำหนดเฉพาะว่า role ทำอะไรได้ · แก้แล้วมีผลทันทีกับ API call ถัดไป",
+
+    /** §16 A4 groups the catalog into three columns of checkboxes. */
+    groups: {
+      request: "REQUEST",
+      approvalReport: "APPROVAL · REPORT",
+      adminAudit: "ADMIN · AUDIT",
+    },
+
+    /** Thai next to each permission code, as the mockup prints them. */
+    permission: {
+      "request.create": "ยื่นคำขอ",
+      "request.read": "ดูคำขอ",
+      "request.return": "ตีกลับ",
+      "request.cancel.own": "ยกเลิกของตน",
+      "request.cancel.any": "ยกเลิกแทน",
+      "request.complete": "ปิดงาน",
+      "request.hold": "พักงาน",
+      "request.sensitive.read": "เห็น margin",
+      "approval.decide": "อนุมัติ",
+      "approval.delegate": "มอบอำนาจ",
+      "approval.history.read": "ประวัติอำนาจ",
+      "report.request.read": "รายงานทีม",
+      "report.dashboard.read": "แดชบอร์ด",
+      "user.read": "ค้นผู้ใช้",
+      "audit.read": "อ่าน audit log",
+      "notification.read": "รับแจ้งเตือน",
+    } as Record<string, string>,
+
+    /** §5.4 guardrail 1 — the reason the admin boxes are not tickable here. */
+    adminLocked: "admin.* — ขัด guardrail แยกหน้าที่",
+    adminLockedHint:
+      "§5.4: role ที่มีสิทธิ์ admin.* ถือ approval.decide หรือ request.sensitive.read ไม่ได้ · backend ปฏิเสธการบันทึก ไม่ใช่แค่ปุ่มนี้ที่กดไม่ได้",
+
+    holdersTitle: (count: number) => `ผู้ใช้ใน role นี้ · ${count}`,
+    bindManually: "+ ผูกมือ",
+    fromKeycloak: "จาก Keycloak",
+    manual: "ผูกมือ",
+    revoke: "ถอน",
+    revoked: "ถอน role แล้ว",
+    seeAll: (count: number) => `ดูทั้งหมด ${count} คน`,
+    noHolders: "ยังไม่มีใครถือ role นี้ในบริษัทนี้",
+    keycloakNotRevocable:
+      "grant ที่มาจาก Keycloak ถอนที่นี่ไม่ได้ — ระบบเขียนทับใหม่ทุกครั้งที่ล็อกอิน (ROLE-03) ให้ถอนที่ Keycloak",
+
+    recentTitle: "การเปลี่ยนแปลงล่าสุด",
+    recentEmpty: "ยังไม่มีการเปลี่ยนแปลง",
+    auditNote: "ทุกรายการอยู่ใน Audit Log",
+
+    newRoleTitle: "สร้าง role ใหม่",
+    code: "รหัส role",
+    codeHint: "ตัวพิมพ์เล็กและขีดล่าง เช่น sales_support — เปลี่ยนภายหลังไม่ได้",
+    name: "ชื่อที่แสดง",
+    description: "คำอธิบาย",
+  },
+
+  /** SCOPE-01 — no mockup; designed to sit beside A4. */
+  scopeRules: {
+    title: "Scope Rules",
+    subtitle:
+      "กำหนดว่า role หนึ่งเห็นข้อมูลได้ไกลแค่ไหน · คู่ (role, ชนิดข้อมูล) ตาม SCOPE-01 — มีผลทันที ไม่ต้อง deploy",
+    columns: {
+      role: "Role",
+      resource: "ชนิดข้อมูล",
+      scope: "ขอบเขต",
+    },
+    scopeLabel: {
+      own: "own — เฉพาะของตัวเอง",
+      team: "team — ทั้งทีม",
+      department: "department — ทั้งฝ่าย",
+      company: "company — ทั้งบริษัท",
+      all: "all — ข้ามบริษัท",
+    } as Record<string, string>,
+    resourceLabel: {
+      request: "คำขอ",
+      approval_case: "งานอนุมัติ",
+      user: "ผู้ใช้",
+    } as Record<string, string>,
+    addRule: "+ เพิ่มกฎ",
+    save: "บันทึกทั้งตาราง",
+    saved: "บันทึกแล้ว — มีผลทันที",
+    replaceNote:
+      "บันทึกแล้วระบบแทนที่ทั้งตาราง กฎที่ลบออกจากหน้านี้จะหายไปจริง",
+    empty: "ยังไม่มีกฎ scope — ทุก role จะเห็นเฉพาะข้อมูลของตัวเอง",
+  },
+
+  /** ROLE-03 — no mockup; designed to sit beside A4. */
+  keycloakMapping: {
+    title: "Keycloak Mapping",
+    subtitle:
+      "จับคู่ role ใน Keycloak กับ role ในระบบ ต่อบริษัท — ระบบประเมินใหม่ทุกครั้งที่ล็อกอินหรือ refresh token (ROLE-03)",
+    columns: {
+      keycloakRole: "Role ใน Keycloak",
+      systemRole: "Role ในระบบ",
+    },
+    addMapping: "+ เพิ่มการจับคู่",
+    save: "บันทึกทั้งตาราง",
+    saved: "บันทึกแล้ว — มีผลกับการล็อกอินครั้งถัดไป",
+    remove: "ลบ",
+    effectNote:
+      "การแก้ที่นี่ไม่เปลี่ยนสิทธิ์ของคนที่ล็อกอินค้างอยู่ทันที — ระบบเขียน role ที่ map มาใหม่ทั้งชุดตอนล็อกอินครั้งถัดไป (ภายในอายุ access token)",
+    replaceNote:
+      "บันทึกแล้วระบบแทนที่ทั้งตารางของบริษัทนี้ การจับคู่ที่ลบออกจะหายไปจริง",
+    empty:
+      "ยังไม่มีการจับคู่ — ผู้ใช้ที่ล็อกอินจะยังไม่ได้ role ใดจนกว่าผู้ดูแลจะผูกมือ",
+    keycloakRolePlaceholder: "crm-team-lead",
   },
 
   users: {
@@ -127,6 +266,129 @@ export const messages = {
     },
     active: "ใช้งาน",
     inactive: "ปิดใช้งาน",
+  },
+
+  requestForm: {
+    title: "ยื่นคำขอ",
+    draftBanner: "สถานะ: ร่าง — เลขคำขอจะออกเมื่อกดยื่น",
+    type: "ประเภทคำขอ",
+    typeRequired: "เลือกประเภทคำขอก่อน",
+    refLabel: "อ้างอิงดีล",
+    sensitiveBadge: "เห็นเฉพาะสายอนุมัติ",
+    documents: "เอกสารแนบ",
+    dropzone: "ลากไฟล์มาวาง หรือกดเพื่อแนบเอกสารเพิ่มเติม",
+    remove: "ลบ",
+    missingDoc: "ยังขาด",
+    noStorageNote:
+      "รอบนี้ระบบบันทึกเฉพาะรายการเอกสาร ยังไม่เก็บตัวไฟล์และดาวน์โหลดไม่ได้",
+    saveDraft: "บันทึกร่าง",
+    submit: "ยื่นคำขอ",
+    submitting: "กำลังยื่น…",
+    saved: "บันทึกร่างแล้ว",
+    submitted: "ยื่นคำขอแล้ว",
+    chainTitle: "เส้นทางอนุมัติที่จะใช้",
+    chainComputed: (amount: string) =>
+      `คำนวณอัตโนมัติจากวงเงิน ${amount} บาท`,
+    chainOverTier: (ceiling: string) => `(เกินเพดาน ${ceiling} บาท)`,
+    chainNoPick: "ผู้ยื่นเลือกผู้อนุมัติเองไม่ได้",
+    chainUnresolved: "ยังไม่มีผู้รับผิดชอบขั้นนี้ในผังทีม",
+    chainExcluded: (position: string, ceiling: string) =>
+      `${position} ไม่อยู่ในเส้นทาง — วงเงินไม่เกินเพดาน ${ceiling} บาท`,
+    chainNeedsAmount: "กรอกวงเงินเพื่อดูเส้นทางอนุมัติ",
+    slaTitle: "กำหนดเวลา (SLA)",
+    slaHours: (hours: number) => `${hours} ชั่วโมงทำการ`,
+    slaNote:
+      "นาฬิกาเริ่มเดินเมื่อยื่น หยุดเมื่อถูกตีกลับให้แก้ · เกินกำหนดระบบเร่งงานถึงผู้บังคับบัญชาอัตโนมัติ",
+    slaNone: "ประเภทนี้ไม่ได้กำหนด SLA",
+    stepReasonFirst: "ตรวจสิทธิ์การยื่นและความสมเหตุสมผล",
+    stepReasonOver: (ceiling: string) => `วงเงินเกิน ${ceiling} บาท`,
+  },
+
+  requestDetail: {
+    cancel: "ยกเลิกคำขอ",
+    cancelReason: "เหตุผลการยกเลิก",
+    cancelled: "ยกเลิกคำขอแล้ว",
+    infoTitle: "ข้อมูลคำขอ",
+    requester: "ผู้ยื่น",
+    submittedAt: "ยื่นเมื่อ",
+    reference: "อ้างอิง",
+    attachments: (count: number) => `เอกสารแนบ (${count})`,
+    noDownload: "ดาวน์โหลดยังไม่เปิดใช้งาน — รอบนี้เก็บเฉพาะรายการเอกสาร",
+    timelineTitle: "ไทม์ไลน์ (บันทึกทุกการเปลี่ยนสถานะ)",
+    system: "ระบบ",
+    chainTitle: "เส้นทางอนุมัติ",
+    chainStep: (n: number) => `ขั้น ${n}`,
+    stepPending: "รอพิจารณา",
+    stepApproved: "อนุมัติแล้ว",
+    stepRejected: "ไม่อนุมัติ",
+    stepWaiting: "ยังไม่ถึงคิว",
+    voidNote:
+      "แก้ไขสาระสำคัญหลังอนุมัติจะทำให้การอนุมัติเป็นโมฆะและต้องเริ่มเส้นทางใหม่",
+    chainFrom: (amount: string, version: number) =>
+      `เส้นทางคำนวณจากวงเงิน ${amount} บาท · ตารางอำนาจเวอร์ชัน ${version}`,
+    masked: "••••••",
+    events: {
+      "request.submitted": "ยื่นคำขอ",
+      "request.resubmitted": "ยื่นใหม่หลังแก้ไข",
+      "request.routed": "เข้าคิวผู้อนุมัติ",
+      "request.returned": "ตีกลับให้แก้ไข",
+      "request.cancelled": "ยกเลิกคำขอ",
+      "request.completed": "ปิดงาน",
+      "request.held": "พักงานไว้",
+      "request.resumed": "กลับมาดำเนินการ",
+      "approval.decided": "ผลการอนุมัติ",
+      "sla.escalated": "เกินกำหนด — เร่งงานอัตโนมัติ",
+    } as Record<string, string>,
+  },
+
+  bottleneck: {
+    title: "รายงานคอขวด",
+    subtitle: "เวลาจริงต่อขั้นอนุมัติ นับเฉพาะขั้นที่ตัดสินแล้ว (REQ-09)",
+    empty: "ยังไม่มีข้อมูลมากพอในช่วงที่เลือก",
+    columns: {
+      type: "ประเภท",
+      step: "ขั้น",
+      role: "ตำแหน่ง",
+      decided: "ตัดสินแล้ว",
+      pending: "ค้างอยู่",
+      mean: "เฉลี่ย (ชม.)",
+      max: "นานสุด (ชม.)",
+    },
+    pendingNote:
+      "ขั้นที่ยังไม่ตัดสินไม่ถูกนำมาเฉลี่ย ",
+  },
+
+  requestTypes: {
+    title: "ประเภทคำขอ",
+    subtitle: "ประเภทคำขอเป็นข้อมูลตั้งค่าย",
+    listTitle: "ประเภททั้งหมด",
+    active: "เปิดใช้",
+    inactive: "ยังไม่เปิด",
+    edit: (name: string, code: string) => `แก้ไข: ${name} (${code})`,
+    name: "ชื่อประเภท",
+    receiver: "ทีมผู้รับ",
+    sla: "SLA (ชั่วโมงทำการ)",
+    fields: "ฟิลด์ฟอร์ม (form schema)",
+    docs: "เอกสารบังคับ",
+    reasons: "เหตุผลตีกลับ",
+    addField: "+ เพิ่มฟิลด์",
+    fieldName: "ชื่อฟิลด์ (key)",
+    fieldTitle: "ป้ายกำกับ",
+    fieldType: "ชนิด",
+    fieldRequired: "บังคับ",
+    fieldSensitive: "ฟิลด์อ่อนไหว",
+    save: "บันทึก",
+    disable: "ปิดใช้งาน",
+    enable: "เปิดใช้งาน",
+    saved: "บันทึกแล้ว",
+    newType: "+ เพิ่มประเภท",
+    newTypeTitle: "เพิ่มประเภทคำขอ",
+    code: "รหัสประเภท",
+    codeHint: "ตัวพิมพ์ใหญ่ ตัวเลข หรือขีดล่าง · เปลี่ยนภายหลังไม่ได้",
+    effectNote:
+      "การบันทึกมีผลกับคำขอที่ยื่นใหม่เท่านั้น — คำขอที่เดินอยู่ใช้การตั้งค่า ณ ขณะยื่น · ทุกการแก้ไขลง Audit Log",
+    matrixNote: "อ้างตารางอำนาจอนุมัติของบริษัทที่ยื่น",
+    selectFirst: "เลือกประเภทจากรายการทางซ้าย",
   },
 
   myWork: {
@@ -186,6 +448,27 @@ export const messages = {
     marginHidden: "ไม่มีสิทธิ์ดูมาร์จิ้น",
     chain: "สายอนุมัติ",
     viaDelegation: "ผ่านการมอบอำนาจ",
+    queueTitle: (count: number) => `คิวรออนุมัติ · ${count} รายการ`,
+    batchApprove: "อนุมัติเป็นชุด",
+    selected: (count: number) => `เลือก ${count} รายการ`,
+    sameDeal: (requestNo: string) => `ดีลเดียวกับ ${requestNo}`,
+    submittedBy: "ยื่นโดย",
+    detailTitle: "รายละเอียดคำขอ",
+    selectFromQueue: "เลือกรายการจากคิวทางซ้าย",
+    marginAfter: "margin หลังส่วนลด",
+    marginFloor: (floor: string) => `(เกณฑ์ขั้นต่ำ ${floor}%)`,
+    previousStep: (step: number) => `ขั้น ${step} หัวหน้าทีมอนุมัติแล้ว`,
+    requesterReason: "เหตุผลผู้ยื่น",
+    openFull: (count: number) => `เปิดดูคำขอฉบับเต็มและเอกสารแนบ (${count})`,
+    snapshotNote:
+      "การตัดสินผูกกับข้อมูลเวอร์ชันนี้ — ถ้าผู้ยื่นแก้ข้อมูลระหว่างนี้ ระบบจะให้โหลดใหม่ก่อนตัดสิน",
+    commentLabel: "ความเห็นประกอบการตัดสิน (บังคับเมื่อปฏิเสธหรือตีกลับ)",
+    commentPlaceholder: "พิมพ์ความเห็น…",
+    returnReasonsLabel: "กรณีตีกลับ — เลือกสิ่งที่ต้องแก้ (อย่างน้อย 1 ข้อ)",
+    delegationBanner: (name: string, window: string) =>
+      `คุณกำลังรับมอบอำนาจแทน ${name} ช่วง ${window} — ทุกการอนุมัติจะบันทึกว่า "อนุมัติแทน"`,
+    urgencyOverdue: "เกินกำหนด",
+    urgencyDueSoon: "ใกล้ครบกำหนด",
   },
   matrix: {
     title: "ตารางอำนาจอนุมัติ",
@@ -205,6 +488,19 @@ export const messages = {
     placeholderWarning:
       "ตัวเลขเพดานปัจจุบันเป็นค่าตั้งต้นสำหรับพัฒนา ยังไม่ได้รับการยืนยันจากฝ่ายการเงิน (คำถามค้าง A) — ห้ามใช้เป็นตัวเลขจริง",
     saved: "เผยแพร่แล้ว",
+    subject: "ประเภทงาน",
+    currency: "สกุลเงิน",
+    createdBy: "สร้างโดย",
+    addTier: "+ เพิ่มระดับ",
+    columns: {
+      level: "ระดับ",
+      band: "ช่วงวงเงิน (THB)",
+      chain: "ลำดับชั้นผู้อนุมัติ",
+      meaning: "ความหมาย",
+    },
+    meaningFirst: "ตรวจสิทธิ์การยื่น จบในทีม",
+    meaningOver: (level: number, ceiling: string) =>
+      `เกินเพดานระดับ ${level} (${ceiling} บาท)`,
   },
   audit: {
     title: "Audit Log",
@@ -216,6 +512,23 @@ export const messages = {
       resource: "รายการ",
     },
     empty: "ยังไม่มีเหตุการณ์ในช่วงที่เลือก",
+
+    /** §11.7 — only the filters the API actually accepts. */
+    filters: {
+      actor: "ผู้กระทำ (username)",
+      eventType: "ประเภทเหตุการณ์",
+      resourceType: "ชนิดรายการ",
+      range: "ช่วงเวลา",
+      apply: "กรอง",
+      clear: "ล้างตัวกรอง",
+      anyEvent: "ทุกเหตุการณ์",
+      anyResource: "ทุกชนิด",
+      actorHint:
+        "ค้นด้วย user id — คัดลอกได้จากหน้าผังทีมและสิทธิ์",
+    },
+    resultCount: (total: number) => `พบ ${total.toLocaleString("th-TH")} รายการ`,
+    appendOnly:
+      "หน้านี้อ่านอย่างเดียวเพราะ API ไม่มีเส้นทางแก้หรือลบ — log เป็น append-only ตาม SUP-04",
   },
 
   placeholder: {

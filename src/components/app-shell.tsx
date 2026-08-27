@@ -83,12 +83,12 @@ export function AppShell({
   return (
     <Layout className="min-h-screen">
       <Sider breakpoint="lg" collapsedWidth="0">
-        <div className="mb-2 flex h-15 w-full items-center justify-center text-white">
+        <div className="mb-2 flex h-15 w-full items-center justify-center ">
           <h1 className="text-xl font-bold">{messages.app.name}</h1>
         </div>
 
         <Menu
-          theme="dark"
+          // theme="dark"
           mode="inline"
           selectedKeys={[pathname]}
           items={items}
