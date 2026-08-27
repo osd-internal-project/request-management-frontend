@@ -27,7 +27,7 @@ export default function AdminBiPage() {
   }, []);
 
   if (error) {
-    return <Alert type="error" showIcon message={messages.bi.loadFailed} description={error} />;
+    return <Alert type="error" showIcon title={messages.bi.loadFailed} description={error} />;
   }
 
   if (!menu) {
@@ -39,7 +39,7 @@ export default function AdminBiPage() {
   }
 
   if (!menu.configured || !menu.settings_url) {
-    return <Alert type="warning" showIcon message={messages.bi.notConfigured} />;
+    return <Alert type="warning" showIcon title={messages.bi.notConfigured} />;
   }
 
   return (

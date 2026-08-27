@@ -1,9 +1,11 @@
-import { Alert } from "antd";
+import { Alert, Breadcrumb } from "antd";
+import Link from "next/link";
 import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
 import { RequestForm } from "@/components/request-form";
 import { getRequestTypes } from "@/lib/api/requests";
 import { messages } from "@/lib/messages";
+import { ROUTES } from "@/lib/routes";
 import { getSession } from "@/lib/session";
 
 /**
@@ -25,7 +27,7 @@ export default async function NewRequestPage() {
       <Alert
         type="error"
         showIcon
-        message={messages.common.loadError}
+        title={messages.common.loadError}
         description={typesResult.error.message}
       />
     );
@@ -33,10 +35,28 @@ export default async function NewRequestPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <Title level={4} className="mb-0!">
-          {messages.requestForm.title}
-        </Title>
+      <Breadcrumb
+        items={[
+          {
+            title: (
+              <Link href={ROUTES.myWork}>{messages.nav.myWork}</Link>
+            ),
+          },
+          { title: messages.requestForm.pageTitle },
+        ]}
+      />
+
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <Title level={4} className="mb-0!">
+            {messages.requestForm.pageTitle}
+          </Title>
+          {/* §16 puts the draft status beside the heading. It was an info Alert
+              across the full width, which spent the loudest element on the page
+              on a line that never changes — and left a real error looking the
+              same as the standing state. */}
+          <Text type="secondary">{messages.requestForm.draftBanner}</Text>
+        </div>
         {activeCompany && (
           <Text type="secondary">
             {messages.nav.company}: {activeCompany.name}

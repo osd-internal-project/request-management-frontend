@@ -77,6 +77,16 @@ export interface OrgMember {
 
 /** A configured request type from `GET /request-types` (REQ-01). */
 /** One field declared by a type's `formSchema` (REQ-01). */
+/**
+ * One field of a type's form.
+ *
+ * `formSchema` reaches the browser exactly as it sits in the database — the API
+ * passes the Prisma JSON column straight through — so the `x-` extension keys
+ * a type is authored with arrive verbatim. Read them through the helpers below
+ * rather than in components: the bare `sensitive` / `multiline` spellings were
+ * what the UI checked for a while, and since nothing ever wrote them, the
+ * sensitive badge and every textarea silently never rendered.
+ */
 export interface FormSchemaProperty {
   type?: string;
   title?: string;
@@ -84,10 +94,37 @@ export interface FormSchemaProperty {
   enum?: string[];
   minimum?: number;
   maximum?: number;
+  maxLength?: number;
   /** SCOPE-04 — rendered with the "เห็นเฉพาะสายอนุมัติ" badge. */
-  sensitive?: boolean;
+  "x-sensitive"?: boolean;
   /** A long answer; rendered as a textarea rather than a single line. */
+  "x-multiline"?: boolean;
+  /**
+   * Display position, ascending.
+   *
+   * Required because `formSchema` is a `jsonb` column and Postgres does not
+   * preserve key order — it returns keys sorted by length, which is how the
+   * screen ended up showing เหตุผล first. JSON Schema has no ordering of its
+   * own, so the order has to be carried as data.
+   */
+  "x-order"?: number;
+  /** Pre-`x-` spellings, still accepted so an older type keeps working. */
+  sensitive?: boolean;
   multiline?: boolean;
+}
+
+/** SCOPE-04: does this field carry the "เห็นเฉพาะสายอนุมัติ" badge? */
+export function isSensitiveField(property: FormSchemaProperty): boolean {
+  return property["x-sensitive"] ?? property.sensitive ?? false;
+}
+
+export function isMultilineField(property: FormSchemaProperty): boolean {
+  return property["x-multiline"] ?? property.multiline ?? false;
+}
+
+/** Unordered fields sink below ordered ones instead of jumping to the top. */
+export function fieldOrder(property: FormSchemaProperty): number {
+  return property["x-order"] ?? Number.MAX_SAFE_INTEGER;
 }
 
 export interface FormSchema {

@@ -95,17 +95,17 @@ export function KeycloakMappingAdmin({
         </Space>
       }
     >
-      <Space direction="vertical" size="middle" className="flex">
+      <Space orientation="vertical" size="middle" className="flex">
         <Paragraph type="secondary" className="mb-0! text-xs">
           {messages.keycloakMapping.subtitle}
         </Paragraph>
 
-        {error && <Alert type="error" showIcon message={error} />}
+        {error && <Alert type="error" showIcon title={error} />}
 
         <Alert
           type="info"
           showIcon
-          message={messages.keycloakMapping.effectNote}
+          title={messages.keycloakMapping.effectNote}
         />
 
         {rows.length ? (
@@ -159,7 +159,7 @@ export function KeycloakMappingAdmin({
         <Alert
           type="warning"
           showIcon
-          message={messages.keycloakMapping.replaceNote}
+          title={messages.keycloakMapping.replaceNote}
         />
       </Space>
     </Card>

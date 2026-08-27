@@ -312,13 +312,13 @@ export function RolePermissionAdmin({
         {!selected ? (
           <Empty description={messages.roleAdmin.selectFirst} />
         ) : (
-          <Space direction="vertical" size="middle" className="flex">
-            {error && <Alert type="error" showIcon message={error} />}
+          <Space orientation="vertical" size="middle" className="flex">
+            {error && <Alert type="error" showIcon title={error} />}
 
             <Alert
               type="info"
               showIcon
-              message={messages.roleAdmin.membershipNote(
+              title={messages.roleAdmin.membershipNote(
                 mappedRole(selected.id),
               )}
             />
@@ -557,10 +557,10 @@ function NewRoleDialog({
       okButtonProps={{ disabled: !code.trim() || !name.trim() }}
     >
       {error && (
-        <Alert type="error" showIcon message={error} className="mb-3!" />
+        <Alert type="error" showIcon title={error} className="mb-3!" />
       )}
 
-      <Space direction="vertical" className="flex">
+      <Space orientation="vertical" className="flex">
         <label className="block">
           <Text strong>{messages.roleAdmin.code}</Text>
           <Input
@@ -660,10 +660,10 @@ function BindUserDialog({
       footer={null}
     >
       {error && (
-        <Alert type="error" showIcon message={error} className="mb-3!" />
+        <Alert type="error" showIcon title={error} className="mb-3!" />
       )}
 
-      <Space direction="vertical" className="flex">
+      <Space orientation="vertical" className="flex">
         <Input.Search
           value={term}
           placeholder={messages.users.searchPlaceholder}

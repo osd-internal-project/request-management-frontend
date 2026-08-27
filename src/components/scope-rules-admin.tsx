@@ -105,12 +105,12 @@ export function ScopeRulesAdmin({
         </Space>
       }
     >
-      <Space direction="vertical" size="middle" className="flex">
+      <Space orientation="vertical" size="middle" className="flex">
         <Paragraph type="secondary" className="mb-0! text-xs">
           {messages.scopeRules.subtitle}
         </Paragraph>
 
-        {error && <Alert type="error" showIcon message={error} />}
+        {error && <Alert type="error" showIcon title={error} />}
 
         {rows.length ? (
           <ul className="space-y-2">
@@ -178,7 +178,7 @@ export function ScopeRulesAdmin({
         <Alert
           type="warning"
           showIcon
-          message={messages.scopeRules.replaceNote}
+          title={messages.scopeRules.replaceNote}
         />
       </Space>
     </Card>

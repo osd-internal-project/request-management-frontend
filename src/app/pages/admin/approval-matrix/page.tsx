@@ -68,7 +68,7 @@ export default async function ApprovalMatrixPage() {
         <Alert
           type="error"
           showIcon
-          message={messages.common.loadError}
+          title={messages.common.loadError}
           description={result.error.message}
         />
       )}

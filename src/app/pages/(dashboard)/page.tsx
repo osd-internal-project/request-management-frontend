@@ -8,7 +8,7 @@ import approvals from "@/lib/api/approvals";
 
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
-import { getSession } from "@/lib/session";
+import { can, getSession } from "@/lib/session";
 
 /**
  * §16 หน้าที่ 2 — งานค้างของฉัน. The landing page after login.
@@ -26,11 +26,17 @@ export default async function MyWorkPage() {
     return <PendingAssignment />;
   }
 
+  // `GET /approvals/inbox` requires `approval.decide`. This page is the landing
+  // page for *every* role, so calling it unconditionally sent a plain employee
+  // a guaranteed 403 on every page view — and put the error in the alert below.
+  // The menu cannot cover this: it gates links, not the data a shared page fetches.
+  const canDecide = can(session, "approval.decide");
+
   const [mineResult, involvedResult, inboxResult, typesResult] =
     await Promise.all([
       requests.getMyRequests(100),
       requests.getInvolvedRequests(100),
-      approvals.getApprovalsInbox({ page_size: 100 }),
+      canDecide ? approvals.getApprovalsInbox({ page_size: 100 }) : null,
       requests.getRequestTypes(),
     ]);
 
@@ -41,8 +47,11 @@ export default async function MyWorkPage() {
    * inbox knows — `view=involved` also returns work further down a chain I am
    * on but not yet responsible for. Intersecting the two keeps the tab honest.
    */
+  // Empty for someone who cannot decide, which is the truthful answer rather
+  // than a swallowed error: nothing can be waiting on an approval they are not
+  // able to give.
   const waitingOnMe = new Set(
-    (inboxResult.ok ? inboxResult.data.data : [])
+    (inboxResult?.ok ? inboxResult.data.data : [])
       .map((approvalCase) => approvalCase.requestId)
       .filter((id): id is string => Boolean(id)),
   );
@@ -53,8 +62,10 @@ export default async function MyWorkPage() {
     involvedResult.ok ? involvedResult.data.data : []
   ).filter((row) => waitingOnMe.has(row.id));
 
+  // A skipped inbox is not a failure — without this the alert fires for every
+  // employee on every load and stops meaning "something went wrong".
   const failed = [mineResult, involvedResult, inboxResult].find(
-    (result) => !result.ok,
+    (result) => result !== null && !result.ok,
   );
 
   return (
@@ -80,6 +91,7 @@ export default async function MyWorkPage() {
       <MyWork
         mine={mine}
         approvals={waitingRows}
+        showApprovals={canDecide}
         types={typesResult.ok ? typesResult.data : []}
       />
     </div>

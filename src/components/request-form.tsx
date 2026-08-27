@@ -9,10 +9,15 @@ import {
   Input,
   InputNumber,
   Select,
-  Space,
   Tag,
   message,
 } from "antd";
+import {
+  CheckCircleFilled,
+  ClockCircleOutlined,
+  LockOutlined,
+  SearchOutlined,
+} from "@ant-design/icons";
 import Text from "antd/es/typography/Text";
 import Paragraph from "antd/es/typography/Paragraph";
 import { useRouter } from "next/navigation";
@@ -24,6 +29,11 @@ import {
   saveDraft,
   submitRequest,
 } from "@/lib/api/client-requests";
+import {
+  fieldOrder,
+  isMultilineField,
+  isSensitiveField,
+} from "@/lib/api/types";
 import type {
   ChainPreview,
   FormSchemaProperty,
@@ -71,6 +81,12 @@ export function RequestForm({ types }: { types: RequestType[] }) {
   const [preview, setPreview] = useState<ChainPreview | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /**
+   * §16 shows `บันทึกร่างอัตโนมัติล่าสุด 10:42 น.` under the form. There is no
+   * autosave yet, so this is set only by a save that actually succeeded —
+   * showing a time before anything was stored would be a claim, not a status.
+   */
+  const [savedAt, setSavedAt] = useState<string | null>(null);
 
   const type = types.find((candidate) => candidate.code === typeCode) ?? null;
   const schema = type?.formSchema;
@@ -149,8 +165,15 @@ export function RequestForm({ types }: { types: RequestType[] }) {
         ref_id: refId || null,
       });
 
-      if (saved.ok) void message.success(messages.requestForm.saved);
-      else setError(saved.message);
+      if (saved.ok) {
+        void message.success(messages.requestForm.saved);
+        setSavedAt(
+          new Date().toLocaleTimeString("th-TH", {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        );
+      } else setError(saved.message);
     }
 
     setBusy(false);
@@ -186,6 +209,13 @@ export function RequestForm({ types }: { types: RequestType[] }) {
   }
 
   async function onSubmit() {
+    // §16 marks `อ้างอิงดีล *` required. It is not part of `formSchema`, so no
+    // schema validation covers it — the check has to live here.
+    if (!refId.trim()) {
+      setError(messages.requestForm.refRequired);
+      return;
+    }
+
     setBusy(true);
     setError(null);
 
@@ -217,21 +247,23 @@ export function RequestForm({ types }: { types: RequestType[] }) {
     attachments.map((entry) => entry.docCode).filter(Boolean),
   );
 
+  // Explicit, because `jsonb` returns the properties sorted by key length —
+  // see `fieldOrder`. Sorting a copy keeps the schema object untouched.
+  const fields = Object.entries(schema?.properties ?? {}).sort(
+    ([, a], [, b]) => fieldOrder(a) - fieldOrder(b),
+  );
+
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
       <div className="space-y-4">
-        <Alert type="info" showIcon message={messages.requestForm.draftBanner} />
-
-        {error && <Alert type="error" showIcon message={error} />}
+        {error && <Alert type="error" showIcon title={error} />}
 
         <Card>
-          <Space direction="vertical" size="middle" className="flex">
-            <label className="block">
-              <Text strong>
-                {messages.requestForm.type} <Text type="danger">*</Text>
-              </Text>
+          {/* Two columns from `md` up, matching §16; the long answer spans both. */}
+          <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
+            <Field label={messages.requestForm.type} required>
               <Select
-                className="mt-1 w-full"
+                className="w-full"
                 value={typeCode}
                 onChange={(next) => {
                   // A new type means a new schema: keeping the old answers
@@ -248,20 +280,19 @@ export function RequestForm({ types }: { types: RequestType[] }) {
                   label: `${entry.name} (${entry.code})`,
                 }))}
               />
-            </label>
+            </Field>
 
-            <label className="block">
-              <Text strong>{messages.requestForm.refLabel}</Text>
+            <Field label={messages.requestForm.refLabel} required>
               <Input
-                className="mt-1"
                 value={refId}
                 onChange={(event) => setRefId(event.target.value)}
                 placeholder="D-501"
+                suffix={<SearchOutlined className="text-black/25" />}
               />
-            </label>
+            </Field>
 
             {type ? (
-              Object.entries(schema?.properties ?? {}).map(([name, prop]) => (
+              fields.map(([name, prop]) => (
                 <SchemaField
                   key={name}
                   name={name}
@@ -272,57 +303,108 @@ export function RequestForm({ types }: { types: RequestType[] }) {
                 />
               ))
             ) : (
-              <Empty description={messages.requestForm.typeRequired} />
+              <div className="md:col-span-2">
+                <Empty description={messages.requestForm.typeRequired} />
+              </div>
             )}
-          </Space>
+          </div>
         </Card>
 
         {type && (
-          <Card title={messages.requestForm.documents}>
-            {(type.requiredDocs ?? []).map((doc) => (
-              <div key={doc.code} className="mb-2 flex items-center gap-2">
-                <Text>{doc.name}</Text>
-                {attachedCodes.has(doc.code) ? (
-                  <Tag color="green">✓</Tag>
-                ) : (
-                  <Tag color="orange">{messages.requestForm.missingDoc}</Tag>
-                )}
-                <label className="cursor-pointer text-xs text-blue-600">
-                  <input
-                    type="file"
-                    className="hidden"
-                    onChange={(event) => {
-                      const file = event.target.files?.[0];
-                      if (file) void onAttach(file, doc.code);
-                      event.target.value = "";
-                    }}
-                  />
-                  {messages.requestForm.dropzone}
-                </label>
-              </div>
-            ))}
+          <Card title={messages.requestForm.requiredDocsTitle}>
+            {/* One row per required document — satisfied rows carry the file
+                they were satisfied by, rather than listing it separately. */}
+            <ul className="mb-3 space-y-2">
+              {(type.requiredDocs ?? []).map((doc) => {
+                const attached = attachments.find(
+                  (entry) => entry.docCode === doc.code,
+                );
 
-            <ul className="mt-2 divide-y divide-black/5">
-              {attachments.map((entry) => (
-                <li
-                  key={entry.id}
-                  className="flex items-center justify-between py-2 text-sm"
-                >
-                  <span>
-                    {entry.fileName}{" "}
-                    <Text type="secondary">· {fileSize(entry.sizeBytes)}</Text>
-                  </span>
-                  <Button
-                    size="small"
-                    type="link"
-                    danger
-                    onClick={() => void onRemoveAttachment(entry.id)}
+                return (
+                  <li
+                    key={doc.code}
+                    className={`flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border px-3 py-2 text-sm ${
+                      attached
+                        ? "border-green-600/20 bg-green-50/60"
+                        : "border-black/8"
+                    }`}
                   >
-                    {messages.requestForm.remove}
-                  </Button>
-                </li>
-              ))}
+                    {attached ? (
+                      <CheckCircleFilled className="text-green-600" />
+                    ) : null}
+                    <Text strong>{doc.name}</Text>
+
+                    {attached ? (
+                      <>
+                        <Text type="secondary" className="text-xs">
+                          {attached.fileName} · {fileSize(attached.sizeBytes)}
+                        </Text>
+                        <Button
+                          size="small"
+                          type="link"
+                          danger
+                          className="ms-auto px-0!"
+                          onClick={() => void onRemoveAttachment(attached.id)}
+                        >
+                          {messages.requestForm.remove}
+                        </Button>
+                      </>
+                    ) : (
+                      <Tag color="orange" className="ms-auto">
+                        {messages.requestForm.missingDoc}
+                      </Tag>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
+
+            {/* Extra documents beyond the required list. */}
+            {attachments.filter((entry) => !entry.docCode).length > 0 && (
+              <ul className="mb-3 divide-y divide-black/5">
+                {attachments
+                  .filter((entry) => !entry.docCode)
+                  .map((entry) => (
+                    <li
+                      key={entry.id}
+                      className="flex items-center justify-between py-2 text-sm"
+                    >
+                      <span>
+                        {entry.fileName}{" "}
+                        <Text type="secondary">
+                          · {fileSize(entry.sizeBytes)}
+                        </Text>
+                      </span>
+                      <Button
+                        size="small"
+                        type="link"
+                        danger
+                        onClick={() => void onRemoveAttachment(entry.id)}
+                      >
+                        {messages.requestForm.remove}
+                      </Button>
+                    </li>
+                  ))}
+              </ul>
+            )}
+
+            <label className="block cursor-pointer rounded-lg border border-dashed border-black/15 px-4 py-5 text-center text-sm transition-colors hover:border-blue-400 hover:bg-blue-50/40">
+              <input
+                type="file"
+                className="hidden"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  // Fills the first outstanding requirement, so the common case
+                  // needs no separate "which document is this?" step.
+                  const nextMissing = (type.requiredDocs ?? []).find(
+                    (doc) => !attachedCodes.has(doc.code),
+                  );
+                  if (file) void onAttach(file, nextMissing?.code);
+                  event.target.value = "";
+                }}
+              />
+              <Text type="secondary">{messages.requestForm.dropzone}</Text>
+            </label>
 
             <Paragraph type="secondary" className="mt-3! mb-0! text-xs">
               {messages.requestForm.noStorageNote}
@@ -330,18 +412,26 @@ export function RequestForm({ types }: { types: RequestType[] }) {
           </Card>
         )}
 
-        <div className="flex justify-end gap-2">
-          <Button onClick={() => void onSaveDraft()} loading={busy}>
-            {messages.requestForm.saveDraft}
-          </Button>
-          <Button
-            type="primary"
-            onClick={() => void onSubmit()}
-            loading={busy}
-            disabled={!typeCode}
-          >
-            {busy ? messages.requestForm.submitting : messages.requestForm.submit}
-          </Button>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Text type="secondary" className="text-xs">
+            {savedAt ? messages.requestForm.autosaveAt(savedAt) : ""}
+          </Text>
+
+          <div className="flex gap-2">
+            <Button onClick={() => void onSaveDraft()} loading={busy}>
+              {messages.requestForm.saveDraft}
+            </Button>
+            <Button
+              type="primary"
+              onClick={() => void onSubmit()}
+              loading={busy}
+              disabled={!typeCode}
+            >
+              {busy
+                ? messages.requestForm.submitting
+                : messages.requestForm.submit}
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -351,7 +441,12 @@ export function RequestForm({ types }: { types: RequestType[] }) {
         <Card title={messages.requestForm.slaTitle} size="small">
           {type?.slaHours ? (
             <>
-              <Text strong>{messages.requestForm.slaHours(type.slaHours)}</Text>
+              <div className="flex items-center gap-2">
+                <ClockCircleOutlined className="text-base text-blue-600" />
+                <Text strong className="text-base">
+                  {messages.requestForm.slaHours(type.slaHours)}
+                </Text>
+              </div>
               <Paragraph type="secondary" className="mt-2! mb-0! text-xs">
                 {messages.requestForm.slaNote}
               </Paragraph>
@@ -379,22 +474,25 @@ function SchemaField({
   value: unknown;
   onChange: (value: unknown) => void;
 }) {
-  const label = property.title ?? name;
+  const multiline = isMultilineField(property);
 
   return (
-    <label className="block">
-      <Text strong>
-        {label} {required && <Text type="danger">*</Text>}
-      </Text>
-      {property.sensitive && (
-        <Tag color="gold" className="ml-2">
-          {messages.requestForm.sensitiveBadge}
-        </Tag>
-      )}
-
+    <Field
+      label={property.title ?? name}
+      required={required}
+      wide={multiline}
+      badge={
+        // SCOPE-04 — states who will see the value, next to the value itself.
+        isSensitiveField(property) ? (
+          <Tag color="gold" icon={<LockOutlined />} className="m-0!">
+            {messages.requestForm.sensitiveBadge}
+          </Tag>
+        ) : null
+      }
+    >
       {property.enum ? (
         <Select
-          className="mt-1 w-full"
+          className="w-full"
           value={value as string | undefined}
           onChange={onChange}
           options={property.enum.map((option) => ({
@@ -404,7 +502,10 @@ function SchemaField({
         />
       ) : property.type === "number" ? (
         <InputNumber
-          className="mt-1 w-full"
+          // Full width of its column: a number is not narrower than a name, and
+          // antd's default made the money field the smallest input on a form
+          // that is mostly about money.
+          className="w-full"
           value={value as number | undefined}
           onChange={(next) => onChange(next)}
           min={property.minimum}
@@ -415,20 +516,52 @@ function SchemaField({
           }
           parser={(input) => Number((input ?? "").replace(/,/g, ""))}
         />
-      ) : property.multiline ? (
+      ) : multiline ? (
         <Input.TextArea
-          className="mt-1"
           rows={3}
+          maxLength={property.maxLength}
           value={value as string | undefined}
           onChange={(event) => onChange(event.target.value)}
         />
       ) : (
         <Input
-          className="mt-1"
           value={value as string | undefined}
           onChange={(event) => onChange(event.target.value)}
         />
       )}
+    </Field>
+  );
+}
+
+/**
+ * Label, required marker, and optional badge above a control.
+ *
+ * Shared so a schema-driven field and a hand-written one (type, deal ref) come
+ * out the same height and weight — that is what makes the two columns line up.
+ */
+function Field({
+  label,
+  required,
+  badge,
+  wide,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  badge?: React.ReactNode;
+  /** Spans both columns — for long answers. */
+  wide?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className={`block ${wide ? "md:col-span-2" : ""}`}>
+      <div className="mb-1.5 flex flex-wrap items-center gap-2">
+        <Text strong>
+          {label} {required && <Text type="danger">*</Text>}
+        </Text>
+        {badge}
+      </div>
+      {children}
     </label>
   );
 }
@@ -456,18 +589,30 @@ function ChainPanel({ preview }: { preview: ChainPreview | null }) {
         {preview.exceeded_upto &&
           messages.requestForm.chainOverTier(money(preview.exceeded_upto))}
       </Paragraph>
-      <Paragraph type="secondary" className="mb-3! text-xs">
+      <Paragraph type="secondary" className="mb-4! text-xs">
         — {messages.requestForm.chainNoPick}
       </Paragraph>
 
-      <ol className="space-y-2">
-        {preview.steps.map((step) => (
-          <li key={step.step_no} className="flex gap-2 text-sm">
-            <Text strong>{step.step_no}</Text>
-            <div className="min-w-0">
-              <div>
-                {step.position}
-                {step.display_name && ` — ${step.display_name}`}
+      <ol>
+        {preview.steps.map((step, index) => (
+          <li key={step.step_no} className="flex gap-3">
+            {/* The rail: a numbered disc, and a line down to the next step.
+                Drawn per-item so the last step ends the line cleanly. */}
+            <div className="flex flex-col items-center">
+              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-semibold text-white">
+                {step.step_no}
+              </span>
+              {index < preview.steps.length - 1 && (
+                <span className="my-1 w-px flex-1 bg-black/10" />
+              )}
+            </div>
+
+            <div className="min-w-0 pb-4">
+              <div className="text-sm">
+                <Text strong>
+                  {step.position}
+                  {step.display_name && ` — ${step.display_name}`}
+                </Text>
               </div>
               <Text type="secondary" className="text-xs">
                 {step.step_no === 1
@@ -479,7 +624,7 @@ function ChainPanel({ preview }: { preview: ChainPreview | null }) {
                     : ""}
               </Text>
               {!step.user_id && (
-                <div>
+                <div className="mt-1">
                   <Tag color="red">{messages.requestForm.chainUnresolved}</Tag>
                 </div>
               )}
@@ -488,20 +633,27 @@ function ChainPanel({ preview }: { preview: ChainPreview | null }) {
         ))}
       </ol>
 
-      {preview.excluded
-        .filter((entry) => entry.appears_above)
-        .map((entry) => (
-          <Paragraph
-            key={entry.position}
-            type="secondary"
-            className="mt-3! mb-0! text-xs"
-          >
-            {messages.requestForm.chainExcluded(
-              entry.position,
-              money(entry.appears_above),
-            )}
-          </Paragraph>
-        ))}
+      {preview.excluded.map((entry) => (
+        <Paragraph
+          key={entry.position}
+          type="secondary"
+          // Ruled off: an approver who is *not* in the path is a different kind
+          // of statement from the steps that are.
+          className="mt-0! mb-0! border-t border-black/8 pt-3 text-xs"
+        >
+          {/* Two different facts. `appears_above` set means "below that
+              ceiling"; null means the position is absent from this ladder
+              altogether. These were collapsed by filtering the null case away,
+              which dropped the line entirely — and §16 shows the absent
+              approver stated rather than left as a gap. */}
+          {entry.appears_above
+            ? messages.requestForm.chainExcluded(
+                entry.position,
+                money(entry.appears_above),
+              )
+            : messages.requestForm.chainExcludedNoTier(entry.position)}
+        </Paragraph>
+      ))}
     </Card>
   );
 }

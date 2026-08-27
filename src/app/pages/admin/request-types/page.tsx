@@ -26,7 +26,7 @@ export default async function AdminRequestTypesPage() {
       <Alert
         type="error"
         showIcon
-        message={messages.common.loadError}
+        title={messages.common.loadError}
         description={result.error.message}
       />
     );

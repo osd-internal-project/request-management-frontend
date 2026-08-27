@@ -1,171 +1,10 @@
-import { theme } from "antd";
-
-// export const appTheme = {
-//   algorithm: theme.defaultAlgorithm,
-
-//   token: {
-//     // ─────────────────────────────
-//     // Brand
-//     // ─────────────────────────────
-//     colorPrimary: "#3B82F6",
-//     colorPrimaryHover: "#60A5FA",
-//     colorPrimaryActive: "#2563EB",
-
-//     // ─────────────────────────────
-//     // Background
-//     // ─────────────────────────────
-//     colorBgBase: "#F6F8FC",
-//     colorBgLayout: "#F6F8FC",
-//     colorBgContainer: "#FFFFFF",
-//     colorBgElevated: "#FFFFFF",
-
-//     // ─────────────────────────────
-//     // Text
-//     // ─────────────────────────────
-//     colorText: "#24344D",
-//     colorTextSecondary: "#718096",
-//     colorTextTertiary: "#9AA9BC",
-//     colorTextQuaternary: "#C1CBD8",
-
-//     // ─────────────────────────────
-//     // Border
-//     // ─────────────────────────────
-//     colorBorder: "#E4EAF2",
-//     colorBorderSecondary: "#EDF1F6",
-
-//     // ─────────────────────────────
-//     // Radius
-//     // ─────────────────────────────
-//     borderRadius: 10,
-//     borderRadiusSM: 7,
-//     borderRadiusLG: 14,
-
-//     // ─────────────────────────────
-//     // Controls
-//     // ─────────────────────────────
-//     controlHeight: 38,
-//     controlHeightSM: 32,
-//     controlHeightLG: 44,
-
-//     // ─────────────────────────────
-//     // Shadows
-//     // ─────────────────────────────
-//     boxShadow: "0 2px 8px rgba(30, 64, 100, 0.04)",
-
-//     boxShadowSecondary: "0 6px 20px rgba(30, 64, 100, 0.07)",
-
-//     // ─────────────────────────────
-//     // Typography
-//     // ─────────────────────────────
-//     fontFamily: '"Inter", "Noto Sans Thai", "Noto Sans", sans-serif',
-
-//     fontSize: 14,
-//     fontSizeHeading1: 28,
-//     fontSizeHeading2: 22,
-//     fontSizeHeading3: 18,
-//   },
-
-//   components: {
-//     Layout: {
-//       headerBg: "#FFFFFF",
-//       siderBg: "#FFFFFF",
-//       bodyBg: "#F6F8FC",
-//       headerHeight: 72,
-//     },
-
-//     Menu: {
-//       itemBg: "transparent",
-//       itemColor: "#52627A",
-
-//       itemHoverBg: "#F5F8FE",
-//       itemHoverColor: "#2563EB",
-
-//       itemSelectedBg: "#EEF4FF",
-//       itemSelectedColor: "#2563EB",
-
-//       itemBorderRadius: 10,
-
-//       activeBarWidth: 0,
-//     },
-
-//     Button: {
-//       borderRadius: 8,
-
-//       colorPrimary: "#3B82F6",
-//       colorPrimaryHover: "#60A5FA",
-//       colorPrimaryActive: "#2563EB",
-
-//       primaryShadow: "0 3px 8px rgba(59, 130, 246, 0.18)",
-
-//       defaultBorderColor: "#DDE5EF",
-//       defaultColor: "#34445B",
-
-//       defaultHoverBorderColor: "#AFC7ED",
-//       defaultHoverColor: "#2563EB",
-//     },
-
-//     Card: {
-//       borderRadiusLG: 14,
-//       colorBorderSecondary: "#E8EDF4",
-
-//       boxShadowTertiary: "0 2px 8px rgba(30, 64, 100, 0.035)",
-//     },
-
-//     Input: {
-//       borderRadius: 8,
-
-//       colorBgContainer: "#FFFFFF",
-
-//       activeBorderColor: "#8CB5F5",
-//       hoverBorderColor: "#B7CEF2",
-
-//       activeShadow: "0 0 0 3px rgba(59, 130, 246, 0.08)",
-//     },
-
-//     Select: {
-//       borderRadius: 8,
-
-//       optionSelectedBg: "#EEF4FF",
-//       optionSelectedColor: "#2563EB",
-
-//       optionActiveBg: "#F5F8FE",
-//     },
-
-//     Table: {
-//       headerBg: "#F8FAFD",
-//       headerColor: "#52627A",
-
-//       rowHoverBg: "#F8FAFE",
-
-//       borderColor: "#EDF1F6",
-//     },
-
-//     Tabs: {
-//       itemColor: "#718096",
-//       itemHoverColor: "#3B82F6",
-//       itemSelectedColor: "#2563EB",
-
-//       inkBarColor: "#3B82F6",
-//     },
-
-//     Tag: {
-//       borderRadiusSM: 6,
-//     },
-
-//     Badge: {
-//       colorError: "#EF6A6A",
-//     },
-
-//     Divider: {
-//       colorSplit: "#E9EEF5",
-//     },
-
-//     Tooltip: {
-//       borderRadius: 8,
-//     },
-//   },
-// };
-// theme.ts
+/**
+ * Application theme — light surfaces, blue accent.
+ *
+ * One palette, defined once. An earlier palette (#3B82F6) sat commented out
+ * above the live one (#2F6FED) for long enough that neither was obviously the
+ * real one; it has been removed rather than left as a second opinion.
+ */
 import type { ThemeConfig } from "antd";
 
 export const appTheme: ThemeConfig = {
@@ -325,6 +164,29 @@ export const appTheme: ThemeConfig = {
       itemSelectedColor: "#2F6FED",
       itemHoverColor: "#2F6FED",
       inkBarColor: "#2F6FED",
+    },
+
+    InputNumber: {
+      controlHeight: 38,
+      borderRadius: 8,
+
+      colorBorder: "#DCE4EF",
+      activeBorderColor: "#6D9AF5",
+      hoverBorderColor: "#AFC6F5",
+
+      activeShadow: "0 0 0 3px rgba(47, 111, 237, 0.10)",
+    },
+
+    Breadcrumb: {
+      itemColor: "#91A0B4",
+      lastItemColor: "#17243A",
+      linkColor: "#66758A",
+      linkHoverColor: "#2F6FED",
+      separatorColor: "#B8C3D1",
+    },
+
+    Alert: {
+      borderRadiusLG: 10,
     },
   },
 };

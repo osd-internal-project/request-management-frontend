@@ -111,7 +111,7 @@ export function ApprovalMatrixAdmin({
       <Alert
         type="warning"
         showIcon
-        message={messages.matrix.placeholderWarning}
+        title={messages.matrix.placeholderWarning}
       />
 
       <Tabs
@@ -174,7 +174,7 @@ function MatrixVersions({
     <>
       {subjects.map((subject) => (
         <Card key={subject} title={`${messages.matrix.subject}: ${subject}`}>
-          <Space direction="vertical" size="middle" className="flex">
+          <Space orientation="vertical" size="middle" className="flex">
             {versions
               .filter((version) => version.subjectType === subject)
               .sort((a, b) => b.version - a.version)
@@ -324,7 +324,7 @@ function PublishDialog({
       width={680}
     >
       {error && (
-        <Alert type="error" showIcon message={error} className="mb-3!" />
+        <Alert type="error" showIcon title={error} className="mb-3!" />
       )}
 
       <Form form={form} layout="vertical">

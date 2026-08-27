@@ -70,10 +70,17 @@ export function MyWork({
   mine,
   approvals,
   types,
+  showApprovals = true,
 }: {
   mine: RequestRow[];
   approvals: RequestRow[];
   types: { code: string; name: string }[];
+  /**
+   * Whether the caller holds `approval.decide`. False hides the tab entirely:
+   * a permanently empty "รออนุมัติของฉัน · 0" reads as a page that failed to
+   * load rather than as work nobody has.
+   */
+  showApprovals?: boolean;
 }) {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<string | undefined>();
@@ -223,11 +230,15 @@ export function MyWork({
             label: `${messages.myWork.tabMine} · ${mine.length}`,
             children: table(mine, messages.myWork.empty),
           },
-          {
-            key: "approvals",
-            label: `${messages.myWork.tabApprovals} · ${approvals.length}`,
-            children: table(approvals, messages.myWork.emptyApprovals),
-          },
+          ...(showApprovals
+            ? [
+                {
+                  key: "approvals",
+                  label: `${messages.myWork.tabApprovals} · ${approvals.length}`,
+                  children: table(approvals, messages.myWork.emptyApprovals),
+                },
+              ]
+            : []),
         ]}
       />
     </Card>

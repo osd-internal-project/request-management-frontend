@@ -54,7 +54,7 @@ export default function BiDashboardPage() {
   const error = current?.error ?? null;
 
   if (error) {
-    return <Alert type="error" showIcon message={messages.bi.loadFailed} description={error} />;
+    return <Alert type="error" showIcon title={messages.bi.loadFailed} description={error} />;
   }
 
   if (!menu) {
@@ -66,13 +66,13 @@ export default function BiDashboardPage() {
   }
 
   if (!menu.configured) {
-    return <Alert type="warning" showIcon message={messages.bi.notConfigured} />;
+    return <Alert type="warning" showIcon title={messages.bi.notConfigured} />;
   }
 
   const dashboard = menu.dashboards.find((entry) => entry.key === key);
 
   if (!dashboard) {
-    return <Alert type="warning" showIcon message={messages.bi.notFound} />;
+    return <Alert type="warning" showIcon title={messages.bi.notFound} />;
   }
 
   return (

@@ -68,7 +68,7 @@ export default async function RequestDetailPage({
       <Alert
         type="error"
         showIcon
-        message={messages.common.loadError}
+        title={messages.common.loadError}
         description={result.error.message}
       />
     );
@@ -140,7 +140,7 @@ export default async function RequestDetailPage({
           {approvalCase ? (
             <>
               <Steps
-                direction="vertical"
+                orientation="vertical"
                 size="small"
                 current={approvalCase.currentStep - 1}
                 items={approvalCase.steps.map((step) => ({

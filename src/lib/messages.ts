@@ -270,10 +270,15 @@ export const messages = {
 
   requestForm: {
     title: "ยื่นคำขอ",
+    /** §16 หน้าที่ 3 — the page heading and the left-menu entry agree. */
+    pageTitle: "ยื่นคำขอใหม่",
     draftBanner: "สถานะ: ร่าง — เลขคำขอจะออกเมื่อกดยื่น",
     type: "ประเภทคำขอ",
     typeRequired: "เลือกประเภทคำขอก่อน",
     refLabel: "อ้างอิงดีล",
+    refRequired: "กรอกเลขอ้างอิงดีลก่อนยื่น",
+    requiredDocsTitle: "เอกสารบังคับตามประเภทคำขอ",
+    autosaveAt: (time: string) => `บันทึกร่างอัตโนมัติล่าสุด ${time} น.`,
     sensitiveBadge: "เห็นเฉพาะสายอนุมัติ",
     documents: "เอกสารแนบ",
     dropzone: "ลากไฟล์มาวาง หรือกดเพื่อแนบเอกสารเพิ่มเติม",
@@ -294,6 +299,13 @@ export const messages = {
     chainUnresolved: "ยังไม่มีผู้รับผิดชอบขั้นนี้ในผังทีม",
     chainExcluded: (position: string, ceiling: string) =>
       `${position} ไม่อยู่ในเส้นทาง — วงเงินไม่เกินเพดาน ${ceiling} บาท`,
+    /**
+     * The position appears nowhere in this ladder, which is a different
+     * statement from "below its threshold" — naming a ceiling here would
+     * invent one.
+     */
+    chainExcludedNoTier: (position: string) =>
+      `${position} ไม่อยู่ในเส้นทาง — ตารางอำนาจอนุมัติรุ่นที่ใช้อยู่ไม่มีชั้นนี้`,
     chainNeedsAmount: "กรอกวงเงินเพื่อดูเส้นทางอนุมัติ",
     slaTitle: "กำหนดเวลา (SLA)",
     slaHours: (hours: number) => `${hours} ชั่วโมงทำการ`,

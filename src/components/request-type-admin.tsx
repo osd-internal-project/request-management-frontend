@@ -223,8 +223,8 @@ export function RequestTypeAdmin({ types: initial }: { types: RequestType[] }) {
         {!selected ? (
           <Empty description={messages.requestTypes.selectFirst} />
         ) : (
-          <Space direction="vertical" size="middle" className="flex">
-            {error && <Alert type="error" showIcon message={error} />}
+          <Space orientation="vertical" size="middle" className="flex">
+            {error && <Alert type="error" showIcon title={error} />}
 
             <label className="block">
               <Text strong>{messages.requestTypes.name}</Text>
@@ -378,7 +378,7 @@ export function RequestTypeAdmin({ types: initial }: { types: RequestType[] }) {
             <Alert
               type="info"
               showIcon
-              message={messages.requestTypes.effectNote}
+              title={messages.requestTypes.effectNote}
             />
           </Space>
         )}
@@ -452,9 +452,9 @@ function NewTypeDialog({
       confirmLoading={busy}
       okButtonProps={{ disabled: !code.trim() || !name.trim() }}
     >
-      {error && <Alert type="error" showIcon message={error} className="mb-3!" />}
+      {error && <Alert type="error" showIcon title={error} className="mb-3!" />}
 
-      <Space direction="vertical" className="flex">
+      <Space orientation="vertical" className="flex">
         <label className="block">
           <Text strong>{messages.requestTypes.code}</Text>
           <Input

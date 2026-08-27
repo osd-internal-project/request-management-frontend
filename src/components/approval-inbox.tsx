@@ -157,14 +157,14 @@ export function ApprovalInbox({
         <Alert
           type="info"
           showIcon
-          message={messages.approvals.delegationBanner(
+          title={messages.approvals.delegationBanner(
             delegation.name,
             delegation.window,
           )}
         />
       )}
 
-      {error && <Alert type="error" showIcon message={error} />}
+      {error && <Alert type="error" showIcon title={error} />}
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
         <Card
@@ -270,7 +270,7 @@ function DecisionPane({
 
   return (
     <Card title={messages.approvals.detailTitle}>
-      <Space direction="vertical" size="middle" className="flex">
+      <Space orientation="vertical" size="middle" className="flex">
         <div className="space-y-1 text-sm">
           <div>
             <Text strong>{messages.approvals.amount}: </Text>
@@ -319,7 +319,7 @@ function DecisionPane({
         </div>
 
         {/* APV-05 — stated before the buttons, because it governs them. */}
-        <Alert type="info" showIcon message={messages.approvals.snapshotNote} />
+        <Alert type="info" showIcon title={messages.approvals.snapshotNote} />
 
         <label className="block">
           <Text strong>{messages.approvals.commentLabel}</Text>

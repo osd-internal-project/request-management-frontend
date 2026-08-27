@@ -79,7 +79,7 @@ export default async function AdminAuditPage({
         />
       ) : (
         <Card>
-          <Space direction="vertical" size="middle" className="flex">
+          <Space orientation="vertical" size="middle" className="flex">
             <AuditFilters
               eventTypes={eventTypes}
               resourceTypes={resourceTypes}
