@@ -38,6 +38,15 @@ These rules exist because all four were broken in the same sprint.
 - Tick `PROGRESS.md` **before** reporting, not after.
 - Report closed/outstanding counts. "Done" without a count is how 9/11 got
   reported as 11.
+- The checklist posted in chat mirrors `PROGRESS.md` item for item — same
+  wording, same order. Two different lists is how the chat said 11 while the
+  file still held 9 unchecked boxes.
+- Tick `PROGRESS.md` first, then the chat line reporting it. Never the other
+  way round.
+- Report each item **as it closes**, in the next message, not batched into the
+  final summary. A screen here takes dozens of tool calls; a checklist ticked
+  only at the end leaves the whole run invisible, which is exactly the state
+  these rules were written to end.
 
 ## Screens
 
