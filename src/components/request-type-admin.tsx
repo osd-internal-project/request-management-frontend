@@ -21,7 +21,12 @@ import {
   createRequestType,
   updateRequestType,
 } from "@/lib/api/client-requests";
-import type { FormSchemaProperty, RequestType } from "@/lib/api/types";
+import type {
+  CodedLabel,
+  FormSchemaProperty,
+  OrgUnitNode,
+  RequestType,
+} from "@/lib/api/types";
 import { messages } from "@/lib/messages";
 
 /** One editable row of the form schema, flattened for the table. */
@@ -68,6 +73,80 @@ function toSchema(rows: FieldRow[]) {
 }
 
 /**
+ * `เอกสารบังคับ` and `เหตุผลตีกลับมาตรฐาน` are the same shape and the same
+ * rules, so they share an editor.
+ *
+ * The code is what the system stores and reports on; the label is what a person
+ * reads. Both matter — REQ-03 blocks a submit by code, REQ-04 counts bounces by
+ * code — which is why the code stays visible and editable rather than being
+ * generated from the label.
+ */
+function CodedLabelEditor({
+  entries,
+  onChange,
+  addLabel,
+}: {
+  readonly entries: CodedLabel[];
+  readonly onChange: (next: CodedLabel[]) => void;
+  readonly addLabel: string;
+}) {
+  return (
+    <div className="mt-1">
+      <ul className="space-y-2">
+        {entries.map((entry, index) => (
+          <li key={index} className="flex flex-wrap items-center gap-2">
+            <Input
+              size="small"
+              style={{ width: 190 }}
+              value={entry.code}
+              placeholder={messages.requestTypes.entryCode}
+              onChange={(event) =>
+                onChange(
+                  entries.map((row, i) =>
+                    i === index
+                      ? { ...row, code: event.target.value.toUpperCase() }
+                      : row,
+                  ),
+                )
+              }
+            />
+            <Input
+              size="small"
+              style={{ width: 240 }}
+              value={entry.name}
+              placeholder={messages.requestTypes.entryLabel}
+              onChange={(event) =>
+                onChange(
+                  entries.map((row, i) =>
+                    i === index ? { ...row, name: event.target.value } : row,
+                  ),
+                )
+              }
+            />
+            <Button
+              size="small"
+              type="link"
+              danger
+              onClick={() => onChange(entries.filter((_, i) => i !== index))}
+            >
+              {messages.requestTypes.remove}
+            </Button>
+          </li>
+        ))}
+      </ul>
+
+      <Button
+        size="small"
+        className="mt-2"
+        onClick={() => onChange([...entries, { code: "", name: "" }])}
+      >
+        {addLabel}
+      </Button>
+    </div>
+  );
+}
+
+/**
  * Screen §16 A2 — ประเภทคำขอ.
  *
  * The whole screen exists to keep REQ-01's promise: the 3rd..30th request type
@@ -78,7 +157,14 @@ function toSchema(rows: FieldRow[]) {
  * snapshot it was raised under (§7), which is why there is no "apply to
  * existing" control anywhere on this screen.
  */
-export function RequestTypeAdmin({ types: initial }: { types: RequestType[] }) {
+export function RequestTypeAdmin({
+  types: initial,
+  orgUnits,
+}: {
+  readonly types: RequestType[];
+  /** For the `ทีมผู้รับ` selector — same source A3 uses. */
+  readonly orgUnits: OrgUnitNode[];
+}) {
   const [types, setTypes] = useState(initial);
   const [selectedCode, setSelectedCode] = useState<string | null>(
     initial[0]?.code ?? null,
@@ -89,6 +175,19 @@ export function RequestTypeAdmin({ types: initial }: { types: RequestType[] }) {
   const [name, setName] = useState(initial[0]?.name ?? "");
   const [slaHours, setSlaHours] = useState<number | null>(
     initial[0]?.slaHours ?? null,
+  );
+  const [businessHours, setBusinessHours] = useState(
+    initial[0]?.slaBusinessHours ?? true,
+  );
+  const [receiver, setReceiver] = useState<string | null>(
+    initial[0]?.receiverOrgUnitId ?? null,
+  );
+  const [docs, setDocs] = useState<CodedLabel[]>(initial[0]?.requiredDocs ?? []);
+  const [reasons, setReasons] = useState<CodedLabel[]>(
+    initial[0]?.returnReasonCodes ?? [],
+  );
+  const [amountField, setAmountField] = useState<string | null>(
+    initial[0]?.approvalPolicy?.amount_field ?? null,
   );
   const [creating, setCreating] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -101,6 +200,11 @@ export function RequestTypeAdmin({ types: initial }: { types: RequestType[] }) {
     setRows(toRows(type));
     setName(type.name);
     setSlaHours(type.slaHours ?? null);
+    setBusinessHours(type.slaBusinessHours ?? true);
+    setReceiver(type.receiverOrgUnitId ?? null);
+    setDocs(type.requiredDocs ?? []);
+    setReasons(type.returnReasonCodes ?? []);
+    setAmountField(type.approvalPolicy?.amount_field ?? null);
     setError(null);
   }
 
@@ -114,6 +218,16 @@ export function RequestTypeAdmin({ types: initial }: { types: RequestType[] }) {
       name,
       form_schema: toSchema(rows),
       ...(slaHours === null ? {} : { sla_hours: slaHours }),
+      sla_business_hours: businessHours,
+      ...(receiver ? { receiver_org_unit_id: receiver } : {}),
+      required_docs: docs,
+      return_reason_codes: reasons,
+      // `mode` is carried through rather than offered: §8.1 defines one chain
+      // shape, and a second would be an Approval Engine change, not a screen.
+      approval_policy: {
+        mode: selected.approvalPolicy?.mode ?? "standard_chain",
+        ...(amountField ? { amount_field: amountField } : {}),
+      },
     });
 
     if (result.ok) {
@@ -170,10 +284,21 @@ export function RequestTypeAdmin({ types: initial }: { types: RequestType[] }) {
                     type.code === selectedCode ? "bg-black/5 font-medium" : ""
                   }`}
                 >
-                  <span className="min-w-0 truncate">
-                    {type.name}{" "}
-                    <Text type="secondary" className="text-xs">
-                      {type.code}
+                  <span className="min-w-0">
+                    <span className="block truncate">{type.name}</span>
+                    <Text type="secondary" className="block truncate text-xs">
+                      {messages.requestTypes.listSubtitle(
+                        type.code,
+                        orgUnits.find(
+                          (unit) => unit.id === type.receiverOrgUnitId,
+                        )?.name ?? messages.requestTypes.noReceiver,
+                        type.slaHours
+                          ? messages.requestTypes.slaShort(
+                              type.slaHours,
+                              type.slaBusinessHours ?? true,
+                            )
+                          : messages.requestTypes.slaUnset,
+                      )}
                     </Text>
                   </span>
                   <Tag color={type.active ? "green" : "default"}>
@@ -236,6 +361,21 @@ export function RequestTypeAdmin({ types: initial }: { types: RequestType[] }) {
             </label>
 
             <label className="block">
+              <Text strong>{messages.requestTypes.receiver}</Text>
+              <Select
+                className="mt-1 w-full"
+                allowClear
+                value={receiver ?? undefined}
+                placeholder={messages.requestTypes.noReceiver}
+                onChange={(next?: string) => setReceiver(next ?? null)}
+                options={orgUnits.map((unit) => ({
+                  value: unit.id,
+                  label: unit.name,
+                }))}
+              />
+            </label>
+
+            <label className="block">
               <Text strong>{messages.requestTypes.sla}</Text>
               <InputNumber
                 className="mt-1 w-full"
@@ -243,6 +383,13 @@ export function RequestTypeAdmin({ types: initial }: { types: RequestType[] }) {
                 value={slaHours ?? undefined}
                 onChange={(next) => setSlaHours(next ?? null)}
               />
+              <Checkbox
+                className="mt-2"
+                checked={businessHours}
+                onChange={(event) => setBusinessHours(event.target.checked)}
+              >
+                {messages.requestTypes.businessHours}
+              </Checkbox>
             </label>
 
             <div>
@@ -366,13 +513,61 @@ export function RequestTypeAdmin({ types: initial }: { types: RequestType[] }) {
 
             <div>
               <Text strong>{messages.requestTypes.docs}</Text>
-              <div className="mt-1">
-                {(selected.requiredDocs ?? []).map((doc) => (
-                  <Tag key={doc.code}>
-                    {doc.name} ({doc.code})
-                  </Tag>
-                ))}
-              </div>
+              <CodedLabelEditor
+                entries={docs}
+                onChange={setDocs}
+                addLabel={messages.requestTypes.addDoc}
+              />
+            </div>
+
+            <div>
+              <Text strong>{messages.requestTypes.reasons}</Text>
+              <Paragraph type="secondary" className="mt-1! mb-0! text-xs">
+                {messages.requestTypes.reasonsNote}
+              </Paragraph>
+              <CodedLabelEditor
+                entries={reasons}
+                onChange={setReasons}
+                addLabel={messages.requestTypes.addReason}
+              />
+            </div>
+
+            <div>
+              <Text strong>{messages.requestTypes.routeTitle}</Text>
+              <Paragraph type="secondary" className="mt-1! mb-1! text-xs">
+                {messages.requestTypes.routeStandard}
+              </Paragraph>
+
+              <Select
+                size="small"
+                allowClear
+                style={{ minWidth: 260 }}
+                value={amountField ?? undefined}
+                placeholder={messages.requestTypes.amountField}
+                onChange={(next?: string) => setAmountField(next ?? null)}
+                options={rows.map((row) => ({
+                  value: row.key,
+                  label: `${row.title || row.key} (${row.key})`,
+                }))}
+              />
+
+              <Paragraph type="secondary" className="mt-1! mb-0! text-xs">
+                {messages.requestTypes.amountFieldNote}
+              </Paragraph>
+
+              {/*
+                APV-02 measures this field against the matrix ceilings. Without
+                it a submit cannot pick a tier, so the type is unroutable — said
+                here rather than discovered at the first submit.
+              */}
+              {!amountField && (
+                <Alert
+                  type="warning"
+                  showIcon
+                  className="mt-2"
+                  message={messages.requestTypes.amountFieldMissing}
+                />
+              )}
             </div>
 
             <Alert

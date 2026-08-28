@@ -139,8 +139,18 @@ export interface CodedLabel {
 }
 
 export interface RequestType {
+  id?: string;
   code: string;
   name: string;
+  /** The team that receives this type — §16 A2's `ทีมผู้รับ`. */
+  receiverOrgUnitId?: string | null;
+  /**
+   * How the chain is chosen at submit. Seed shape:
+   * `{ mode: 'standard_chain', amount_field: 'deal_value' }` — `amount_field`
+   * names the form field APV-02 measures against the matrix ceilings, so a
+   * type without one cannot be routed.
+   */
+  approvalPolicy?: { mode?: string; amount_field?: string } | null;
   /** The form is data, not code — §16 หน้าที่ 3 renders straight from this. */
   formSchema?: FormSchema;
   requiredDocs?: CodedLabel[];
@@ -195,7 +205,19 @@ export interface RequestDetail extends Omit<RequestRow, "approvalCases"> {
   requesterId?: string;
   submittedAt?: string | null;
   cancelReason?: string | null;
-  requestType?: { name: string; formSchema?: FormSchema };
+  requestType?: RequestType;
+  /**
+   * The type's configuration **as it stood at submit** (REQ-01).
+   *
+   * The server validates a return reason against this before falling back to
+   * the live type (`requests.service.ts:706`), so anything offering the user a
+   * choice must read it the same way round. A request in flight is judged by
+   * the rules it was raised under, not by whatever an admin saved since.
+   */
+  typeSnapshot?: {
+    requiredDocs?: CodedLabel[];
+    returnReasonCodes?: CodedLabel[];
+  } | null;
   attachments?: RequestAttachment[];
   events?: RequestEventRow[];
 }

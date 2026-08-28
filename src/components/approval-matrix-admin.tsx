@@ -66,6 +66,53 @@ function meaning(tiers: MatrixTier[], index: number): string {
   return messages.matrix.meaningOver(index, money(tiers[index - 1]?.upto ?? null));
 }
 
+function thaiDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("th-TH", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+/**
+ * What changed between one version and the one before it — §16 prints this
+ * beside each entry in `ประวัติเวอร์ชัน` (`ปรับ T1 เป็น 100,000`).
+ *
+ * **Derived, never stored.** A summary saved alongside a version is a second
+ * copy of the same fact, and the two start disagreeing the first time anyone
+ * edits one — the same reason `band()` computes a tier's lower bound instead of
+ * keeping it.
+ *
+ * Reports the first difference rather than all of them: the line is a jog to
+ * the memory, and the full ladder is one click away in the table above.
+ */
+function changeSummary(
+  tiers: MatrixTier[],
+  previous: MatrixTier[] | null,
+): string {
+  if (!previous) return messages.matrix.historyInitial;
+
+  for (let index = 0; index < Math.max(tiers.length, previous.length); index++) {
+    const level = `T${index}`;
+    const now = tiers[index];
+    const before = previous[index];
+
+    if (now && !before) return messages.matrix.historyTierAdded(level);
+    if (!now && before) return messages.matrix.historyTierRemoved(level);
+    if (!now || !before) continue;
+
+    if (now.upto !== before.upto) {
+      return messages.matrix.historyCeilingMoved(level, money(now.upto));
+    }
+
+    if (now.chain.join() !== before.chain.join()) {
+      return messages.matrix.historyChainChanged(level);
+    }
+  }
+
+  return messages.matrix.historyNoChange;
+}
+
 /**
  * Screen §16 A1 — ตารางอำนาจอนุมัติ (APV-01, APV-02).
  *
@@ -172,28 +219,103 @@ function MatrixVersions({
 
   return (
     <>
-      {subjects.map((subject) => (
-        <Card key={subject} title={`${messages.matrix.subject}: ${subject}`}>
-          <Space orientation="vertical" size="middle" className="flex">
-            {versions
-              .filter((version) => version.subjectType === subject)
-              .sort((a, b) => b.version - a.version)
-              .map((version) => (
+      {subjects.map((subject) => {
+        // Newest first, so index + 1 is always the version beneath.
+        const ofSubject = versions
+          .filter((version) => version.subjectType === subject)
+          .sort((a, b) => b.version - a.version);
+
+        const liveVersion = inForce.get(subject);
+        const shown =
+          ofSubject.find((version) => version.version === liveVersion) ??
+          ofSubject[0];
+
+        return (
+          <Card key={subject} title={`${messages.matrix.subject}: ${subject}`}>
+            <Space orientation="vertical" size="middle" className="flex">
+              {/*
+                Only the ladder in force is drawn in full. §16 shows one table
+                and a list; stacking every version's table made an old ceiling
+                as prominent as the one actually routing cases.
+              */}
+              {shown && (
                 <MatrixVersionTable
-                  key={version.id}
-                  version={version}
-                  live={inForce.get(subject) === version.version}
+                  version={shown}
+                  live={shown.version === liveVersion}
                   userNames={userNames}
                 />
-              ))}
-          </Space>
-        </Card>
-      ))}
+              )}
 
-      <Paragraph type="secondary" className="text-xs">
-        {messages.matrix.immutableNote}
-      </Paragraph>
+              <Paragraph type="secondary" className="mb-0! text-xs">
+                {messages.matrix.immutableNote}
+              </Paragraph>
+
+              <AlwaysEnforced />
+
+              <VersionHistory versions={ofSubject} />
+            </Space>
+          </Card>
+        );
+      })}
     </>
+  );
+}
+
+/** §16 A1 — the rules that hold whatever the table above says. */
+function AlwaysEnforced() {
+  return (
+    <div>
+      <Text strong>{messages.matrix.alwaysEnforcedTitle}</Text>
+      <ul className="mt-1 list-disc pl-5">
+        {messages.matrix.alwaysEnforced.map((rule) => (
+          <li key={rule}>
+            <Text type="secondary" className="text-xs">
+              {rule}
+            </Text>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** §16 A1 — one line per version, newest first. */
+function VersionHistory({
+  versions,
+}: {
+  versions: ApprovalMatrixVersion[];
+}) {
+  if (versions.length < 2) return null;
+
+  return (
+    <div>
+      <Text strong>{messages.matrix.historyTitle}</Text>
+
+      <ul className="mt-1 space-y-1">
+        {versions.map((version, index) => {
+          const previous = versions[index + 1] ?? null;
+          const when = thaiDate(version.effectiveFrom);
+
+          return (
+            <li key={version.id} className="text-xs">
+              <Text>
+                {messages.matrix.version} {version.version}
+              </Text>{" "}
+              <Text type="secondary">
+                · {changeSummary(version.tiers, previous?.tiers ?? null)} ·{" "}
+                {version.publishedAt
+                  ? messages.matrix.historyEffective(when)
+                  : messages.matrix.historyPending(when)}
+              </Text>
+            </li>
+          );
+        })}
+      </ul>
+
+      <Paragraph type="secondary" className="mt-2! mb-0! text-xs">
+        {messages.matrix.historyNote}
+      </Paragraph>
+    </div>
   );
 }
 

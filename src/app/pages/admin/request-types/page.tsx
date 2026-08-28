@@ -3,6 +3,7 @@ import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
 import { RequestTypeAdmin } from "@/components/request-type-admin";
 import { getAdminRequestTypes } from "@/lib/api/admin";
+import orgUnitsApi from "@/lib/api/org-units";
 import { messages } from "@/lib/messages";
 import { getSession } from "@/lib/session";
 
@@ -15,7 +16,13 @@ import { getSession } from "@/lib/session";
  */
 export default async function AdminRequestTypesPage() {
   const session = await getSession();
-  const result = await getAdminRequestTypes();
+
+  // The org tree feeds the `ทีมผู้รับ` selector. Fetched alongside rather than
+  // on demand: it is a handful of rows and the selector is always on screen.
+  const [result, unitsResult] = await Promise.all([
+    getAdminRequestTypes(),
+    orgUnitsApi.getOrgUnits(),
+  ]);
 
   const activeCompany = session?.companies.find(
     (company) => company.id === session.active_company_id,
@@ -48,7 +55,10 @@ export default async function AdminRequestTypesPage() {
         )}
       </div>
 
-      <RequestTypeAdmin types={result.data} />
+      <RequestTypeAdmin
+        types={result.data}
+        orgUnits={unitsResult.ok ? unitsResult.data : []}
+      />
     </div>
   );
 }

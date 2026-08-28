@@ -25,28 +25,17 @@ worked example of the fix — a `"use client"` component the server page renders
 
 ## Working to the plan
 
-Multi-phase work is tracked in two files: the plan (under `~/.claude/plans/`) and
-[`../PROGRESS.md`](../PROGRESS.md). Both are authoritative; memory of them is not.
-These rules exist because all four were broken in the same sprint.
+**The plan lives under `~/.claude/plans/`.** It is authoritative; memory of it is not.
 
-- Open the plan file and quote the phase heading before starting that phase. Never
-  work from a remembered plan — the file has been rewritten mid-sprint before.
-- Work phases in the written order. Reordering or skipping needs saying so first,
-  with the reason. Phase 6 was built before Phase 1, and the screens that stalled
-  were exactly the ones Phase 1 was supposed to supply.
-- A phase is not done while an unchecked `- [ ]` remains under it in `PROGRESS.md`.
-- Tick `PROGRESS.md` **before** reporting, not after.
-- Report closed/outstanding counts. "Done" without a count is how 9/11 got
-  reported as 11.
-- The checklist posted in chat mirrors `PROGRESS.md` item for item — same
-  wording, same order. Two different lists is how the chat said 11 while the
-  file still held 9 unchecked boxes.
-- Tick `PROGRESS.md` first, then the chat line reporting it. Never the other
-  way round.
-- Report each item **as it closes**, in the next message, not batched into the
-  final summary. A screen here takes dozens of tool calls; a checklist ticked
-  only at the end leaves the whole run invisible, which is exactly the state
-  these rules were written to end.
+There is deliberately **no progress file**. What a screen actually covers is established by
+running `yarn spec:check` in the backend repo: it compares every §16 screen against
+`docs/screen-checklist.json` and writes `docs/spec-coverage.md`. It reads this repo's
+sources directly, so a screen that is half-built shows as `8/16`, not as done.
+
+The rules for working a plan and reporting a checklist are in `~/.claude/AGENTS.md`; the
+incidents that produced them are recorded once, in
+[`../request-management-backend/AGENTS.md`](../request-management-backend/AGENTS.md).
+Neither is repeated here.
 
 ## Screens
 
@@ -58,3 +47,19 @@ match §16's house style rather than inventing a new one.
 
 All user-facing text lives in `src/lib/messages.ts`. No Thai string literals in
 components.
+
+## A page must not fetch what its viewer cannot read
+
+Gate every call with `can()` / `canAny()` from `@/lib/session` before making it.
+The menu gates *links*; it does nothing for the data a shared page fetches on
+the server.
+
+The landing page `/pages` is the one every role opens, and it called
+`GET /approvals/inbox` — `@Permissions('approval.decide')` — for everybody. A
+plain employee got a guaranteed 403 per page view, a red "โหลดข้อมูลไม่สำเร็จ"
+alert on a page where nothing was wrong, and one FORBIDDEN line in the
+core-service log each time, burying the real ones.
+
+Skipping the call, not hiding the error, is the fix: an empty result for
+someone who cannot decide is the truthful answer. And hide the UI it feeds —
+a tab that can only ever read `· 0` looks like a page that failed to load.

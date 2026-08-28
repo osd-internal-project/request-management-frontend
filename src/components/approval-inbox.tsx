@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   Button,
@@ -16,19 +16,16 @@ import Text from "antd/es/typography/Text";
 import Paragraph from "antd/es/typography/Paragraph";
 import Link from "next/link";
 import { appApi } from "@/lib/api/client";
-import type { ApprovalCase } from "@/lib/api/types";
+import type {
+  ApprovalCase,
+  CodedLabel,
+  RequestDetail,
+} from "@/lib/api/types";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 
 export type { ApprovalStep, ApprovalCase } from "@/lib/api/types";
 
-/** REQ-04 — a bounce must name a standard cause so bounces can be counted. */
-const RETURN_REASONS = [
-  { code: "DOC_INCOMPLETE", label: "เอกสารไม่ครบ" },
-  { code: "MARGIN_WRONG", label: "ตัวเลข margin ไม่ถูกต้อง" },
-  { code: "REASON_INSUFFICIENT", label: "เหตุผลไม่เพียงพอ" },
-  { code: "OTHER", label: "อื่น ๆ (ระบุ)" },
-];
 
 function money(amount: string | null, currency: string | null): string {
   if (amount === null) return "—";
@@ -231,6 +228,7 @@ export function ApprovalInbox({
 
         {selected ? (
           <DecisionPane
+            key={selected.id}
             approvalCase={selected}
             busy={busy}
             onDecide={(decision, note, reasons) =>
@@ -263,6 +261,56 @@ function DecisionPane({
 }) {
   const [note, setNote] = useState("");
   const [reasons, setReasons] = useState<string[]>([]);
+  const requestId = approvalCase.requestId ?? null;
+
+  /**
+   * `null` while loading. A case with no request behind it (APV-07) resolves
+   * to an empty list immediately — there is no requester to return to.
+   */
+  const [available, setAvailable] = useState<CodedLabel[] | null>(
+    requestId ? null : [],
+  );
+  const [reasonError, setReasonError] = useState<string | null>(null);
+
+  /**
+   * REQ-04 — the reasons this request may be returned with.
+   *
+   * Loaded from the request rather than held as a constant. A hardcoded list
+   * lived here until 28 Aug 2026 and two of its four codes were not in the
+   * type's configuration, so the server answered
+   * `400 เหตุผลการตีกลับไม่ถูกต้อง` and those buttons simply did not work.
+   *
+   * `typeSnapshot` first, then the live type — the same order as
+   * `requests.service.ts:706`. The server judges an in-flight request by the
+   * configuration it was raised under, so offering the current type's reasons
+   * would recreate the bug the first time an admin edits a type.
+   */
+  useEffect(() => {
+    if (!requestId) return;
+
+    let cancelled = false;
+
+    void appApi<RequestDetail>(`requests/${requestId}`).then((result) => {
+      if (cancelled) return;
+
+      if (!result.ok) {
+        setReasonError(result.message);
+        setAvailable([]);
+
+        return;
+      }
+
+      setAvailable(
+        result.data.typeSnapshot?.returnReasonCodes ??
+          result.data.requestType?.returnReasonCodes ??
+          [],
+      );
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [requestId]);
 
   const payload = approvalCase.payload ?? {};
   const margin = payload.est_margin_pct;
@@ -332,26 +380,55 @@ function DecisionPane({
           />
         </label>
 
-        <div>
-          <Text strong>{messages.approvals.returnReasonsLabel}</Text>
-          <div className="mt-1 flex flex-wrap gap-3">
-            {RETURN_REASONS.map((reason) => (
-              <Checkbox
-                key={reason.code}
-                checked={reasons.includes(reason.code)}
-                onChange={(event) =>
-                  setReasons((current) =>
-                    event.target.checked
-                      ? [...current, reason.code]
-                      : current.filter((code) => code !== reason.code),
-                  )
-                }
-              >
-                {reason.label}
-              </Checkbox>
-            ))}
+        {/*
+          Hidden entirely for a case with no request behind it (APV-07): there
+          is no requester to return to, so offering the control would promise
+          something that cannot happen.
+        */}
+        {requestId && (
+          <div>
+            <Text strong>{messages.approvals.returnReasonsLabel}</Text>
+
+            {reasonError ? (
+              <Alert
+                type="warning"
+                showIcon
+                className="mt-1"
+                message={messages.approvals.reasonsUnavailable}
+                description={reasonError}
+              />
+            ) : available === null ? (
+              <Text type="secondary" className="mt-1 block text-xs">
+                {messages.common.loading}
+              </Text>
+            ) : available.length ? (
+              <div className="mt-1 flex flex-wrap gap-3">
+                {available.map((reason) => (
+                  <Checkbox
+                    key={reason.code}
+                    checked={reasons.includes(reason.code)}
+                    onChange={(event) =>
+                      setReasons((current) =>
+                        event.target.checked
+                          ? [...current, reason.code]
+                          : current.filter((code) => code !== reason.code),
+                      )
+                    }
+                  >
+                    {reason.name}
+                  </Checkbox>
+                ))}
+              </div>
+            ) : (
+              <Alert
+                type="warning"
+                showIcon
+                className="mt-1"
+                message={messages.approvals.reasonsMissing}
+              />
+            )}
           </div>
-        </div>
+        )}
 
         <Space className="justify-end flex">
           <Button

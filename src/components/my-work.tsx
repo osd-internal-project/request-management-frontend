@@ -44,9 +44,27 @@ function humanGap(ms: number): string {
  * page takes one reading and every row is measured against it.
  */
 function DueCell({ row, now }: { row: RequestRow; now: number }) {
-  if (row.slaClock?.state === "paused") {
+  const state = row.slaClock?.state;
+
+  if (state === "paused") {
     return <Tag>{messages.myWork.clockPaused}</Tag>;
   }
+
+  /**
+   * A stopped clock has already been judged — read its verdict rather than
+   * recompute one.
+   *
+   * `met` means the work finished inside its SLA, and the clock does not run
+   * while a request sits returned with its requester (SUP-01). Comparing
+   * `dueAt` to the wall clock ignores that pause, so a request the system
+   * recorded as on time would keep counting up and eventually read
+   * `เกินกำหนด` — contradicting the row the decision was written to.
+   */
+  if (state === "met") {
+    return <Tag color="green">{messages.myWork.onTime}</Tag>;
+  }
+
+  if (state === "cancelled") return <Text type="secondary">—</Text>;
 
   if (!row.dueAt) return <Text type="secondary">—</Text>;
 
@@ -115,8 +133,15 @@ export function MyWork({
     {
       title: messages.myWork.columns.requestNo,
       dataIndex: "requestNo",
+      // REQ-02 issues the number inside the submit transaction, so a draft
+      // legitimately has none. A bare dash reads like missing data; saying so
+      // makes it obviously the normal state of a draft.
       render: (value: string | null) =>
-        value ? <Text strong>{value}</Text> : <Text type="secondary">—</Text>,
+        value ? (
+          <Text strong>{value}</Text>
+        ) : (
+          <Text type="secondary">{messages.myWork.noNumber}</Text>
+        ),
     },
     {
       title: messages.myWork.columns.typeRef,

@@ -372,7 +372,7 @@ export const messages = {
 
   requestTypes: {
     title: "ประเภทคำขอ",
-    subtitle: "ประเภทคำขอเป็นข้อมูลตั้งค่าย",
+    subtitle: "ประเภทคำขอ — ตั้งค่าได้โดยไม่ต้องแก้โปรแกรม",
     listTitle: "ประเภททั้งหมด",
     active: "เปิดใช้",
     inactive: "ยังไม่เปิด",
@@ -382,7 +382,12 @@ export const messages = {
     sla: "SLA (ชั่วโมงทำการ)",
     fields: "ฟิลด์ฟอร์ม (form schema)",
     docs: "เอกสารบังคับ",
-    reasons: "เหตุผลตีกลับ",
+    addDoc: "+ เพิ่มเอกสารบังคับ",
+    reasons: "เหตุผลตีกลับมาตรฐาน",
+    addReason: "+ เพิ่ม",
+    /** REQ-04: the list is the point — free text alone cannot be reported on. */
+    reasonsNote:
+      "รายการนี้คือสิ่งที่ผู้อนุมัติเลือกตอนตีกลับ — ระบบปฏิเสธเหตุผลนอกรายการ เพื่อให้นับสาเหตุการตีกลับได้",
     addField: "+ เพิ่มฟิลด์",
     fieldName: "ชื่อฟิลด์ (key)",
     fieldTitle: "ป้ายกำกับ",
@@ -401,6 +406,27 @@ export const messages = {
       "การบันทึกมีผลกับคำขอที่ยื่นใหม่เท่านั้น — คำขอที่เดินอยู่ใช้การตั้งค่า ณ ขณะยื่น · ทุกการแก้ไขลง Audit Log",
     matrixNote: "อ้างตารางอำนาจอนุมัติของบริษัทที่ยื่น",
     selectFirst: "เลือกประเภทจากรายการทางซ้าย",
+
+    entryCode: "รหัส",
+    entryLabel: "ชื่อที่แสดง",
+    remove: "ลบ",
+    noReceiver: "ยังไม่ได้กำหนดทีมผู้รับ",
+    businessHours: "นับเฉพาะเวลาทำการ",
+    /** §16 A2 list subtitle: `DSC · Sales → Pricing · SLA 24 ชม.ทำการ` */
+    listSubtitle: (code: string, receiver: string, sla: string) =>
+      `${code} · ${receiver} · ${sla}`,
+    slaShort: (hours: number, businessHours: boolean) =>
+      businessHours ? `SLA ${hours} ชม.ทำการ` : `SLA ${hours} ชม.`,
+    slaUnset: "ยังไม่ได้ตั้ง SLA",
+
+    /** §16 A2 — the approval route block. */
+    routeTitle: "เส้นทางอนุมัติ",
+    routeStandard: "เส้นทางมาตรฐานตามวงเงิน (หัวหน้าทีม → CFO → CEO)",
+    amountField: "ฟิลด์วงเงินที่ใช้คำนวณ",
+    amountFieldNote:
+      "ฟิลด์วงเงินที่ใช้คำนวณ: เลือกจากฟิลด์ฟอร์มด้านบน · อ้างตารางอำนาจอนุมัติของบริษัทที่ยื่น",
+    amountFieldMissing:
+      "ยังไม่ได้เลือกฟิลด์วงเงิน — คำขอประเภทนี้จะหาเพดานอนุมัติไม่ได้ตอนยื่น",
   },
 
   myWork: {
@@ -425,6 +451,10 @@ export const messages = {
     clockPaused: "นาฬิกาหยุด",
     overdueBy: (text: string) => `เกิน ${text}`,
     dueIn: (text: string) => `เหลือ ${text}`,
+    /** A finished request whose clock stopped inside its SLA (`state: met`). */
+    onTime: "ทันกำหนด",
+    /** REQ-02 issues the number at submit, so a draft has none yet. */
+    noNumber: "ยังไม่ออกเลข",
     step: (current: number, total: number) => `ขั้น ${current}/${total}`,
     status: {
       draft: "ร่าง",
@@ -477,6 +507,14 @@ export const messages = {
     commentLabel: "ความเห็นประกอบการตัดสิน (บังคับเมื่อปฏิเสธหรือตีกลับ)",
     commentPlaceholder: "พิมพ์ความเห็น…",
     returnReasonsLabel: "กรณีตีกลับ — เลือกสิ่งที่ต้องแก้ (อย่างน้อย 1 ข้อ)",
+    /**
+     * The reason list comes from the request type (REQ-04). When it cannot be
+     * read, say so instead of offering a guessed list — a guessed list is what
+     * made two of these buttons return 400.
+     */
+    reasonsUnavailable: "อ่านเหตุผลตีกลับของคำขอนี้ไม่ได้ — ตีกลับไม่ได้จนกว่าจะโหลดสำเร็จ",
+    reasonsMissing:
+      "ประเภทคำขอนี้ยังไม่ได้ตั้งค่าเหตุผลตีกลับมาตรฐาน — ตั้งค่าที่หน้าประเภทคำขอก่อน (REQ-04)",
     delegationBanner: (name: string, window: string) =>
       `คุณกำลังรับมอบอำนาจแทน ${name} ช่วง ${window} — ทุกการอนุมัติจะบันทึกว่า "อนุมัติแทน"`,
     urgencyOverdue: "เกินกำหนด",
@@ -494,9 +532,20 @@ export const messages = {
     upto: "ไม่เกิน",
     noCeiling: "ไม่จำกัด",
     chain: "สายอนุมัติ",
-    publishNew: "+ เผยแพร่เวอร์ชันใหม่",
-    immutableNote:
-      "เวอร์ชันที่เผยแพร่แล้วแก้ไขไม่ได้ — การเปลี่ยนเพดานคือการเผยแพร่เวอร์ชันใหม่ งานที่เดินอยู่จะยังใช้เวอร์ชันเดิมที่มันเริ่มไว้",
+    /**
+     * §16 A1's own words.
+     *
+     * Suggestion: `เผยแพร่` (publish) describes the API more accurately than
+     * `สร้าง` (create) — a version is *published*, and the publish is what
+     * reaches the audit log. §16 wins here because the mockup is the copy
+     * specification; say the word and this becomes `เผยแพร่เวอร์ชันใหม่`.
+     */
+    publishNew: "สร้างเวอร์ชันใหม่",
+    /**
+     * §16 splits what used to be one sentence: immutability stays here, while
+     * "งานที่เดินอยู่ใช้เวอร์ชัน ณ ขณะยื่น" becomes rule 3 of `alwaysEnforced`.
+     */
+    immutableNote: "เวอร์ชันที่ประกาศแล้วแก้ทับไม่ได้ — ต้องสร้างเวอร์ชันใหม่",
     placeholderWarning:
       "ตัวเลขเพดานปัจจุบันเป็นค่าตั้งต้นสำหรับพัฒนา ยังไม่ได้รับการยืนยันจากฝ่ายการเงิน (คำถามค้าง A) — ห้ามใช้เป็นตัวเลขจริง",
     saved: "เผยแพร่แล้ว",
@@ -513,6 +562,34 @@ export const messages = {
     meaningFirst: "ตรวจสิทธิ์การยื่น จบในทีม",
     meaningOver: (level: number, ceiling: string) =>
       `เกินเพดานระดับ ${level} (${ceiling} บาท)`,
+
+    /**
+     * §16 A1 — rules the backend enforces whatever this table says.
+     *
+     * On screen because an administrator would otherwise meet them by
+     * surprise: the second especially, since a chain that silently drops a
+     * rung looks like a defect rather than the rule it is.
+     */
+    alwaysEnforcedTitle: "กติกาที่ระบบบังคับเสมอ",
+    alwaysEnforced: [
+      "ผู้ยื่นเลือกผู้อนุมัติเองไม่ได้ — ระบบคำนวณจากตารางนี้ ณ ขณะยื่น",
+      "ผู้อนุมัติเป็นผู้ยื่นเอง → ชั้นนั้นเลื่อนขึ้น/ถูกข้ามอัตโนมัติ",
+      "คำขอที่เดินอยู่ใช้เวอร์ชัน ณ ขณะยื่น — เปลี่ยนตารางไม่กระทบงานค้าง",
+    ],
+
+    historyTitle: "ประวัติเวอร์ชัน",
+    historyNote: "ทุกเวอร์ชันอ่านย้อนหลังได้ · การเผยแพร่ลง Audit Log",
+    /** §16: `เวอร์ชัน 3 · ร่าง รอมีผล 1 ก.ย. 2569` */
+    historyPending: (on: string) => `ร่าง รอมีผล ${on}`,
+    historyEffective: (on: string) => `มีผล ${on}`,
+    /** The first version has nothing to compare against. */
+    historyInitial: "ชุดตั้งต้น",
+    historyCeilingMoved: (level: string, to: string) =>
+      `ปรับ ${level} เป็น ${to}`,
+    historyTierAdded: (level: string) => `เพิ่มระดับ ${level}`,
+    historyTierRemoved: (level: string) => `ตัดระดับ ${level}`,
+    historyChainChanged: (level: string) => `ปรับสายอนุมัติ ${level}`,
+    historyNoChange: "ไม่เปลี่ยนเพดาน",
   },
   audit: {
     title: "Audit Log",
@@ -563,6 +640,7 @@ export const messages = {
   common: {
     loadError: "โหลดข้อมูลไม่สำเร็จ",
     retry: "ลองใหม่",
+    loading: "กำลังโหลด…",
   },
 } as const;
 
