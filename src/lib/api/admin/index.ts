@@ -33,10 +33,17 @@ export async function getApprovalMatrixVersion(
  * raised: A2 has to show a type that is still being set up, which is exactly
  * the one a requester must not see.
  */
-export async function getAdminRequestTypes(): Promise<
-  ApiResult<RequestType[]>
-> {
-  return apiGet<RequestType[]>("/admin/request-types");
+export async function getAdminRequestTypes(
+  companyId?: string,
+): Promise<ApiResult<RequestType[]>> {
+  // A1 shows one company per tab, independent of the header switcher, so it
+  // asks for a company by id. The backend refuses one the caller does not
+  // belong to (SCOPE-03) rather than answering it.
+  return apiGet<RequestType[]>(
+    companyId
+      ? `/admin/request-types?company_id=${encodeURIComponent(companyId)}`
+      : "/admin/request-types",
+  );
 }
 
 /** SUP-01 / D-09 — the clock per request type for one company. */

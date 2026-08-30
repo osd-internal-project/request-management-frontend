@@ -41,23 +41,21 @@ export default async function AdminRequestTypesPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <div>
-          <Title level={4} className="mb-0!">
-            {messages.requestTypes.title}
-          </Title>
-          <Text type="secondary">{messages.requestTypes.subtitle}</Text>
-        </div>
-        {activeCompany && (
-          <Text type="secondary">
-            {messages.nav.company}: {activeCompany.name}
-          </Text>
-        )}
+      <div>
+        <Title level={4} className="mb-0!">
+          {messages.requestTypes.title}
+        </Title>
+        <Text type="secondary">{messages.requestTypes.subtitle}</Text>
       </div>
 
+      {/*
+        The company is named on the list card §16 heads with it
+        (`ประเภททั้งหมด · บริษัท OSD`), so it is not repeated here.
+      */}
       <RequestTypeAdmin
         types={result.data}
         orgUnits={unitsResult.ok ? unitsResult.data : []}
+        companyName={activeCompany?.name ?? null}
       />
     </div>
   );

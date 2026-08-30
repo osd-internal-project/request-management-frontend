@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { Alert } from "antd";
 import { Check, Info, LockKeyhole } from "lucide-react";
 import { loginErrorMessage, messages } from "@/lib/messages";
@@ -9,18 +10,36 @@ import { loginErrorMessage, messages } from "@/lib/messages";
  * Keycloak's own page, so this application never sees them. The button is a
  * plain link to the BFF route, which means login works before any JavaScript
  * has hydrated.
+ *
+ * **Normally nobody sees this page.** Someone without a session is sent
+ * straight to Keycloak by `proxy.ts`; this route exists for the two states
+ * that a redirect cannot express:
+ *
+ *   - `?error=…` — authorize failed (the BFF sends `unreachable` /
+ *     `authorize_failed` here). Bouncing these back into `/api/auth/login`
+ *     would retry the exact call that just failed, for ever.
+ *   - `?signed_out=1` — the user logged out. Bouncing this to Keycloak would
+ *     re-authenticate them against their still-live SSO session and drop them
+ *     back inside the app, which is the opposite of logging out.
+ *
+ * Anything else is a stale link, and goes to Keycloak like every other
+ * unauthenticated request.
+ *
+ * The full marketing version of this page is kept at `page.tsx.bak`.
  */
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; from?: string }>;
+  searchParams: Promise<{ error?: string; from?: string; signed_out?: string }>;
 }) {
-  const { error, from } = await searchParams;
+  const { error, from, signed_out: signedOut } = await searchParams;
   const errorMessage = loginErrorMessage(error);
 
   const loginHref = from
     ? `/api/auth/login?from=${encodeURIComponent(from)}`
     : "/api/auth/login";
+
+  if (!errorMessage && !signedOut) redirect(loginHref);
 
   return (
     <main className="min-h-screen bg-[#f6f8fc] text-[14px] text-[#26323e]">
@@ -69,6 +88,15 @@ export default async function LoginPage({
                 type="error"
                 showIcon
                 title={errorMessage}
+                className="mb-5! rounded-xl!"
+              />
+            )}
+
+            {signedOut && !errorMessage && (
+              <Alert
+                type="success"
+                showIcon
+                title={messages.login.signedOut}
                 className="mb-5! rounded-xl!"
               />
             )}

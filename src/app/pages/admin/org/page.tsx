@@ -49,10 +49,18 @@ export default async function AdminOrgPage({
   // Prefer a unit that actually has members: opening on an empty one makes the
   // screen look broken when it is merely showing the truth about an empty team.
   const units = unitsResult.ok ? unitsResult.data : [];
+  /*
+    Prefer whichever unit has the most people. The old order looked for a TEAM
+    first, and the real OSD chart (บริษัท → ฝ่าย → แผนก) has none — so it fell
+    through to `units[0]`, the company root, which holds nobody and made a
+    fully populated org chart open on an empty panel.
+  */
   const initialSelectedId =
-    units.find((unit) => unit.kind === "TEAM" && unit.memberCount > 0)?.id ??
-    units.find((unit) => unit.memberCount > 0)?.id ??
-    units.find((unit) => unit.kind === "TEAM")?.id ??
+    [...units]
+      .sort((a, b) => b.memberCount - a.memberCount)
+      .find((unit) => unit.memberCount > 0)?.id ??
+    units.find((unit) => unit.kind === "TEAM" || unit.kind === "DEPARTMENT")
+      ?.id ??
     units[0]?.id ??
     null;
 

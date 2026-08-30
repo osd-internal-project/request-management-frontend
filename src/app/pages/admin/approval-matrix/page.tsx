@@ -2,7 +2,7 @@ import { Alert } from "antd";
 import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
 import { ApprovalMatrixAdmin } from "@/components/approval-matrix-admin";
-import admin from "@/lib/api/admin";
+import admin, { getAdminRequestTypes } from "@/lib/api/admin";
 import { apiGet } from "@/lib/api/core";
 import { messages } from "@/lib/messages";
 import { getSession } from "@/lib/session";
@@ -33,9 +33,16 @@ export default async function ApprovalMatrixPage() {
    * tables, so the name is resolved here — on an admin screen whose viewer
    * already holds `user.read` — rather than by a cross-service call per row.
    */
-  const [result, users] = await Promise.all([
+  /**
+   * The catalog is fetched alongside the ladders because the `ประเภทงาน`
+   * selector is built from it — without it the screen can only offer subjects
+   * that already have a matrix, which is a list you cannot add the first entry
+   * to.
+   */
+  const [result, users, types] = await Promise.all([
     admin.getApprovalMatrix(),
     apiGet<Paginated<DirectoryUser>>("/users?page_size=100"),
+    getAdminRequestTypes(),
   ]);
 
   const userNames = Object.fromEntries(
@@ -57,6 +64,7 @@ export default async function ApprovalMatrixPage() {
       {result.ok ? (
         <ApprovalMatrixAdmin
           versions={result.data}
+          types={types.ok ? types.data : []}
           companies={(session?.companies ?? []).map((company) => ({
             id: company.id,
             name: company.name,

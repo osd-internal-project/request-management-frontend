@@ -4,6 +4,8 @@ import Text from "antd/es/typography/Text";
 import Paragraph from "antd/es/typography/Paragraph";
 import { getRequest } from "@/lib/api/requests";
 import type { RequestDetail, RequestEventRow } from "@/lib/api/types";
+import { RequestActions } from "@/components/request-actions";
+import { getSession } from "@/lib/session";
 import { messages } from "@/lib/messages";
 
 /** Thai date + time as §16 prints it: `23 ส.ค. 16:40 น.` */
@@ -61,7 +63,7 @@ export default async function RequestDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const result = await getRequest(id);
+  const [result, session] = await Promise.all([getRequest(id), getSession()]);
 
   if (!result.ok) {
     return (
@@ -83,6 +85,13 @@ export default async function RequestDetailPage({
 
   return (
     <div className="space-y-4">
+      {/*
+        The buttons that move the ticket. Rendered above the detail because a
+        request open on this page is usually open in order to do something to
+        it, not to read it.
+      */}
+      <RequestActions request={request} viewerId={session?.user.id ?? ""} />
+
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <Title level={4} className="mb-0!">
           {request.requestNo ?? messages.myWork.status.draft} ·{" "}

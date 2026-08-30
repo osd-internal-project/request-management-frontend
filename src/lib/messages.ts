@@ -21,6 +21,12 @@ export const messages = {
       "ระบบจะพาไปยืนยันตัวตนผ่าน Keycloak ด้วยรหัสผ่านองค์กร (LDAP) — ระบบนี้ไม่เก็บและไม่เห็นรหัสผ่านของคุณ",
     marketingDescription:
       "แพลตฟอร์มคำขอและการอนุมัติกลางของกลุ่มบริษัท เลิกไล่งานในอีเมลและแชท",
+    /**
+     * Shown after logout. Without this state the page would bounce to Keycloak,
+     * whose SSO session is often still alive, and sign the user straight back
+     * in — a logout button that logs you in.
+     */
+    signedOut: "ออกจากระบบเรียบร้อยแล้ว",
     pendingTitle: "เข้าระบบครั้งแรกแล้วยังไม่เห็นเมนู?",
     pendingHint:
       "บัญชีของคุณกำลังรอผู้ดูแลจัดสังกัดทีม ติดต่อผู้ดูแลระบบที่ it-support@company.co.th",
@@ -106,9 +112,12 @@ export const messages = {
     keycloakGroup: "กลุ่ม Keycloak",
     keycloakUnavailable: "ยังไม่ได้ตั้งค่าการเชื่อมต่อ Keycloak Admin API",
     scope: "scope",
-    editScope: "ปรับ scope",
-    scopeIsPerRole: (role: string, holders: number) =>
-      `scope กำหนดต่อ (role, ชนิดข้อมูล) ตาม SCOPE-01 — การแก้ตรงนี้มีผลกับทุกคนที่ถือ role "${role}" ในบริษัทนี้ (${holders} คน)`,
+    /**
+     * A3 prints scope beside a person, which reads as per-person — it is not.
+     * SCOPE-01 keys it on `(role, resource)`, so this is a pointer to where it
+     * really lives rather than a control.
+     */
+    scopeEditedOnRole: "scope มาจาก role — แก้ที่แท็บ Scope Rules",
     extraRoles: "role เพิ่มเติมในระบบ",
     addRole: "ผูก role เพิ่ม",
 
@@ -202,6 +211,16 @@ export const messages = {
 
   /** SCOPE-01 — no mockup; designed to sit beside A4. */
   scopeRules: {
+    holders: (count: number) => `${count} คน`,
+    cancel: "ยกเลิก",
+    confirmTitle: "ยืนยันการบันทึก scope",
+    /**
+     * SCOPE-01 keys a rule on `(role, resource)`, so a save moves everyone
+     * holding that role at once. The count is shown before the click because
+     * this is the change people expected to be per person and it is not.
+     */
+    confirmBody: (roles: number, people: number) =>
+      `กติกาที่แก้ครอบคลุม ${roles} role · มีผลกับผู้ใช้ ${people} คนทันทีที่บันทึก`,
     title: "Scope Rules",
     subtitle:
       "กำหนดว่า role หนึ่งเห็นข้อมูลได้ไกลแค่ไหน · คู่ (role, ชนิดข้อมูล) ตาม SCOPE-01 — มีผลทันที ไม่ต้อง deploy",
@@ -269,6 +288,9 @@ export const messages = {
   },
 
   requestForm: {
+    receiver: "ผู้รับเรื่อง",
+    receiverPlaceholder: "เลือกผู้รับเรื่อง — คำขอจะไปอยู่ในคิวของคนนี้",
+    receiverRequired: "ต้องระบุผู้รับเรื่องก่อนยื่นคำขอ",
     title: "ยื่นคำขอ",
     /** §16 หน้าที่ 3 — the page heading and the left-menu entry agree. */
     pageTitle: "ยื่นคำขอใหม่",
@@ -317,6 +339,15 @@ export const messages = {
   },
 
   requestDetail: {
+    receive: "รับเรื่อง",
+    complete: "ทำเสร็จแล้ว",
+    close: "ปิดคำขอ",
+    assign: "มอบหมายงาน",
+    assignPlaceholder: "เลือกผู้รับผิดชอบ",
+    addChild: "+ สร้างคำขอย่อย",
+    actionDone: "บันทึกแล้ว",
+    childrenTitle: "คำขอย่อย",
+    childrenNote: "คำขอแม่จะกด “ทำเสร็จแล้ว” ไม่ได้จนกว่าคำขอย่อยทุกใบจะปิด",
     cancel: "ยกเลิกคำขอ",
     cancelReason: "เหตุผลการยกเลิก",
     cancelled: "ยกเลิกคำขอแล้ว",
@@ -354,6 +385,23 @@ export const messages = {
   },
 
   bottleneck: {
+    filterType: "ประเภทคำขอ",
+    filterPeriod: "ช่วงเวลา",
+    filterFrom: "ตั้งแต่",
+    filterTo: "ถึง",
+    clearFilters: "ล้างตัวกรอง",
+    /**
+     * SCOPE-02 — the report aggregates only the requests this viewer may see,
+     * so two people can open it and get different totals. Said on the page
+     * because a smaller table looks like missing data otherwise.
+     */
+    scopeNote: {
+      own: "รายงานนี้นับเฉพาะคำขอที่คุณยื่นเอง",
+      team: "รายงานนี้นับเฉพาะคำขอของทีมคุณ",
+      department: "รายงานนี้นับเฉพาะคำขอของฝ่ายคุณ",
+      company: "รายงานนี้นับคำขอทั้งบริษัทที่เลือกอยู่",
+      all: "รายงานนี้นับคำขอทุกบริษัท",
+    } as Record<string, string>,
     title: "รายงานคอขวด",
     subtitle: "เวลาจริงต่อขั้นอนุมัติ นับเฉพาะขั้นที่ตัดสินแล้ว (REQ-09)",
     empty: "ยังไม่มีข้อมูลมากพอในช่วงที่เลือก",
@@ -374,6 +422,8 @@ export const messages = {
     title: "ประเภทคำขอ",
     subtitle: "ประเภทคำขอ — ตั้งค่าได้โดยไม่ต้องแก้โปรแกรม",
     listTitle: "ประเภททั้งหมด",
+    /** §16 A2 heads the list with the company whose types these are. */
+    listTitleFor: (company: string) => `ประเภททั้งหมด · ${company}`,
     active: "เปิดใช้",
     inactive: "ยังไม่เปิด",
     edit: (name: string, code: string) => `แก้ไข: ${name} (${code})`,
@@ -394,6 +444,20 @@ export const messages = {
     fieldType: "ชนิด",
     fieldRequired: "บังคับ",
     fieldSensitive: "ฟิลด์อ่อนไหว",
+    /** The pill §16 puts on a sensitive field — what it *does*, not what it is. */
+    fieldRestricted: "จำกัดสิทธิ์",
+    fieldMultiline: "ข้อความยาว",
+    /** §16 describes a field by its shape (`ตัวเลข · ฟิลด์อ่อนไหว`), not by its JSON Schema type. */
+    fieldTypeLabels: {
+      string: "ข้อความ",
+      number: "ตัวเลข",
+      boolean: "ใช่/ไม่ใช่",
+    } as Record<string, string>,
+    fieldRange: (min: number, max: number) => `${min}–${max}`,
+    fieldEditTitle: "แก้ไขฟิลด์ฟอร์ม",
+    fieldAddTitle: "เพิ่มฟิลด์ฟอร์ม",
+    entryEditTitle: "แก้ไขรายการ",
+    entryAddTitle: "เพิ่มรายการ",
     save: "บันทึก",
     disable: "ปิดใช้งาน",
     enable: "เปิดใช้งาน",
@@ -423,8 +487,6 @@ export const messages = {
     routeTitle: "เส้นทางอนุมัติ",
     routeStandard: "เส้นทางมาตรฐานตามวงเงิน (หัวหน้าทีม → CFO → CEO)",
     amountField: "ฟิลด์วงเงินที่ใช้คำนวณ",
-    amountFieldNote:
-      "ฟิลด์วงเงินที่ใช้คำนวณ: เลือกจากฟิลด์ฟอร์มด้านบน · อ้างตารางอำนาจอนุมัติของบริษัทที่ยื่น",
     amountFieldMissing:
       "ยังไม่ได้เลือกฟิลด์วงเงิน — คำขอประเภทนี้จะหาเพดานอนุมัติไม่ได้ตอนยื่น",
   },
@@ -434,6 +496,23 @@ export const messages = {
     newRequest: "ยื่นคำขอใหม่",
     tabMine: "คำขอของฉัน",
     tabApprovals: "รออนุมัติของฉัน",
+    /** Tickets handed to me — shown only when there are any. */
+    tabIncoming: "รอฉันรับเรื่อง",
+    emptyIncoming: "ไม่มีคำขอที่ส่งมาให้คุณ",
+    /**
+     * The first tab shows whatever the viewer's data scope allows, so its name
+     * has to say what that is. §16 wrote it for an employee — `own` keeps the
+     * mockup's exact wording, and only a wider scope changes it, because a tab
+     * called "คำขอของฉัน" listing other people's requests is a lie.
+     */
+    tabForScope: (scope: string) =>
+      ({
+        own: "คำขอของฉัน",
+        team: "คำขอของทีม",
+        department: "คำขอของฝ่าย",
+        company: "คำขอทั้งบริษัท",
+        all: "คำขอทุกบริษัท",
+      })[scope] ?? "คำขอของฉัน",
     search: "ค้นหาเลขที่ / ลูกค้า / ดีล",
     filterStatus: "สถานะ",
     filterType: "ประเภท",
@@ -445,7 +524,21 @@ export const messages = {
       status: "สถานะ",
       currentStep: "ขั้นปัจจุบัน",
       dueAt: "ครบกำหนด",
+      /** Only rendered when the list crosses people (scope wider than `own`). */
+      requester: "ผู้ขอ",
     },
+    /**
+     * SCOPE-02 — the first tab shows what the viewer's scope allows and nothing
+     * more. Printed under the heading so a short list is not mistaken for
+     * missing data.
+     */
+    scopeNote: {
+      own: "แท็บแรกแสดงคำขอที่คุณยื่นเอง",
+      team: "แท็บแรกแสดงคำขอของทีมคุณ",
+      department: "แท็บแรกแสดงคำขอของฝ่ายคุณ",
+      company: "แท็บแรกแสดงคำขอทั้งบริษัทที่เลือกอยู่",
+      all: "แท็บแรกแสดงคำขอทุกบริษัท",
+    } as Record<string, string>,
     empty: "ยังไม่มีคำขอ",
     emptyApprovals: "ไม่มีรายการรออนุมัติ",
     clockPaused: "นาฬิกาหยุด",
@@ -464,10 +557,13 @@ export const messages = {
       approved: "อนุมัติแล้ว",
       rejected: "ไม่อนุมัติ",
       in_progress: "กำลังดำเนินการ",
+      on_hold: "พักไว้",
       completed: "เสร็จสิ้น",
+      closed: "ปิดคำขอแล้ว",
       cancelled: "ยกเลิก",
     } as Record<string, string>,
   },
+
 
   approvals: {
     title: "รออนุมัติ",
@@ -524,11 +620,18 @@ export const messages = {
     title: "ตารางอำนาจอนุมัติ",
     subtitle: "เพดานและผู้อนุมัติต่อบริษัทและประเภทงาน (APV-01)",
     empty: "ยังไม่ได้ตั้งค่าตารางอำนาจอนุมัติ",
+    /** A1 lists subjects from the request-type catalog, so an empty one means A2. */
+    noSubjects: "บริษัทนี้ยังไม่มีประเภทคำขอ — เพิ่มที่หน้าประเภทคำขอก่อน",
+    emptyForSubject: "ประเภทงานนี้ยังไม่มีตารางอำนาจอนุมัติ — กด “สร้างเวอร์ชันใหม่” เพื่อเริ่ม",
+
     version: "เวอร์ชัน",
     effectiveFrom: "มีผลตั้งแต่",
-    published: "เผยแพร่แล้ว",
     draft: "ฉบับร่าง",
-    inForce: "ใช้งานอยู่",
+    /**
+     * §16 writes the ladder in force as `เวอร์ชัน 2 (ปัจจุบัน)` — one line, not
+     * a version number with a separate "in force" badge beside it.
+     */
+    currentSuffix: "(ปัจจุบัน)",
     upto: "ไม่เกิน",
     noCeiling: "ไม่จำกัด",
     chain: "สายอนุมัติ",
@@ -560,6 +663,16 @@ export const messages = {
       meaning: "ความหมาย",
     },
     meaningFirst: "ตรวจสิทธิ์การยื่น จบในทีม",
+    /**
+     * §16 names the approver a tier *adds* rather than repeating its ceiling:
+     * `เกินเพดานระดับ 1 — เพิ่ม CFO`, and `— ถึง CEO` on the open-ended top
+     * tier, which is where the ladder stops rather than grows.
+     */
+    meaningAdds: (level: number, approvers: string) =>
+      `เกินเพดานระดับ ${level} — เพิ่ม ${approvers}`,
+    meaningTop: (level: number, approvers: string) =>
+      `เกินเพดานระดับ ${level} — ถึง ${approvers}`,
+    /** A tier that raises the ceiling without adding anyone to the chain. */
     meaningOver: (level: number, ceiling: string) =>
       `เกินเพดานระดับ ${level} (${ceiling} บาท)`,
 

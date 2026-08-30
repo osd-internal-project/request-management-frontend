@@ -17,7 +17,9 @@ import {
 } from "antd";
 import Text from "antd/es/typography/Text";
 import Paragraph from "antd/es/typography/Paragraph";
+import Link from "next/link";
 import { messages } from "@/lib/messages";
+import { ROUTES } from "@/lib/routes";
 
 import type {
   OrgUnitNode,
@@ -145,7 +147,6 @@ export function OrgAdmin({
   const [assigning, setAssigning] = useState<UnassignedUser | null>(null);
   const [addingTeam, setAddingTeam] = useState(false);
   const [changingLead, setChangingLead] = useState(false);
-  const [editingScope, setEditingScope] = useState<OrgMember | null>(null);
 
   // One reading of the clock for the whole screen — see `firstLoginLabel`.
   const [now] = useState(() => Date.now());
@@ -246,13 +247,17 @@ export function OrgAdmin({
   /**
    * The tree of §16 A3: name on the left, who runs it on the right.
    *
-   * A department prints its head's name alone ("ผอ. ประเสริฐ ท."), a team
-   * prints "หัวหน้า: … · N คน". That is not decoration — this tree is the
-   * source of truth for "หัวหน้าของผู้ยื่น", so an admin has to be able to see
-   * at a glance which unit has nobody in charge.
+   * A branch prints its head's name alone ("ผอ. ประเสริฐ ท."), a unit people
+   * actually sit in prints "หัวหน้า: … · N คน". That is not decoration — this
+   * tree is the source of truth for "หัวหน้าของผู้ยื่น", so an admin has to be
+   * able to see at a glance which unit has nobody in charge.
+   *
+   * Keyed on having members rather than on `kind === "TEAM"`: the real OSD
+   * chart is บริษัท → ฝ่าย → แผนก with no TEAM level at all, and the kind test
+   * left every one of its units printing the branch form.
    */
   function nodeDetail(unit: OrgUnitNode): string {
-    if (unit.kind === "TEAM") {
+    if (unit.kind === "TEAM" || unit.memberCount > 0) {
       const lead = unit.managerDisplayName
         ? `${messages.org.manager}: ${unit.managerDisplayName} · `
         : "";
@@ -434,15 +439,20 @@ export function OrgAdmin({
                             {group.name}
                           </Tag>
                         ))}
+                        {/*
+                          Not an edit control. `ScopeRule` is keyed on
+                          `(role, resource)` — SCOPE-01, enforced by
+                          `@@unique([roleId, resource])` — so there is no such
+                          thing as this person's scope to change. A button here
+                          promised one and silently rewrote the scope of
+                          everyone holding the same role.
+                        */}
                         {member.roles.length > 0 && (
-                          <Button
-                            size="small"
-                            type="link"
-                            className="px-0!"
-                            onClick={() => setEditingScope(member)}
-                          >
-                            {messages.org.editScope}
-                          </Button>
+                          <Link href={`${ROUTES.adminOrg}?tab=scope`}>
+                            <Text type="secondary" className="text-xs underline">
+                              {messages.org.scopeEditedOnRole}
+                            </Text>
+                          </Link>
                         )}
                       </div>
 
@@ -496,23 +506,6 @@ export function OrgAdmin({
           setAddingTeam(false);
           void message.success(messages.org.saved);
           await refreshTree();
-        }}
-      />
-
-      <ScopeDialog
-        member={editingScope}
-        holders={
-          editingScope
-            ? members.filter((m) =>
-                m.roles.some((r) => r.code === editingScope.roles[0]?.code),
-              ).length
-            : 0
-        }
-        onClose={() => setEditingScope(null)}
-        onDone={async () => {
-          setEditingScope(null);
-          void message.success(messages.org.saved);
-          reloadMembers();
         }}
       />
 
@@ -624,6 +617,8 @@ function AddTeamDialog({
 
     const result = await adminApi("org-units", {
       method: "POST",
+      // A unit added by hand is a team under whatever was selected; ฝ่าย and
+      // แผนก come from the HR register through the importer, not from here.
       body: JSON.stringify({ ...values, kind: "TEAM", company_id: companyId }),
     });
 
@@ -713,85 +708,6 @@ function ChangeLeadDialog({
               value: member.id,
               label: `${member.displayName} · ${member.username}`,
             }))}
-          />
-        </Form.Item>
-      </Form>
-    </Modal>
-  );
-}
-
-/**
- * Adjusts data scope — the half of the A3 rule that lives in this system
- * ("role หลักมาจาก Keycloak, scope ปรับในระบบ").
- *
- * SCOPE-01 defines scope per `(role, resource)`, and the schema enforces that,
- * so this edits the **role's** rule. The mockup prints scope beside a person,
- * which reads as per-person — hence the warning: an admin widening one
- * salesperson's view widens it for every salesperson in the company.
- */
-function ScopeDialog({
-  member,
-  holders,
-  onClose,
-  onDone,
-}: {
-  member: OrgMember | null;
-  holders: number;
-  onClose: () => void;
-  onDone: () => void;
-}) {
-  const [scope, setScope] = useState<string | undefined>();
-  const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-
-  const role = member?.roles[0];
-
-  async function submit() {
-    if (!role || !scope) return;
-    setSaving(true);
-    setError(null);
-
-    const result = await adminApi("scope-rules", {
-      method: "PUT",
-      body: JSON.stringify({
-        rules: [{ role_id: role.id, resource: "request", scope }],
-      }),
-    });
-
-    setSaving(false);
-    if (result.ok) onDone();
-    else setError(result.message);
-  }
-
-  return (
-    <Modal
-      open={Boolean(member)}
-      title={`${messages.org.editScope}: ${member?.displayName ?? ""}`}
-      onCancel={onClose}
-      onOk={submit}
-      confirmLoading={saving}
-      okButtonProps={{ disabled: !scope }}
-    >
-      {error && <Alert type="error" showIcon title={error} className="mb-3!" />}
-
-      {role && (
-        <Alert
-          type="warning"
-          showIcon
-          className="mb-3!"
-          title={messages.org.scopeIsPerRole(role.code, holders)}
-        />
-      )}
-
-      <Form layout="vertical">
-        <Form.Item label={messages.org.scope} required>
-          <Select
-            value={scope}
-            onChange={setScope}
-            placeholder={member?.scope}
-            options={["own", "team", "department", "company", "all"].map(
-              (level) => ({ value: level, label: level }),
-            )}
           />
         </Form.Item>
       </Form>

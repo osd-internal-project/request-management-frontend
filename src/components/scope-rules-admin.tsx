@@ -1,7 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { Alert, Button, Card, Empty, Select, Space, message } from "antd";
+import { useMemo, useState } from "react";
+import {
+  Alert,
+  Button,
+  Card,
+  Empty,
+  Popconfirm,
+  Select,
+  Space,
+  message,
+} from "antd";
 import Text from "antd/es/typography/Text";
 import Paragraph from "antd/es/typography/Paragraph";
 import { replaceScopeRules } from "@/lib/api/client-roles";
@@ -56,6 +65,31 @@ export function ScopeRulesAdmin({
     );
   }
 
+  /**
+   * How many people this save actually moves.
+   *
+   * A scope rule is keyed on `(role, resource)`, so saving one row changes what
+   * every holder of that role can see. The screen used to say so in prose only,
+   * and the one place that did print a number counted the members of the
+   * selected org unit — nine, where the role had seventy-three. A wrong number
+   * is worse than none, so this counts distinct roles from `_count.users`,
+   * which the roles endpoint already returns.
+   */
+  const affected = useMemo(() => {
+    const byRole = new Map<string, number>();
+
+    for (const row of rows) {
+      if (!row.roleId) continue;
+      const role = roles.find((candidate) => candidate.id === row.roleId);
+      byRole.set(row.roleId, role?._count.users ?? 0);
+    }
+
+    return {
+      roles: byRole.size,
+      people: [...byRole.values()].reduce((sum, n) => sum + n, 0),
+    };
+  }, [rows, roles]);
+
   async function save() {
     setBusy(true);
     setError(null);
@@ -94,14 +128,20 @@ export function ScopeRulesAdmin({
           >
             {messages.scopeRules.addRule}
           </Button>
-          <Button
-            size="small"
-            type="primary"
-            loading={busy}
-            onClick={() => void save()}
+          <Popconfirm
+            title={messages.scopeRules.confirmTitle}
+            description={messages.scopeRules.confirmBody(
+              affected.roles,
+              affected.people,
+            )}
+            okText={messages.scopeRules.save}
+            cancelText={messages.scopeRules.cancel}
+            onConfirm={() => void save()}
           >
-            {messages.scopeRules.save}
-          </Button>
+            <Button size="small" type="primary" loading={busy}>
+              {messages.scopeRules.save}
+            </Button>
+          </Popconfirm>
         </Space>
       }
     >
@@ -127,7 +167,9 @@ export function ScopeRulesAdmin({
                   onChange={(next) => update(index, { roleId: next })}
                   options={roles.map((role) => ({
                     value: role.id,
-                    label: role.name,
+                    // The count is the point: it turns "แก้ scope ของ employee"
+                    // into "แก้ scope ของ 73 คน" before the click, not after.
+                    label: `${role.name} · ${messages.scopeRules.holders(role._count.users)}`,
                   }))}
                 />
 

@@ -18,6 +18,10 @@ export function createDraft(input: {
   form_data?: Record<string, unknown>;
   ref_type?: string;
   ref_id?: string;
+  /** The person this ticket is handed to. Required by the time it is submitted. */
+  receiver_user_id?: string;
+  /** Set when this request is spawned from another one. */
+  parent_request_id?: string;
 }): Promise<ClientResult<RequestRow>> {
   return appApi<RequestRow>("requests", {
     method: "POST",
@@ -31,6 +35,7 @@ export function saveDraft(
     form_data?: Record<string, unknown>;
     ref_type?: string | null;
     ref_id?: string | null;
+    receiver_user_id?: string | null;
   },
 ): Promise<ClientResult<RequestRow>> {
   return appApi<RequestRow>(`requests/${id}`, {
@@ -61,6 +66,32 @@ export function removeAttachment(
   return appApi<void>(`requests/${id}/attachments/${attachmentId}`, {
     method: "DELETE",
   });
+}
+
+/** The named receiver accepts the ticket — the working clock starts here. */
+export function receiveRequest(id: string): Promise<ClientResult<RequestRow>> {
+  return appApi<RequestRow>(`requests/${id}/receive`, { method: "POST" });
+}
+
+/** Hands the work on — `ASSIGNED` the first time, `HANDOVER` afterwards. */
+export function assignRequest(
+  id: string,
+  input: { assignee_user_id: string; note?: string },
+): Promise<ClientResult<RequestRow>> {
+  return appApi<RequestRow>(`requests/${id}/assign`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+/** The doing team says the work is finished. */
+export function completeRequest(id: string): Promise<ClientResult<RequestRow>> {
+  return appApi<RequestRow>(`requests/${id}/complete`, { method: "POST" });
+}
+
+/** The requester accepts the result and the ticket ends. */
+export function closeRequest(id: string): Promise<ClientResult<RequestRow>> {
+  return appApi<RequestRow>(`requests/${id}/close`, { method: "POST" });
 }
 
 export function submitRequest(id: string): Promise<ClientResult<RequestRow>> {

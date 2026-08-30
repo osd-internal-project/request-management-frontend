@@ -4,6 +4,7 @@ import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
 import { RequestForm } from "@/components/request-form";
 import { getRequestTypes } from "@/lib/api/requests";
+import { apiGet } from "@/lib/api/core";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import { getSession } from "@/lib/session";
@@ -14,9 +15,35 @@ import { getSession } from "@/lib/session";
  * The types (and therefore the whole form) are loaded server-side so the first
  * paint already knows what can be raised; only the answers are client state.
  */
-export default async function NewRequestPage() {
+interface Paginated<T> {
+  data: T[];
+}
+
+interface DirectoryUser {
+  id: string;
+  displayName: string;
+  username: string;
+}
+
+export default async function NewRequestPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ parent?: string }>;
+}) {
   const session = await getSession();
-  const typesResult = await getRequestTypes();
+  const { parent } = await searchParams;
+
+  /**
+   * The directory feeds the `ผู้รับเรื่อง` selector.
+   *
+   * A request is handed to a person, so the form cannot be filled in without
+   * one — fetched here rather than on demand so the field is usable on first
+   * paint like every other part of the form.
+   */
+  const [typesResult, users] = await Promise.all([
+    getRequestTypes(),
+    apiGet<Paginated<DirectoryUser>>("/users?page_size=200"),
+  ]);
 
   const activeCompany = session?.companies.find(
     (company) => company.id === session.active_company_id,
@@ -64,7 +91,11 @@ export default async function NewRequestPage() {
         )}
       </div>
 
-      <RequestForm types={typesResult.data} />
+      <RequestForm
+        types={typesResult.data}
+        people={users.ok ? users.data.data : []}
+        parentRequestId={parent ?? null}
+      />
     </div>
   );
 }

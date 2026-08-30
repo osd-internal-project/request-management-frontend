@@ -1,6 +1,7 @@
 import { Alert, Button } from "antd";
 import Link from "next/link";
 import Title from "antd/es/typography/Title";
+import Text from "antd/es/typography/Text";
 import { MyWork } from "@/components/my-work";
 import { PendingAssignment } from "@/components/pending-assignment";
 import requests from "@/lib/api/requests";
@@ -17,8 +18,25 @@ import { can, getSession } from "@/lib/session";
  * at the backend, so this page renders whatever it is given without deciding
  * visibility itself (SCOPE-02).
  */
-export default async function MyWorkPage() {
+export default async function MyWorkPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    status?: string;
+    type_code?: string;
+    q?: string;
+    overdue?: string;
+  }>;
+}) {
   const session = await getSession();
+  const query = await searchParams;
+
+  const filters = {
+    status: query.status,
+    typeCode: query.type_code,
+    q: query.q,
+    overdue: query.overdue === "true",
+  };
 
   // AUTH-04: someone not yet placed in the org chart has no supervisor, so
   // there is no step-1 approver and nothing they submit could route.
@@ -32,10 +50,30 @@ export default async function MyWorkPage() {
   // The menu cannot cover this: it gates links, not the data a shared page fetches.
   const canDecide = can(session, "approval.decide");
 
-  const [mineResult, involvedResult, inboxResult, typesResult] =
+  /**
+   * The first tab asks for **no `view`**, so `buildScopeWhere` decides which
+   * rows come back (SCOPE-02).
+   *
+   * It used to send `view=mine`, which pins `requesterId` to the caller and
+   * therefore overrides the scope entirely: an administrator scoped to the whole
+   * company saw an empty page while every one of those rows was already visible
+   * to them at the API.
+   *
+   * Filters go to the server for the same reason — the scope list can run past
+   * one page, and narrowing the fetched page in the browser would report
+   * "nothing found" for matches sitting on the next one.
+   */
+  const [mineResult, involvedResult, incomingResult, inboxResult, typesResult] =
     await Promise.all([
-      requests.getMyRequests(100),
+      requests.getRequests({
+        status: filters.status,
+        type_code: filters.typeCode,
+        q: filters.q,
+        overdue: filters.overdue,
+        page_size: 100,
+      }),
       requests.getInvolvedRequests(100),
+      requests.getIncomingRequests(100),
       canDecide ? approvals.getApprovalsInbox({ page_size: 100 }) : null,
       requests.getRequestTypes(),
     ]);
@@ -71,9 +109,16 @@ export default async function MyWorkPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
-        <Title level={4} className="mb-0!">
-          {messages.myWork.title}
-        </Title>
+        <div>
+          <Title level={4} className="mb-0!">
+            {messages.myWork.title}
+          </Title>
+          {/* SCOPE-02: the row set is the backend's decision. Said here so a
+              short list reads as the truth rather than as a broken page. */}
+          <Text type="secondary" className="text-xs">
+            {messages.myWork.scopeNote[session?.scopes.request ?? "own"] ?? ""}
+          </Text>
+        </div>
         <Link href={ROUTES.newRequest}>
           <Button type="primary">{messages.myWork.newRequest}</Button>
         </Link>
@@ -92,6 +137,9 @@ export default async function MyWorkPage() {
         mine={mine}
         approvals={waitingRows}
         showApprovals={canDecide}
+        incoming={incomingResult.ok ? incomingResult.data.data : []}
+        scope={session?.scopes.request ?? "own"}
+        filters={filters}
         types={typesResult.ok ? typesResult.data : []}
       />
     </div>

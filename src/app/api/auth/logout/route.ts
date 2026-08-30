@@ -65,7 +65,11 @@ export async function GET(request: NextRequest) {
   const reason = request.nextUrl.searchParams.get("reason");
 
   const fallback = new URL(LOGIN_PATH, request.url);
+  // `signed_out` is what stops `/login` bouncing the browser to Keycloak: the
+  // realm session may well still be alive, and the user would be signed back in
+  // before they saw anything. `reason` already renders for the same reason.
   if (reason) fallback.searchParams.set("error", reason);
+  else fallback.searchParams.set("signed_out", "1");
 
   return clearCookies(
     NextResponse.redirect(endSessionUrl ?? fallback.toString()),

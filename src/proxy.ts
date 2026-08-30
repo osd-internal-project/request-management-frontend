@@ -7,8 +7,20 @@ export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isLoginPage = pathname.startsWith(LOGIN_PATH);
 
+  /**
+   * Straight to Keycloak, not to `/login`.
+   *
+   * The old route sent everyone to a page whose only control was a button that
+   * went here anyway — one extra click on the way to the identity provider that
+   * owns the credentials. `/login` still exists for the states a redirect
+   * cannot carry (an authorize failure, a completed logout); see the comment on
+   * that page.
+   *
+   * `matcher` below excludes `/api`, so this redirect does not re-enter the
+   * proxy and cannot loop.
+   */
   if (!isAuthenticated && !isLoginPage) {
-    const loginUrl = new URL(LOGIN_PATH, request.url);
+    const loginUrl = new URL("/api/auth/login", request.url);
     if (pathname !== "/") {
       loginUrl.searchParams.set("from", pathname);
     }

@@ -21,6 +21,11 @@ import {
   createRequestType,
   updateRequestType,
 } from "@/lib/api/client-requests";
+import {
+  fieldOrder,
+  isMultilineField,
+  isSensitiveField,
+} from "@/lib/api/types";
 import type {
   CodedLabel,
   FormSchemaProperty,
@@ -29,41 +34,90 @@ import type {
 } from "@/lib/api/types";
 import { messages } from "@/lib/messages";
 
-/** One editable row of the form schema, flattened for the table. */
+/** One editable row of the form schema, flattened for display. */
 interface FieldRow {
   key: string;
   title: string;
   type: string;
   required: boolean;
   sensitive: boolean;
+  multiline: boolean;
+  /**
+   * Everything this screen does not edit — `description`, `enum`, `minimum`,
+   * `maximum`, `maxLength` — carried through a round trip so saving a type does
+   * not quietly strip the parts of its schema the editor has no control for.
+   */
+  extra: FormSchemaProperty;
 }
 
 const FIELD_TYPES = ["string", "number", "boolean"];
 
+/** The schema keys this editor owns; everything else survives a round trip. */
+const OWNED_PROPERTY_KEYS = [
+  "type",
+  "title",
+  "sensitive",
+  "multiline",
+  "x-sensitive",
+  "x-multiline",
+  "x-order",
+] as const;
+
+const EMPTY_FIELD: FieldRow = {
+  key: "",
+  title: "",
+  type: "string",
+  required: false,
+  sensitive: false,
+  multiline: false,
+  extra: {},
+};
+
+/**
+ * Rows in the order the submit screen will draw them.
+ *
+ * `formSchema` is a `jsonb` column and Postgres does not preserve key order, so
+ * the order is carried as `x-order` data (see `fieldOrder`). Reading it here —
+ * and writing it back in `toSchema` — is what keeps this screen and หน้าที่ 3
+ * showing the same form.
+ */
 function toRows(type: RequestType): FieldRow[] {
   const properties = type.formSchema?.properties ?? {};
   const required = new Set(type.formSchema?.required ?? []);
 
-  return Object.entries(properties).map(([key, property]) => ({
-    key,
-    title: property.title ?? key,
-    type: property.type ?? "string",
-    required: required.has(key),
-    sensitive: Boolean(property.sensitive),
-  }));
+  return Object.entries(properties)
+    .sort(([, a], [, b]) => fieldOrder(a) - fieldOrder(b))
+    .map(([key, property]) => {
+      const extra: FormSchemaProperty = { ...property };
+      for (const owned of OWNED_PROPERTY_KEYS) delete extra[owned];
+
+      return {
+        key,
+        title: property.title ?? key,
+        type: property.type ?? "string",
+        required: required.has(key),
+        sensitive: isSensitiveField(property),
+        multiline: isMultilineField(property),
+        extra,
+      };
+    });
 }
 
 /** The inverse — what the API stores. */
 function toSchema(rows: FieldRow[]) {
   const properties: Record<string, FormSchemaProperty> = {};
 
-  for (const row of rows) {
+  rows.forEach((row, index) => {
     properties[row.key] = {
+      ...row.extra,
       type: row.type,
       title: row.title,
-      ...(row.sensitive ? { sensitive: true } : {}),
+      // Position is data, not key order — see `toRows`.
+      "x-order": index + 1,
+      ...(row.sensitive ? { "x-sensitive": true } : {}),
+      ...(row.multiline ? { "x-multiline": true } : {}),
     };
-  }
+  });
 
   return {
     type: "object",
@@ -72,78 +126,25 @@ function toSchema(rows: FieldRow[]) {
   };
 }
 
-/**
- * `เอกสารบังคับ` and `เหตุผลตีกลับมาตรฐาน` are the same shape and the same
- * rules, so they share an editor.
- *
- * The code is what the system stores and reports on; the label is what a person
- * reads. Both matter — REQ-03 blocks a submit by code, REQ-04 counts bounces by
- * code — which is why the code stays visible and editable rather than being
- * generated from the label.
- */
-function CodedLabelEditor({
-  entries,
-  onChange,
-  addLabel,
-}: {
-  readonly entries: CodedLabel[];
-  readonly onChange: (next: CodedLabel[]) => void;
-  readonly addLabel: string;
-}) {
-  return (
-    <div className="mt-1">
-      <ul className="space-y-2">
-        {entries.map((entry, index) => (
-          <li key={index} className="flex flex-wrap items-center gap-2">
-            <Input
-              size="small"
-              style={{ width: 190 }}
-              value={entry.code}
-              placeholder={messages.requestTypes.entryCode}
-              onChange={(event) =>
-                onChange(
-                  entries.map((row, i) =>
-                    i === index
-                      ? { ...row, code: event.target.value.toUpperCase() }
-                      : row,
-                  ),
-                )
-              }
-            />
-            <Input
-              size="small"
-              style={{ width: 240 }}
-              value={entry.name}
-              placeholder={messages.requestTypes.entryLabel}
-              onChange={(event) =>
-                onChange(
-                  entries.map((row, i) =>
-                    i === index ? { ...row, name: event.target.value } : row,
-                  ),
-                )
-              }
-            />
-            <Button
-              size="small"
-              type="link"
-              danger
-              onClick={() => onChange(entries.filter((_, i) => i !== index))}
-            >
-              {messages.requestTypes.remove}
-            </Button>
-          </li>
-        ))}
-      </ul>
+/** §16 describes a field by its shape: `ตัวเลข 0–100`, `ตัวเลข · ฟิลด์อ่อนไหว`. */
+function describeField(row: FieldRow): string {
+  const parts: string[] = [];
 
-      <Button
-        size="small"
-        className="mt-2"
-        onClick={() => onChange([...entries, { code: "", name: "" }])}
-      >
-        {addLabel}
-      </Button>
-    </div>
-  );
+  if (row.multiline) parts.push(messages.requestTypes.fieldMultiline);
+  else {
+    const base = messages.requestTypes.fieldTypeLabels[row.type] ?? row.type;
+    const { minimum, maximum } = row.extra;
+
+    parts.push(
+      minimum !== undefined && maximum !== undefined
+        ? `${base} ${messages.requestTypes.fieldRange(minimum, maximum)}`
+        : base,
+    );
+  }
+
+  if (row.sensitive) parts.push(messages.requestTypes.fieldSensitive);
+
+  return parts.join(" · ");
 }
 
 /**
@@ -156,14 +157,22 @@ function CodedLabelEditor({
  * Saving affects **new requests only**. Work already in the ladder keeps the
  * snapshot it was raised under (§7), which is why there is no "apply to
  * existing" control anywhere on this screen.
+ *
+ * §16 draws every list here — form fields, documents, return reasons — as one
+ * compact line each, so the whole configuration of a type fits on one screen.
+ * Editing therefore happens in a dialog rather than in a row of inputs: a row
+ * wide enough to edit in is a row too wide to scan.
  */
 export function RequestTypeAdmin({
   types: initial,
   orgUnits,
+  companyName,
 }: {
   readonly types: RequestType[];
   /** For the `ทีมผู้รับ` selector — same source A3 uses. */
   readonly orgUnits: OrgUnitNode[];
+  /** §16 heads the list with the company these types belong to. */
+  readonly companyName: string | null;
 }) {
   const [types, setTypes] = useState(initial);
   const [selectedCode, setSelectedCode] = useState<string | null>(
@@ -264,320 +273,121 @@ export function RequestTypeAdmin({
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)]">
-      <Card
-        title={messages.requestTypes.listTitle}
-        extra={
-          <Button size="small" onClick={() => setCreating(true)}>
-            {messages.requestTypes.newType}
-          </Button>
-        }
-      >
-        {types.length ? (
-          <ul className="divide-y divide-black/5">
-            {types.map((type) => (
-              <li key={type.code}>
-                <button
-                  type="button"
-                  onClick={() => select(type)}
-                  className={`flex w-full cursor-pointer items-center justify-between gap-2 rounded px-2 py-2 text-left hover:bg-black/5 ${
-                    type.code === selectedCode ? "bg-black/5 font-medium" : ""
-                  }`}
-                >
-                  <span className="min-w-0">
-                    <span className="block truncate">{type.name}</span>
-                    <Text type="secondary" className="block truncate text-xs">
-                      {messages.requestTypes.listSubtitle(
-                        type.code,
-                        orgUnits.find(
-                          (unit) => unit.id === type.receiverOrgUnitId,
-                        )?.name ?? messages.requestTypes.noReceiver,
-                        type.slaHours
-                          ? messages.requestTypes.slaShort(
-                              type.slaHours,
-                              type.slaBusinessHours ?? true,
-                            )
-                          : messages.requestTypes.slaUnset,
-                      )}
-                    </Text>
-                  </span>
-                  <Tag color={type.active ? "green" : "default"}>
-                    {type.active
-                      ? messages.requestTypes.active
-                      : messages.requestTypes.inactive}
-                  </Tag>
-                </button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <Empty />
-        )}
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <Button type="primary" onClick={() => setCreating(true)}>
+          {messages.requestTypes.newTypeTitle}
+        </Button>
+      </div>
 
-        <Paragraph type="secondary" className="mt-3! mb-0! text-xs">
-          {messages.requestTypes.matrixNote}
-        </Paragraph>
-      </Card>
+      <div className="grid gap-4 lg:grid-cols-[330px_minmax(0,1fr)]">
+        <TypeList
+          types={types}
+          orgUnits={orgUnits}
+          selectedCode={selectedCode}
+          companyName={companyName}
+          onSelect={select}
+        />
 
-      <Card
-        title={
-          selected
-            ? messages.requestTypes.edit(selected.name, selected.code)
-            : messages.requestTypes.selectFirst
-        }
-        extra={
-          selected && (
-            <Space>
-              <Button size="small" onClick={() => void toggleActive()}>
-                {selected.active
-                  ? messages.requestTypes.disable
-                  : messages.requestTypes.enable}
-              </Button>
-              <Button
-                size="small"
-                type="primary"
-                loading={busy}
-                onClick={() => void save()}
-              >
-                {messages.requestTypes.save}
-              </Button>
-            </Space>
-          )
-        }
-      >
-        {!selected ? (
-          <Empty description={messages.requestTypes.selectFirst} />
-        ) : (
-          <Space orientation="vertical" size="middle" className="flex">
-            {error && <Alert type="error" showIcon title={error} />}
-
-            <label className="block">
-              <Text strong>{messages.requestTypes.name}</Text>
-              <Input
-                className="mt-1"
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-              />
-            </label>
-
-            <label className="block">
-              <Text strong>{messages.requestTypes.receiver}</Text>
-              <Select
-                className="mt-1 w-full"
-                allowClear
-                value={receiver ?? undefined}
-                placeholder={messages.requestTypes.noReceiver}
-                onChange={(next?: string) => setReceiver(next ?? null)}
-                options={orgUnits.map((unit) => ({
-                  value: unit.id,
-                  label: unit.name,
-                }))}
-              />
-            </label>
-
-            <label className="block">
-              <Text strong>{messages.requestTypes.sla}</Text>
-              <InputNumber
-                className="mt-1 w-full"
-                min={1}
-                value={slaHours ?? undefined}
-                onChange={(next) => setSlaHours(next ?? null)}
-              />
-              <Checkbox
-                className="mt-2"
-                checked={businessHours}
-                onChange={(event) => setBusinessHours(event.target.checked)}
-              >
-                {messages.requestTypes.businessHours}
-              </Checkbox>
-            </label>
-
-            <div>
-              <div className="mb-2 flex items-center justify-between">
-                <Text strong>{messages.requestTypes.fields}</Text>
-                <Button
-                  size="small"
-                  onClick={() =>
-                    setRows((current) => [
-                      ...current,
-                      {
-                        key: `field_${current.length + 1}`,
-                        title: "",
-                        type: "string",
-                        required: false,
-                        sensitive: false,
-                      },
-                    ])
-                  }
-                >
-                  {messages.requestTypes.addField}
+        <Card
+          title={
+            selected
+              ? messages.requestTypes.edit(selected.name, selected.code)
+              : messages.requestTypes.selectFirst
+          }
+          extra={
+            selected && (
+              <Space>
+                <Button danger onClick={() => void toggleActive()}>
+                  {selected.active
+                    ? messages.requestTypes.disable
+                    : messages.requestTypes.enable}
                 </Button>
+                <Button
+                  type="primary"
+                  loading={busy}
+                  onClick={() => void save()}
+                >
+                  {messages.requestTypes.save}
+                </Button>
+              </Space>
+            )
+          }
+        >
+          {!selected ? (
+            <Empty description={messages.requestTypes.selectFirst} />
+          ) : (
+            <div className="space-y-4">
+              {error && <Alert type="error" showIcon title={error} />}
+
+              <div className="grid gap-4 sm:grid-cols-3">
+                <label className="block">
+                  <Text strong>{messages.requestTypes.name}</Text>
+                  <Input
+                    className="mt-1"
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                  />
+                </label>
+
+                <label className="block">
+                  <Text strong>{messages.requestTypes.receiver}</Text>
+                  <Select
+                    className="mt-1 w-full"
+                    allowClear
+                    value={receiver ?? undefined}
+                    placeholder={messages.requestTypes.noReceiver}
+                    onChange={(next?: string) => setReceiver(next ?? null)}
+                    options={orgUnits.map((unit) => ({
+                      value: unit.id,
+                      label: unit.name,
+                    }))}
+                  />
+                </label>
+
+                <label className="block">
+                  <Text strong>{messages.requestTypes.sla}</Text>
+                  <InputNumber
+                    className="mt-1 w-full"
+                    min={1}
+                    value={slaHours ?? undefined}
+                    onChange={(next) => setSlaHours(next ?? null)}
+                  />
+                  <Checkbox
+                    className="mt-1"
+                    checked={businessHours}
+                    onChange={(event) => setBusinessHours(event.target.checked)}
+                  >
+                    <Text type="secondary" className="text-xs">
+                      {messages.requestTypes.businessHours}
+                    </Text>
+                  </Checkbox>
+                </label>
               </div>
 
-              <ul className="space-y-2">
-                {rows.map((row, index) => (
-                  <li
-                    key={index}
-                    className="flex flex-wrap items-center gap-2 rounded border border-black/5 p-2"
-                  >
-                    <Input
-                      size="small"
-                      style={{ width: 150 }}
-                      value={row.key}
-                      placeholder={messages.requestTypes.fieldName}
-                      onChange={(event) =>
-                        setRows((current) =>
-                          current.map((entry, i) =>
-                            i === index
-                              ? { ...entry, key: event.target.value }
-                              : entry,
-                          ),
-                        )
-                      }
-                    />
-                    <Input
-                      size="small"
-                      style={{ width: 170 }}
-                      value={row.title}
-                      placeholder={messages.requestTypes.fieldTitle}
-                      onChange={(event) =>
-                        setRows((current) =>
-                          current.map((entry, i) =>
-                            i === index
-                              ? { ...entry, title: event.target.value }
-                              : entry,
-                          ),
-                        )
-                      }
-                    />
-                    <Select
-                      size="small"
-                      style={{ width: 110 }}
-                      value={row.type}
-                      onChange={(next) =>
-                        setRows((current) =>
-                          current.map((entry, i) =>
-                            i === index ? { ...entry, type: next } : entry,
-                          ),
-                        )
-                      }
-                      options={FIELD_TYPES.map((value) => ({
-                        value,
-                        label: value,
-                      }))}
-                    />
-                    <Checkbox
-                      checked={row.required}
-                      onChange={(event) =>
-                        setRows((current) =>
-                          current.map((entry, i) =>
-                            i === index
-                              ? { ...entry, required: event.target.checked }
-                              : entry,
-                          ),
-                        )
-                      }
-                    >
-                      {messages.requestTypes.fieldRequired}
-                    </Checkbox>
-                    <Checkbox
-                      checked={row.sensitive}
-                      onChange={(event) =>
-                        setRows((current) =>
-                          current.map((entry, i) =>
-                            i === index
-                              ? { ...entry, sensitive: event.target.checked }
-                              : entry,
-                          ),
-                        )
-                      }
-                    >
-                      {messages.requestTypes.fieldSensitive}
-                    </Checkbox>
-                    <Button
-                      size="small"
-                      type="link"
-                      danger
-                      onClick={() =>
-                        setRows((current) =>
-                          current.filter((_, i) => i !== index),
-                        )
-                      }
-                    >
-                      {messages.requestForm.remove}
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            </div>
+              <div className="grid gap-6 lg:grid-cols-2">
+                <FormSchemaEditor rows={rows} onChange={setRows} />
 
-            <div>
-              <Text strong>{messages.requestTypes.docs}</Text>
-              <CodedLabelEditor
-                entries={docs}
-                onChange={setDocs}
-                addLabel={messages.requestTypes.addDoc}
+                <div className="space-y-4">
+                  <RequiredDocs entries={docs} onChange={setDocs} />
+                  <ReturnReasons entries={reasons} onChange={setReasons} />
+                  <ApprovalRoute
+                    rows={rows}
+                    amountField={amountField}
+                    onChange={setAmountField}
+                  />
+                </div>
+              </div>
+
+              <Alert
+                type="info"
+                showIcon
+                title={messages.requestTypes.effectNote}
               />
             </div>
-
-            <div>
-              <Text strong>{messages.requestTypes.reasons}</Text>
-              <Paragraph type="secondary" className="mt-1! mb-0! text-xs">
-                {messages.requestTypes.reasonsNote}
-              </Paragraph>
-              <CodedLabelEditor
-                entries={reasons}
-                onChange={setReasons}
-                addLabel={messages.requestTypes.addReason}
-              />
-            </div>
-
-            <div>
-              <Text strong>{messages.requestTypes.routeTitle}</Text>
-              <Paragraph type="secondary" className="mt-1! mb-1! text-xs">
-                {messages.requestTypes.routeStandard}
-              </Paragraph>
-
-              <Select
-                size="small"
-                allowClear
-                style={{ minWidth: 260 }}
-                value={amountField ?? undefined}
-                placeholder={messages.requestTypes.amountField}
-                onChange={(next?: string) => setAmountField(next ?? null)}
-                options={rows.map((row) => ({
-                  value: row.key,
-                  label: `${row.title || row.key} (${row.key})`,
-                }))}
-              />
-
-              <Paragraph type="secondary" className="mt-1! mb-0! text-xs">
-                {messages.requestTypes.amountFieldNote}
-              </Paragraph>
-
-              {/*
-                APV-02 measures this field against the matrix ceilings. Without
-                it a submit cannot pick a tier, so the type is unroutable — said
-                here rather than discovered at the first submit.
-              */}
-              {!amountField && (
-                <Alert
-                  type="warning"
-                  showIcon
-                  className="mt-2"
-                  message={messages.requestTypes.amountFieldMissing}
-                />
-              )}
-            </div>
-
-            <Alert
-              type="info"
-              showIcon
-              title={messages.requestTypes.effectNote}
-            />
-          </Space>
-        )}
-      </Card>
+          )}
+        </Card>
+      </div>
 
       <NewTypeDialog
         open={creating}
@@ -588,6 +398,521 @@ export function RequestTypeAdmin({
           select(type);
         }}
       />
+    </div>
+  );
+}
+
+/** §16's left column: every type of the active company, status included. */
+function TypeList({
+  types,
+  orgUnits,
+  selectedCode,
+  companyName,
+  onSelect,
+}: {
+  readonly types: RequestType[];
+  readonly orgUnits: OrgUnitNode[];
+  readonly selectedCode: string | null;
+  readonly companyName: string | null;
+  readonly onSelect: (type: RequestType) => void;
+}) {
+  return (
+    <Card
+      title={
+        companyName
+          ? messages.requestTypes.listTitleFor(companyName)
+          : messages.requestTypes.listTitle
+      }
+      styles={{ body: { padding: 0 } }}
+    >
+      {types.length ? (
+        <ul className="m-0 list-none p-0">
+          {types.map((type) => {
+            const active = type.code === selectedCode;
+
+            return (
+              <li key={type.code} className="border-b border-black/5 last:border-b-0">
+                <button
+                  type="button"
+                  onClick={() => onSelect(type)}
+                  className={`flex w-full cursor-pointer flex-col gap-1 border-l-[3px] px-4 py-3 text-left hover:bg-black/[0.03] ${
+                    active
+                      ? "border-l-[var(--app-primary)] bg-[var(--app-primary-pale)]"
+                      : "border-l-transparent"
+                  }`}
+                >
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="min-w-0 truncate font-semibold">
+                      {type.name}
+                    </span>
+                    <Tag
+                      color={type.active ? "green" : "default"}
+                      className="m-0!"
+                    >
+                      {type.active
+                        ? messages.requestTypes.active
+                        : messages.requestTypes.inactive}
+                    </Tag>
+                  </span>
+
+                  <Text type="secondary" className="truncate text-xs">
+                    {messages.requestTypes.listSubtitle(
+                      type.code,
+                      orgUnits.find((unit) => unit.id === type.receiverOrgUnitId)
+                        ?.name ?? messages.requestTypes.noReceiver,
+                      type.slaHours
+                        ? messages.requestTypes.slaShort(
+                            type.slaHours,
+                            type.slaBusinessHours ?? true,
+                          )
+                        : messages.requestTypes.slaUnset,
+                    )}
+                  </Text>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <div className="p-4">
+          <Empty />
+        </div>
+      )}
+    </Card>
+  );
+}
+
+/** `ฟิลด์ฟอร์ม (form schema)` — one line per field, edited in a dialog. */
+function FormSchemaEditor({
+  rows,
+  onChange,
+}: {
+  readonly rows: FieldRow[];
+  readonly onChange: (next: FieldRow[]) => void;
+}) {
+  // -1 opens the dialog on a new field; null keeps it closed.
+  const [editing, setEditing] = useState<number | null>(null);
+
+  return (
+    <div>
+      <Text strong>{messages.requestTypes.fields}</Text>
+
+      <ul className="mt-2 m-0 list-none space-y-2 p-0">
+        {rows.map((row, index) => (
+          <li key={index}>
+            <button
+              type="button"
+              onClick={() => setEditing(index)}
+              className="flex w-full cursor-pointer items-center gap-3 rounded border border-black/5 px-3 py-2 text-left hover:bg-black/[0.03]"
+            >
+              <span className="w-36 shrink-0 truncate font-semibold">
+                {row.title || row.key}
+              </span>
+
+              <Text type="secondary" className="min-w-0 truncate text-xs">
+                {describeField(row)}
+              </Text>
+
+              <span className="flex-1" />
+
+              {row.required && (
+                <Tag color="red" className="m-0!">
+                  {messages.requestTypes.fieldRequired}
+                </Tag>
+              )}
+              {row.sensitive && (
+                <Tag color="blue" className="m-0!">
+                  {messages.requestTypes.fieldRestricted}
+                </Tag>
+              )}
+            </button>
+          </li>
+        ))}
+      </ul>
+
+      <Button type="link" className="mt-1 px-0!" onClick={() => setEditing(-1)}>
+        {messages.requestTypes.addField}
+      </Button>
+
+      {/*
+        Keyed by which row is open: the draft below is seeded at mount, and
+        `destroyOnHidden` destroys the Modal body, not this component. Without
+        the key, the second field opened would show the first one's values.
+      */}
+      <FieldDialog
+        key={editing ?? "closed"}
+        open={editing !== null}
+        row={editing !== null && editing >= 0 ? rows[editing] : null}
+        onClose={() => setEditing(null)}
+        onSave={(row) => {
+          onChange(
+            editing !== null && editing >= 0
+              ? rows.map((entry, index) => (index === editing ? row : entry))
+              : [...rows, row],
+          );
+          setEditing(null);
+        }}
+        onRemove={
+          editing !== null && editing >= 0
+            ? () => {
+                onChange(rows.filter((_, index) => index !== editing));
+                setEditing(null);
+              }
+            : undefined
+        }
+      />
+    </div>
+  );
+}
+
+function FieldDialog({
+  open,
+  row,
+  onClose,
+  onSave,
+  onRemove,
+}: {
+  open: boolean;
+  row: FieldRow | null;
+  onClose: () => void;
+  onSave: (row: FieldRow) => void;
+  onRemove?: () => void;
+}) {
+  // Seeded at mount; the caller keys this component per opening so a new
+  // selection arrives as a remount rather than as a stale draft.
+  const [draft, setDraft] = useState<FieldRow>(row ?? EMPTY_FIELD);
+
+  function set(patch: Partial<FieldRow>) {
+    setDraft((current) => ({ ...current, ...patch }));
+  }
+
+  return (
+    <Modal
+      open={open}
+      destroyOnHidden
+      title={
+        row
+          ? messages.requestTypes.fieldEditTitle
+          : messages.requestTypes.fieldAddTitle
+      }
+      onCancel={onClose}
+      onOk={() => onSave(draft)}
+      okButtonProps={{ disabled: !draft.key.trim() }}
+      footer={(_, { OkBtn, CancelBtn }) => (
+        <div className="flex items-center">
+          {onRemove && (
+            <Button type="link" danger onClick={onRemove}>
+              {messages.requestTypes.remove}
+            </Button>
+          )}
+          <span className="flex-1" />
+          <Space>
+            <CancelBtn />
+            <OkBtn />
+          </Space>
+        </div>
+      )}
+    >
+      <Space orientation="vertical" size="middle" className="flex">
+        <label className="block">
+          <Text strong>{messages.requestTypes.fieldName}</Text>
+          <Input
+            className="mt-1"
+            value={draft.key}
+            onChange={(event) => set({ key: event.target.value })}
+          />
+        </label>
+
+        <label className="block">
+          <Text strong>{messages.requestTypes.fieldTitle}</Text>
+          <Input
+            className="mt-1"
+            value={draft.title}
+            onChange={(event) => set({ title: event.target.value })}
+          />
+        </label>
+
+        <label className="block">
+          <Text strong>{messages.requestTypes.fieldType}</Text>
+          <Select
+            className="mt-1 w-full"
+            value={draft.type}
+            onChange={(next: string) => set({ type: next })}
+            options={FIELD_TYPES.map((value) => ({ value, label: value }))}
+          />
+        </label>
+
+        <Space wrap>
+          <Checkbox
+            checked={draft.required}
+            onChange={(event) => set({ required: event.target.checked })}
+          >
+            {messages.requestTypes.fieldRequired}
+          </Checkbox>
+          <Checkbox
+            checked={draft.sensitive}
+            onChange={(event) => set({ sensitive: event.target.checked })}
+          >
+            {messages.requestTypes.fieldSensitive}
+          </Checkbox>
+          <Checkbox
+            checked={draft.multiline}
+            onChange={(event) => set({ multiline: event.target.checked })}
+          >
+            {messages.requestTypes.fieldMultiline}
+          </Checkbox>
+        </Space>
+      </Space>
+    </Modal>
+  );
+}
+
+/** `เอกสารบังคับ` — one line each, as §16 draws them. */
+function RequiredDocs({
+  entries,
+  onChange,
+}: {
+  readonly entries: CodedLabel[];
+  readonly onChange: (next: CodedLabel[]) => void;
+}) {
+  const [editing, setEditing] = useState<number | null>(null);
+
+  return (
+    <div>
+      <Text strong>{messages.requestTypes.docs}</Text>
+
+      <ul className="mt-2 m-0 list-none p-0">
+        {entries.map((entry, index) => (
+          <li
+            key={index}
+            className="flex items-center gap-2 border-b border-black/5 py-1.5"
+          >
+            <button
+              type="button"
+              onClick={() => setEditing(index)}
+              className="min-w-0 cursor-pointer truncate text-left font-semibold hover:underline"
+            >
+              {entry.name || entry.code}
+            </button>
+            <span className="flex-1" />
+            <Button
+              size="small"
+              type="link"
+              danger
+              onClick={() =>
+                onChange(entries.filter((_, i) => i !== index))
+              }
+            >
+              {messages.requestTypes.remove}
+            </Button>
+          </li>
+        ))}
+      </ul>
+
+      <Button type="link" className="mt-1 px-0!" onClick={() => setEditing(-1)}>
+        {messages.requestTypes.addDoc}
+      </Button>
+
+      <CodedLabelDialog
+        key={editing ?? "closed"}
+        open={editing !== null}
+        entry={editing !== null && editing >= 0 ? entries[editing] : null}
+        onClose={() => setEditing(null)}
+        onSave={(entry) => {
+          onChange(
+            editing !== null && editing >= 0
+              ? entries.map((row, index) => (index === editing ? entry : row))
+              : [...entries, entry],
+          );
+          setEditing(null);
+        }}
+      />
+    </div>
+  );
+}
+
+/** `เหตุผลตีกลับมาตรฐาน` — §16 draws these as pills, not as rows. */
+function ReturnReasons({
+  entries,
+  onChange,
+}: {
+  readonly entries: CodedLabel[];
+  readonly onChange: (next: CodedLabel[]) => void;
+}) {
+  const [editing, setEditing] = useState<number | null>(null);
+
+  return (
+    <div>
+      <Text strong>{messages.requestTypes.reasons}</Text>
+      <Paragraph type="secondary" className="mt-1! mb-2! text-xs">
+        {messages.requestTypes.reasonsNote}
+      </Paragraph>
+
+      <div className="flex flex-wrap items-center gap-2">
+        {entries.map((entry, index) => (
+          <Tag
+            key={index}
+            closable
+            className="m-0! cursor-pointer"
+            onClick={() => setEditing(index)}
+            onClose={(event) => {
+              event.preventDefault();
+              // The × is inside the pill, so its click would otherwise reach
+              // the pill's own onClick and open the entry just removed.
+              event.stopPropagation();
+              onChange(entries.filter((_, i) => i !== index));
+            }}
+          >
+            {entry.name || entry.code}
+          </Tag>
+        ))}
+
+        <Tag
+          className="m-0! cursor-pointer border-dashed"
+          onClick={() => setEditing(-1)}
+        >
+          {messages.requestTypes.addReason}
+        </Tag>
+      </div>
+
+      <CodedLabelDialog
+        key={editing ?? "closed"}
+        open={editing !== null}
+        entry={editing !== null && editing >= 0 ? entries[editing] : null}
+        onClose={() => setEditing(null)}
+        onSave={(entry) => {
+          onChange(
+            editing !== null && editing >= 0
+              ? entries.map((row, index) => (index === editing ? entry : row))
+              : [...entries, entry],
+          );
+          setEditing(null);
+        }}
+      />
+    </div>
+  );
+}
+
+/**
+ * `เอกสารบังคับ` and `เหตุผลตีกลับมาตรฐาน` are the same shape and the same
+ * rules, so they share an editor.
+ *
+ * The code is what the system stores and reports on; the label is what a person
+ * reads. Both matter — REQ-03 blocks a submit by code, REQ-04 counts bounces by
+ * code — which is why the code stays visible and editable rather than being
+ * generated from the label.
+ */
+function CodedLabelDialog({
+  open,
+  entry,
+  onClose,
+  onSave,
+}: {
+  open: boolean;
+  entry: CodedLabel | null;
+  onClose: () => void;
+  onSave: (entry: CodedLabel) => void;
+}) {
+  const [draft, setDraft] = useState<CodedLabel>(entry ?? { code: "", name: "" });
+
+  return (
+    <Modal
+      open={open}
+      destroyOnHidden
+      title={
+        entry
+          ? messages.requestTypes.entryEditTitle
+          : messages.requestTypes.entryAddTitle
+      }
+      onCancel={onClose}
+      onOk={() => onSave(draft)}
+      okButtonProps={{ disabled: !draft.code.trim() || !draft.name.trim() }}
+    >
+      <Space orientation="vertical" className="flex">
+        <label className="block">
+          <Text strong>{messages.requestTypes.entryCode}</Text>
+          <Input
+            className="mt-1"
+            value={draft.code}
+            onChange={(event) =>
+              setDraft((current) => ({
+                ...current,
+                code: event.target.value.toUpperCase(),
+              }))
+            }
+          />
+        </label>
+
+        <label className="block">
+          <Text strong>{messages.requestTypes.entryLabel}</Text>
+          <Input
+            className="mt-1"
+            value={draft.name}
+            onChange={(event) =>
+              setDraft((current) => ({ ...current, name: event.target.value }))
+            }
+          />
+        </label>
+      </Space>
+    </Modal>
+  );
+}
+
+/** `เส้นทางอนุมัติ` — the chain is §8.1's; only the amount field is a choice. */
+function ApprovalRoute({
+  rows,
+  amountField,
+  onChange,
+}: {
+  readonly rows: FieldRow[];
+  readonly amountField: string | null;
+  readonly onChange: (next: string | null) => void;
+}) {
+  return (
+    <div>
+      <Text strong>{messages.requestTypes.routeTitle}</Text>
+
+      <div className="mt-2 rounded border border-black/10 bg-black/[0.02] p-3">
+        <Text strong className="text-xs">
+          {messages.requestTypes.routeStandard}
+        </Text>
+
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <Text type="secondary" className="text-xs">
+            {messages.requestTypes.amountField}
+          </Text>
+          <Select
+            size="small"
+            allowClear
+            style={{ minWidth: 200 }}
+            value={amountField ?? undefined}
+            placeholder={messages.requestTypes.amountField}
+            onChange={(next?: string) => onChange(next ?? null)}
+            options={rows.map((row) => ({
+              value: row.key,
+              label: `${row.title || row.key} (${row.key})`,
+            }))}
+          />
+        </div>
+
+        <Paragraph type="secondary" className="mt-2! mb-0! text-xs">
+          {messages.requestTypes.matrixNote}
+        </Paragraph>
+      </div>
+
+      {/*
+        APV-02 measures this field against the matrix ceilings. Without it a
+        submit cannot pick a tier, so the type is unroutable — said here rather
+        than discovered at the first submit.
+      */}
+      {!amountField && (
+        <Alert
+          type="warning"
+          showIcon
+          className="mt-2"
+          message={messages.requestTypes.amountFieldMissing}
+        />
+      )}
     </div>
   );
 }

@@ -68,12 +68,30 @@ function fileSize(bytes: number): string {
  * (`planChain`), so what the user is shown before pressing the button is what
  * actually happens when they do.
  */
-export function RequestForm({ types }: { types: RequestType[] }) {
+export function RequestForm({
+  types,
+  people,
+  parentRequestId,
+}: {
+  types: RequestType[];
+  /** The directory the `ผู้รับเรื่อง` selector draws from. */
+  people: { id: string; displayName: string; username: string }[];
+  /** Set when this request is being raised from inside another one. */
+  parentRequestId?: string | null;
+}) {
   const router = useRouter();
 
   const [typeCode, setTypeCode] = useState<string | undefined>(
     types.length === 1 ? types[0].code : undefined,
   );
+  /**
+   * A request is handed to a person, not dropped in a department's queue.
+   *
+   * The source keeps a named `ผู้รับผิดชอบที่แผนกปลายทาง` on every row, and the
+   * backend refuses a submit without one — a ticket nobody owns is the failure
+   * this system exists to prevent.
+   */
+  const [receiverId, setReceiverId] = useState<string | undefined>();
   const [values, setValues] = useState<Record<string, unknown>>({});
   const [refId, setRefId] = useState("");
   const [draftId, setDraftId] = useState<string | null>(null);
@@ -118,6 +136,8 @@ export function RequestForm({ types }: { types: RequestType[] }) {
       form_data: values,
       ref_type: refId ? "deal" : undefined,
       ref_id: refId || undefined,
+      receiver_user_id: receiverId,
+      ...(parentRequestId ? { parent_request_id: parentRequestId } : {}),
     });
 
     if (!created.ok) {
@@ -163,6 +183,7 @@ export function RequestForm({ types }: { types: RequestType[] }) {
         form_data: values,
         ref_type: refId ? "deal" : null,
         ref_id: refId || null,
+        receiver_user_id: receiverId ?? null,
       });
 
       if (saved.ok) {
@@ -278,6 +299,26 @@ export function RequestForm({ types }: { types: RequestType[] }) {
                 options={types.map((entry) => ({
                   value: entry.code,
                   label: `${entry.name} (${entry.code})`,
+                }))}
+              />
+            </Field>
+
+            {/*
+              A ticket is handed to a person. The backend refuses a submit
+              without one, so this is required here rather than discovered at
+              the last click.
+            */}
+            <Field label={messages.requestForm.receiver} required>
+              <Select
+                className="w-full"
+                showSearch
+                optionFilterProp="label"
+                value={receiverId}
+                onChange={setReceiverId}
+                placeholder={messages.requestForm.receiverPlaceholder}
+                options={people.map((person) => ({
+                  value: person.id,
+                  label: `${person.displayName} · ${person.username}`,
                 }))}
               />
             </Field>

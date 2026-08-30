@@ -3,8 +3,11 @@ import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
 import Paragraph from "antd/es/typography/Paragraph";
 import { BottleneckTable } from "@/components/bottleneck-table";
+import { BottleneckFilters } from "@/components/bottleneck-filters";
 import { getBottleneck } from "@/lib/api/reports";
+import requests from "@/lib/api/requests";
 import { messages } from "@/lib/messages";
+import { getSession } from "@/lib/session";
 
 /**
  * REQ-09 — where requests actually wait.
@@ -12,8 +15,21 @@ import { messages } from "@/lib/messages";
  * Rows arrive slowest-first from the server, so the answer to "where is the
  * queue" is the top of the table without anyone sorting it.
  */
-export default async function BottleneckReportPage() {
-  const result = await getBottleneck();
+export default async function BottleneckReportPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ type_code?: string; from?: string; to?: string }>;
+}) {
+  const session = await getSession();
+  const filters = await searchParams;
+
+  // Filters are the API's (`BottleneckQueryDto` declares them); the page only
+  // carries them from the URL. Nothing is narrowed in the browser, because the
+  // server has already aggregated by the time we see a row.
+  const [result, types] = await Promise.all([
+    getBottleneck(filters),
+    requests.getRequestTypes(),
+  ]);
 
   if (!result.ok) {
     return (
@@ -35,7 +51,20 @@ export default async function BottleneckReportPage() {
           {messages.bottleneck.title}
         </Title>
         <Text type="secondary">{messages.bottleneck.subtitle}</Text>
+        {/* SCOPE-02: the report measures only requests this viewer can see, so
+            a smaller table than a colleague's is the truth, not a fault. */}
+        <div>
+          <Text type="secondary" className="text-xs">
+            {messages.bottleneck.scopeNote[session?.scopes.request ?? "own"] ??
+              ""}
+          </Text>
+        </div>
       </div>
+
+      <BottleneckFilters
+        types={types.ok ? types.data : []}
+        filters={filters}
+      />
 
       <Card>
         {rows.length ? (

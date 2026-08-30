@@ -39,7 +39,7 @@ export interface OrgUnitNode {
   id: string;
   code: string;
   name: string;
-  kind: "COMPANY" | "DEPARTMENT" | "TEAM";
+  kind: "COMPANY" | "DIVISION" | "DEPARTMENT" | "TEAM";
   parentId: string | null;
   active: boolean;
   managerUserId: string | null;
@@ -203,6 +203,10 @@ export interface RequestDetail extends Omit<RequestRow, "approvalCases"> {
   formData?: Record<string, unknown>;
   companyId?: string;
   requesterId?: string;
+  /** Who the ticket was handed to, and who is carrying it now. */
+  receiverUserId?: string | null;
+  assigneeUserId?: string | null;
+  parentRequestId?: string | null;
   submittedAt?: string | null;
   cancelReason?: string | null;
   requestType?: RequestType;
@@ -262,6 +266,8 @@ export interface RequestRow {
   id: string;
   requestNo: string | null;
   typeCode: string;
+  /** Who raised it — only the scope-wide list has a use for this. */
+  requester?: { id: string; displayName: string };
   refType: string | null;
   refId: string | null;
   status: string;
