@@ -41,6 +41,7 @@ const CORE_SERVICE_PREFIXES = [
   "/requests",
   "/request-types",
   "/admin/approval-matrix",
+  "/admin/bi",
   "/admin/request-types",
   "/admin/sla",
   "/reports",

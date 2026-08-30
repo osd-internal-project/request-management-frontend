@@ -37,27 +37,6 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     permissions: ["report.request.read"],
   },
 
-  // CD-92 — Metabase dashboards, embedded behind the app's own login. The
-  // key segment must match `dashboards[].key` from `GET /bi/menu`.
-  {
-    label: messages.nav.biRequestOverview,
-    href: ROUTES.biDashboard("requestOverview"),
-    permissions: ["report.dashboard.read"],
-    group: messages.nav.biGroup,
-  },
-  {
-    label: messages.nav.biApproval,
-    href: ROUTES.biDashboard("approval"),
-    permissions: ["report.dashboard.read"],
-    group: messages.nav.biGroup,
-  },
-  {
-    label: messages.nav.biSla,
-    href: ROUTES.biDashboard("sla"),
-    permissions: ["report.dashboard.read"],
-    group: messages.nav.biGroup,
-  },
-
   {
     label: messages.nav.adminApprovalMatrix,
     href: ROUTES.adminApprovalMatrix,
@@ -96,6 +75,12 @@ const MENU_ITEMS: readonly MenuEntry[] = [
   },
 ];
 
+/** One BI dashboard as the menu needs it — `key` and `title` from `GET /bi/menu`. */
+export interface BiMenuDashboard {
+  key: string;
+  title: string;
+}
+
 /**
  * The menu this session may see (ROLE-06).
  *
@@ -103,13 +88,39 @@ const MENU_ITEMS: readonly MenuEntry[] = [
  * gets a 403 from the backend, because `PolicyGuard` re-checks the same
  * permission on every call. Never treat a hidden menu item as access control.
  *
+ * CD-92 v2: the BI entries are no longer fixed — the layout passes in whatever
+ * `GET /bi/menu` answered for this caller (already filtered per team by the
+ * backend), and they render under the BI group between reports and admin.
+ *
  * Passing no session yields an empty menu rather than the full one, so a
  * failed `/auth/me` degrades closed.
  */
-export const accessMenuItems = (session?: Session | null): MenuEntry[] => {
+export const accessMenuItems = (
+  session?: Session | null,
+  biDashboards: readonly BiMenuDashboard[] = [],
+): MenuEntry[] => {
   if (!session) return [];
 
-  return MENU_ITEMS.filter(
+  const biEntries: MenuEntry[] = biDashboards.map((dashboard) => ({
+    label: dashboard.title,
+    href: ROUTES.biDashboard(dashboard.key),
+    permissions: ["report.dashboard.read"],
+    group: messages.nav.biGroup,
+  }));
+
+  const adminStart = MENU_ITEMS.findIndex(
+    (item) => item.group === messages.nav.adminGroup,
+  );
+  const items =
+    adminStart === -1
+      ? [...MENU_ITEMS, ...biEntries]
+      : [
+          ...MENU_ITEMS.slice(0, adminStart),
+          ...biEntries,
+          ...MENU_ITEMS.slice(adminStart),
+        ];
+
+  return items.filter(
     (item) =>
       !item.permissions?.length ||
       item.permissions.some((permission) =>

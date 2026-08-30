@@ -63,10 +63,7 @@ export const messages = {
     adminUsers: "ผู้ใช้",
     adminAudit: "Audit Log",
     biGroup: "แดชบอร์ดผู้บริหาร",
-    biRequestOverview: "ภาพรวมคำขอ",
-    biApproval: "การอนุมัติ",
-    biSla: "SLA",
-    adminBi: "ตั้งค่า Metabase",
+    adminBi: "ตั้งค่า Dashboard",
     logout: "ออกจากระบบ",
     company: "บริษัท",
     switchFailed: "สลับบริษัทไม่สำเร็จ",
@@ -742,12 +739,44 @@ export const messages = {
   bi: {
     loadFailed: "โหลดแดชบอร์ดไม่สำเร็จ",
     notConfigured:
-      "ยังไม่ได้ตั้งค่าการเชื่อมต่อ Metabase — ผู้ดูแลระบบต้องกำหนด METABASE_SITE_URL, METABASE_EMBED_SECRET และรหัสแดชบอร์ดใน .env ของ core-service",
+      "ยังไม่ได้ตั้งค่าการเชื่อมต่อ Metabase — ผู้ดูแลระบบต้องกำหนด METABASE_SITE_URL และ METABASE_EMBED_SECRET ใน .env ของ core-service",
     notFound: "ไม่พบแดชบอร์ดที่ระบุ",
     settingsTitle: "ตั้งค่า Metabase",
     settingsBody:
-      "จัดการ connection, คำถาม (question), แดชบอร์ด และสิทธิ์ผู้ใช้ BI ได้จากหน้าผู้ดูแลของ Metabase — เปิดในแท็บใหม่",
+      "จัดการ connection, คำถาม (question), และตัวแดชบอร์ดใน Metabase ได้จากหน้าผู้ดูแลของ Metabase — เปิดในแท็บใหม่",
     settingsOpen: "เปิด Metabase",
+
+    // CD-92 v2 — จัดการรายการแดชบอร์ดและทีมที่มองเห็นจากในระบบ
+    manageTitle: "ตั้งค่า Dashboard",
+    manageSubtitle:
+      "กำหนดแดชบอร์ดในเมนูและทีมที่มองเห็นแต่ละแดชบอร์ด — มีผลทันที ไม่ต้อง deploy",
+    envFallbackNotice:
+      "บริษัทนี้ยังไม่มีแดชบอร์ดที่ตั้งค่าไว้ — เมนูกำลังใช้ค่า fallback จาก .env (ทุกทีมเห็นเหมือนกัน) เพิ่มแดชบอร์ดด้านล่างเพื่อเริ่มจัดการเอง",
+    addDashboard: "เพิ่มแดชบอร์ด",
+    editDashboard: "แก้ไขแดชบอร์ด",
+    columnTitle: "ชื่อแดชบอร์ด",
+    columnMetabaseId: "Metabase ID",
+    columnAudience: "ทีมที่มองเห็น",
+    columnStatus: "สถานะ",
+    columnActions: "จัดการ",
+    audienceEveryone: "ทั้งบริษัท",
+    statusActive: "ใช้งาน",
+    statusInactive: "ปิดใช้งาน",
+    actionEdit: "แก้ไข",
+    actionDeactivate: "ปิดใช้งาน",
+    actionReactivate: "เปิดใช้งาน",
+    confirmDeactivate: "ปิดใช้งานแดชบอร์ดนี้?",
+    confirmDeactivateBody:
+      "รายการจะหายจากเมนูของทุกทีม แต่ข้อมูลยังอยู่และเปิดใช้งานใหม่ได้ภายหลัง",
+    formTitle: "ชื่อแดชบอร์ด",
+    formMetabaseId: "รหัสแดชบอร์ดใน Metabase",
+    formMetabaseIdHelp: "ตัวเลขใน URL ของแดชบอร์ด เช่น /dashboard/12",
+    formAudience: "ทีมที่มองเห็น",
+    formAudienceHelp:
+      "ไม่เลือก = ทุกทีมในบริษัทเห็น • เลือกหน่วยงานระดับฝ่าย/บริษัท = ทีมย่อยทั้งหมดใต้หน่วยงานนั้นเห็นด้วย",
+    formSortOrder: "ลำดับในเมนู",
+    saved: "บันทึกแล้ว",
+    deactivated: "ปิดใช้งานแดชบอร์ดแล้ว",
   },
 
   common: {
