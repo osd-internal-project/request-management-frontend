@@ -8,7 +8,6 @@ import {
   Empty,
   Input,
   InputNumber,
-  Select,
   Tag,
   message,
 } from "antd";
@@ -41,13 +40,9 @@ import type {
   RequestType,
 } from "@/lib/api/types";
 import { messages } from "@/lib/messages";
+import { SearchSelect } from "@/components/search-select";
 import { ROUTES } from "@/lib/routes";
 
-/** Thai-grouped money, matching the mockup's `800,000`. */
-function money(value: string | null): string {
-  if (value === null) return "—";
-  return Number(value).toLocaleString("th-TH");
-}
 
 function fileSize(bytes: number): string {
   return bytes >= 1_048_576
@@ -75,7 +70,12 @@ export function RequestForm({
 }: {
   types: RequestType[];
   /** The directory the `ผู้รับเรื่อง` selector draws from. */
-  people: { id: string; displayName: string; username: string }[];
+  people: {
+    id: string;
+    displayName: string;
+    username: string;
+    orgUnitId: string | null;
+  }[];
   /** Set when this request is being raised from inside another one. */
   parentRequestId?: string | null;
 }) {
@@ -92,6 +92,18 @@ export function RequestForm({
    * this system exists to prevent.
    */
   const [receiverId, setReceiverId] = useState<string | undefined>();
+  /**
+   * ทีมผู้รับ. Seeded from the type and changeable — REQ-01 configures a
+   * starting point, not a routing rule, and the departments' own logs show
+   * work being sent outside the type's usual team often enough to matter.
+   *
+   * `undefined` means "whatever the type says"; the server applies the same
+   * default, so a request raised without ever touching this field still lands
+   * on the right team.
+   */
+  const [receiverOrgUnitId, setReceiverOrgUnitId] = useState<
+    string | undefined
+  >(types.length === 1 ? (types[0].receiverOrgUnitId ?? undefined) : undefined);
   const [values, setValues] = useState<Record<string, unknown>>({});
   const [refId, setRefId] = useState("");
   const [draftId, setDraftId] = useState<string | null>(null);
@@ -109,6 +121,33 @@ export function RequestForm({
   const type = types.find((candidate) => candidate.code === typeCode) ?? null;
   const schema = type?.formSchema;
   const required = schema?.required ?? [];
+
+  /**
+   * The teams offered, drawn from the request types themselves.
+   *
+   * The org chart is admin-only over the API (`GET /admin/org-units` requires
+   * `admin.org.manage`), and a page that fetches what its viewer cannot read
+   * is a guaranteed 403. The receiving teams travel with `GET /request-types`,
+   * which every requester can read, so the list is exactly the set of teams
+   * this company actually sends work to.
+   */
+  const teams = [
+    ...new Map(
+      types
+        .map((entry) => entry.receiverOrgUnit)
+        .filter((unit): unit is { id: string; name: string } => Boolean(unit))
+        .map((unit) => [unit.id, unit]),
+    ).values(),
+  ].sort((left, right) => left.name.localeCompare(right.name, "th"));
+
+  /**
+   * Nobody in the chosen team is a real answer, not a reason to widen the
+   * list: it means the team has no members yet, and handing the ticket to
+   * somebody outside it would hide that.
+   */
+  const receiverCandidates = receiverOrgUnitId
+    ? people.filter((person) => person.orgUnitId === receiverOrgUnitId)
+    : people;
 
   /**
    * Which field carries the money.
@@ -137,6 +176,7 @@ export function RequestForm({
       ref_type: refId ? "deal" : undefined,
       ref_id: refId || undefined,
       receiver_user_id: receiverId,
+      receiver_org_unit_id: receiverOrgUnitId,
       ...(parentRequestId ? { parent_request_id: parentRequestId } : {}),
     });
 
@@ -184,6 +224,7 @@ export function RequestForm({
         ref_type: refId ? "deal" : null,
         ref_id: refId || null,
         receiver_user_id: receiverId ?? null,
+        receiver_org_unit_id: receiverOrgUnitId,
       });
 
       if (saved.ok) {
@@ -243,11 +284,19 @@ export function RequestForm({
     const id = await ensureDraft();
 
     if (id) {
-      // Saved first: the draft row was created before the last keystrokes.
+      /*
+        Saved first: the draft row was created before the last keystrokes.
+
+        The receiver and the team go with it. Leaving them out overwrote a
+        change made after the draft was created with nothing — the submit then
+        failed on a receiver the user had already picked.
+      */
       await saveDraft(id, {
         form_data: values,
         ref_type: refId ? "deal" : null,
         ref_id: refId || null,
+        receiver_user_id: receiverId ?? null,
+        receiver_org_unit_id: receiverOrgUnitId,
       });
 
       const sent = await submitRequest(id);
@@ -283,7 +332,7 @@ export function RequestForm({
           {/* Two columns from `md` up, matching §16; the long answer spans both. */}
           <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
             <Field label={messages.requestForm.type} required>
-              <Select
+              <SearchSelect
                 className="w-full"
                 value={typeCode}
                 onChange={(next) => {
@@ -294,6 +343,12 @@ export function RequestForm({
                   setPreview(null);
                   setDraftId(null);
                   setAttachments([]);
+
+                  // The new type brings its own default team, and the person
+                  // picked from the old team may not be in it.
+                  const chosen = types.find((entry) => entry.code === next);
+                  setReceiverOrgUnitId(chosen?.receiverOrgUnitId ?? undefined);
+                  setReceiverId(undefined);
                 }}
                 placeholder={messages.requestForm.type}
                 options={types.map((entry) => ({
@@ -304,19 +359,51 @@ export function RequestForm({
             </Field>
 
             {/*
+              §16 A2 calls this ทีมผู้รับ. It arrives preselected from the type
+              and stays changeable — the type configures where work usually
+              goes, not where this particular request has to.
+            */}
+            <Field
+              label={messages.requestForm.receiverTeam}
+              hint={messages.requestForm.receiverTeamHint}
+            >
+              <SearchSelect
+                className="w-full"
+                allowClear
+                value={receiverOrgUnitId}
+                onChange={(next?: string) => {
+                  setReceiverOrgUnitId(next);
+                  // The person already chosen may not be in the new team.
+                  setReceiverId(undefined);
+                }}
+                placeholder={messages.requestForm.receiverTeamPlaceholder}
+                options={teams.map((team) => ({
+                  value: team.id,
+                  label: team.name,
+                }))}
+              />
+            </Field>
+
+            {/*
               A ticket is handed to a person. The backend refuses a submit
               without one, so this is required here rather than discovered at
               the last click.
             */}
-            <Field label={messages.requestForm.receiver} required>
-              <Select
+            <Field
+              label={messages.requestForm.receiver}
+              required
+              hint={
+                receiverOrgUnitId && receiverCandidates.length === 0
+                  ? messages.requestForm.receiverTeamEmpty
+                  : undefined
+              }
+            >
+              <SearchSelect
                 className="w-full"
-                showSearch
-                optionFilterProp="label"
                 value={receiverId}
                 onChange={setReceiverId}
                 placeholder={messages.requestForm.receiverPlaceholder}
-                options={people.map((person) => ({
+                options={receiverCandidates.map((person) => ({
                   value: person.id,
                   label: `${person.displayName} · ${person.username}`,
                 }))}
@@ -502,7 +589,7 @@ export function RequestForm({
 }
 
 /** One field, rendered from what the schema says it is. */
-function SchemaField({
+export function SchemaField({
   name,
   property,
   required,
@@ -532,7 +619,7 @@ function SchemaField({
       }
     >
       {property.enum ? (
-        <Select
+        <SearchSelect
           className="w-full"
           value={value as string | undefined}
           onChange={onChange}
@@ -580,16 +667,19 @@ function SchemaField({
  * Shared so a schema-driven field and a hand-written one (type, deal ref) come
  * out the same height and weight — that is what makes the two columns line up.
  */
-function Field({
+export function Field({
   label,
   required,
   badge,
+  hint,
   wide,
   children,
 }: {
   label: string;
   required?: boolean;
   badge?: React.ReactNode;
+  /** A line under the control — what the value means, not an error. */
+  hint?: string;
   /** Spans both columns — for long answers. */
   wide?: boolean;
   children: React.ReactNode;
@@ -603,6 +693,11 @@ function Field({
         {badge}
       </div>
       {children}
+      {hint && (
+        <Text type="secondary" className="mt-1 block text-xs">
+          {hint}
+        </Text>
+      )}
     </label>
   );
 }
@@ -618,7 +713,7 @@ function ChainPanel({ preview }: { preview: ChainPreview | null }) {
   if (!preview) {
     return (
       <Card title={messages.requestForm.chainTitle} size="small">
-        <Text type="secondary">{messages.requestForm.chainNeedsAmount}</Text>
+        <Text type="secondary">{messages.requestForm.chainNoMatrix}</Text>
       </Card>
     );
   }
@@ -626,9 +721,7 @@ function ChainPanel({ preview }: { preview: ChainPreview | null }) {
   return (
     <Card title={messages.requestForm.chainTitle} size="small">
       <Paragraph className="mb-1! text-xs">
-        {messages.requestForm.chainComputed(money(preview.amount))}{" "}
-        {preview.exceeded_upto &&
-          messages.requestForm.chainOverTier(money(preview.exceeded_upto))}
+        {messages.requestForm.chainComputed}
       </Paragraph>
       <Paragraph type="secondary" className="mb-4! text-xs">
         — {messages.requestForm.chainNoPick}
@@ -651,19 +744,29 @@ function ChainPanel({ preview }: { preview: ChainPreview | null }) {
             <div className="min-w-0 pb-4">
               <div className="text-sm">
                 <Text strong>
-                  {step.position}
-                  {step.display_name && ` — ${step.display_name}`}
+                  {step.display_name ?? step.position}
                 </Text>
               </div>
-              <Text type="secondary" className="text-xs">
-                {step.step_no === 1
-                  ? messages.requestForm.stepReasonFirst
-                  : preview.exceeded_upto
-                    ? messages.requestForm.stepReasonOver(
-                        money(preview.exceeded_upto),
-                      )
-                    : ""}
-              </Text>
+
+              {/*
+                A level can name several people and any one of them may decide.
+                Said explicitly: showing only the first name would read as "this
+                person must approve", which is not what the ladder says.
+              */}
+              {step.candidate_user_ids.length > 1 && (
+                <Text type="secondary" className="text-xs">
+                  {messages.requestForm.chainAnyOf(
+                    step.candidate_user_ids.length,
+                  )}
+                </Text>
+              )}
+
+              {step.step_no === 1 && (
+                <Text type="secondary" className="block text-xs">
+                  {messages.requestForm.stepReasonFirst}
+                </Text>
+              )}
+
               {!step.user_id && (
                 <div className="mt-1">
                   <Tag color="red">{messages.requestForm.chainUnresolved}</Tag>
@@ -673,28 +776,6 @@ function ChainPanel({ preview }: { preview: ChainPreview | null }) {
           </li>
         ))}
       </ol>
-
-      {preview.excluded.map((entry) => (
-        <Paragraph
-          key={entry.position}
-          type="secondary"
-          // Ruled off: an approver who is *not* in the path is a different kind
-          // of statement from the steps that are.
-          className="mt-0! mb-0! border-t border-black/8 pt-3 text-xs"
-        >
-          {/* Two different facts. `appears_above` set means "below that
-              ceiling"; null means the position is absent from this ladder
-              altogether. These were collapsed by filtering the null case away,
-              which dropped the line entirely — and §16 shows the absent
-              approver stated rather than left as a gap. */}
-          {entry.appears_above
-            ? messages.requestForm.chainExcluded(
-                entry.position,
-                money(entry.appears_above),
-              )
-            : messages.requestForm.chainExcludedNoTier(entry.position)}
-        </Paragraph>
-      ))}
     </Card>
   );
 }

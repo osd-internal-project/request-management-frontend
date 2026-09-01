@@ -5,6 +5,7 @@ import { ApprovalMatrixAdmin } from "@/components/approval-matrix-admin";
 import admin, { getAdminRequestTypes } from "@/lib/api/admin";
 import { apiGet } from "@/lib/api/core";
 import { messages } from "@/lib/messages";
+import orgUnitsApi from "@/lib/api/org-units";
 import { getSession } from "@/lib/session";
 
 interface Paginated<T> {
@@ -39,10 +40,11 @@ export default async function ApprovalMatrixPage() {
    * that already have a matrix, which is a list you cannot add the first entry
    * to.
    */
-  const [result, users, types] = await Promise.all([
+  const [result, users, types, units] = await Promise.all([
     admin.getApprovalMatrix(),
     apiGet<Paginated<DirectoryUser>>("/users?page_size=100"),
     getAdminRequestTypes(),
+    orgUnitsApi.getOrgUnits(),
   ]);
 
   const userNames = Object.fromEntries(
@@ -71,6 +73,7 @@ export default async function ApprovalMatrixPage() {
           }))}
           companyId={session?.active_company_id ?? ""}
           userNames={userNames}
+        orgUnits={units.ok ? units.data : []}
         />
       ) : (
         <Alert

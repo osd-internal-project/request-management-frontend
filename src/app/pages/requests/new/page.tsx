@@ -23,6 +23,13 @@ interface DirectoryUser {
   id: string;
   displayName: string;
   username: string;
+  /**
+   * Carried so the form can narrow the `ผู้รับเรื่อง` list to the chosen team
+   * without a second round trip — and, more to the point, without reaching
+   * for `GET /admin/org-units`, which needs `admin.org.manage` and would 403
+   * for every ordinary requester who opened this page.
+   */
+  orgUnitId: string | null;
 }
 
 export default async function NewRequestPage({

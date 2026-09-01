@@ -10,13 +10,19 @@ import {
   type Paginated,
   type RequestDetail,
   type RequestRow,
+  type RequestTree,
   type RequestType,
 } from "../types";
 
-/** Get requests with filtering */
+/**
+ * Get requests with filtering.
+ *
+ * `view` narrows what the caller may already see; it can never widen it —
+ * `AccessService` decides that once, on the backend (SCOPE-02).
+ */
 export async function getRequests(options?: {
-  /** Omit for "everything my data scope allows" — SCOPE-02 decides, not us. */
-  view?: "mine" | "involved" | "incoming";
+  /** Omit for everything visible, the four tabs' union plus groups I lead. */
+  view?: "involved" | "created" | "incoming" | "approver" | "led";
   status?: string;
   type_code?: string;
   q?: string;
@@ -35,30 +41,56 @@ export async function getRequests(options?: {
   return apiGet<Paginated<RequestRow>>(`/requests?${params.toString()}`);
 }
 
-/** Get my submitted requests */
-export async function getMyRequests(
-  pageSize: number = 100,
-): Promise<ApiResult<Paginated<RequestRow>>> {
-  return getRequests({ view: "mine", page_size: pageSize });
+/**
+ * The four tabs of "งานค้างของฉัน", and the "งานทั้งหมด" screen.
+ *
+ * One helper each rather than callers passing `view` themselves: the tab a
+ * page opens and the count it prints have to come from the same query, and a
+ * literal repeated at two call sites is how those two drift apart.
+ */
+export const myWorkViews = {
+  /** ทั้งหมด — everything I raised, received, carry, or may approve. */
+  involved: (pageSize = 100) =>
+    getRequests({ view: "involved", page_size: pageSize }),
+  /** สร้าง — raised by me. */
+  created: (pageSize = 100) =>
+    getRequests({ view: "created", page_size: pageSize }),
+  /** รับเรื่อง — handed to me and not finished. */
+  incoming: (pageSize = 100) =>
+    getRequests({ view: "incoming", page_size: pageSize }),
+  /** อนุมัติ — waiting on my decision right now. */
+  approver: (pageSize = 100) =>
+    getRequests({ view: "approver", page_size: pageSize }),
+};
+
+/**
+ * งานทั้งหมด — the work of the groups this person heads, subtrees included.
+ *
+ * Read-only by design: the screen answers "what is happening under me", and a
+ * head who wants to act on one of these opens it like anybody else.
+ */
+export async function getLedRequests(options?: {
+  status?: string;
+  type_code?: string;
+  q?: string;
+  overdue?: boolean;
+  page?: number;
+  page_size?: number;
+}): Promise<ApiResult<Paginated<RequestRow>>> {
+  return getRequests({ ...options, view: "led" });
 }
 
 /**
- * Tickets handed to me that I have not finished.
+ * H2.2 ข้อ 4 — this request, everything spawned under it, and its parent.
  *
- * Not reachable through data scope: an employee is scoped to what they raised,
- * and a request sent to them was raised by somebody else.
+ * Its own call rather than part of the detail read: the panel is one query
+ * against an index, and a request with no children should not pay to find that
+ * out inside the query that fetches the form, the documents and the chain.
  */
-export async function getIncomingRequests(
-  pageSize: number = 100,
-): Promise<ApiResult<Paginated<RequestRow>>> {
-  return getRequests({ view: "incoming", page_size: pageSize });
-}
-
-/** Get requests I'm involved in */
-export async function getInvolvedRequests(
-  pageSize: number = 100,
-): Promise<ApiResult<Paginated<RequestRow>>> {
-  return getRequests({ view: "involved", page_size: pageSize });
+export async function getRequestTree(
+  requestId: string,
+): Promise<ApiResult<RequestTree>> {
+  return apiGet<RequestTree>(`/requests/${requestId}/tree`);
 }
 
 /** Get a single request by ID */
@@ -78,10 +110,10 @@ export async function getRequestTypes(): Promise<
 /** Grouped for `import requestsApi from …` at call sites. */
 const requestsApi = {
   getRequests,
-  getMyRequests,
-  getIncomingRequests,
-  getInvolvedRequests,
+  getLedRequests,
+  myWorkViews,
   getRequest,
+  getRequestTree,
   getRequestTypes,
 };
 

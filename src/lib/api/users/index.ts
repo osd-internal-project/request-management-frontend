@@ -21,17 +21,10 @@ export async function getKeycloakUsers(options?: {
   return apiGet<Paginated<KeycloakUser>>(`/users/keycloak?${params.toString()}`);
 }
 
-/** Get a single Keycloak user by ID */
-export async function getKeycloakUser(
-  userId: string,
-): Promise<ApiResult<KeycloakUser>> {
-  return apiGet<KeycloakUser>(`/users/keycloak/${userId}`);
-}
 
 /** Grouped for `import usersApi from …` at call sites. */
 const usersApi = {
   getKeycloakUsers,
-  getKeycloakUser,
 };
 
 export default usersApi;

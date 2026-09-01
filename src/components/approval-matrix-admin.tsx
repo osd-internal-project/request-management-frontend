@@ -7,48 +7,35 @@ import {
   Card,
   Empty,
   Form,
-  Input,
   Modal,
   Segmented,
-  Select,
-  Space,
   Table,
   Tag,
   message,
 } from "antd";
+import type { FormInstance } from "antd";
 import Text from "antd/es/typography/Text";
 import Paragraph from "antd/es/typography/Paragraph";
 import { adminApi } from "@/lib/api/client";
 import type {
   ApprovalMatrixVersion,
-  MatrixTier,
+  MatrixLevel,
+  OrgUnitNode,
   RequestType,
 } from "@/lib/api/types";
 import { messages } from "@/lib/messages";
+import {
+  SearchSelect,
+  SearchTreeSelect,
+} from "@/components/search-select";
+import { buildUnitTree, type UnitTreeNode } from "@/lib/org-tree";
 
-export type { MatrixTier, ApprovalMatrixVersion } from "@/lib/api/types";
+export type { ApprovalMatrixVersion } from "@/lib/api/types";
 
-const POSITIONS = ["team_lead", "cfo", "ceo"];
 
 /** The Thai titles §16 prints in the ladder, not the storage codes. */
-const POSITION_LABEL: Record<string, string> = {
-  team_lead: "หัวหน้าทีมของผู้ยื่น",
-  cfo: "CFO",
-  ceo: "CEO",
-};
 
-/**
- * §16 draws each rung a shade warmer than the one below it, so a chain that
- * reaches the CEO reads as escalation at a glance rather than as three
- * identical chips.
- */
-const STEP_TONE = ["default", "gold", "red"];
 
-function money(value: string | null): string {
-  return value === null
-    ? messages.matrix.noCeiling
-    : Number(value).toLocaleString("th-TH");
-}
 
 /** APV-02 builds this from the type code at submit; A1 must match it exactly. */
 function subjectOf(type: RequestType): string {
@@ -86,61 +73,8 @@ function subjectOptions(
   return options.sort((a, b) => a.label.localeCompare(b.label, "th"));
 }
 
-/**
- * The band a tier covers, as §16 writes it: `100,001 – 1,000,000`.
- *
- * Derived from the tier below rather than stored: the ladder is a list of
- * ceilings, so a tier's lower bound is one baht above the one beneath it.
- * Storing it twice is how the two start disagreeing.
- */
-function band(tiers: MatrixTier[], index: number): string {
-  const upto = tiers[index]?.upto ?? null;
-  const below = index > 0 ? (tiers[index - 1]?.upto ?? null) : null;
 
-  if (below === null) {
-    return upto === null ? messages.matrix.noCeiling : `≤ ${money(upto)}`;
-  }
 
-  const from = (Number(below) + 1).toLocaleString("th-TH");
-
-  return upto === null ? `> ${money(below)}` : `${from} – ${money(upto)}`;
-}
-
-/** One rung of the `ลำดับชั้นผู้อนุมัติ` column: `2 · CFO`. */
-function step(position: string, index: number): string {
-  return `${index + 1} · ${POSITION_LABEL[position] ?? position}`;
-}
-
-/**
- * Why this rung exists — the `ความหมาย` column.
- *
- * §16 names whoever the tier *adds* (`— เพิ่ม CFO`), which is the reason the
- * band exists at all. Derived from the chains rather than written per tier: a
- * ladder is configuration, so any wording keyed to T1/T2 by hand would be
- * wrong the first time an administrator inserts a rung between them.
- */
-function meaning(tiers: MatrixTier[], index: number): string {
-  if (index === 0) return messages.matrix.meaningFirst;
-
-  const below = new Set(tiers[index - 1]?.chain ?? []);
-  const added = (tiers[index]?.chain ?? [])
-    .filter((position) => !below.has(position))
-    .map((position) => POSITION_LABEL[position] ?? position);
-
-  // A tier that only raises the ceiling has no new approver to name.
-  if (!added.length) {
-    return messages.matrix.meaningOver(
-      index,
-      money(tiers[index - 1]?.upto ?? null),
-    );
-  }
-
-  const joined = added.join(" · ");
-
-  return index === tiers.length - 1
-    ? messages.matrix.meaningTop(index, joined)
-    : messages.matrix.meaningAdds(index, joined);
-}
 
 function thaiDate(iso: string): string {
   return new Date(iso).toLocaleDateString("th-TH", {
@@ -156,33 +90,30 @@ function thaiDate(iso: string): string {
  *
  * **Derived, never stored.** A summary saved alongside a version is a second
  * copy of the same fact, and the two start disagreeing the first time anyone
- * edits one — the same reason `band()` computes a tier's lower bound instead of
- * keeping it.
+ * edits one.
  *
  * Reports the first difference rather than all of them: the line is a jog to
  * the memory, and the full ladder is one click away in the table above.
  */
 function changeSummary(
-  tiers: MatrixTier[],
-  previous: MatrixTier[] | null,
+  levels: MatrixLevel[] | null,
+  previous: MatrixLevel[] | null,
 ): string {
   if (!previous) return messages.matrix.historyInitial;
 
-  for (let index = 0; index < Math.max(tiers.length, previous.length); index++) {
-    const level = `T${index}`;
-    const now = tiers[index];
+  const now = levels ?? [];
+
+  for (let index = 0; index < Math.max(now.length, previous.length); index++) {
+    const label = `${index + 1}`;
+    const here = now[index];
     const before = previous[index];
 
-    if (now && !before) return messages.matrix.historyTierAdded(level);
-    if (!now && before) return messages.matrix.historyTierRemoved(level);
-    if (!now || !before) continue;
+    if (here && !before) return messages.matrix.historyTierAdded(label);
+    if (!here && before) return messages.matrix.historyTierRemoved(label);
+    if (!here || !before) continue;
 
-    if (now.upto !== before.upto) {
-      return messages.matrix.historyCeilingMoved(level, money(now.upto));
-    }
-
-    if (now.chain.join() !== before.chain.join()) {
-      return messages.matrix.historyChainChanged(level);
+    if (JSON.stringify(here) !== JSON.stringify(before)) {
+      return messages.matrix.historyChainChanged(label);
     }
   }
 
@@ -208,6 +139,7 @@ export function ApprovalMatrixAdmin({
   companies,
   companyId,
   userNames,
+  orgUnits,
 }: {
   versions: ApprovalMatrixVersion[];
   /** The company's request-type catalog — what a ladder can be published for. */
@@ -216,8 +148,14 @@ export function ApprovalMatrixAdmin({
   companyId: string;
   /** `userId` → display name, so the header can name who published a version. */
   userNames: Record<string, string>;
+  /** The chart, for the `org` levels and for naming the groups a ladder uses. */
+  orgUnits: OrgUnitNode[];
 }) {
   const [activeCompany, setActiveCompany] = useState(companyId);
+  const unitTree = buildUnitTree(orgUnits);
+  const unitNames = Object.fromEntries(
+    orgUnits.map((unit) => [unit.id, unit.name]),
+  );
   const [versions, setVersions] = useState(initial);
   const [types, setTypes] = useState(initialTypes);
   const [activeSubject, setActiveSubject] = useState<string | null>(
@@ -258,12 +196,6 @@ export function ApprovalMatrixAdmin({
 
   return (
     <div className="space-y-4">
-      <Alert
-        type="warning"
-        showIcon
-        title={messages.matrix.placeholderWarning}
-      />
-
       <div className="flex flex-wrap items-center gap-3">
         <Segmented
           value={activeCompany}
@@ -280,12 +212,10 @@ export function ApprovalMatrixAdmin({
           <Text type="secondary" className="text-xs">
             {messages.matrix.subject}
           </Text>
-          <Select
+          <SearchSelect
             value={shownSubject ?? undefined}
             onChange={setActiveSubject}
             style={{ minWidth: 320 }}
-            showSearch
-            optionFilterProp="label"
             placeholder={messages.matrix.subject}
             notFoundContent={messages.matrix.noSubjects}
             options={subjects}
@@ -304,6 +234,7 @@ export function ApprovalMatrixAdmin({
           (version) => version.subjectType === shownSubject,
         )}
         userNames={userNames}
+        unitNames={unitNames}
       />
 
       {/* Keyed so the subject prefill below follows the toolbar rather than
@@ -314,6 +245,7 @@ export function ApprovalMatrixAdmin({
         companyId={activeCompany}
         subject={shownSubject}
         subjects={subjects}
+        unitTree={unitTree}
         onClose={() => setPublishing(false)}
         onDone={async () => {
           setPublishing(false);
@@ -329,9 +261,11 @@ export function ApprovalMatrixAdmin({
 function SubjectLadder({
   versions,
   userNames,
+  unitNames,
 }: {
   versions: ApprovalMatrixVersion[];
   userNames: Record<string, string>;
+  unitNames: Record<string, string>;
 }) {
   if (!versions.length) {
     return <Empty description={messages.matrix.emptyForSubject} />;
@@ -358,6 +292,7 @@ function SubjectLadder({
           version={shown}
           live={shown.version === liveVersion}
           userNames={userNames}
+          unitNames={unitNames}
         />
       )}
 
@@ -419,7 +354,7 @@ function VersionHistory({ versions }: { versions: ApprovalMatrixVersion[] }) {
                   {messages.matrix.version} {version.version}
                 </Text>{" "}
                 <Text type="secondary">
-                  · {changeSummary(version.tiers, previous?.tiers ?? null)}
+                  · {changeSummary(version.levels, previous?.levels ?? null)}
                 </Text>
               </span>
 
@@ -443,24 +378,65 @@ function VersionHistory({ versions }: { versions: ApprovalMatrixVersion[] }) {
   );
 }
 
+/**
+ * A level, in one line — what the ladder table prints in place of a chain.
+ *
+ * Named for what it *is* rather than for who it resolves to today: the whole
+ * point of a `supervisor` level is that it follows people as they move, so
+ * printing a name here would make the ladder look like a list of individuals.
+ */
+function levelLabel(
+  level: MatrixLevel,
+  unitNames: Record<string, string>,
+): string {
+  if (level.type === "supervisor") {
+    return messages.matrix.supervisorLevel[level.up] ?? `หัวหน้าชั้นที่ ${level.up}`;
+  }
+
+  return level.orgUnitIds
+    .map((id) => unitNames[id] ?? id)
+    .join(" · ");
+}
+
+/** The `ความหมาย` column: who that resolves to, and how. */
+function levelMeaning(
+  level: MatrixLevel,
+  unitNames: Record<string, string>,
+  userNames: Record<string, string>,
+): string {
+  if (level.type === "supervisor") return messages.matrix.meaningSupervisor;
+
+  if (level.userIds?.length) {
+    return level.userIds.map((id) => userNames[id] ?? id).join(", ");
+  }
+
+  return messages.matrix.meaningGroupHeads(
+    level.orgUnitIds.map((id) => unitNames[id] ?? id).join(", "),
+  );
+}
+
 /** The four-column ladder §16 draws, under the version header it draws. */
 function MatrixVersionTable({
   version,
   live,
   userNames,
+  unitNames,
 }: {
   version: ApprovalMatrixVersion;
   live: boolean;
   userNames: Record<string, string>;
+  unitNames: Record<string, string>;
 }) {
-  const tiers = version.tiers;
-
-  const rows = tiers.map((tier, index) => ({
+  /*
+    One row per level, in order. The ladders published with amount ceilings are
+    gone (`yarn matrix:clear-legacy`), so there is no second shape to draw —
+    see the declared amendment in §8 of `docs/ctd-foundation-spec.md`.
+  */
+  const rows = (version.levels ?? []).map((level, index) => ({
     key: index,
-    level: `T${index}`,
-    band: band(tiers, index),
-    chain: tier.chain,
-    meaning: meaning(tiers, index),
+    level: `${index + 1}`,
+    chain: levelLabel(level, unitNames),
+    meaning: levelMeaning(level, unitNames, userNames),
   }));
 
   return (
@@ -516,31 +492,9 @@ function MatrixVersionTable({
             render: (level: string) => <Text strong>{level}</Text>,
           },
           {
-            title: messages.matrix.columns.band,
-            dataIndex: "band",
-            width: 240,
-            render: (value: string) => (
-              <span className="tabular-nums">{value}</span>
-            ),
-          },
-          {
-            title: messages.matrix.columns.chain,
+            title: messages.matrix.columns.approvers,
             dataIndex: "chain",
-            render: (chain: string[]) => (
-              <div className="flex flex-wrap items-center gap-1">
-                {chain.map((position, index) => (
-                  <Fragment key={`${position}-${index}`}>
-                    {index > 0 && <span className="text-black/25">→</span>}
-                    <Tag
-                      color={STEP_TONE[index] ?? STEP_TONE[0]}
-                      className="m-0!"
-                    >
-                      {step(position, index)}
-                    </Tag>
-                  </Fragment>
-                ))}
-              </div>
-            ),
+            render: (value: string) => <Tag className="m-0!">{value}</Tag>,
           },
           {
             title: messages.matrix.columns.meaning,
@@ -559,11 +513,138 @@ function MatrixVersionTable({
   );
 }
 
+/**
+ * One level of the ladder being authored.
+ *
+ * A `Segmented` first, because the two shapes ask for completely different
+ * things and showing both at once reads as one form with half its fields
+ * greyed out. Watching the field rather than holding local state keeps the
+ * switch and the value that gets submitted the same thing.
+ */
+function LevelFields({
+  name,
+  form,
+  unitTree,
+  onRemove,
+}: {
+  name: number;
+  form: FormInstance;
+  unitTree: UnitTreeNode[];
+  onRemove: () => void;
+}) {
+  const type = Form.useWatch(["levels", name, "type"], form) as
+    | "supervisor"
+    | "org"
+    | undefined;
+
+  const chosenUnits = (Form.useWatch(["levels", name, "orgUnitIds"], form) ??
+    []) as string[];
+
+  const [people, setPeople] = useState<
+    { value: string; label: string }[]
+  >([]);
+
+  /**
+   * The people under the chosen groups, so "pick from this group" means the
+   * whole subtree — a department's people sit in the positions under it, not
+   * in the department itself.
+   */
+  async function loadPeople(unitIds: string[]) {
+    const results = await Promise.all(
+      unitIds.map((unitId) =>
+        adminApi<{ id: string; displayName: string; username: string }[]>(
+          `org-units/${unitId}/members/recursive`,
+        ),
+      ),
+    );
+
+    const found = new Map<string, { value: string; label: string }>();
+    for (const result of results) {
+      if (!result.ok) continue;
+      for (const person of result.data) {
+        found.set(person.id, {
+          value: person.id,
+          label: `${person.displayName} · ${person.username}`,
+        });
+      }
+    }
+
+    setPeople([...found.values()]);
+  }
+
+  return (
+    <Card size="small" className="mb-3!">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <Form.Item name={[name, "type"]} noStyle>
+          <Segmented
+            options={[
+              {
+                value: "supervisor",
+                label: messages.matrix.levelSupervisor,
+              },
+              { value: "org", label: messages.matrix.levelOrg },
+            ]}
+          />
+        </Form.Item>
+        <Button type="link" danger onClick={onRemove}>
+          {messages.requestForm.remove}
+        </Button>
+      </div>
+
+      {type === "org" ? (
+        <>
+          <Form.Item
+            name={[name, "orgUnitIds"]}
+            label={messages.matrix.levelGroups}
+            rules={[{ required: true }]}
+          >
+            <SearchTreeSelect
+              multiple
+              allowClear
+              treeDefaultExpandAll
+              treeData={unitTree}
+              onChange={(next: string[]) => void loadPeople(next)}
+            />
+          </Form.Item>
+
+          <Form.Item
+            name={[name, "userIds"]}
+            label={messages.matrix.levelPeople}
+            extra={messages.matrix.levelPeopleHint}
+          >
+            <SearchSelect
+              mode="multiple"
+              allowClear
+              disabled={!chosenUnits.length}
+              options={people}
+            />
+          </Form.Item>
+        </>
+      ) : (
+        <Form.Item
+          name={[name, "up"]}
+          label={messages.matrix.levelUp}
+          extra={messages.matrix.levelUpHint}
+          rules={[{ required: true }]}
+        >
+          <SearchSelect
+            options={[1, 2, 3, 4].map((up) => ({
+              value: up,
+              label: messages.matrix.supervisorLevel[up],
+            }))}
+          />
+        </Form.Item>
+      )}
+    </Card>
+  );
+}
+
 function PublishDialog({
   open,
   companyId,
   subject,
   subjects,
+  unitTree,
   onClose,
   onDone,
 }: {
@@ -572,6 +653,7 @@ function PublishDialog({
   /** The subject the toolbar is showing — what a new version most likely edits. */
   subject: string | null;
   subjects: { value: string; label: string }[];
+  unitTree: UnitTreeNode[];
   onClose: () => void;
   onDone: () => void;
 }) {
@@ -582,7 +664,12 @@ function PublishDialog({
   async function submit() {
     const values = (await form.validateFields()) as {
       subject_type: string;
-      tiers: { upto?: string; chain: string[] }[];
+      levels: {
+        type: "supervisor" | "org";
+        up?: number;
+        orgUnitIds?: string[];
+        userIds?: string[];
+      }[];
     };
 
     setSaving(true);
@@ -593,10 +680,18 @@ function PublishDialog({
       body: JSON.stringify({
         company_id: companyId,
         subject_type: values.subject_type,
-        tiers: values.tiers.map((tier) => ({
-          upto: tier.upto ? tier.upto : null,
-          chain: tier.chain,
-        })),
+        // Only the fields the chosen shape uses. Sending an `up` on an `org`
+        // level would be stored and then never read, which is how a ladder
+        // starts describing something it does not do.
+        levels: values.levels.map((level) =>
+          level.type === "supervisor"
+            ? { type: "supervisor", up: level.up ?? 1 }
+            : {
+                type: "org",
+                orgUnitIds: level.orgUnitIds ?? [],
+                userIds: level.userIds ?? [],
+              },
+        ),
       }),
     });
 
@@ -627,7 +722,7 @@ function PublishDialog({
         layout="vertical"
         initialValues={{
           ...(subject ? { subject_type: subject } : {}),
-          tiers: [{ chain: ["team_lead"] }],
+          levels: [{ type: "supervisor", up: 1 }],
         }}
       >
         <Form.Item
@@ -635,41 +730,23 @@ function PublishDialog({
           label={messages.matrix.subject}
           rules={[{ required: true }]}
         >
-          <Select showSearch optionFilterProp="label" options={subjects} />
+          <SearchSelect showSearch optionFilterProp="label" options={subjects} />
         </Form.Item>
 
-        <Form.List name="tiers">
+        <Form.List name="levels">
           {(fields, { add, remove }) => (
             <>
               {fields.map((field) => (
-                <Space key={field.key} align="baseline" wrap>
-                  <Form.Item
-                    name={[field.name, "upto"]}
-                    label={messages.matrix.upto}
-                  >
-                    <Input placeholder={messages.matrix.noCeiling} />
-                  </Form.Item>
-                  <Form.Item
-                    name={[field.name, "chain"]}
-                    label={messages.matrix.chain}
-                    rules={[{ required: true }]}
-                  >
-                    <Select
-                      mode="multiple"
-                      style={{ minWidth: 260 }}
-                      options={POSITIONS.map((position) => ({
-                        value: position,
-                        label: POSITION_LABEL[position],
-                      }))}
-                    />
-                  </Form.Item>
-                  <Button type="link" danger onClick={() => remove(field.name)}>
-                    {messages.requestForm.remove}
-                  </Button>
-                </Space>
+                <LevelFields
+                  key={field.key}
+                  name={field.name}
+                  form={form}
+                  unitTree={unitTree}
+                  onRemove={() => remove(field.name)}
+                />
               ))}
-              <Button onClick={() => add({ chain: ["team_lead"] })}>
-                {messages.matrix.addTier}
+              <Button onClick={() => add({ type: "supervisor", up: 1 })}>
+                {messages.matrix.addLevel}
               </Button>
             </>
           )}

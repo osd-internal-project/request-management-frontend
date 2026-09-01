@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Card, Checkbox, Empty, Input, Select, Space, Table, Tabs, Tag } from "antd";
+import { Card, Checkbox, Empty, Input, Space, Table, Tabs, Tag } from "antd";
 import Text from "antd/es/typography/Text";
 import { messages } from "@/lib/messages";
+import { SearchSelect } from "@/components/search-select";
 import { ROUTES } from "@/lib/routes";
 
 import type {
@@ -99,78 +100,18 @@ export function DueCell({ row, now }: { row: RequestRow; now: number }) {
  * it keeps filtering in the browser. Same controls, same behaviour to the user;
  * the difference is only in where the work happens.
  */
-export function MyWork({
-  mine,
-  approvals,
-  incoming,
-  types,
-  scope,
-  filters,
-  showApprovals = true,
-}: {
-  mine: RequestRow[];
-  approvals: RequestRow[];
-  /** Tickets handed to this person that they have not finished. */
-  incoming: RequestRow[];
-  types: { code: string; name: string }[];
-  /** §6.1 level for `request` — decides the tab's name and the ผู้ขอ column. */
-  scope: string;
-  /** Applied by the server for the first tab; echoed into the controls. */
-  filters: {
-    status?: string;
-    typeCode?: string;
-    q?: string;
-    overdue: boolean;
-  };
-  /**
-   * Whether the caller holds `approval.decide`. False hides the tab entirely:
-   * a permanently empty "รออนุมัติของฉัน · 0" reads as a page that failed to
-   * load rather than as work nobody has.
-   */
-  showApprovals?: boolean;
-}) {
-  const router = useRouter();
-  const params = useSearchParams();
-  const [search, setSearch] = useState(filters.q ?? "");
-
-  // One reading of the clock for the whole page, taken when it mounts.
-  const [now] = useState(() => Date.now());
-
-  /** Someone who only ever sees their own rows needs no "whose row is this". */
-  const acrossPeople = scope !== "own";
-
-  /** Filters live in the URL so the server can apply them to the scope tab. */
-  function apply(key: string, value: string | undefined) {
-    const next = new URLSearchParams(params.toString());
-    if (value) next.set(key, value);
-    else next.delete(key);
-
-    router.push(next.size ? `${ROUTES.myWork}?${next.toString()}` : ROUTES.myWork);
-  }
-
-  /** The same predicates, for the inbox tab — see the note on this component. */
-  const filterInbox = useMemo(
-    () => (rows: RequestRow[]) =>
-      rows.filter((row) => {
-        if (filters.status && row.status !== filters.status) return false;
-        if (filters.typeCode && row.typeCode !== filters.typeCode) return false;
-
-        if (filters.overdue) {
-          const due = row.dueAt ? new Date(row.dueAt).getTime() : null;
-          if (due === null || due > now) return false;
-        }
-
-        if (!filters.q?.trim()) return true;
-
-        const needle = filters.q.trim().toLowerCase();
-        return [row.requestNo, row.refId, row.requestType?.name]
-          .filter((value): value is string => Boolean(value))
-          .some((value) => value.toLowerCase().includes(needle));
-      }),
-    [filters, now],
-  );
-
-  const columns = [
+/**
+ * The columns §16 หน้าที่ 2 draws, shared by "งานค้างของฉัน" and "งานทั้งหมด".
+ *
+ * Lifted out of the component so both screens print the same table. Two copies
+ * would drift on the first column anyone added — and a head comparing their own
+ * queue against their team's would be comparing two different tables.
+ *
+ * `now` is passed in rather than read here: reading the clock during render
+ * makes the same row render differently on an incidental re-render.
+ */
+export function requestColumns(now: number) {
+  return [
     {
       title: messages.myWork.columns.requestNo,
       dataIndex: "requestNo",
@@ -202,23 +143,21 @@ export function MyWork({
         </div>
       ),
     },
-    // Only where the list crosses people. For scope `own` every row would
-    // answer with the reader's own name.
-    ...(acrossPeople
-      ? [
-          {
-            title: messages.myWork.columns.requester,
-            key: "requester",
-            render: (_: unknown, row: RequestRow) => (
-              <span className="text-xs">
-                {row.requester?.displayName ?? (
-                  <Text type="secondary">—</Text>
-                )}
-              </span>
-            ),
-          },
-        ]
-      : []),
+    /*
+      Always shown. The list used to hide this column at scope `own`, where
+      every row answered with the reader's own name; visibility now includes
+      tickets handed to you and work in the groups you lead, so "whose row is
+      this" is a real question on every tab.
+    */
+    {
+      title: messages.myWork.columns.requester,
+      key: "requester",
+      render: (_: unknown, row: RequestRow) => (
+        <span className="text-xs">
+          {row.requester?.displayName ?? <Text type="secondary">—</Text>}
+        </span>
+      ),
+    },
     {
       title: messages.myWork.columns.status,
       dataIndex: "status",
@@ -255,7 +194,52 @@ export function MyWork({
       key: "due",
       render: (_: unknown, row: RequestRow) => <DueCell row={row} now={now} />,
     },
-  ];
+    ];
+}
+
+export function MyWork({
+  involved,
+  created,
+  incoming,
+  approver,
+  types,
+  filters,
+}: {
+  /** ทั้งหมด — everything this person raised, received, carries, or may approve. */
+  involved: RequestRow[];
+  /** สร้าง — raised by them. */
+  created: RequestRow[];
+  /** รับเรื่อง — handed to them and not finished. */
+  incoming: RequestRow[];
+  /** อนุมัติ — waiting on their decision right now. */
+  approver: RequestRow[];
+  types: { code: string; name: string }[];
+  /** Applied by the server for the first tab; echoed into the controls. */
+  filters: {
+    status?: string;
+    typeCode?: string;
+    q?: string;
+    overdue: boolean;
+  };
+}) {
+  const router = useRouter();
+  const params = useSearchParams();
+  const [search, setSearch] = useState(filters.q ?? "");
+
+  // One reading of the clock for the whole page, taken when it mounts.
+  const [now] = useState(() => Date.now());
+
+
+  /** Filters live in the URL so the server can apply them to the scope tab. */
+  function apply(key: string, value: string | undefined) {
+    const next = new URLSearchParams(params.toString());
+    if (value) next.set(key, value);
+    else next.delete(key);
+
+    router.push(next.size ? `${ROUTES.myWork}?${next.toString()}` : ROUTES.myWork);
+  }
+
+  const columns = requestColumns(now);
 
   const table = (rows: RequestRow[], emptyText: string) =>
     rows.length ? (
@@ -286,7 +270,7 @@ export function MyWork({
           onSearch={(value) => apply("q", value.trim() || undefined)}
           style={{ width: 260 }}
         />
-        <Select
+        <SearchSelect
           allowClear
           value={filters.status}
           onChange={(value?: string) => apply("status", value)}
@@ -296,10 +280,8 @@ export function MyWork({
             ([value, label]) => ({ value, label }),
           )}
         />
-        <Select
+        <SearchSelect
           allowClear
-          showSearch
-          optionFilterProp="label"
           value={filters.typeCode}
           onChange={(value?: string) => apply("type_code", value)}
           placeholder={`${messages.myWork.filterType}: ${messages.myWork.filterAll}`}
@@ -319,43 +301,40 @@ export function MyWork({
         </Checkbox>
       </Space>
 
+      {/*
+        Four tabs, always all four, in the order the requirement names them.
+        Hiding an empty one used to save a line and cost more: a tab that
+        appears only when it has work makes the row jump about, and "รับเรื่อง"
+        vanishing is indistinguishable from a page that failed to load it.
+      */}
       <Tabs
         items={[
           {
-            key: "mine",
-            label: `${messages.myWork.tabForScope(scope)} · ${mine.length}`,
-            children: table(mine, messages.myWork.empty),
+            key: "involved",
+            label: `${messages.myWork.tabInvolved} · ${involved.length}`,
+            children: table(involved, messages.myWork.empty),
+          },
+          {
+            key: "created",
+            label: `${messages.myWork.tabCreated} · ${created.length}`,
+            children: table(created, messages.myWork.empty),
           },
           /*
             The queue that makes the ticket model work. Without it the person a
-            request was handed to is the one person who cannot find it: their
-            data scope covers what they raised, and this was raised by somebody
-            else.
+            request was handed to is the one person who cannot find it: what
+            they can see covers what they raised, and this was raised by
+            somebody else.
           */
-          ...(incoming.length
-            ? [
-                {
-                  key: "incoming",
-                  label: `${messages.myWork.tabIncoming} · ${incoming.length}`,
-                  children: table(
-                    filterInbox(incoming),
-                    messages.myWork.emptyIncoming,
-                  ),
-                },
-              ]
-            : []),
-          ...(showApprovals
-            ? [
-                {
-                  key: "approvals",
-                  label: `${messages.myWork.tabApprovals} · ${approvals.length}`,
-                  children: table(
-                    filterInbox(approvals),
-                    messages.myWork.emptyApprovals,
-                  ),
-                },
-              ]
-            : []),
+          {
+            key: "incoming",
+            label: `${messages.myWork.tabIncoming} · ${incoming.length}`,
+            children: table(incoming, messages.myWork.emptyIncoming),
+          },
+          {
+            key: "approver",
+            label: `${messages.myWork.tabApprovals} · ${approver.length}`,
+            children: table(approver, messages.myWork.emptyApprovals),
+          },
         ]}
       />
     </Card>

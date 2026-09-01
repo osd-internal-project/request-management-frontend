@@ -6,32 +6,30 @@ import {
   Avatar,
   Button,
   Card,
+  Checkbox,
   Empty,
   Form,
   Input,
   Modal,
-  Select,
   Spin,
   Tag,
   message,
 } from "antd";
 import Text from "antd/es/typography/Text";
 import Paragraph from "antd/es/typography/Paragraph";
-import Link from "next/link";
 import { messages } from "@/lib/messages";
-import { ROUTES } from "@/lib/routes";
+import { SearchSelect, SearchTreeSelect } from "@/components/search-select";
+import { buildUnitTree } from "@/lib/org-tree";
 
 import type {
   OrgUnitNode,
   UnassignedUser,
   OrgMember,
+  RoleRow,
 } from "@/lib/api/types";
 import { adminApi } from "@/lib/api/client";
-export type {
-  OrgUnitNode,
-  UnassignedUser,
-  OrgMember,
-} from "@/lib/api/types";
+import { grantRole, revokeRole, searchUsers } from "@/lib/api/client-roles";
+export type { OrgUnitNode, UnassignedUser, OrgMember } from "@/lib/api/types";
 
 interface KeycloakIdentity {
   roles: string[];
@@ -105,6 +103,125 @@ function realmRoles(
   );
 }
 
+/**
+ * A unit plus everything under it — the set that may never become its parent.
+ *
+ * `assertNoCycle` on the backend rejects these outright, but a dropdown that
+ * offers the choice and then answers `ORG_UNIT_CYCLE` teaches an admin nothing
+ * about the shape of their own chart. Excluding them is the explanation.
+ */
+function subtreeIds(units: OrgUnitNode[], rootId: string): Set<string> {
+  const found = new Set([rootId]);
+  let grew = true;
+
+  // The tree is shallow (บริษัท → ฝ่าย → แผนก → ทีม) and already in memory, so
+  // sweeping it to a fixed point costs less than building an index per open.
+  while (grew) {
+    grew = false;
+    for (const unit of units) {
+      if (unit.parentId && found.has(unit.parentId) && !found.has(unit.id)) {
+        found.add(unit.id);
+        grew = true;
+      }
+    }
+  }
+
+  return found;
+}
+
+/**
+ * The units a search should leave on screen: the matches, **plus every unit
+ * above them**.
+ *
+ * Dropping the ancestors would leave the matches floating at the root, and the
+ * one thing an admin needs from a chart search is where in the chart the answer
+ * sits. Children of a match are kept too — finding a department and losing its
+ * positions would be answering half the question.
+ */
+function matchingSubtree(units: OrgUnitNode[], query: string): Set<string> {
+  const needle = query.trim().toLowerCase();
+  const byId = new Map(units.map((unit) => [unit.id, unit]));
+
+  const visible = new Set<string>();
+
+  for (const unit of units) {
+    const hit = [unit.name, unit.code, unit.managerDisplayName]
+      .filter((value): value is string => Boolean(value))
+      .some((value) => value.toLowerCase().includes(needle));
+
+    if (!hit) continue;
+
+    for (const id of subtreeIds(units, unit.id)) visible.add(id);
+
+    let parentId = unit.parentId;
+    while (parentId && !visible.has(parentId)) {
+      visible.add(parentId);
+      parentId = byId.get(parentId)?.parentId ?? null;
+    }
+  }
+
+  return visible;
+}
+
+/**
+ * Picks one group from the chart, drawn as the chart.
+ *
+ * A flat list cannot answer the question these dialogs ask. OSD has 158 groups
+ * and its position names repeat across departments — `Engineer Support` exists
+ * under three — so a list of names is a list of ambiguities, and the one thing
+ * that disambiguates them is exactly what a flat list throws away.
+ *
+ * Groups that may not be chosen are **disabled rather than removed**: dropping
+ * one would re-hang its children at the root, and a chart whose shape depends
+ * on why you opened the picker is a chart nobody can learn.
+ */
+function UnitTreePicker({
+  units,
+  value,
+  onChange,
+  placeholder,
+  allowClear,
+  disabled,
+}: {
+  units: OrgUnitNode[];
+  /**
+   * Optional because `Form.Item` injects both when this sits inside a form —
+   * writing them there would be two sources for one value.
+   */
+  value?: string;
+  onChange?: (value?: string) => void;
+  placeholder: string;
+  allowClear?: boolean;
+  /** Groups shown but not choosable — inactive ones, the group already open. */
+  disabled?: (unit: OrgUnitNode) => boolean;
+}) {
+  const treeData = useMemo(
+    () =>
+      buildUnitTree(units, {
+        // The head is what tells two same-named positions apart, so it is part
+        // of the label rather than a detail the picker drops.
+        title: (unit) =>
+          unit.managerDisplayName
+            ? `${unit.name} — ${unit.managerDisplayName}`
+            : unit.name,
+        disabled,
+      }),
+    [units, disabled],
+  );
+
+  return (
+    <SearchTreeSelect
+      className="w-full"
+      allowClear={allowClear}
+      treeDefaultExpandAll
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      treeData={treeData}
+    />
+  );
+}
+
 function Initials({ name }: { name: string }) {
   return (
     <Avatar size="small" className="shrink-0 bg-gray-200! text-gray-700!">
@@ -127,6 +244,8 @@ export function OrgAdmin({
   initialSelectedId,
   initialMembers,
   companyId,
+  roles,
+  canManageRoles,
 }: {
   units: OrgUnitNode[];
   unassigned: UnassignedUser[];
@@ -136,17 +255,34 @@ export function OrgAdmin({
   initialMembers: OrgMember[];
   /** Active company — required when creating a unit (D-11). */
   companyId: string;
+  /** System roles of this company, for the per-member role editor. */
+  roles: RoleRow[];
+  /**
+   * Whether the viewer holds `admin.role.manage`. Editing a member's roles is
+   * a different permission from editing the chart, and this screen is reachable
+   * with only the latter — a button that always answers 403 is worse than none.
+   */
+  canManageRoles: boolean;
 }) {
   const [units, setUnits] = useState(initialUnits);
   const [unassigned, setUnassigned] = useState(initialUnassigned);
-  const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId);
+  const [selectedId, setSelectedId] = useState<string | null>(
+    initialSelectedId,
+  );
   const [members, setMembers] = useState<OrgMember[]>(initialMembers);
-  const [identities, setIdentities] = useState<Record<string, KeycloakIdentity>>({});
+  const [identities, setIdentities] = useState<
+    Record<string, KeycloakIdentity>
+  >({});
   const [loading, setLoading] = useState(false);
   const [keycloakNote, setKeycloakNote] = useState<string | null>(null);
   const [assigning, setAssigning] = useState<UnassignedUser | null>(null);
   const [addingTeam, setAddingTeam] = useState(false);
   const [changingLead, setChangingLead] = useState(false);
+  const [editingUnit, setEditingUnit] = useState(false);
+  const [movingMember, setMovingMember] = useState<OrgMember | null>(null);
+  const [editingRolesOf, setEditingRolesOf] = useState<OrgMember | null>(null);
+  const [addingMember, setAddingMember] = useState(false);
+  const [treeQuery, setTreeQuery] = useState("");
 
   // One reading of the clock for the whole screen — see `firstLoginLabel`.
   const [now] = useState(() => Date.now());
@@ -245,6 +381,130 @@ export function OrgAdmin({
   }, [selectedId, loadMembers]);
 
   /**
+   * Take a member out of the chart entirely — unit *and* supervisor.
+   *
+   * Clearing only the unit would leave `supervisorUserId` pointing into a team
+   * the person no longer sits in, and that edge is exactly what `scopeSetsFor`
+   * and approval step 1 read.
+   */
+  const removeFromTeam = useCallback(
+    (member: OrgMember) => {
+      Modal.confirm({
+        title: messages.org.removeConfirm(member.displayName),
+        content: messages.org.removeConfirmBody,
+        okText: messages.org.confirmOk,
+        cancelText: messages.org.confirmCancel,
+        okButtonProps: { danger: true },
+        onOk: async () => {
+          const result = await adminApi(`users/${member.id}/org`, {
+            method: "PATCH",
+            body: JSON.stringify({
+              org_unit_id: null,
+              supervisor_user_id: null,
+            }),
+          });
+
+          if (!result.ok) {
+            void message.error(result.message);
+            return;
+          }
+
+          void message.success(messages.org.saved);
+          await Promise.all([refreshTree(), refreshQueue()]);
+          reloadMembers();
+        },
+      });
+    },
+    [refreshTree, refreshQueue, reloadMembers],
+  );
+
+  const setUnitActive = useCallback(
+    async (unit: OrgUnitNode, active: boolean) => {
+      const result = await adminApi(`org-units/${unit.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ active }),
+      });
+
+      if (!result.ok) {
+        void message.error(result.message);
+        return;
+      }
+
+      void message.success(messages.org.saved);
+      await refreshTree();
+    },
+    [refreshTree],
+  );
+
+  /**
+   * Deactivating a unit that still holds people would drop their team out of
+   * the chart while scope and approval carried on reading it. Members and
+   * active children move out first — a refusal, not a warning to click past.
+   */
+  const toggleActive = useCallback(
+    (unit: OrgUnitNode) => {
+      if (!unit.active) {
+        void setUnitActive(unit, true);
+        return;
+      }
+
+      if (unit.memberCount > 0) {
+        void message.warning(messages.org.deactivateBlockedMembers);
+        return;
+      }
+
+      if (units.some((child) => child.parentId === unit.id && child.active)) {
+        void message.warning(messages.org.deactivateBlockedChildren);
+        return;
+      }
+
+      Modal.confirm({
+        title: messages.org.deactivateConfirm(unit.name),
+        okText: messages.org.confirmOk,
+        cancelText: messages.org.confirmCancel,
+        okButtonProps: { danger: true },
+        onOk: () => setUnitActive(unit, false),
+      });
+    },
+    [units, setUnitActive],
+  );
+
+  const visibleUnits = useMemo(
+    () => (treeQuery.trim() ? matchingSubtree(units, treeQuery) : null),
+    [units, treeQuery],
+  );
+
+  const deleteUnit = useCallback(
+    (unit: OrgUnitNode) => {
+      Modal.confirm({
+        title: messages.org.deleteConfirm(unit.name),
+        content: messages.org.deleteConfirmBody,
+        okText: messages.org.confirmOk,
+        cancelText: messages.org.confirmCancel,
+        okButtonProps: { danger: true },
+        onOk: async () => {
+          const result = await adminApi(`org-units/${unit.id}`, {
+            method: "DELETE",
+          });
+
+          // The backend refuses while anything still points at the unit and
+          // says what, so its message is more useful than any wording here.
+          if (!result.ok) {
+            void message.error(result.message);
+            return;
+          }
+
+          void message.success(messages.org.saved);
+          setSelectedId(null);
+          setMembers([]);
+          await refreshTree();
+        },
+      });
+    },
+    [refreshTree],
+  );
+
+  /**
    * The tree of §16 A3: name on the left, who runs it on the right.
    *
    * A branch prints its head's name alone ("ผอ. ประเสริฐ ท."), a unit people
@@ -271,11 +531,17 @@ export function OrgAdmin({
   }
 
   function renderTree(parentId: string | null, depth = 0) {
-    const children = units.filter((unit) => unit.parentId === parentId);
+    const children = units.filter(
+      (unit) =>
+        unit.parentId === parentId &&
+        (visibleUnits === null || visibleUnits.has(unit.id)),
+    );
     if (!children.length) return null;
 
     return (
-      <ul className={depth === 0 ? "space-y-1" : "ml-3 space-y-1 border-l pl-3"}>
+      <ul
+        className={depth === 0 ? "space-y-1" : "ml-3 space-y-1 border-l pl-3"}
+      >
         {children.map((unit) => (
           <li key={unit.id}>
             <button
@@ -283,9 +549,19 @@ export function OrgAdmin({
               onClick={() => selectUnit(unit.id)}
               className={`flex w-full cursor-pointer items-baseline justify-between gap-3 rounded px-2 py-1.5 text-left hover:bg-black/5 ${
                 unit.id === selectedId ? "bg-black/5 font-medium" : ""
-              }`}
+              } ${unit.active ? "" : "opacity-50"}`}
             >
-              <span className="truncate">{unit.name}</span>
+              {/*
+                A deactivated unit is dimmed and labelled, never hidden. Hiding
+                it would take a team that still has people in it off the chart
+                while scope and approval went on reading it.
+              */}
+              <span className="flex min-w-0 items-baseline gap-1.5">
+                <span className="truncate">{unit.name}</span>
+                {!unit.active && (
+                  <Tag className="m-0! shrink-0">{messages.org.inactive}</Tag>
+                )}
+              </span>
               <Text
                 type="secondary"
                 className="shrink-0 text-xs whitespace-nowrap"
@@ -310,7 +586,22 @@ export function OrgAdmin({
           </Button>
         }
       >
-        {units.length ? renderTree(null) : <Empty />}
+        <Input.Search
+          allowClear
+          className="mb-3"
+          placeholder={messages.org.searchTeam}
+          value={treeQuery}
+          onChange={(event) => setTreeQuery(event.target.value)}
+        />
+        <div className="max-h-[calc(100vh-50px)] overflow-y-auto pr-2">
+          {!units.length ? (
+            <Empty />
+          ) : visibleUnits?.size === 0 ? (
+            <Empty description={messages.org.searchNoMatch} />
+          ) : (
+            renderTree(null)
+          )}
+        </div>
         <Paragraph type="secondary" className="mt-4! mb-0! text-xs">
           {messages.org.truthNote}
         </Paragraph>
@@ -385,9 +676,42 @@ export function OrgAdmin({
           }
           extra={
             selected && (
-              <Button type="primary" size="small" onClick={() => setChangingLead(true)}>
-                {messages.org.changeLead}
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button size="small" onClick={() => setAddingMember(true)}>
+                  {messages.org.addMember}
+                </Button>
+                <Button size="small" onClick={() => setEditingUnit(true)}>
+                  {messages.org.editTeam}
+                </Button>
+                <Button
+                  size="small"
+                  danger={selected.active}
+                  onClick={() => toggleActive(selected)}
+                >
+                  {selected.active
+                    ? messages.org.deactivateTeam
+                    : messages.org.activateTeam}
+                </Button>
+                {/*
+                  Deleting is offered beside deactivating rather than instead of
+                  it: the backend refuses while anything points at the unit, so
+                  the two are genuinely different answers to "retire this".
+                */}
+                <Button
+                  size="small"
+                  danger
+                  onClick={() => deleteUnit(selected)}
+                >
+                  {messages.org.deleteTeam}
+                </Button>
+                <Button
+                  type="primary"
+                  size="small"
+                  onClick={() => setChangingLead(true)}
+                >
+                  {messages.org.changeLead}
+                </Button>
+              </div>
             )
           }
         >
@@ -426,9 +750,6 @@ export function OrgAdmin({
                         {member.roles.map((role) => (
                           <Tag key={role.code}>{role.code}</Tag>
                         ))}
-                        <Tag color="geekblue">
-                          {messages.org.scope}: {member.scope}
-                        </Tag>
                         {keycloak.map((role) => (
                           <Tag key={role} color="gold">
                             {role}
@@ -439,27 +760,37 @@ export function OrgAdmin({
                             {group.name}
                           </Tag>
                         ))}
-                        {/*
-                          Not an edit control. `ScopeRule` is keyed on
-                          `(role, resource)` — SCOPE-01, enforced by
-                          `@@unique([roleId, resource])` — so there is no such
-                          thing as this person's scope to change. A button here
-                          promised one and silently rewrote the scope of
-                          everyone holding the same role.
-                        */}
-                        {member.roles.length > 0 && (
-                          <Link href={`${ROUTES.adminOrg}?tab=scope`}>
-                            <Text type="secondary" className="text-xs underline">
-                              {messages.org.scopeEditedOnRole}
-                            </Text>
-                          </Link>
-                        )}
                       </div>
 
                       <Text type="secondary" className="text-xs">
                         {isLead ? messages.org.reportsTo : messages.org.manager}
                         : {member.supervisor?.displayName ?? "—"}
                       </Text>
+                    </div>
+
+                    <div className="flex shrink-0 flex-col items-end gap-1">
+                      {canManageRoles && (
+                        <Button
+                          size="small"
+                          onClick={() => setEditingRolesOf(member)}
+                        >
+                          {messages.org.editRoles}
+                        </Button>
+                      )}
+                      <Button
+                        size="small"
+                        onClick={() => setMovingMember(member)}
+                      >
+                        {messages.org.moveMember}
+                      </Button>
+                      <Button
+                        size="small"
+                        type="text"
+                        danger
+                        onClick={() => removeFromTeam(member)}
+                      >
+                        {messages.org.removeFromTeam}
+                      </Button>
                     </div>
                   </li>
                 );
@@ -510,9 +841,9 @@ export function OrgAdmin({
       />
 
       <ChangeLeadDialog
+        key={`lead-${selected?.id ?? "none"}`}
         open={changingLead}
         unit={selected}
-        members={members}
         onClose={() => setChangingLead(false)}
         onDone={async () => {
           setChangingLead(false);
@@ -521,7 +852,544 @@ export function OrgAdmin({
           reloadMembers();
         }}
       />
+
+      {/*
+        Keyed on the unit so the form re-mounts with the right `initialValues`
+        when the admin selects a different one. The alternative is an effect
+        that syncs the form to props, which this file deliberately avoids.
+      */}
+      <EditUnitDialog
+        key={`edit-${selected?.id ?? "none"}`}
+        open={editingUnit}
+        unit={selected}
+        units={units}
+        onClose={() => setEditingUnit(false)}
+        onDone={async () => {
+          setEditingUnit(false);
+          void message.success(messages.org.saved);
+          await refreshTree();
+        }}
+      />
+
+      <MoveMemberDialog
+        key={`move-${movingMember?.id ?? "none"}`}
+        member={movingMember}
+        units={units}
+        currentUnitId={selectedId}
+        onClose={() => setMovingMember(null)}
+        onDone={async () => {
+          setMovingMember(null);
+          void message.success(messages.org.saved);
+          await refreshTree();
+          reloadMembers();
+        }}
+      />
+
+      <AddMemberDialog
+        open={addingMember}
+        unit={selected}
+        onClose={() => setAddingMember(false)}
+        onDone={async () => {
+          setAddingMember(false);
+          void message.success(messages.org.saved);
+          await Promise.all([refreshTree(), refreshQueue()]);
+          reloadMembers();
+        }}
+      />
+
+      <MemberRolesDialog
+        key={`roles-${editingRolesOf?.id ?? "none"}`}
+        member={editingRolesOf}
+        roles={roles}
+        companyId={companyId}
+        onClose={() => setEditingRolesOf(null)}
+        onDone={() => {
+          setEditingRolesOf(null);
+          void message.success(messages.org.saved);
+          reloadMembers();
+        }}
+      />
     </div>
+  );
+}
+
+/**
+ * A user picker over the whole company.
+ *
+ * `GET /users` is company-wide (see `visibleUsersWhere`), so this is genuinely
+ * everybody — which is what both callers need: a group head does not have to be
+ * a member of the group they lead, and a member being added is by definition
+ * not in it yet.
+ *
+ * Searches on the server rather than filtering a preloaded list: the directory
+ * runs to hundreds of people, and a picker that only searches the first page is
+ * a picker that cannot find most of them.
+ */
+function UserPicker({
+  value,
+  onChange,
+  placeholder,
+  allowClear,
+}: {
+  value?: string;
+  onChange: (value?: string) => void;
+  placeholder: string;
+  allowClear?: boolean;
+}) {
+  const [options, setOptions] = useState<{ value: string; label: string }[]>(
+    [],
+  );
+  const [loading, setLoading] = useState(false);
+
+  async function search(term: string) {
+    setLoading(true);
+    const result = await searchUsers(term);
+    setLoading(false);
+
+    setOptions(
+      result.ok
+        ? result.data.data.map((person) => ({
+            value: person.id,
+            label: `${person.displayName} · ${person.username}`,
+          }))
+        : [],
+    );
+  }
+
+  return (
+    <SearchSelect
+      className="w-full"
+      allowClear={allowClear}
+      value={value}
+      onChange={onChange}
+      onSearch={(term) => void search(term)}
+      onFocus={() => {
+        if (!options.length) void search("");
+      }}
+      // The server has already matched; filtering again in the browser would
+      // hide results whose match is in a field the label does not show.
+      filterOption={false}
+      loading={loading}
+      notFoundContent={loading ? <Spin size="small" /> : null}
+      placeholder={placeholder}
+      options={options}
+    />
+  );
+}
+
+/** Moves somebody into the open group — the counterpart of `ย้ายทีม`. */
+function AddMemberDialog({
+  open,
+  unit,
+  onClose,
+  onDone,
+}: {
+  open: boolean;
+  unit: OrgUnitNode | null;
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const [userId, setUserId] = useState<string | undefined>();
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  async function submit() {
+    if (!unit || !userId) return;
+    setSaving(true);
+    setError(null);
+
+    const result = await adminApi(`users/${userId}/org`, {
+      method: "PATCH",
+      // The group's own head becomes their supervisor, as `AssignDialog` does
+      // from the queue — the same move should not mean two different things.
+      body: JSON.stringify({
+        org_unit_id: unit.id,
+        supervisor_user_id: unit.managerUserId ?? null,
+      }),
+    });
+
+    setSaving(false);
+    if (result.ok) {
+      setUserId(undefined);
+      onDone();
+    } else setError(result.message);
+  }
+
+  return (
+    <Modal
+      open={open}
+      title={`${messages.org.addMember}: ${unit?.name ?? ""}`}
+      onCancel={onClose}
+      onOk={submit}
+      confirmLoading={saving}
+      okText={messages.org.confirmOk}
+      cancelText={messages.org.confirmCancel}
+      okButtonProps={{ disabled: !userId }}
+    >
+      {error && <Alert type="error" showIcon title={error} className="mb-3!" />}
+      <Form layout="vertical">
+        <Form.Item required extra={messages.org.addMemberHint}>
+          <UserPicker
+            value={userId}
+            onChange={setUserId}
+            placeholder={messages.org.selectUser}
+          />
+        </Form.Item>
+      </Form>
+    </Modal>
+  );
+}
+
+/**
+ * The system roles one member holds in this company.
+ *
+ * Roles arrive two ways (ROLE-02/ROLE-03) and only one of them is editable
+ * here: a grant mapped from a Keycloak claim is re-derived on every login, so
+ * revoking it would last until the person next signed in. Those are shown
+ * locked with their source, and the checkbox only governs manual grants.
+ */
+function MemberRolesDialog({
+  member,
+  roles,
+  companyId,
+  onClose,
+  onDone,
+}: {
+  member: OrgMember | null;
+  roles: RoleRow[];
+  companyId: string;
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const held = new Map((member?.roles ?? []).map((role) => [role.id, role]));
+
+  const [checked, setChecked] = useState<string[]>([...held.keys()]);
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const mapped = new Set(
+    (member?.roles ?? [])
+      .filter((role) => role.source !== "MANUAL")
+      .map((role) => role.id),
+  );
+
+  async function submit() {
+    if (!member) return;
+    setSaving(true);
+    setError(null);
+
+    const wanted = new Set(checked);
+    const granted = [...wanted].filter((id) => !held.has(id));
+    // A mapped grant cannot be revoked here, so it is never in the diff even
+    // if the box somehow came back unchecked.
+    const revoked = [...held.keys()].filter(
+      (id) => !wanted.has(id) && !mapped.has(id),
+    );
+
+    for (const roleId of granted) {
+      const result = await grantRole(member.id, {
+        role_id: roleId,
+        company_id: companyId,
+      });
+      if (!result.ok) {
+        setSaving(false);
+        setError(result.message);
+        return;
+      }
+    }
+
+    for (const roleId of revoked) {
+      const result = await revokeRole(member.id, roleId);
+      if (!result.ok) {
+        setSaving(false);
+        setError(result.message);
+        return;
+      }
+    }
+
+    setSaving(false);
+    onDone();
+  }
+
+  return (
+    <Modal
+      open={Boolean(member)}
+      title={messages.org.editRolesTitle(member?.displayName ?? "")}
+      onCancel={onClose}
+      onOk={submit}
+      confirmLoading={saving}
+      okText={messages.org.confirmOk}
+      cancelText={messages.org.confirmCancel}
+    >
+      {error && <Alert type="error" showIcon title={error} className="mb-3!" />}
+
+      <Paragraph type="secondary" className="mb-3! text-xs">
+        {messages.org.editRolesHint}
+      </Paragraph>
+
+      <div className="space-y-2">
+        {roles.map((role) => (
+          <div key={role.id} className="flex items-center gap-2">
+            <Checkbox
+              checked={checked.includes(role.id)}
+              disabled={mapped.has(role.id)}
+              onChange={(event) =>
+                setChecked((current) =>
+                  event.target.checked
+                    ? [...current, role.id]
+                    : current.filter((id) => id !== role.id),
+                )
+              }
+            >
+              {role.name} <Text type="secondary">({role.code})</Text>
+            </Checkbox>
+            {held.has(role.id) && (
+              <Tag color={mapped.has(role.id) ? "blue" : "orange"}>
+                {mapped.has(role.id)
+                  ? messages.org.fromKeycloak
+                  : messages.org.manualGrant}
+              </Tag>
+            )}
+          </div>
+        ))}
+      </div>
+    </Modal>
+  );
+}
+
+/** The `OrgUnitKind` options, widest first — the order the enum declares. */
+const UNIT_KINDS = [
+  "COMPANY",
+  "DIVISION",
+  "DEPARTMENT",
+  "POSITION",
+  "TEAM",
+] as const;
+
+/**
+ * Rename a unit, change what kind of unit it is, or move it elsewhere in the
+ * chart. Re-parenting rebuilds `org_closure` on the backend inside the same
+ * transaction, so team and department scope move with it.
+ */
+function EditUnitDialog({
+  open,
+  unit,
+  units,
+  onClose,
+  onDone,
+}: {
+  open: boolean;
+  unit: OrgUnitNode | null;
+  units: OrgUnitNode[];
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const [form] = Form.useForm();
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const forbiddenParents = useMemo(
+    () => (unit ? subtreeIds(units, unit.id) : new Set<string>()),
+    [units, unit],
+  );
+
+  async function submit() {
+    if (!unit) return;
+
+    const values = (await form.validateFields()) as {
+      name: string;
+      kind: OrgUnitNode["kind"];
+      parent_id?: string;
+    };
+
+    setSaving(true);
+    setError(null);
+
+    const result = await adminApi(`org-units/${unit.id}`, {
+      method: "PATCH",
+      // `parent_id` is sent even when cleared: `null` promotes the unit to a
+      // root, and omitting the key would leave it where it was instead.
+      body: JSON.stringify({
+        name: values.name,
+        kind: values.kind,
+        parent_id: values.parent_id ?? null,
+      }),
+    });
+
+    setSaving(false);
+    if (result.ok) onDone();
+    else setError(result.message);
+  }
+
+  return (
+    <Modal
+      open={open}
+      title={`${messages.org.editTeam}: ${unit?.name ?? ""}`}
+      onCancel={onClose}
+      onOk={submit}
+      confirmLoading={saving}
+      okText={messages.org.confirmOk}
+      cancelText={messages.org.confirmCancel}
+    >
+      {error && <Alert type="error" showIcon title={error} className="mb-3!" />}
+      <Form
+        form={form}
+        layout="vertical"
+        initialValues={{
+          name: unit?.name,
+          kind: unit?.kind,
+          parent_id: unit?.parentId ?? undefined,
+        }}
+      >
+        <Form.Item label={messages.org.unitCode}>
+          {/* Code is the unit's identity across companies — renaming is safe,
+              re-coding is not, and `UpdateOrgUnitDto` does not accept it. */}
+          <Input value={unit?.code} disabled />
+        </Form.Item>
+        <Form.Item
+          name="name"
+          label={messages.org.unitName}
+          rules={[{ required: true }]}
+        >
+          <Input />
+        </Form.Item>
+        <Form.Item
+          name="kind"
+          label={messages.org.unitKind}
+          rules={[{ required: true }]}
+        >
+          <SearchSelect
+            options={UNIT_KINDS.map((kind) => ({
+              value: kind,
+              label: messages.org.unitKinds[kind],
+            }))}
+          />
+        </Form.Item>
+        {/*
+          A group cannot hang from itself or from one of its own descendants —
+          those are shown greyed rather than hidden, so an admin can see *why*
+          the branch they were aiming at is not on offer.
+        */}
+        <Form.Item name="parent_id" label={messages.org.parentUnit}>
+          <UnitTreePicker
+            units={units}
+            allowClear
+            placeholder={messages.org.selectUnit}
+            disabled={(candidate) => forbiddenParents.has(candidate.id)}
+          />
+        </Form.Item>
+      </Form>
+    </Modal>
+  );
+}
+
+/**
+ * Move one person to another unit.
+ *
+ * The supervisor moves with them by default — the destination's lead — because
+ * that edge is what data scope, approval step 1 and escalation read. It stays
+ * overridable: a person can sit in a team and report past its lead.
+ */
+function MoveMemberDialog({
+  member,
+  units,
+  currentUnitId,
+  onClose,
+  onDone,
+}: {
+  member: OrgMember | null;
+  units: OrgUnitNode[];
+  currentUnitId: string | null;
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const [orgUnitId, setOrgUnitId] = useState<string | undefined>();
+  const [supervisorId, setSupervisorId] = useState<string | undefined>();
+  const [candidates, setCandidates] = useState<OrgMember[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  /**
+   * Picking the destination also loads the people already in it, so the
+   * supervisor field offers real names rather than asking the admin to
+   * remember who is in that team.
+   */
+  async function selectTarget(unitId: string) {
+    setOrgUnitId(unitId);
+
+    const unit = units.find((candidate) => candidate.id === unitId);
+    setSupervisorId(unit?.managerUserId ?? undefined);
+
+    const result = await adminApi<OrgMember[]>(`org-units/${unitId}/members`);
+    setCandidates(result.ok ? result.data : []);
+  }
+
+  async function submit() {
+    if (!member || !orgUnitId) return;
+    setSaving(true);
+    setError(null);
+
+    const result = await adminApi(`users/${member.id}/org`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        org_unit_id: orgUnitId,
+        supervisor_user_id: supervisorId ?? null,
+      }),
+    });
+
+    setSaving(false);
+    if (result.ok) onDone();
+    else setError(result.message);
+  }
+
+  return (
+    <Modal
+      open={Boolean(member)}
+      title={`${messages.org.moveMember}: ${member?.displayName ?? ""}`}
+      onCancel={onClose}
+      onOk={submit}
+      confirmLoading={saving}
+      okText={messages.org.confirmOk}
+      cancelText={messages.org.confirmCancel}
+      okButtonProps={{ disabled: !orgUnitId }}
+    >
+      {error && <Alert type="error" showIcon title={error} className="mb-3!" />}
+      <Form layout="vertical">
+        <Form.Item label={messages.org.targetUnit} required>
+          <UnitTreePicker
+            units={units}
+            value={orgUnitId}
+            onChange={(value?: string) => {
+              if (value) void selectTarget(value);
+            }}
+            placeholder={messages.org.selectUnit}
+            /*
+              A deactivated group is on its way out of the chart, and the group
+              they are already in is not a move. Both stay visible so the tree
+              reads the same as it does everywhere else.
+            */
+            disabled={(unit) => !unit.active || unit.id === currentUnitId}
+          />
+        </Form.Item>
+        <Form.Item
+          label={messages.org.newSupervisor}
+          extra={messages.org.supervisorFromLead}
+        >
+          <SearchSelect
+            allowClear
+            value={supervisorId}
+            onChange={setSupervisorId}
+            disabled={!orgUnitId}
+            options={candidates
+              .filter((candidate) => candidate.id !== member?.id)
+              .map((candidate) => ({
+                value: candidate.id,
+                label: `${candidate.displayName} · ${candidate.username}`,
+              }))}
+          />
+        </Form.Item>
+      </Form>
+    </Modal>
   );
 }
 
@@ -573,14 +1441,14 @@ function AssignDialog({
       {error && <Alert type="error" showIcon title={error} className="mb-3!" />}
       <Form layout="vertical">
         <Form.Item label={messages.org.selectUnit} required>
-          <Select
+          <UnitTreePicker
+            units={units}
             value={orgUnitId}
             onChange={setOrgUnitId}
             placeholder={messages.org.selectUnit}
-            options={units.map((unit) => ({
-              value: unit.id,
-              label: `${unit.name}${unit.managerDisplayName ? ` — ${unit.managerDisplayName}` : ""}`,
-            }))}
+            // Placing somebody in a group that is on its way out of the chart
+            // would undo the deactivation the moment they were assigned.
+            disabled={(unit) => !unit.active}
           />
         </Form.Item>
       </Form>
@@ -639,16 +1507,25 @@ function AddTeamDialog({
     >
       {error && <Alert type="error" showIcon title={error} className="mb-3!" />}
       <Form form={form} layout="vertical">
-        <Form.Item name="code" label={messages.org.unitCode} rules={[{ required: true }]}>
+        <Form.Item
+          name="code"
+          label={messages.org.unitCode}
+          rules={[{ required: true }]}
+        >
           <Input placeholder="GETTER2" />
         </Form.Item>
-        <Form.Item name="name" label={messages.org.unitName} rules={[{ required: true }]}>
+        <Form.Item
+          name="name"
+          label={messages.org.unitName}
+          rules={[{ required: true }]}
+        >
           <Input placeholder="ทีมขาย Getter 2" />
         </Form.Item>
         <Form.Item name="parent_id" label={messages.org.parentUnit}>
-          <Select
+          <UnitTreePicker
+            units={units}
             allowClear
-            options={units.map((unit) => ({ value: unit.id, label: unit.name }))}
+            placeholder={messages.org.selectUnit}
           />
         </Form.Item>
       </Form>
@@ -656,16 +1533,22 @@ function AddTeamDialog({
   );
 }
 
+/**
+ * Sets the group's head, chosen from **anybody in the company**.
+ *
+ * It used to offer only the group's own members, which cannot express the
+ * common case: a department head who sits in one of its positions, or a
+ * division head who sits nowhere below themselves. A head is who a group
+ * reports to, not who is filed inside it.
+ */
 function ChangeLeadDialog({
   open,
   unit,
-  members,
   onClose,
   onDone,
 }: {
   open: boolean;
   unit: OrgUnitNode | null;
-  members: OrgMember[];
   onClose: () => void;
   onDone: () => void;
 }) {
@@ -698,16 +1581,15 @@ function ChangeLeadDialog({
     >
       {error && <Alert type="error" showIcon title={error} className="mb-3!" />}
       <Form layout="vertical">
-        <Form.Item label={messages.org.manager}>
-          <Select
+        <Form.Item
+          label={messages.org.manager}
+          extra={messages.org.leadFromCompany}
+        >
+          <UserPicker
             allowClear
             value={managerId}
             onChange={setManagerId}
-            placeholder={messages.org.manager}
-            options={members.map((member) => ({
-              value: member.id,
-              label: `${member.displayName} · ${member.username}`,
-            }))}
+            placeholder={messages.org.selectUser}
           />
         </Form.Item>
       </Form>

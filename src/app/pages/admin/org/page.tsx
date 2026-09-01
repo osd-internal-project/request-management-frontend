@@ -5,14 +5,13 @@ import { KeycloakMappingAdmin } from "@/components/keycloak-mapping-admin";
 import { OrgAdmin } from "@/components/org-admin";
 import { OrgPermissionTabs } from "@/components/org-permission-tabs";
 import { RolePermissionAdmin } from "@/components/role-permission-admin";
-import { ScopeRulesAdmin } from "@/components/scope-rules-admin";
 import audit from "@/lib/api/audit";
 import orgUnits from "@/lib/api/org-units";
 import roleApi from "@/lib/api/roles";
 
 import { messages } from "@/lib/messages";
 import { toOrgTab } from "@/lib/org-tabs";
-import { getSession } from "@/lib/session";
+import { can, getSession } from "@/lib/session";
 
 /**
  * Screen §16 A3 — ผังทีมและสิทธิ์, and Screen §16 A4 — Role และ Permission.
@@ -59,7 +58,12 @@ export default async function AdminOrgPage({
     [...units]
       .sort((a, b) => b.memberCount - a.memberCount)
       .find((unit) => unit.memberCount > 0)?.id ??
-    units.find((unit) => unit.kind === "TEAM" || unit.kind === "DEPARTMENT")
+    units.find(
+      (unit) =>
+        unit.kind === "POSITION" ||
+        unit.kind === "TEAM" ||
+        unit.kind === "DEPARTMENT",
+    )
       ?.id ??
     units[0]?.id ??
     null;
@@ -68,16 +72,14 @@ export default async function AdminOrgPage({
     ? await orgUnits.getOrgUnitMembers(initialSelectedId)
     : null;
 
-  // The other three tabs. Fetched here rather than lazily on tab change so
+  // The other tabs. Fetched here rather than lazily on tab change so
   // switching tabs is instant and the whole screen fails or succeeds as one —
   // each is a small admin table, not a paged list.
-  const [permissionResult, rolesResult, scopeResult, mappingResult] =
-    await Promise.all([
-      roleApi.getPermissions(),
-      roleApi.getRoles(),
-      roleApi.getScopeRules(),
-      roleApi.getKeycloakRoleMappings(),
-    ]);
+  const [permissionResult, rolesResult, mappingResult] = await Promise.all([
+    roleApi.getPermissions(),
+    roleApi.getRoles(),
+    roleApi.getKeycloakRoleMappings(),
+  ]);
 
   const roleRows = rolesResult.ok ? rolesResult.data : [];
   const mappingRows = mappingResult.ok ? mappingResult.data : [];
@@ -138,6 +140,8 @@ export default async function AdminOrgPage({
             initialSelectedId={initialSelectedId}
             initialMembers={membersResult?.ok ? membersResult.data : []}
             companyId={session?.active_company_id ?? ""}
+            roles={roleRows}
+            canManageRoles={can(session, "admin.role.manage")}
           />
         }
         roles={
@@ -149,12 +153,6 @@ export default async function AdminOrgPage({
             companyId={session?.active_company_id ?? ""}
             initialHolders={holderResult?.ok ? holderResult.data : []}
             initialAudit={auditResult?.ok ? auditResult.data.data : []}
-          />
-        }
-        scope={
-          <ScopeRulesAdmin
-            rules={scopeResult.ok ? scopeResult.data : []}
-            roles={roleRows}
           />
         }
         keycloak={

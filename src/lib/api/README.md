@@ -17,7 +17,7 @@ src/lib/api/
 ├── approvals/                   # Approval entity
 │   └── index.ts                 # getApprovalsInbox(), getApproval()
 ├── users/                       # Keycloak users entity
-│   └── index.ts                 # getKeycloakUsers(), getKeycloakUser()
+│   └── index.ts                 # getKeycloakUsers()
 ├── org-units/                   # Organization units entity
 │   └── index.ts                 # getOrgUnits(), getOrgUnitMembers(), getUnassignedUsers()
 ├── audit/                       # Audit logs entity
@@ -104,9 +104,6 @@ await users.getKeycloakUsers({
   page_size: 50,
   q: "search term"
 });
-
-// Single user
-await users.getKeycloakUser(userId);
 ```
 
 ### Organization Units

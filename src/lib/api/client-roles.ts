@@ -8,6 +8,7 @@
 import { adminApi, appApi, type ClientResult } from "./client";
 import type {
   AuditLogRow,
+  HolidayCalendarRow,
   KeycloakRoleMappingRow,
   Paginated,
   RoleHolder,
@@ -69,6 +70,28 @@ export function revokeRole(
 ): Promise<ClientResult<void>> {
   return adminApi<void>(`users/${userId}/roles/${roleId}`, {
     method: "DELETE",
+  });
+}
+
+/**
+ * SUP-01 — the company's working window and holidays.
+ *
+ * Replaces the whole calendar rather than patching fields: the screen shows
+ * one form and saves it whole, and a holiday removed from the list has to
+ * actually disappear.
+ */
+export function replaceHolidayCalendar(
+  companyId: string,
+  input: {
+    workday_start_minute: number;
+    workday_end_minute: number;
+    working_weekdays: number[];
+    holidays: string[];
+  },
+): Promise<ClientResult<HolidayCalendarRow>> {
+  return adminApi<HolidayCalendarRow>(`holiday-calendars/${companyId}`, {
+    method: "PUT",
+    body: JSON.stringify(input),
   });
 }
 

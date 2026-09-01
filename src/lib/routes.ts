@@ -28,8 +28,13 @@ export const ROUTES = {
   newRequest: `${HOME_PATH}/requests/new`,
   /** Screen 4 — รายละเอียดคำขอ */
   requestDetail: (id: string) => `${HOME_PATH}/requests/${id}`,
-  /** Screen 5 — รออนุมัติของฉัน */
-  approvals: `${HOME_PATH}/approvals`,
+  /**
+   * งานทั้งหมด — the work of the groups the viewer heads.
+   *
+   * Still `/approvals` as a path: it replaced that screen rather than sitting
+   * beside it, and moving the URL would break every link anyone had kept.
+   */
+  allWork: `${HOME_PATH}/approvals`,
   /** REQ-09 — รายงานคอขวด */
   bottleneckReport: `${HOME_PATH}/reports/bottleneck`,
 
@@ -42,6 +47,8 @@ export const ROUTES = {
   adminApprovalMatrix: `${HOME_PATH}/admin/approval-matrix`,
   /** Screen A2 — ประเภทคำขอ */
   adminRequestTypes: `${HOME_PATH}/admin/request-types`,
+  /** SUP-01 — เวลาทำการและวันหยุด, what a business-hours SLA is measured against. */
+  adminSla: `${HOME_PATH}/admin/sla`,
   /** Screen A3 — ผังทีมและสิทธิ์ */
   adminOrg: `${HOME_PATH}/admin/org`,
   /** Read-only Keycloak user directory. */

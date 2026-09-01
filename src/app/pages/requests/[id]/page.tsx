@@ -2,9 +2,12 @@ import { Alert, Card, Descriptions, Steps, Tag } from "antd";
 import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
 import Paragraph from "antd/es/typography/Paragraph";
-import { getRequest } from "@/lib/api/requests";
-import type { RequestDetail, RequestEventRow } from "@/lib/api/types";
+import { getRequest, getRequestTree } from "@/lib/api/requests";
+import type { FormSchema, RequestDetail } from "@/lib/api/types";
 import { RequestActions } from "@/components/request-actions";
+import { ReceiverForm } from "@/components/receiver-form";
+import { RequestTimeline } from "@/components/request-timeline";
+import { RequestTreePanel } from "@/components/request-tree";
 import { getSession } from "@/lib/session";
 import { messages } from "@/lib/messages";
 
@@ -63,7 +66,11 @@ export default async function RequestDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [result, session] = await Promise.all([getRequest(id), getSession()]);
+  const [result, session, treeResult] = await Promise.all([
+    getRequest(id),
+    getSession(),
+    getRequestTree(id),
+  ]);
 
   if (!result.ok) {
     return (
@@ -76,9 +83,49 @@ export default async function RequestDetailPage({
     );
   }
 
+  // An unreadable tree is not a reason to fail the page: the request itself is
+  // what the reader came for, and an empty panel says "nothing under this".
+  const tree = treeResult.ok
+    ? treeResult.data
+    : { parent: null, descendants: [] };
+
   const request = result.data;
   const approvalCase = request.approvalCases?.[0];
   const events = [...(request.events ?? [])].sort((a, b) => a.seq - b.seq);
+
+  const currentStep = approvalCase?.steps.find(
+    (step) => step.stepNo === approvalCase.currentStep,
+  );
+
+  const viewerId = session?.user.id ?? "";
+
+  /*
+    Anyone the request already involves may comment. The read itself is what
+    decided they could open it (SCOPE-03 answers 404, not 403, for anything
+    else), so this only keeps somebody who reached it *as a group head* from
+    joining a conversation they are not part of.
+  */
+  /*
+    H2.2 ข้อ 3 — the receiver's form, from the snapshot taken at submit so a
+    type edited mid-flight cannot change what finishing this request requires
+    (REQ-01). Falls back to the live type for a request that has none yet.
+  */
+  const receiverSchema =
+    request.typeSnapshot?.receiverFormSchema ??
+    request.requestType?.receiverFormSchema ??
+    null;
+
+  /** Only the person carrying the request fills it in, and only while open. */
+  const showReceiverForm =
+    request.status === "in_progress" &&
+    (request.assigneeUserId === viewerId ||
+      request.receiverUserId === viewerId);
+
+  const involved =
+    request.requesterId === viewerId ||
+    request.receiverUserId === viewerId ||
+    request.assigneeUserId === viewerId ||
+    (currentStep?.candidateUserIds ?? []).includes(viewerId);
   const attachments = (request.attachments ?? []).filter(
     (entry) => !entry.deletedAt,
   );
@@ -90,7 +137,18 @@ export default async function RequestDetailPage({
         request open on this page is usually open in order to do something to
         it, not to read it.
       */}
-      <RequestActions request={request} viewerId={session?.user.id ?? ""} />
+      <RequestActions
+        request={{
+          ...request,
+          approvalCaseId: approvalCase?.id ?? null,
+          approverCandidateIds: currentStep?.candidateUserIds ?? [],
+          // The plain "ทำเสร็จแล้ว" button steps aside when there is a form:
+          // finishing *is* submitting it, and two controls for one action is
+          // how a request gets completed with the form still blank.
+          hasReceiverForm: Boolean(receiverSchema),
+        }}
+        viewerId={viewerId}
+      />
 
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <Title level={4} className="mb-0!">
@@ -118,6 +176,25 @@ export default async function RequestDetailPage({
             <RequestFacts request={request} />
           </Card>
 
+          {/*
+            What the receiver recorded, once they have. The approver deciding on
+            this request is deciding on *the work*, not on the ask — so a
+            completed request that shows only what was requested asks them to
+            approve something they cannot see.
+          */}
+          {receiverSchema &&
+            Object.keys(request.receiverFormData ?? {}).length > 0 && (
+              <Card
+                title={messages.requestDetail.receiverFormTitle}
+                size="small"
+              >
+                <SchemaAnswers
+                  schema={receiverSchema}
+                  answers={request.receiverFormData ?? {}}
+                />
+              </Card>
+            )}
+
           <Card
             title={messages.requestDetail.attachments(attachments.length)}
             size="small"
@@ -140,8 +217,30 @@ export default async function RequestDetailPage({
             </Paragraph>
           </Card>
 
+          {/*
+            H2.2 ข้อ 4 — the chain this request sits in. Above the timeline
+            because it is about what the request *is*, and the timeline is
+            about what has happened to it.
+          */}
+          {receiverSchema && showReceiverForm && (
+            <ReceiverForm
+              requestId={request.id}
+              schema={receiverSchema}
+              initial={request.receiverFormData ?? {}}
+            />
+          )}
+
+          <Card title={messages.requestDetail.treeTitle} size="small">
+            <RequestTreePanel requestId={request.id} tree={tree} />
+          </Card>
+
           <Card title={messages.requestDetail.timelineTitle} size="small">
-            <Timeline events={events} />
+            <RequestTimeline
+              requestId={request.id}
+              events={events}
+              comments={request.comments ?? []}
+              canComment={involved}
+            />
           </Card>
         </div>
 
@@ -180,7 +279,7 @@ export default async function RequestDetailPage({
             </>
           ) : (
             <Text type="secondary">
-              {messages.requestForm.chainNeedsAmount}
+              {messages.requestForm.chainNoMatrix}
             </Text>
           )}
         </Card>
@@ -197,6 +296,39 @@ export default async function RequestDetailPage({
  * carry is printed as `••••••`. That is exactly the `margin` case in the
  * mockup, and it means the mask cannot be lifted by reading the page source.
  */
+/**
+ * A schema's answers, as a labelled list.
+ *
+ * A field the caller may not see is *absent* from the payload — the backend
+ * strips it (SCOPE-04) — so a name the schema declares but the data does not
+ * carry prints as `••••••` rather than as empty.
+ */
+function SchemaAnswers({
+  schema,
+  answers,
+}: {
+  schema: FormSchema;
+  answers: Record<string, unknown>;
+}) {
+  return (
+    <Descriptions column={1} size="small" bordered>
+      {Object.entries(schema.properties ?? {}).map(([name, property]) => {
+        const withheld = !(name in answers);
+
+        return (
+          <Descriptions.Item key={name} label={property.title ?? name}>
+            {withheld ? (
+              <Text type="secondary">{messages.requestDetail.masked}</Text>
+            ) : (
+              String(answers[name] ?? "—")
+            )}
+          </Descriptions.Item>
+        );
+      })}
+    </Descriptions>
+  );
+}
+
 function RequestFacts({ request }: { request: RequestDetail }) {
   const properties = request.requestType?.formSchema?.properties ?? {};
   const formData = request.formData ?? {};
@@ -225,38 +357,5 @@ function RequestFacts({ request }: { request: RequestDetail }) {
         );
       })}
     </Descriptions>
-  );
-}
-
-/** REQ-07 — append-only, and it shows what the system did as well as people. */
-function Timeline({ events }: { events: RequestEventRow[] }) {
-  if (!events.length) return <Text type="secondary">—</Text>;
-
-  return (
-    <ol className="space-y-3">
-      {events.map((event) => (
-        <li key={event.id} className="text-sm">
-          <div>
-            <Text strong>
-              {messages.requestDetail.events[event.type] ?? event.type}
-            </Text>{" "}
-            <Text type="secondary">
-              —{" "}
-              {event.actorLabel === "system"
-                ? messages.requestDetail.system
-                : (event.actor?.displayName ?? messages.requestDetail.system)}{" "}
-              · {when(event.createdAt)}
-            </Text>
-          </div>
-
-          {event.fromStatus && event.toStatus && (
-            <Text type="secondary" className="text-xs">
-              {messages.myWork.status[event.fromStatus] ?? event.fromStatus} →{" "}
-              {messages.myWork.status[event.toStatus] ?? event.toStatus}
-            </Text>
-          )}
-        </li>
-      ))}
-    </ol>
   );
 }

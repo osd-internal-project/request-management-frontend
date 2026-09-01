@@ -6,8 +6,8 @@ import { messages } from "@/lib/messages";
 import type { OrgTabKey } from "@/lib/org-tabs";
 
 /**
- * §16 — A3 and A4 are two tabs of one screen (`ผังทีมและสิทธิ์`), with Scope
- * Rules and Keycloak Mapping beside them.
+ * §16 — A3 and A4 are two tabs of one screen (`ผังทีมและสิทธิ์`), with Keycloak
+ * Mapping beside them. Scope Rules is hidden — see `lib/org-tabs.ts`.
  *
  * A client component because `Tabs` owns which tab is open, and because its
  * `items` array cannot be built on the server: antd accepts render callbacks
@@ -22,13 +22,11 @@ import type { OrgTabKey } from "@/lib/org-tabs";
 export function OrgPermissionTabs({
   tree,
   roles,
-  scope,
   keycloak,
   initialTab = "tree",
 }: {
   readonly tree: ReactNode;
   readonly roles: ReactNode;
-  readonly scope: ReactNode;
   readonly keycloak: ReactNode;
   /** From `?tab=` — lets an admin link straight to one tab. */
   readonly initialTab?: OrgTabKey;
@@ -39,7 +37,6 @@ export function OrgPermissionTabs({
       items={[
         { key: "tree", label: messages.org.tabs.tree, children: tree },
         { key: "roles", label: messages.org.tabs.roles, children: roles },
-        { key: "scope", label: messages.org.tabs.scope, children: scope },
         {
           key: "keycloak",
           label: messages.org.tabs.keycloak,

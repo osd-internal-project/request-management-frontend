@@ -14,7 +14,6 @@ import {
   Spin,
   Table,
   Tag,
-  TreeSelect,
   message,
 } from "antd";
 import Paragraph from "antd/es/typography/Paragraph";
@@ -33,6 +32,8 @@ import {
   type BiOrgUnitOption,
 } from "@/lib/api/bi";
 import { messages } from "@/lib/messages";
+import { SearchTreeSelect } from "@/components/search-select";
+import { buildUnitTree } from "@/lib/org-tree";
 
 /**
  * CD-92 v2 — the "ตั้งค่า Dashboard" admin screen.
@@ -44,31 +45,6 @@ import { messages } from "@/lib/messages";
  * contents — is still administered in Metabase's own UI, linked below.
  */
 
-interface UnitTreeNode {
-  value: string;
-  title: string;
-  children: UnitTreeNode[];
-}
-
-/** The org units as a TreeSelect tree; orphaned parents fall back to the root. */
-function buildUnitTree(units: BiOrgUnitOption[]): UnitTreeNode[] {
-  const nodes = new Map<string, UnitTreeNode>(
-    units.map((unit) => [
-      unit.id,
-      { value: unit.id, title: unit.name, children: [] },
-    ]),
-  );
-  const roots: UnitTreeNode[] = [];
-
-  for (const unit of units) {
-    const node = nodes.get(unit.id)!;
-    const parent = unit.parentId ? nodes.get(unit.parentId) : undefined;
-    if (parent) parent.children.push(node);
-    else roots.push(node);
-  }
-
-  return roots;
-}
 
 interface FormValues {
   title: string;
@@ -340,12 +316,10 @@ export default function AdminBiPage() {
             label={messages.bi.formAudience}
             extra={messages.bi.formAudienceHelp}
           >
-            <TreeSelect
+            <SearchTreeSelect
               multiple
               treeDefaultExpandAll
               allowClear
-              showSearch
-              treeNodeFilterProp="title"
               treeData={unitTree}
               placeholder={messages.bi.audienceEveryone}
             />

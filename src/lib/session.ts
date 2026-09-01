@@ -28,12 +28,16 @@ export interface Session {
   active_company_id: string;
   roles: string[];
   permissions: string[];
-  scopes: Record<string, string>;
+  /**
+   * Whether this person heads any group. Gates the "งานทั้งหมด" screen in the
+   * menu — a page that can only ever be empty reads as one that failed.
+   */
+  leads_units: boolean;
   sensitive_fields_visible: string[];
 }
 
 /**
- * Reads the signed-in user's identity, permissions, and scope.
+ * Reads the signed-in user's identity and permissions.
  *
  * Server-side only, and called once per render rather than per component —
  * ROLE-06 has the frontend fetch this once after login and compose the menu

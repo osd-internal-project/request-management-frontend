@@ -33,18 +33,31 @@ export function backendUrl(path: string): string {
  * `/admin/approval-matrix` sits here while the other `/admin/*` paths do not:
  * the authority matrix belongs to the Approval Engine (D-31), even though it
  * is administered from an admin screen.
+ *
+ * **A path missing from this list fails silently**, as a 404 from the wrong
+ * service — the request is well formed and the endpoint exists, just not
+ * there. `/admin/holiday-calendars` was missing for exactly that reason: the
+ * working-hours screen was added and `/admin/sla` looked like it covered the
+ * whole SLA surface. `yarn spec:check` now compares this list against the
+ * routes both services declare, so the next omission is reported rather than
+ * met on screen.
+ *
+ * Written out per route rather than shortened to `/admin/sla`: a prefix that
+ * happens to match two paths is a prefix that will match a third by accident.
  */
-const CORE_SERVICE_PREFIXES = [
+export const CORE_SERVICE_PREFIXES = [
   "/approvals",
   "/bi",
   "/notifications",
   "/requests",
   "/request-types",
+  "/reports",
+  "/integrations",
   "/admin/approval-matrix",
   "/admin/bi",
   "/admin/request-types",
-  "/admin/sla",
-  "/reports",
+  "/admin/sla-configs",
+  "/admin/holiday-calendars",
 ];
 
 /** Which backend serves this path. One place to look when a route 404s. */

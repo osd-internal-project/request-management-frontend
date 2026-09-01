@@ -7,7 +7,6 @@ import {
   Card,
   Empty,
   Popconfirm,
-  Select,
   Space,
   message,
 } from "antd";
@@ -16,6 +15,7 @@ import Paragraph from "antd/es/typography/Paragraph";
 import { replaceScopeRules } from "@/lib/api/client-roles";
 import type { RoleRow, ScopeRuleRow } from "@/lib/api/types";
 import { messages } from "@/lib/messages";
+import { SearchSelect } from "@/components/search-select";
 
 const SCOPES = ["own", "team", "department", "company", "all"] as const;
 const RESOURCES = ["request", "approval_case", "user"] as const;
@@ -159,7 +159,7 @@ export function ScopeRulesAdmin({
                 key={`${row.roleId}-${row.resource}-${index}`}
                 className="flex flex-wrap items-center gap-2 rounded border border-black/5 p-2"
               >
-                <Select
+                <SearchSelect
                   size="small"
                   style={{ width: 200 }}
                   value={row.roleId || undefined}
@@ -173,7 +173,7 @@ export function ScopeRulesAdmin({
                   }))}
                 />
 
-                <Select
+                <SearchSelect
                   size="small"
                   style={{ width: 160 }}
                   value={row.resource}
@@ -185,7 +185,7 @@ export function ScopeRulesAdmin({
                   }))}
                 />
 
-                <Select
+                <SearchSelect
                   size="small"
                   style={{ width: 220 }}
                   value={row.scope}

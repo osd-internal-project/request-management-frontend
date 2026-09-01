@@ -1,11 +1,12 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { Button, Card, DatePicker, Select, Space } from "antd";
+import { Button, Card, DatePicker, Space } from "antd";
 import dayjs from "dayjs";
 import Text from "antd/es/typography/Text";
 import type { RequestType } from "@/lib/api/types";
 import { messages } from "@/lib/messages";
+import { SearchSelect } from "@/components/search-select";
 import { ROUTES } from "@/lib/routes";
 
 /**
@@ -48,10 +49,8 @@ export function BottleneckFilters({
   return (
     <Card size="small">
       <Space wrap>
-        <Select
+        <SearchSelect
           allowClear
-          showSearch
-          optionFilterProp="label"
           style={{ width: 220 }}
           placeholder={messages.bottleneck.filterType}
           value={filters.type_code}

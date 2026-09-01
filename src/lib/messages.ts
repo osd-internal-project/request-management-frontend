@@ -52,13 +52,16 @@ export const messages = {
   },
 
   nav: {
+    /** H2.1 — the group heading above the request screens. */
+    requestGroup: "Request",
     myWork: "งานค้างของฉัน",
     newRequest: "ยื่นคำขอใหม่",
-    approvals: "รออนุมัติของฉัน",
+    allWork: "งานทั้งหมด",
     bottleneckReport: "รายงานคอขวด",
     adminGroup: "ผู้ดูแลระบบ",
     adminApprovalMatrix: "ตารางอำนาจอนุมัติ",
     adminRequestTypes: "ประเภทคำขอ",
+    adminSla: "เวลาทำการและวันหยุด",
     adminOrg: "ผังทีมและสิทธิ์",
     adminUsers: "ผู้ใช้",
     adminAudit: "Audit Log",
@@ -97,6 +100,55 @@ export const messages = {
       "role หลักมาจาก Keycloak (แก้ที่ Keycloak) · ผู้ดูแลปรับ scope และผูก role เพิ่มในระบบได้ — ทุกการแก้ไขลง Audit Log",
     firstLogin: "ล็อกอินครั้งแรก",
     addTeam: "+ เพิ่มทีม",
+    editTeam: "แก้ไขทีม",
+    searchTeam: "ค้นหาหน่วยงาน ชื่อ รหัส หรือหัวหน้า",
+    searchNoMatch: "ไม่พบหน่วยงานที่ตรงกับคำค้น",
+    deleteTeam: "ลบหน่วยงาน",
+    deleteConfirm: (name: string) => `ลบหน่วยงาน ${name}?`,
+    deleteConfirmBody:
+      "ลบแล้วเอากลับไม่ได้ — ถ้าต้องการเก็บประวัติไว้ ให้ปิดใช้งานแทน",
+    addMember: "เพิ่มสมาชิก",
+    addMemberHint: "เลือกได้จากคนทั้งบริษัท คนที่ถูกเลือกจะย้ายมาสังกัดหน่วยงานนี้",
+    selectUser: "ค้นหาชื่อหรือชื่อผู้ใช้",
+    editRoles: "แก้ role",
+    editRolesTitle: (name: string) => `role ของ ${name}`,
+    editRolesHint:
+      "role ที่มาจาก Keycloak ถอนที่นี่ไม่ได้ — ต้องแก้ที่ Keycloak · ที่ผูกมือไว้ถอนได้",
+    fromKeycloak: "จาก Keycloak",
+    manualGrant: "ผูกมือ",
+    leadFromCompany: "เลือกหัวหน้าได้จากคนทั้งบริษัท ไม่จำเป็นต้องเป็นสมาชิกหน่วยงานนี้",
+    unitKind: "ประเภทหน่วยงาน",
+    /** `OrgUnitKind` — widest first, the order the enum declares. */
+    unitKinds: {
+      COMPANY: "บริษัท",
+      DIVISION: "ฝ่าย",
+      DEPARTMENT: "แผนก",
+      POSITION: "ตำแหน่ง",
+      /** Kept for the demo company and older charts; new units use ตำแหน่ง. */
+      TEAM: "ทีม",
+    },
+    moveMember: "ย้ายทีม",
+    targetUnit: "ทีมปลายทาง",
+    /**
+     * The supervisor a move writes. Defaults to the destination unit's lead,
+     * because that is what approval step 1 and team scope read.
+     */
+    newSupervisor: "หัวหน้าใหม่",
+    supervisorFromLead: "ค่าตั้งต้นคือหัวหน้าของทีมปลายทาง",
+    removeFromTeam: "ถอดออกจากทีม",
+    removeConfirm: (name: string) => `ถอด ${name} ออกจากทีม?`,
+    removeConfirmBody:
+      "คนนี้จะกลับไปอยู่คิว “รอจัดสังกัด” และยื่นคำขอที่ต้องอนุมัติไม่ได้จนกว่าจะมีสังกัดใหม่",
+    confirmOk: "ยืนยัน",
+    confirmCancel: "ยกเลิก",
+    deactivateTeam: "ปิดใช้งานทีม",
+    activateTeam: "เปิดใช้งานทีม",
+    inactive: "ปิดใช้งาน",
+    deactivateConfirm: (name: string) => `ปิดใช้งาน ${name}?`,
+    deactivateBlockedMembers:
+      "ยังมีสมาชิกอยู่ในหน่วยงานนี้ — ย้ายคนออกให้หมดก่อนจึงจะปิดใช้งานได้",
+    deactivateBlockedChildren:
+      "ยังมีหน่วยงานลูกที่เปิดใช้งานอยู่ — ปิดใช้งานหน่วยงานลูกก่อน",
     assign: "จัดสังกัด",
     changeLead: "เปลี่ยนหัวหน้าทีม",
     noMembers: "ยังไม่มีสมาชิกในหน่วยงานนี้",
@@ -108,13 +160,6 @@ export const messages = {
     keycloakRole: "role จาก Keycloak",
     keycloakGroup: "กลุ่ม Keycloak",
     keycloakUnavailable: "ยังไม่ได้ตั้งค่าการเชื่อมต่อ Keycloak Admin API",
-    scope: "scope",
-    /**
-     * A3 prints scope beside a person, which reads as per-person — it is not.
-     * SCOPE-01 keys it on `(role, resource)`, so this is a pointer to where it
-     * really lives rather than a control.
-     */
-    scopeEditedOnRole: "scope มาจาก role — แก้ที่แท็บ Scope Rules",
     extraRoles: "role เพิ่มเติมในระบบ",
     addRole: "ผูก role เพิ่ม",
 
@@ -270,22 +315,37 @@ export const messages = {
 
   users: {
     title: "ผู้ใช้",
-    subtitle: "รายชื่อผู้ใช้จาก Keycloak (อ่านอย่างเดียว)",
+    subtitle:
+      "รายชื่อผู้ใช้จาก Keycloak (อ่านอย่างเดียว) · ตำแหน่ง สังกัด และ role ดูแลในระบบนี้ แก้ที่หน้าผังทีมและสิทธิ์ · role กับหน่วยงานที่เป็นหัวหน้าเป็นของบริษัทที่เลือกอยู่",
     searchPlaceholder: "ค้นหาชื่อผู้ใช้ ชื่อ หรืออีเมล",
     search: "ค้นหา",
     empty: "ไม่พบผู้ใช้",
     columns: {
       username: "ชื่อผู้ใช้",
       name: "ชื่อ-นามสกุล",
+      position: "ตำแหน่ง",
+      team: "สังกัด",
+      leads: "เป็นหัวหน้า",
+      roles: "role",
       email: "อีเมล",
       status: "สถานะ",
     },
     active: "ใช้งาน",
     inactive: "ปิดใช้งาน",
+    /** A realm account that has never signed in has no local profile yet. */
+    noProfile: "ยังไม่เคยเข้าระบบ",
+    page: (from: number, to: number, total: number) =>
+      `${from}–${to} จาก ${total} คน`,
+    prev: "ก่อนหน้า",
+    next: "ถัดไป",
   },
 
   requestForm: {
     receiver: "ผู้รับเรื่อง",
+    receiverTeam: "ทีมผู้รับ",
+    receiverTeamHint: "ค่าตั้งต้นมาจากประเภทคำขอ — เปลี่ยนได้",
+    receiverTeamPlaceholder: "เลือกทีมผู้รับ",
+    receiverTeamEmpty: "ทีมนี้ยังไม่มีสมาชิก — เลือกทีมอื่นหรือล้างช่องทีมผู้รับ",
     receiverPlaceholder: "เลือกผู้รับเรื่อง — คำขอจะไปอยู่ในคิวของคนนี้",
     receiverRequired: "ต้องระบุผู้รับเรื่องก่อนยื่นคำขอ",
     title: "ยื่นคำขอ",
@@ -311,40 +371,57 @@ export const messages = {
     saved: "บันทึกร่างแล้ว",
     submitted: "ยื่นคำขอแล้ว",
     chainTitle: "เส้นทางอนุมัติที่จะใช้",
-    chainComputed: (amount: string) =>
-      `คำนวณอัตโนมัติจากวงเงิน ${amount} บาท`,
-    chainOverTier: (ceiling: string) => `(เกินเพดาน ${ceiling} บาท)`,
+    chainComputed: "คำนวณอัตโนมัติจากตารางอำนาจอนุมัติของประเภทคำขอนี้",
     chainNoPick: "ผู้ยื่นเลือกผู้อนุมัติเองไม่ได้",
     chainUnresolved: "ยังไม่มีผู้รับผิดชอบขั้นนี้ในผังทีม",
-    chainExcluded: (position: string, ceiling: string) =>
-      `${position} ไม่อยู่ในเส้นทาง — วงเงินไม่เกินเพดาน ${ceiling} บาท`,
-    /**
-     * The position appears nowhere in this ladder, which is a different
-     * statement from "below its threshold" — naming a ceiling here would
-     * invent one.
-     */
-    chainExcludedNoTier: (position: string) =>
-      `${position} ไม่อยู่ในเส้นทาง — ตารางอำนาจอนุมัติรุ่นที่ใช้อยู่ไม่มีชั้นนี้`,
-    chainNeedsAmount: "กรอกวงเงินเพื่อดูเส้นทางอนุมัติ",
+    /** A level naming several people: any one of them is enough. */
+    chainAnyOf: (count: number) => `อนุมัติได้ ${count} คน ใครอนุมัติก็ผ่าน`,
+    chainNoMatrix: "ประเภทคำขอนี้ไม่มีชั้นอนุมัติ — ทำเสร็จแล้วจบเลย",
     slaTitle: "กำหนดเวลา (SLA)",
     slaHours: (hours: number) => `${hours} ชั่วโมงทำการ`,
     slaNote:
       "นาฬิกาเริ่มเดินเมื่อยื่น หยุดเมื่อถูกตีกลับให้แก้ · เกินกำหนดระบบเร่งงานถึงผู้บังคับบัญชาอัตโนมัติ",
     slaNone: "ประเภทนี้ไม่ได้กำหนด SLA",
     stepReasonFirst: "ตรวจสิทธิ์การยื่นและความสมเหตุสมผล",
-    stepReasonOver: (ceiling: string) => `วงเงินเกิน ${ceiling} บาท`,
   },
 
   requestDetail: {
     receive: "รับเรื่อง",
+    /* H2.2 ข้อ 3 — the second form, filled in by whoever did the work. */
+    receiverFormTitle: "ฟอร์มผู้รับคำขอ",
+    receiverFormHint:
+      "กรอกผลการดำเนินการก่อนกดทำเสร็จ — ระบบใช้แบบฟอร์มตามที่ตั้งไว้ ณ ตอนยื่นคำขอ",
+    /* H2.2 ข้อ 6 — the moves that go backwards, each with its reason. */
+    reject: "ไม่อนุมัติ",
+    approve: "อนุมัติ",
+    returnToRequester: "ส่งกลับให้แก้",
+    hold: "พักไว้",
+    resume: "ทำต่อ",
+    reasonLabel: "เหตุผล",
+    reasonRequired: "ต้องระบุเหตุผล",
+    noteLabel: "คำอธิบาย",
+    noteOptional: "คำอธิบาย (ไม่บังคับ)",
+    approveNoteRequired: "ต้องระบุคำอธิบายประกอบการอนุมัติ",
+    /* H2.2 — comments on the timeline. */
+    commentPlaceholder: "เขียนความเห็น…",
+    commentSend: "ส่ง",
+    commentEmpty: "ยังไม่มีความเห็น",
+    /* H2.2 ข้อ 4 — the request chain. */
+    treeTitle: "สายคำขอ",
+    /* Written when the panel was first planned; it exists now. */
+    treeOpenedFrom: (requestNo: string) => `เปิดจาก ${requestNo}`,
+    treeEmpty: "ยังไม่มีคำขอย่อยภายใต้คำขอนี้",
+    treeOpenBold: "คำขอที่ยังไม่ปิด — คำขอแม่จะปิดไม่ได้จนกว่าจะปิดครบ",
+    /* H2.2 ข้อ 4 — who a waiting step is waiting on. */
+    waitingOn: (names: string) => `รออนุมัติจาก ${names}`,
+    anyOf: (count: number) => `${count} คน ใครอนุมัติก็ผ่าน`,
     complete: "ทำเสร็จแล้ว",
     close: "ปิดคำขอ",
     assign: "มอบหมายงาน",
     assignPlaceholder: "เลือกผู้รับผิดชอบ",
     addChild: "+ สร้างคำขอย่อย",
     actionDone: "บันทึกแล้ว",
-    childrenTitle: "คำขอย่อย",
-    childrenNote: "คำขอแม่จะกด “ทำเสร็จแล้ว” ไม่ได้จนกว่าคำขอย่อยทุกใบจะปิด",
+    treeNote: "คำขอแม่จะกด “ทำเสร็จแล้ว” ไม่ได้จนกว่าคำขอย่อยทุกใบจะปิด",
     cancel: "ยกเลิกคำขอ",
     cancelReason: "เหตุผลการยกเลิก",
     cancelled: "ยกเลิกคำขอแล้ว",
@@ -392,13 +469,8 @@ export const messages = {
      * so two people can open it and get different totals. Said on the page
      * because a smaller table looks like missing data otherwise.
      */
-    scopeNote: {
-      own: "รายงานนี้นับเฉพาะคำขอที่คุณยื่นเอง",
-      team: "รายงานนี้นับเฉพาะคำขอของทีมคุณ",
-      department: "รายงานนี้นับเฉพาะคำขอของฝ่ายคุณ",
-      company: "รายงานนี้นับคำขอทั้งบริษัทที่เลือกอยู่",
-      all: "รายงานนี้นับคำขอทุกบริษัท",
-    } as Record<string, string>,
+    scopeNote:
+      "รายงานนี้นับเฉพาะคำขอที่คุณเกี่ยวข้อง และคำขอของทีมที่คุณเป็นหัวหน้า",
     title: "รายงานคอขวด",
     subtitle: "เวลาจริงต่อขั้นอนุมัติ นับเฉพาะขั้นที่ตัดสินแล้ว (REQ-09)",
     empty: "ยังไม่มีข้อมูลมากพอในช่วงที่เลือก",
@@ -472,44 +544,77 @@ export const messages = {
     entryLabel: "ชื่อที่แสดง",
     remove: "ลบ",
     noReceiver: "ยังไม่ได้กำหนดทีมผู้รับ",
-    businessHours: "นับเฉพาะเวลาทำการ",
+    /** SUP-01 — which hours the SLA clock actually counts. */
+    coverage: {
+      H24X7: "24x7 — นับตลอดเวลา",
+      H8X7: "8x7 — นับเฉพาะเวลาทำการ ทุกวัน",
+      H8X5: "8x5 — นับเฉพาะเวลาทำการ วันทำงาน",
+    } as Record<string, string>,
+    workingHoursLink: "ตั้งเวลาทำการและวันหยุด",
+    eligibleUnits: "หน่วยงานที่เปิดคำขอนี้ได้",
+    eligibleUnitsAll: "ไม่ได้เลือก = ทุกหน่วยงานเปิดได้",
+    eligibleUnitsHint:
+      "เลือกหน่วยงานไหน หน่วยงานที่อยู่ใต้หน่วยงานนั้นก็เปิดคำขอนี้ได้ด้วย",
+    requesterForm: "ฟอร์มผู้ขอ",
+    receiverForm: "ฟอร์มผู้รับคำขอ",
+    receiverFormHint:
+      "ผู้รับคำขอกรอกฟอร์มนี้ก่อนกดทำเสร็จ — ไม่มีฟิลด์เลยแปลว่าประเภทนี้ไม่มีขั้นนี้",
+    deleteType: "ลบประเภทคำขอ",
+    deleteConfirm: (name: string) => `ลบประเภทคำขอ ${name}?`,
+    deleteConfirmBody:
+      "ลบแล้วเอากลับไม่ได้ — ถ้าเคยมีคำขอประเภทนี้แล้ว ระบบจะไม่ให้ลบ ให้ปิดใช้งานแทน",
     /** §16 A2 list subtitle: `DSC · Sales → Pricing · SLA 24 ชม.ทำการ` */
     listSubtitle: (code: string, receiver: string, sla: string) =>
       `${code} · ${receiver} · ${sla}`,
     slaShort: (hours: number, businessHours: boolean) =>
       businessHours ? `SLA ${hours} ชม.ทำการ` : `SLA ${hours} ชม.`,
     slaUnset: "ยังไม่ได้ตั้ง SLA",
+  },
 
-    /** §16 A2 — the approval route block. */
-    routeTitle: "เส้นทางอนุมัติ",
-    routeStandard: "เส้นทางมาตรฐานตามวงเงิน (หัวหน้าทีม → CFO → CEO)",
-    amountField: "ฟิลด์วงเงินที่ใช้คำนวณ",
-    amountFieldMissing:
-      "ยังไม่ได้เลือกฟิลด์วงเงิน — คำขอประเภทนี้จะหาเพดานอนุมัติไม่ได้ตอนยื่น",
+  /** SUP-01 — the working window every business-hours SLA is measured against. */
+  slaAdmin: {
+    title: "เวลาทำการและวันหยุด",
+    subtitle:
+      "SLA แบบ 8x7 และ 8x5 นับเฉพาะช่วงเวลานี้ — แก้แล้วมีผลกับคำขอที่ยื่นใหม่",
+    company: "บริษัท",
+    start: "เวลาเปิด",
+    end: "เวลาปิด",
+    weekdays: "วันทำงาน",
+    holidays: "วันหยุด",
+    holidaysHint: "หนึ่งวันต่อบรรทัด รูปแบบ YYYY-MM-DD",
+    save: "บันทึก",
+    saved: "บันทึกแล้ว",
+    endBeforeStart: "เวลาปิดต้องอยู่หลังเวลาเปิด",
+    days: ["จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์", "อาทิตย์"],
+  },
+
+  /** H2.3 — งานทั้งหมด, the read-only view of what a head's groups are doing. */
+  allWork: {
+    title: "งานทั้งหมด",
+    subtitle:
+      "งานของหน่วยงานที่คุณเป็นหัวหน้า รวมหน่วยงานที่อยู่ภายใต้ · ดูอย่างเดียว",
+    empty: "ยังไม่มีงานในหน่วยงานที่คุณดูแล",
+    notALead:
+      "หน้านี้แสดงงานของหน่วยงานที่คุณเป็นหัวหน้า — ตอนนี้คุณยังไม่ได้เป็นหัวหน้าหน่วยงานใด",
   },
 
   myWork: {
     title: "งานค้างของฉัน",
     newRequest: "ยื่นคำขอใหม่",
-    tabMine: "คำขอของฉัน",
-    tabApprovals: "รออนุมัติของฉัน",
-    /** Tickets handed to me — shown only when there are any. */
-    tabIncoming: "รอฉันรับเรื่อง",
-    emptyIncoming: "ไม่มีคำขอที่ส่งมาให้คุณ",
     /**
-     * The first tab shows whatever the viewer's data scope allows, so its name
-     * has to say what that is. §16 wrote it for an employee — `own` keeps the
-     * mockup's exact wording, and only a wider scope changes it, because a tab
-     * called "คำขอของฉัน" listing other people's requests is a lie.
+     * The four tabs, in the order the requirement names them. Short on purpose:
+     * they sit in one row and each is qualified by the count beside it.
+     *
+     * The first used to be named after the viewer's scope level, which no
+     * longer exists — and calling it "คำขอของฉัน" while it listed tickets
+     * handed to you by somebody else was a lie either way. It is now the union
+     * of the other three, which is what "ทั้งหมด" says.
      */
-    tabForScope: (scope: string) =>
-      ({
-        own: "คำขอของฉัน",
-        team: "คำขอของทีม",
-        department: "คำขอของฝ่าย",
-        company: "คำขอทั้งบริษัท",
-        all: "คำขอทุกบริษัท",
-      })[scope] ?? "คำขอของฉัน",
+    tabInvolved: "ทั้งหมด",
+    tabCreated: "สร้าง",
+    tabIncoming: "รับเรื่อง",
+    tabApprovals: "อนุมัติ",
+    emptyIncoming: "ไม่มีคำขอที่ส่งมาให้คุณ",
     search: "ค้นหาเลขที่ / ลูกค้า / ดีล",
     filterStatus: "สถานะ",
     filterType: "ประเภท",
@@ -521,21 +626,15 @@ export const messages = {
       status: "สถานะ",
       currentStep: "ขั้นปัจจุบัน",
       dueAt: "ครบกำหนด",
-      /** Only rendered when the list crosses people (scope wider than `own`). */
       requester: "ผู้ขอ",
     },
     /**
-     * SCOPE-02 — the first tab shows what the viewer's scope allows and nothing
-     * more. Printed under the heading so a short list is not mistaken for
-     * missing data.
+     * SCOPE-02 — the first tab shows what this viewer may see and nothing more.
+     * Printed under the heading so a short list is not mistaken for missing
+     * data.
      */
-    scopeNote: {
-      own: "แท็บแรกแสดงคำขอที่คุณยื่นเอง",
-      team: "แท็บแรกแสดงคำขอของทีมคุณ",
-      department: "แท็บแรกแสดงคำขอของฝ่ายคุณ",
-      company: "แท็บแรกแสดงคำขอทั้งบริษัทที่เลือกอยู่",
-      all: "แท็บแรกแสดงคำขอทุกบริษัท",
-    } as Record<string, string>,
+    scopeNote:
+      "หน้านี้แสดงเฉพาะงานที่คุณเกี่ยวข้อง — คำขอของฉัน คำขอที่ฉันรับเรื่อง และคำขอที่รออนุมัติจากฉัน",
     empty: "ยังไม่มีคำขอ",
     emptyApprovals: "ไม่มีรายการรออนุมัติ",
     clockPaused: "นาฬิกาหยุด",
@@ -561,61 +660,9 @@ export const messages = {
     } as Record<string, string>,
   },
 
-
-  approvals: {
-    title: "รออนุมัติ",
-    subtitle: "รายการที่รอการตัดสินใจของคุณ",
-    empty: "ไม่มีรายการรออนุมัติ",
-    requester: "ผู้ยื่น",
-    amount: "มูลค่า",
-    step: "ชั้นที่",
-    of: "จาก",
-    approver: "ผู้อนุมัติ",
-    decidedBy: "ตัดสินโดย",
-    onBehalfOf: "แทน",
-    approve: "อนุมัติ",
-    reject: "ไม่อนุมัติ",
-    returnForEdit: "ส่งกลับแก้ไข",
-    reason: "เหตุผล",
-    reasonRequired: "ต้องระบุเหตุผลเมื่อไม่อนุมัติหรือส่งกลับแก้ไข",
-    decided: "บันทึกการตัดสินใจแล้ว",
-    margin: "มาร์จิ้นโดยประมาณ",
-    marginHidden: "ไม่มีสิทธิ์ดูมาร์จิ้น",
-    chain: "สายอนุมัติ",
-    viaDelegation: "ผ่านการมอบอำนาจ",
-    queueTitle: (count: number) => `คิวรออนุมัติ · ${count} รายการ`,
-    batchApprove: "อนุมัติเป็นชุด",
-    selected: (count: number) => `เลือก ${count} รายการ`,
-    sameDeal: (requestNo: string) => `ดีลเดียวกับ ${requestNo}`,
-    submittedBy: "ยื่นโดย",
-    detailTitle: "รายละเอียดคำขอ",
-    selectFromQueue: "เลือกรายการจากคิวทางซ้าย",
-    marginAfter: "margin หลังส่วนลด",
-    marginFloor: (floor: string) => `(เกณฑ์ขั้นต่ำ ${floor}%)`,
-    previousStep: (step: number) => `ขั้น ${step} หัวหน้าทีมอนุมัติแล้ว`,
-    requesterReason: "เหตุผลผู้ยื่น",
-    openFull: (count: number) => `เปิดดูคำขอฉบับเต็มและเอกสารแนบ (${count})`,
-    snapshotNote:
-      "การตัดสินผูกกับข้อมูลเวอร์ชันนี้ — ถ้าผู้ยื่นแก้ข้อมูลระหว่างนี้ ระบบจะให้โหลดใหม่ก่อนตัดสิน",
-    commentLabel: "ความเห็นประกอบการตัดสิน (บังคับเมื่อปฏิเสธหรือตีกลับ)",
-    commentPlaceholder: "พิมพ์ความเห็น…",
-    returnReasonsLabel: "กรณีตีกลับ — เลือกสิ่งที่ต้องแก้ (อย่างน้อย 1 ข้อ)",
-    /**
-     * The reason list comes from the request type (REQ-04). When it cannot be
-     * read, say so instead of offering a guessed list — a guessed list is what
-     * made two of these buttons return 400.
-     */
-    reasonsUnavailable: "อ่านเหตุผลตีกลับของคำขอนี้ไม่ได้ — ตีกลับไม่ได้จนกว่าจะโหลดสำเร็จ",
-    reasonsMissing:
-      "ประเภทคำขอนี้ยังไม่ได้ตั้งค่าเหตุผลตีกลับมาตรฐาน — ตั้งค่าที่หน้าประเภทคำขอก่อน (REQ-04)",
-    delegationBanner: (name: string, window: string) =>
-      `คุณกำลังรับมอบอำนาจแทน ${name} ช่วง ${window} — ทุกการอนุมัติจะบันทึกว่า "อนุมัติแทน"`,
-    urgencyOverdue: "เกินกำหนด",
-    urgencyDueSoon: "ใกล้ครบกำหนด",
-  },
   matrix: {
     title: "ตารางอำนาจอนุมัติ",
-    subtitle: "เพดานและผู้อนุมัติต่อบริษัทและประเภทงาน (APV-01)",
+    subtitle: "สายอนุมัติต่อบริษัทและประเภทงาน (APV-01)",
     empty: "ยังไม่ได้ตั้งค่าตารางอำนาจอนุมัติ",
     /** A1 lists subjects from the request-type catalog, so an empty one means A2. */
     noSubjects: "บริษัทนี้ยังไม่มีประเภทคำขอ — เพิ่มที่หน้าประเภทคำขอก่อน",
@@ -629,9 +676,6 @@ export const messages = {
      * a version number with a separate "in force" badge beside it.
      */
     currentSuffix: "(ปัจจุบัน)",
-    upto: "ไม่เกิน",
-    noCeiling: "ไม่จำกัด",
-    chain: "สายอนุมัติ",
     /**
      * §16 A1's own words.
      *
@@ -646,32 +690,37 @@ export const messages = {
      * "งานที่เดินอยู่ใช้เวอร์ชัน ณ ขณะยื่น" becomes rule 3 of `alwaysEnforced`.
      */
     immutableNote: "เวอร์ชันที่ประกาศแล้วแก้ทับไม่ได้ — ต้องสร้างเวอร์ชันใหม่",
-    placeholderWarning:
-      "ตัวเลขเพดานปัจจุบันเป็นค่าตั้งต้นสำหรับพัฒนา ยังไม่ได้รับการยืนยันจากฝ่ายการเงิน (คำถามค้าง A) — ห้ามใช้เป็นตัวเลขจริง",
     saved: "เผยแพร่แล้ว",
     subject: "ประเภทงาน",
     currency: "สกุลเงิน",
     createdBy: "สร้างโดย",
-    addTier: "+ เพิ่มระดับ",
+    /**
+     * §8.1 amendment — a ladder is a list of levels, not amount bands. The
+     * wording follows the chart: Company → Division → Department → ตำแหน่ง.
+     */
+    supervisorLevel: {
+      1: "หัวหน้าหน่วยงานที่สังกัด",
+      2: "หัวหน้าแผนก",
+      3: "หัวหน้าฝ่าย",
+      4: "ผู้บริหารบริษัท",
+    } as Record<number, string>,
+    levelSupervisor: "หัวหน้าทีม",
+    levelOrg: "ตามตำแหน่งงาน",
+    levelUp: "หัวหน้าชั้นไหน",
+    levelUpHint:
+      "นับจากหน่วยงานที่ผู้ยื่นสังกัดขึ้นไป · ชั้นที่ยังไม่ตั้งหัวหน้า ระบบจะไต่ขึ้นต่อ",
+    levelGroups: "หน่วยงานที่มีสิทธิ์อนุมัติ",
+    levelPeople: "ผู้อนุมัติในหน่วยงานที่เลือก",
+    levelPeopleHint:
+      "ไม่เลือก = หัวหน้าของหน่วยงานที่เลือก · เลือกหลายคนได้ ใครอนุมัติก็ผ่าน",
+    addLevel: "+ เพิ่มชั้นอนุมัติ",
+    meaningSupervisor: "ไต่ตามผังทีมของผู้ยื่นในขณะนั้น",
+    meaningGroupHeads: (groups: string) => `หัวหน้าของ ${groups}`,
     columns: {
       level: "ระดับ",
-      band: "ช่วงวงเงิน (THB)",
-      chain: "ลำดับชั้นผู้อนุมัติ",
+      approvers: "ผู้อนุมัติ",
       meaning: "ความหมาย",
     },
-    meaningFirst: "ตรวจสิทธิ์การยื่น จบในทีม",
-    /**
-     * §16 names the approver a tier *adds* rather than repeating its ceiling:
-     * `เกินเพดานระดับ 1 — เพิ่ม CFO`, and `— ถึง CEO` on the open-ended top
-     * tier, which is where the ladder stops rather than grows.
-     */
-    meaningAdds: (level: number, approvers: string) =>
-      `เกินเพดานระดับ ${level} — เพิ่ม ${approvers}`,
-    meaningTop: (level: number, approvers: string) =>
-      `เกินเพดานระดับ ${level} — ถึง ${approvers}`,
-    /** A tier that raises the ceiling without adding anyone to the chain. */
-    meaningOver: (level: number, ceiling: string) =>
-      `เกินเพดานระดับ ${level} (${ceiling} บาท)`,
 
     /**
      * §16 A1 — rules the backend enforces whatever this table says.
@@ -694,12 +743,10 @@ export const messages = {
     historyEffective: (on: string) => `มีผล ${on}`,
     /** The first version has nothing to compare against. */
     historyInitial: "ชุดตั้งต้น",
-    historyCeilingMoved: (level: string, to: string) =>
-      `ปรับ ${level} เป็น ${to}`,
-    historyTierAdded: (level: string) => `เพิ่มระดับ ${level}`,
+    historyTierAdded: (level: string) => `เพิ่มชั้นที่ ${level}`,
     historyTierRemoved: (level: string) => `ตัดระดับ ${level}`,
     historyChainChanged: (level: string) => `ปรับสายอนุมัติ ${level}`,
-    historyNoChange: "ไม่เปลี่ยนเพดาน",
+    historyNoChange: "ไม่เปลี่ยนสายอนุมัติ",
   },
   audit: {
     title: "Audit Log",

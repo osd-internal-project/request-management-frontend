@@ -7,7 +7,8 @@
  * token and `X-Company-Id` server-side — the browser never holds a credential.
  *
  * This exists because three components had each grown their own copy of the
- * same fetch wrapper (`org-admin`, `approval-matrix-admin`, `approval-inbox`).
+ * same fetch wrapper (`org-admin`, `approval-matrix-admin`, and the approval
+ * inbox that has since been folded into the request screen).
  * Three copies is three places for the error handling to drift.
  */
 

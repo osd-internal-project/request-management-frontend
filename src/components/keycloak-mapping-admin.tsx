@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Alert, Button, Card, Empty, Input, Select, Space, message } from "antd";
+import { Alert, Button, Card, Empty, Input, Space, message } from "antd";
 import Paragraph from "antd/es/typography/Paragraph";
 import { replaceKeycloakMappings } from "@/lib/api/client-roles";
 import type { KeycloakRoleMappingRow, RoleRow } from "@/lib/api/types";
 import { messages } from "@/lib/messages";
+import { SearchSelect } from "@/components/search-select";
 
 interface Draft {
   keycloakRole: string;
@@ -127,7 +128,7 @@ export function KeycloakMappingAdmin({
 
                 <span aria-hidden>→</span>
 
-                <Select
+                <SearchSelect
                   size="small"
                   style={{ width: 220 }}
                   value={row.roleId || undefined}

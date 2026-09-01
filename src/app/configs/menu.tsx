@@ -20,16 +20,24 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     label: messages.nav.myWork,
     href: ROUTES.myWork,
     permissions: ["request.read"],
+    group: messages.nav.requestGroup,
   },
   {
     label: messages.nav.newRequest,
     href: ROUTES.newRequest,
     permissions: ["request.create"],
+    group: messages.nav.requestGroup,
   },
+  /*
+    Shown to everybody who can read requests, not only to heads: somebody who
+    heads nothing sees the screen say so, which is a better answer than a menu
+    item that appears the day they are made a head and is otherwise invisible.
+  */
   {
-    label: messages.nav.approvals,
-    href: ROUTES.approvals,
-    permissions: ["approval.decide"],
+    label: messages.nav.allWork,
+    href: ROUTES.allWork,
+    permissions: ["request.read"],
+    group: messages.nav.requestGroup,
   },
   {
     label: messages.nav.bottleneckReport,
@@ -47,6 +55,12 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     label: messages.nav.adminRequestTypes,
     href: ROUTES.adminRequestTypes,
     permissions: ["admin.request-type.manage"],
+    group: messages.nav.adminGroup,
+  },
+  {
+    label: messages.nav.adminSla,
+    href: ROUTES.adminSla,
+    permissions: ["admin.sla.manage"],
     group: messages.nav.adminGroup,
   },
   {

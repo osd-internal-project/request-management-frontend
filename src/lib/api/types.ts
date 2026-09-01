@@ -24,7 +24,13 @@ export interface Paginated<T> {
 /* Identity                                                                    */
 /* -------------------------------------------------------------------------- */
 
-/** A realm account from `GET /users/keycloak`. */
+/**
+ * A realm account from `GET /users/keycloak`, enriched with the two facts this
+ * system owns rather than Keycloak: job title and team (D-07/D-08).
+ *
+ * Both are null for an account that exists in the realm but has never signed
+ * in here, so it has no local profile yet.
+ */
 export interface KeycloakUser {
   id: string;
   username: string;
@@ -32,6 +38,12 @@ export interface KeycloakUser {
   firstName?: string;
   lastName?: string;
   email?: string;
+  position: string | null;
+  orgUnitName: string | null;
+  /** Groups this person heads, in the company the viewer is looking at. */
+  managedUnitNames: string[];
+  /** System role names held in that company (ROLE-04). */
+  roles: string[];
 }
 
 /** A node of the A3 org tree from `GET /admin/org-units`. */
@@ -39,7 +51,7 @@ export interface OrgUnitNode {
   id: string;
   code: string;
   name: string;
-  kind: "COMPANY" | "DIVISION" | "DEPARTMENT" | "TEAM";
+  kind: "COMPANY" | "DIVISION" | "DEPARTMENT" | "POSITION" | "TEAM";
   parentId: string | null;
   active: boolean;
   managerUserId: string | null;
@@ -66,7 +78,6 @@ export interface OrgMember {
   firstName?: string;
   lastName?: string;
   roles: { id: string; code: string; name: string; source: string }[];
-  scope: string;
   supervisor: { id: string; displayName: string } | null;
   keycloakRoles: string[];
 }
@@ -142,8 +153,15 @@ export interface RequestType {
   id?: string;
   code: string;
   name: string;
-  /** The team that receives this type — §16 A2's `ทีมผู้รับ`. */
+  /**
+   * The team that receives this type — §16 A2's `ทีมผู้รับ`.
+   *
+   * A **default**, not a routing rule: it preselects the team on the submit
+   * screen and the requester may send the request elsewhere.
+   */
   receiverOrgUnitId?: string | null;
+  /** Joined by `GET /request-types` so the submit screen can name the team. */
+  receiverOrgUnit?: { id: string; name: string } | null;
   /**
    * How the chain is chosen at submit. Seed shape:
    * `{ mode: 'standard_chain', amount_field: 'deal_value' }` — `amount_field`
@@ -153,12 +171,44 @@ export interface RequestType {
   approvalPolicy?: { mode?: string; amount_field?: string } | null;
   /** The form is data, not code — §16 หน้าที่ 3 renders straight from this. */
   formSchema?: FormSchema;
+  /**
+   * The form the receiver fills in before completing. Null for a type where
+   * accepting and finishing is the whole of the receiver's part.
+   */
+  receiverFormSchema?: FormSchema | null;
   requiredDocs?: CodedLabel[];
   returnReasonCodes?: CodedLabel[];
   slaHours?: number | null;
-  slaBusinessHours?: boolean;
+  /** How much of the clock counts — see `SlaCoverage` on the backend. */
+  slaCoverage?: SlaCoverage;
+  /**
+   * Groups allowed to raise this type, each covering its subtree.
+   * **Empty means every group may** — that is the default, not "nobody".
+   */
+  eligibleUnits?: { orgUnitId: string }[];
   active?: boolean;
 }
+
+/**
+ * SUP-01 — the working window a business-hours SLA is measured against.
+ *
+ * One per company. Minutes from midnight rather than a time string because
+ * that is what the arithmetic wants, and the screen renders them back.
+ */
+export interface HolidayCalendarRow {
+  id: string;
+  companyId: string;
+  name: string;
+  workdayStartMinute: number;
+  workdayEndMinute: number;
+  workingWeekdays: number[];
+  holidays: string[];
+}
+
+/** `H24X7` elapsed · `H8X7` office hours daily · `H8X5` office hours, Mon–Fri. */
+export const SLA_COVERAGES = ["H24X7", "H8X7", "H8X5"] as const;
+
+export type SlaCoverage = (typeof SLA_COVERAGES)[number];
 
 /**
  * REQ-07 — one line of the append-only timeline.
@@ -186,26 +236,67 @@ export interface RequestDetailStep {
   stepNo: number;
   approverRole: string;
   approverUserId: string | null;
+  /** Everyone who may decide this step; any one of them is enough. */
+  candidateUserIds: string[];
   status: string;
   decision: string | null;
   decidedAt: string | null;
   approver: { displayName: string } | null;
 }
 
+/** H2.2 — one note somebody left on a request. */
+export interface RequestComment {
+  id: string;
+  body: string;
+  createdAt: string;
+  author: { displayName: string } | null;
+}
+
+/** One node of the สายคำขอ panel. */
+export interface RequestTreeNode {
+  id: string;
+  requestNo: string | null;
+  typeCode: string;
+  status: string;
+  parentRequestId: string | null;
+  ancestorIds: string[];
+  requester: { displayName: string } | null;
+  assignee: { displayName: string } | null;
+  receiver: { displayName: string } | null;
+}
+
+/** What `GET /requests/:id/tree` answers. */
+export interface RequestTree {
+  /** Shallow on purpose: a child shows who it came from, not their contents. */
+  parent: {
+    id: string;
+    requestNo: string | null;
+    typeCode: string;
+    status: string;
+  } | null;
+  descendants: RequestTreeNode[];
+}
+
 /** The full request as หน้าที่ 4 needs it. */
 export interface RequestDetail extends Omit<RequestRow, "approvalCases"> {
   approvalCases?: {
+    /** Needed to decide on the case from the request screen. */
+    id: string;
     currentStep: number;
     matrixVersion: number;
     amount: string | null;
     steps: RequestDetailStep[];
   }[];
   formData?: Record<string, unknown>;
+  /** H2.2 ข้อ 3 — what the receiver filled in, if the type asks for anything. */
+  receiverFormData?: Record<string, unknown>;
   companyId?: string;
   requesterId?: string;
   /** Who the ticket was handed to, and who is carrying it now. */
   receiverUserId?: string | null;
   assigneeUserId?: string | null;
+  /** The team it was sent to — seeded from the type, changeable by the requester. */
+  receiverOrgUnitId?: string | null;
   parentRequestId?: string | null;
   submittedAt?: string | null;
   cancelReason?: string | null;
@@ -221,9 +312,12 @@ export interface RequestDetail extends Omit<RequestRow, "approvalCases"> {
   typeSnapshot?: {
     requiredDocs?: CodedLabel[];
     returnReasonCodes?: CodedLabel[];
+    /** REQ-01: what finishing this request requires, fixed at submit. */
+    receiverFormSchema?: FormSchema | null;
   } | null;
   attachments?: RequestAttachment[];
   events?: RequestEventRow[];
+  comments?: RequestComment[];
 }
 
 /** REQ-03 — recorded metadata; there is no file behind it yet. */
@@ -239,23 +333,23 @@ export interface RequestAttachment {
 /**
  * APV-02 — the route a request would take, computed before it is submitted.
  *
- * Amounts stay strings: they are money, and rounding them into JavaScript
- * numbers on the way to the screen is how a displayed ceiling starts
- * disagreeing with the one the engine routed under.
+ * The ceilings are gone (31 ส.ค. 2569): a ladder is a list of levels, so there
+ * is no tier to report and no approver "excluded by amount" to explain. What
+ * is left is the steps and who can decide each one.
  */
 export interface ChainPreview {
   amount: string | null;
   currency: string;
-  tier_index: number;
-  tier_upto: string | null;
-  exceeded_upto: string | null;
   steps: {
     step_no: number;
+    /** What the ladder said: `supervisor:N` or `org`. */
     position: string;
+    /** The first candidate — who the step is shown as waiting on. */
     user_id: string | null;
     display_name: string | null;
+    /** Everyone who could decide it; any one of them is enough. */
+    candidate_user_ids: string[];
   }[];
-  excluded: { position: string; appears_above: string | null }[];
 }
 
 /**
@@ -319,11 +413,27 @@ export interface ApprovalCase {
   requestId?: string | null;
 }
 
-/** One band of the A1 ladder. `upto: null` is the open-ended top tier. */
+/**
+ * One band of the A1 ladder as it was published **before 31 Aug 2026**.
+ *
+ * Still read so an older version can be displayed and the cases routed under
+ * it explained; nothing writes this shape any more.
+ */
 export interface MatrixTier {
   upto: string | null;
   chain: string[];
 }
+
+/**
+ * One level of the ladder.
+ *
+ * `supervisor` follows the requester's own line of management — `up: 1` is the
+ * head of the group they sit in, `2` the department above it. `org` names
+ * groups; with `userIds` those people approve, without it the groups' heads do.
+ */
+export type MatrixLevel =
+  | { type: "supervisor"; up: number }
+  | { type: "org"; orgUnitIds: string[]; userIds?: string[] };
 
 export interface ApprovalMatrixVersion {
   /** Who published it — a userId; A1 resolves it to a name for display. */
@@ -333,6 +443,8 @@ export interface ApprovalMatrixVersion {
   currency: string;
   version: number;
   tiers: MatrixTier[];
+  /** Null on a version published before the amounts were withdrawn. */
+  levels: MatrixLevel[] | null;
   effectiveFrom: string;
   publishedAt: string | null;
 }

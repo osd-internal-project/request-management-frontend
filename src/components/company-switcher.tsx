@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Select, message } from "antd";
+import { message } from "antd";
 import { useRouter } from "next/navigation";
 import { messages } from "@/lib/messages";
+import { SearchSelect } from "@/components/search-select";
 
 export interface SwitcherCompany {
   id: string;
@@ -74,7 +75,7 @@ export function CompanySwitcher({
   return (
     <div className="flex items-center gap-2 text-sm text-gray-600">
       <span className="hidden sm:inline">{messages.nav.company}:</span>
-      <Select
+      <SearchSelect
         size="small"
         value={activeCompanyId ?? undefined}
         loading={switching}

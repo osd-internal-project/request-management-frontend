@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   Alert,
   Button,
@@ -10,6 +10,7 @@ import {
   Input,
   Modal,
   Space,
+  Spin,
   Tag,
   Tooltip,
   message,
@@ -108,6 +109,17 @@ export function RolePermissionAdmin({
   );
   const [holders, setHolders] = useState(initialHolders);
   const [audit, setAudit] = useState(initialAudit);
+  const [panelsLoading, setPanelsLoading] = useState(false);
+  const [panelError, setPanelError] = useState<string | null>(null);
+
+  /**
+   * The role the newest click asked for.
+   *
+   * A ref rather than the state above because `refreshPanels` closes over the
+   * value it read when it started, and the whole point is to compare against
+   * what is current when it finishes.
+   */
+  const selectedIdRef = useRef<string | null>(initialRoles[0]?.id ?? null);
   const [creating, setCreating] = useState(false);
   const [binding, setBinding] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -124,6 +136,7 @@ export function RolePermissionAdmin({
 
   async function select(role: RoleRow) {
     setSelectedId(role.id);
+    selectedIdRef.current = role.id;
     setChecked(role.permissions.map((p) => p.permissionCode));
     setError(null);
 
@@ -135,18 +148,36 @@ export function RolePermissionAdmin({
    * rather than pre-loaded for every row — the left list grows with each role
    * an admin adds, and only one panel is ever on screen.
    *
-   * A failure here leaves the previous panel in place rather than blanking it:
-   * the permissions the admin came to edit are already loaded and correct, and
-   * an empty holder list would read as "nobody holds this role".
+   * A failure is **said**, not swallowed. Leaving the previous panel in place
+   * silently is worse than an empty one: the heading names the role that was
+   * just clicked while the list underneath still belongs to the last one, so
+   * the screen reads as "these people hold this role" and is wrong.
    */
   async function refreshPanels(roleId: string) {
+    setPanelsLoading(true);
+
     const [holderResult, auditResult] = await Promise.all([
       fetchRoleHolders(roleId),
       fetchRoleAudit(roleId),
     ]);
 
-    if (holderResult.ok) setHolders(holderResult.data);
+    setPanelsLoading(false);
+
+    // Only the newest click may write. Clicking down the list faster than the
+    // network answers is normal, and a slow response for a role the admin has
+    // already left must not be painted over the newer one.
+    if (roleId !== selectedIdRef.current) return;
+
+    if (holderResult.ok) {
+      setHolders(holderResult.data);
+      setPanelError(null);
+    } else {
+      setHolders([]);
+      setPanelError(holderResult.message);
+    }
+
     if (auditResult.ok) setAudit(auditResult.data.data);
+    else setAudit([]);
   }
 
   function toggle(code: string, on: boolean) {
@@ -400,7 +431,19 @@ export function RolePermissionAdmin({
             )
           }
         >
-          {holders.length ? (
+          {panelError && (
+            <Alert
+              type="error"
+              showIcon
+              className="mb-3!"
+              title={messages.common.loadError}
+              description={panelError}
+            />
+          )}
+
+          {panelsLoading ? (
+            <Spin />
+          ) : holders.length ? (
             <ul className="divide-y divide-black/5">
               {holders.map((holder) => (
                 <li

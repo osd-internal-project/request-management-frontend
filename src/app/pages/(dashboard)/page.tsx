@@ -5,11 +5,10 @@ import Text from "antd/es/typography/Text";
 import { MyWork } from "@/components/my-work";
 import { PendingAssignment } from "@/components/pending-assignment";
 import requests from "@/lib/api/requests";
-import approvals from "@/lib/api/approvals";
 
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
-import { can, getSession } from "@/lib/session";
+import { getSession } from "@/lib/session";
 
 /**
  * §16 หน้าที่ 2 — งานค้างของฉัน. The landing page after login.
@@ -44,67 +43,40 @@ export default async function MyWorkPage({
     return <PendingAssignment />;
   }
 
-  // `GET /approvals/inbox` requires `approval.decide`. This page is the landing
-  // page for *every* role, so calling it unconditionally sent a plain employee
-  // a guaranteed 403 on every page view — and put the error in the alert below.
-  // The menu cannot cover this: it gates links, not the data a shared page fetches.
-  const canDecide = can(session, "approval.decide");
-
   /**
-   * The first tab asks for **no `view`**, so `buildScopeWhere` decides which
-   * rows come back (SCOPE-02).
+   * Four tabs, four queries, each narrowing what the caller may already see.
    *
-   * It used to send `view=mine`, which pins `requesterId` to the caller and
-   * therefore overrides the scope entirely: an administrator scoped to the whole
-   * company saw an empty page while every one of those rows was already visible
-   * to them at the API.
+   * `involved` rather than no view at all: the default also covers the groups
+   * this person heads, and a head's own queue should not fill with their
+   * department's work — that is what "งานทั้งหมด" is for.
    *
-   * Filters go to the server for the same reason — the scope list can run past
-   * one page, and narrowing the fetched page in the browser would report
+   * Filters go to the server rather than being applied to the fetched page:
+   * a list can run past one page, and narrowing it in the browser would report
    * "nothing found" for matches sitting on the next one.
    */
-  const [mineResult, involvedResult, incomingResult, inboxResult, typesResult] =
+  const filterArgs = {
+    status: filters.status,
+    type_code: filters.typeCode,
+    q: filters.q,
+    overdue: filters.overdue,
+    page_size: 100,
+  };
+
+  const [involvedResult, createdResult, incomingResult, approverResult, typesResult] =
     await Promise.all([
-      requests.getRequests({
-        status: filters.status,
-        type_code: filters.typeCode,
-        q: filters.q,
-        overdue: filters.overdue,
-        page_size: 100,
-      }),
-      requests.getInvolvedRequests(100),
-      requests.getIncomingRequests(100),
-      canDecide ? approvals.getApprovalsInbox({ page_size: 100 }) : null,
+      requests.getRequests({ ...filterArgs, view: "involved" }),
+      requests.getRequests({ ...filterArgs, view: "created" }),
+      requests.getRequests({ ...filterArgs, view: "incoming" }),
+      requests.getRequests({ ...filterArgs, view: "approver" }),
       requests.getRequestTypes(),
     ]);
 
-  const mine = mineResult.ok ? mineResult.data.data : [];
-
-  /**
-   * The "รออนุมัติของฉัน" tab means *waiting on me*, which only the approval
-   * inbox knows — `view=involved` also returns work further down a chain I am
-   * on but not yet responsible for. Intersecting the two keeps the tab honest.
-   */
-  // Empty for someone who cannot decide, which is the truthful answer rather
-  // than a swallowed error: nothing can be waiting on an approval they are not
-  // able to give.
-  const waitingOnMe = new Set(
-    (inboxResult?.ok ? inboxResult.data.data : [])
-      .map((approvalCase) => approvalCase.requestId)
-      .filter((id): id is string => Boolean(id)),
-  );
-
-  // Not named `approvals`: that is the imported API module, and shadowing it
-  // here made the module unreachable at the call above.
-  const waitingRows = (
-    involvedResult.ok ? involvedResult.data.data : []
-  ).filter((row) => waitingOnMe.has(row.id));
-
-  // A skipped inbox is not a failure — without this the alert fires for every
-  // employee on every load and stops meaning "something went wrong".
-  const failed = [mineResult, involvedResult, inboxResult].find(
-    (result) => result !== null && !result.ok,
-  );
+  const failed = [
+    involvedResult,
+    createdResult,
+    incomingResult,
+    approverResult,
+  ].find((result) => !result.ok);
 
   return (
     <div className="space-y-4">
@@ -116,7 +88,7 @@ export default async function MyWorkPage({
           {/* SCOPE-02: the row set is the backend's decision. Said here so a
               short list reads as the truth rather than as a broken page. */}
           <Text type="secondary" className="text-xs">
-            {messages.myWork.scopeNote[session?.scopes.request ?? "own"] ?? ""}
+            {messages.myWork.scopeNote}
           </Text>
         </div>
         <Link href={ROUTES.newRequest}>
@@ -134,11 +106,10 @@ export default async function MyWorkPage({
       )}
 
       <MyWork
-        mine={mine}
-        approvals={waitingRows}
-        showApprovals={canDecide}
+        involved={involvedResult.ok ? involvedResult.data.data : []}
+        created={createdResult.ok ? createdResult.data.data : []}
         incoming={incomingResult.ok ? incomingResult.data.data : []}
-        scope={session?.scopes.request ?? "own"}
+        approver={approverResult.ok ? approverResult.data.data : []}
         filters={filters}
         types={typesResult.ok ? typesResult.data : []}
       />

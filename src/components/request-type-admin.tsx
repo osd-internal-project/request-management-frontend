@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Alert,
   Button,
@@ -10,7 +10,7 @@ import {
   Input,
   InputNumber,
   Modal,
-  Select,
+  Tabs,
   Space,
   Tag,
   message,
@@ -19,6 +19,7 @@ import Text from "antd/es/typography/Text";
 import Paragraph from "antd/es/typography/Paragraph";
 import {
   createRequestType,
+  deleteRequestType,
   updateRequestType,
 } from "@/lib/api/client-requests";
 import {
@@ -26,13 +27,22 @@ import {
   isMultilineField,
   isSensitiveField,
 } from "@/lib/api/types";
+import Link from "next/link";
+import { buildUnitTree } from "@/lib/org-tree";
+import { ROUTES } from "@/lib/routes";
+import { SLA_COVERAGES } from "@/lib/api/types";
 import type {
+  SlaCoverage,
   CodedLabel,
   FormSchemaProperty,
   OrgUnitNode,
   RequestType,
 } from "@/lib/api/types";
 import { messages } from "@/lib/messages";
+import {
+  SearchSelect,
+  SearchTreeSelect,
+} from "@/components/search-select";
 
 /** One editable row of the form schema, flattened for display. */
 interface FieldRow {
@@ -81,9 +91,13 @@ const EMPTY_FIELD: FieldRow = {
  * and writing it back in `toSchema` — is what keeps this screen and หน้าที่ 3
  * showing the same form.
  */
-function toRows(type: RequestType): FieldRow[] {
-  const properties = type.formSchema?.properties ?? {};
-  const required = new Set(type.formSchema?.required ?? []);
+function toRows(
+  type: RequestType,
+  which: "formSchema" | "receiverFormSchema" = "formSchema",
+): FieldRow[] {
+  const schema = type[which];
+  const properties = schema?.properties ?? {};
+  const required = new Set(schema?.required ?? []);
 
   return Object.entries(properties)
     .sort(([, a], [, b]) => fieldOrder(a) - fieldOrder(b))
@@ -185,8 +199,15 @@ export function RequestTypeAdmin({
   const [slaHours, setSlaHours] = useState<number | null>(
     initial[0]?.slaHours ?? null,
   );
-  const [businessHours, setBusinessHours] = useState(
-    initial[0]?.slaBusinessHours ?? true,
+  const [coverage, setCoverage] = useState<SlaCoverage>(
+    initial[0]?.slaCoverage ?? "H24X7",
+  );
+  /** The receiver's form, kept beside the requester's — see `FormTabs`. */
+  const [receiverRows, setReceiverRows] = useState<FieldRow[]>(
+    initial[0] ? toRows(initial[0], "receiverFormSchema") : [],
+  );
+  const [eligibleUnits, setEligibleUnits] = useState<string[]>(
+    initial[0]?.eligibleUnits?.map((entry) => entry.orgUnitId) ?? [],
   );
   const [receiver, setReceiver] = useState<string | null>(
     initial[0]?.receiverOrgUnitId ?? null,
@@ -195,25 +216,25 @@ export function RequestTypeAdmin({
   const [reasons, setReasons] = useState<CodedLabel[]>(
     initial[0]?.returnReasonCodes ?? [],
   );
-  const [amountField, setAmountField] = useState<string | null>(
-    initial[0]?.approvalPolicy?.amount_field ?? null,
-  );
   const [creating, setCreating] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const selected = types.find((type) => type.code === selectedCode) ?? null;
 
+  const unitTree = useMemo(() => buildUnitTree(orgUnits), [orgUnits]);
+
   function select(type: RequestType) {
     setSelectedCode(type.code);
     setRows(toRows(type));
     setName(type.name);
     setSlaHours(type.slaHours ?? null);
-    setBusinessHours(type.slaBusinessHours ?? true);
+    setCoverage(type.slaCoverage ?? "H24X7");
+    setReceiverRows(toRows(type, "receiverFormSchema"));
+    setEligibleUnits(type.eligibleUnits?.map((entry) => entry.orgUnitId) ?? []);
     setReceiver(type.receiverOrgUnitId ?? null);
     setDocs(type.requiredDocs ?? []);
     setReasons(type.returnReasonCodes ?? []);
-    setAmountField(type.approvalPolicy?.amount_field ?? null);
     setError(null);
   }
 
@@ -227,16 +248,23 @@ export function RequestTypeAdmin({
       name,
       form_schema: toSchema(rows),
       ...(slaHours === null ? {} : { sla_hours: slaHours }),
-      sla_business_hours: businessHours,
-      ...(receiver ? { receiver_org_unit_id: receiver } : {}),
+      sla_coverage: coverage,
+      // `null` clears the receiver's form; an empty editor means the type has
+      // no second step rather than a step with no fields.
+      receiver_form_schema: receiverRows.length ? toSchema(receiverRows) : null,
+      // Sent whole. An empty list is the meaningful value "every group may
+      // raise this", so omitting it when nothing is selected would make the
+      // selector unable to reopen a type to everybody.
+      eligible_org_unit_ids: eligibleUnits,
+      // Sent even when cleared. Omitting it made `allowClear` on the ทีมผู้รับ
+      // selector a lie: the field emptied on screen, the save left the old
+      // team in place, and reopening the type put it back.
+      receiver_org_unit_id: receiver,
       required_docs: docs,
       return_reason_codes: reasons,
-      // `mode` is carried through rather than offered: §8.1 defines one chain
-      // shape, and a second would be an Approval Engine change, not a screen.
-      approval_policy: {
-        mode: selected.approvalPolicy?.mode ?? "standard_chain",
-        ...(amountField ? { amount_field: amountField } : {}),
-      },
+      // `approval_policy` is deliberately not sent. The approval route moved
+      // off this screen entirely (31 Aug 2026) — it is edited on A1, and a
+      // half-copy here would be a second place for it to drift.
     });
 
     if (result.ok) {
@@ -249,6 +277,38 @@ export function RequestTypeAdmin({
     } else setError(result.message);
 
     setBusy(false);
+  }
+
+  /**
+   * Removes a type outright. The backend refuses once anything has been raised
+   * against it and says so, which is a better answer than any wording here —
+   * a type with history should be switched off, not erased.
+   */
+  function remove() {
+    if (!selected) return;
+    const target = selected;
+
+    Modal.confirm({
+      title: messages.requestTypes.deleteConfirm(target.name),
+      content: messages.requestTypes.deleteConfirmBody,
+      okText: messages.org.confirmOk,
+      cancelText: messages.org.confirmCancel,
+      okButtonProps: { danger: true },
+      onOk: async () => {
+        const result = await deleteRequestType(target.code);
+
+        if (!result.ok) {
+          void message.error(result.message);
+          return;
+        }
+
+        void message.success(messages.requestTypes.saved);
+        setTypes((current) =>
+          current.filter((type) => type.code !== target.code),
+        );
+        setSelectedCode(null);
+      },
+    });
   }
 
   async function toggleActive() {
@@ -303,6 +363,9 @@ export function RequestTypeAdmin({
                     ? messages.requestTypes.disable
                     : messages.requestTypes.enable}
                 </Button>
+                <Button danger onClick={remove}>
+                  {messages.requestTypes.deleteType}
+                </Button>
                 <Button
                   type="primary"
                   loading={busy}
@@ -332,7 +395,7 @@ export function RequestTypeAdmin({
 
                 <label className="block">
                   <Text strong>{messages.requestTypes.receiver}</Text>
-                  <Select
+                  <SearchSelect
                     className="mt-1 w-full"
                     allowClear
                     value={receiver ?? undefined}
@@ -353,30 +416,80 @@ export function RequestTypeAdmin({
                     value={slaHours ?? undefined}
                     onChange={(next) => setSlaHours(next ?? null)}
                   />
-                  <Checkbox
-                    className="mt-1"
-                    checked={businessHours}
-                    onChange={(event) => setBusinessHours(event.target.checked)}
-                  >
-                    <Text type="secondary" className="text-xs">
-                      {messages.requestTypes.businessHours}
+                  {/*
+                    Three modes, not a checkbox. The boolean could not tell a
+                    desk staffed every day that still closes at 17:30 from one
+                    that only runs Mon–Fri, and until now it changed nothing at
+                    all — the clock counted elapsed time whatever it said.
+                  */}
+                  <SearchSelect
+                    className="mt-1 w-full"
+                    value={coverage}
+                    onChange={setCoverage}
+                    options={SLA_COVERAGES.map((value) => ({
+                      value,
+                      label: messages.requestTypes.coverage[value],
+                    }))}
+                  />
+                  <Link href={ROUTES.adminSla}>
+                    <Text type="secondary" className="text-xs underline">
+                      {messages.requestTypes.workingHoursLink}
                     </Text>
-                  </Checkbox>
+                  </Link>
                 </label>
               </div>
 
-              <div className="grid gap-6 lg:grid-cols-2">
-                <FormSchemaEditor rows={rows} onChange={setRows} />
+              <label className="block">
+                <Text strong>{messages.requestTypes.eligibleUnits}</Text>
+                <SearchTreeSelect
+                  className="mt-1 w-full"
+                  multiple
+                  allowClear
+                  treeDefaultExpandAll
+                  value={eligibleUnits}
+                  onChange={setEligibleUnits}
+                  placeholder={messages.requestTypes.eligibleUnitsAll}
+                  treeData={unitTree}
+                />
+                <Text type="secondary" className="mt-1 block text-xs">
+                  {messages.requestTypes.eligibleUnitsHint}
+                </Text>
+              </label>
 
-                <div className="space-y-4">
-                  <RequiredDocs entries={docs} onChange={setDocs} />
-                  <ReturnReasons entries={reasons} onChange={setReasons} />
-                  <ApprovalRoute
-                    rows={rows}
-                    amountField={amountField}
-                    onChange={setAmountField}
-                  />
-                </div>
+              {/*
+                Two forms, two tabs. Side by side they read as one long form and
+                an admin loses track of which half the requester will see.
+              */}
+              <Tabs
+                items={[
+                  {
+                    key: "requester",
+                    label: messages.requestTypes.requesterForm,
+                    children: (
+                      <FormSchemaEditor rows={rows} onChange={setRows} />
+                    ),
+                  },
+                  {
+                    key: "receiver",
+                    label: messages.requestTypes.receiverForm,
+                    children: (
+                      <>
+                        <Paragraph type="secondary" className="text-xs">
+                          {messages.requestTypes.receiverFormHint}
+                        </Paragraph>
+                        <FormSchemaEditor
+                          rows={receiverRows}
+                          onChange={setReceiverRows}
+                        />
+                      </>
+                    ),
+                  },
+                ]}
+              />
+
+              <div className="grid gap-6 lg:grid-cols-2">
+                <RequiredDocs entries={docs} onChange={setDocs} />
+                <ReturnReasons entries={reasons} onChange={setReasons} />
               </div>
 
               <Alert
@@ -463,7 +576,7 @@ function TypeList({
                       type.slaHours
                         ? messages.requestTypes.slaShort(
                             type.slaHours,
-                            type.slaBusinessHours ?? true,
+                            (type.slaCoverage ?? "H24X7") !== "H24X7",
                           )
                         : messages.requestTypes.slaUnset,
                     )}
@@ -634,7 +747,7 @@ function FieldDialog({
 
         <label className="block">
           <Text strong>{messages.requestTypes.fieldType}</Text>
-          <Select
+          <SearchSelect
             className="mt-1 w-full"
             value={draft.type}
             onChange={(next: string) => set({ type: next })}
@@ -858,64 +971,6 @@ function CodedLabelDialog({
   );
 }
 
-/** `เส้นทางอนุมัติ` — the chain is §8.1's; only the amount field is a choice. */
-function ApprovalRoute({
-  rows,
-  amountField,
-  onChange,
-}: {
-  readonly rows: FieldRow[];
-  readonly amountField: string | null;
-  readonly onChange: (next: string | null) => void;
-}) {
-  return (
-    <div>
-      <Text strong>{messages.requestTypes.routeTitle}</Text>
-
-      <div className="mt-2 rounded border border-black/10 bg-black/[0.02] p-3">
-        <Text strong className="text-xs">
-          {messages.requestTypes.routeStandard}
-        </Text>
-
-        <div className="mt-2 flex flex-wrap items-center gap-2">
-          <Text type="secondary" className="text-xs">
-            {messages.requestTypes.amountField}
-          </Text>
-          <Select
-            size="small"
-            allowClear
-            style={{ minWidth: 200 }}
-            value={amountField ?? undefined}
-            placeholder={messages.requestTypes.amountField}
-            onChange={(next?: string) => onChange(next ?? null)}
-            options={rows.map((row) => ({
-              value: row.key,
-              label: `${row.title || row.key} (${row.key})`,
-            }))}
-          />
-        </div>
-
-        <Paragraph type="secondary" className="mt-2! mb-0! text-xs">
-          {messages.requestTypes.matrixNote}
-        </Paragraph>
-      </div>
-
-      {/*
-        APV-02 measures this field against the matrix ceilings. Without it a
-        submit cannot pick a tier, so the type is unroutable — said here rather
-        than discovered at the first submit.
-      */}
-      {!amountField && (
-        <Alert
-          type="warning"
-          showIcon
-          className="mt-2"
-          message={messages.requestTypes.amountFieldMissing}
-        />
-      )}
-    </div>
-  );
-}
 
 /**
  * A new type starts **inactive** — the API's default.
