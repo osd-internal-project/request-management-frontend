@@ -115,6 +115,23 @@ export const PKCE_STATE_COOKIE = "pkce_state";
 /** How long a login may sit half-finished before the verifier expires. */
 export const PKCE_TTL_SECONDS = 600;
 
+/**
+ * AUTH-02 idle timeout — how long a session survives without activity.
+ *
+ * This is the `maxAge` of both auth cookies, rewritten on every successful
+ * refresh, so it slides forward while the user is working. That is what makes
+ * it a real timeout rather than a courtesy: fifteen minutes with no refresh and
+ * the browser drops the cookies itself, whether or not our JavaScript ran.
+ */
+export const SESSION_IDLE_TIMEOUT_SECONDS = Number(
+  process.env.SESSION_IDLE_TIMEOUT_SECONDS ?? 15 * 60,
+);
+
+/** How often `SessionKeeper` renews the tokens while the user is active. */
+export const SESSION_REFRESH_INTERVAL_SECONDS = Number(
+  process.env.SESSION_REFRESH_INTERVAL_SECONDS ?? 5 * 60,
+);
+
 export const isProduction = process.env.NODE_ENV === "production";
 
 /** The cookie options every auth cookie shares. */

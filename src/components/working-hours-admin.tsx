@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Alert, Button, Card, Checkbox, Input, TimePicker, message } from "antd";
+import { Alert, App, Button, Card, Checkbox, Input, TimePicker } from "antd";
 import Paragraph from "antd/es/typography/Paragraph";
 import Text from "antd/es/typography/Text";
 import dayjs, { type Dayjs } from "dayjs";
@@ -41,6 +41,8 @@ export function WorkingHoursAdmin({
   /** Null for a company that has never had one — the defaults are shown. */
   readonly initial: HolidayCalendarRow | null;
 }) {
+  // antd's `message` from context, so it inherits the app theme.
+  const { message } = App.useApp();
   const [start, setStart] = useState<Dayjs | null>(
     toTime(initial?.workdayStartMinute ?? 510),
   );

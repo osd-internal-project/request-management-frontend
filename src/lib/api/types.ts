@@ -46,6 +46,21 @@ export interface KeycloakUser {
   roles: string[];
 }
 
+/**
+ * A colleague from `GET /users` — the picker used when a screen has to name a
+ * person (§11.2).
+ *
+ * `orgUnitId` travels with the row so a form can narrow the list to one team
+ * without reaching for `GET /admin/org-units`, which needs `admin.org.manage`
+ * and would 403 for every ordinary requester.
+ */
+export interface DirectoryUser {
+  id: string;
+  displayName: string;
+  username: string;
+  orgUnitId: string | null;
+}
+
 /** A node of the A3 org tree from `GET /admin/org-units`. */
 export interface OrgUnitNode {
   id: string;
@@ -57,6 +72,23 @@ export interface OrgUnitNode {
   managerUserId: string | null;
   managerDisplayName: string | null;
   memberCount: number;
+}
+
+/**
+ * The chart as a requester sees it — shape only, no manager, no member count.
+ *
+ * Declared separately from `OrgUnitNode` rather than derived from it, to match
+ * the backend: a field added for the admin screen must not become readable by
+ * everybody just because the two types were linked.
+ */
+export interface OrgUnitShape {
+  id: string;
+  code: string;
+  name: string;
+  kind: OrgUnitNode["kind"];
+  parentId: string | null;
+  /** A switched-off team: drawn in the tree, but not choosable. */
+  active: boolean;
 }
 
 /** AUTH-04: signed in, but not yet placed in the org chart. */
@@ -119,6 +151,16 @@ export interface FormSchemaProperty {
    * own, so the order has to be carried as data.
    */
   "x-order"?: number;
+  /**
+   * A table: `items` carries the columns as a schema of its own.
+   *
+   * Plain JSON Schema, like `maxLength` and `minimum` above — the system's own
+   * concerns are the keys spelled `x-`. One level only: the backend refuses a
+   * table inside a table, and so does the grid that draws it.
+   */
+  items?: FormSchema;
+  /** How many rows the person filling it in may add. Absent = no cap. */
+  maxItems?: number;
   /** Pre-`x-` spellings, still accepted so an older type keeps working. */
   sensitive?: boolean;
   multiline?: boolean;
@@ -186,6 +228,8 @@ export interface RequestType {
    * **Empty means every group may** — that is the default, not "nobody".
    */
   eligibleUnits?: { orgUnitId: string }[];
+  /** REQ-03 — whether ยื่นคำขอ demands an `อ้างอิงดีล` for this type. */
+  refRequired?: boolean;
   active?: boolean;
 }
 

@@ -67,7 +67,7 @@ export default async function AdminUsersPage({
           />
           <button
             type="submit"
-            className="rounded-md bg-[#ff6600] px-4 py-2 font-medium text-white hover:bg-[#e65c00]"
+            // className="rounded-md bg-[#ff6600] px-4 py-2 font-medium text-white hover:bg-[#e65c00]"
           >
             {messages.users.search}
           </button>

@@ -12,6 +12,15 @@ export const LOGIN_PATH = "/login";
 export const LOGOUT_PATH = "/api/auth/logout";
 
 /**
+ * Where a session that has run out sends the browser (AUTH-02).
+ *
+ * Always through logout: the cookies have to be cleared and the Keycloak SSO
+ * session ended, or the user is signed straight back in without seeing why
+ * they were thrown out.
+ */
+export const SESSION_EXPIRED_PATH = `${LOGOUT_PATH}?reason=session_expired`;
+
+/**
  * The full CTD screen map (spec §16 mockups).
  *
  * S1 builds out the org and audit screens; the rest are routed placeholders so

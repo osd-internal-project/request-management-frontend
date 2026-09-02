@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { message } from "antd";
+import { App } from "antd";
 import { useRouter } from "next/navigation";
 import { messages } from "@/lib/messages";
 import { SearchSelect } from "@/components/search-select";
@@ -30,6 +30,8 @@ export function CompanySwitcher({
   companies: SwitcherCompany[];
   activeCompanyId: string | null;
 }) {
+  // antd's `message` from context, so it inherits the app theme.
+  const { message } = App.useApp();
   const router = useRouter();
   const [switching, setSwitching] = useState(false);
 
@@ -59,6 +61,7 @@ export function CompanySwitcher({
         } | null;
 
         void message.error(body?.message ?? messages.nav.switchFailed);
+        window.location.reload();
         return;
       }
 

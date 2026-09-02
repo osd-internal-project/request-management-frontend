@@ -3,7 +3,12 @@ import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
 import Paragraph from "antd/es/typography/Paragraph";
 import { getRequest, getRequestTree } from "@/lib/api/requests";
-import type { FormSchema, RequestDetail } from "@/lib/api/types";
+import type {
+  FormSchema,
+  FormSchemaProperty,
+  RequestDetail,
+} from "@/lib/api/types";
+import { fieldOrder } from "@/lib/api/types";
 import { RequestActions } from "@/components/request-actions";
 import { ReceiverForm } from "@/components/receiver-form";
 import { RequestTimeline } from "@/components/request-timeline";
@@ -115,6 +120,19 @@ export default async function RequestDetailPage({
     request.requestType?.receiverFormSchema ??
     null;
 
+  /*
+    REQ-04 — the bounce causes offered by the "ตีกลับ" dialog.
+
+    Snapshot first, for the same reason and in the same order as
+    `returnToRequester` on the server (`requests.service.ts`). Reading the live
+    type here instead would let the picker offer a code the server then refuses
+    — a failure the person on screen has no way to correct.
+  */
+  const returnReasons =
+    request.typeSnapshot?.returnReasonCodes ??
+    request.requestType?.returnReasonCodes ??
+    [];
+
   /** Only the person carrying the request fills it in, and only while open. */
   const showReceiverForm =
     request.status === "in_progress" &&
@@ -146,6 +164,7 @@ export default async function RequestDetailPage({
           // finishing *is* submitting it, and two controls for one action is
           // how a request gets completed with the form still blank.
           hasReceiverForm: Boolean(receiverSchema),
+          returnReasons,
         }}
         viewerId={viewerId}
       />
@@ -329,6 +348,71 @@ function SchemaAnswers({
   );
 }
 
+/**
+ * One answer, printed the way its field was filled in.
+ *
+ * A table field holds rows of objects, and `String(value)` turned those into
+ * `[object Object],[object Object]` — the answers were stored correctly and
+ * unreadable on the one screen that exists to read them.
+ */
+function FormAnswer({
+  property,
+  value,
+}: {
+  readonly property: FormSchemaProperty;
+  readonly value: unknown;
+}) {
+  const columns = Object.entries(property.items?.properties ?? {}).sort(
+    ([, a], [, b]) => fieldOrder(a) - fieldOrder(b),
+  );
+
+  if (property.type !== "array" || !columns.length || !Array.isArray(value)) {
+    return <>{String(value ?? "—")}</>;
+  }
+
+  const rows = value.filter(
+    (row): row is Record<string, unknown> =>
+      typeof row === "object" && row !== null && !Array.isArray(row),
+  );
+
+  if (!rows.length) return <Text type="secondary">—</Text>;
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[24rem] text-sm">
+        <thead>
+          <tr className="border-b border-black/10 text-left">
+            {columns.map(([column, spec]) => (
+              <th key={column} className="px-2 py-1 font-medium">
+                {spec.title ?? column}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, index) => (
+            <tr key={index} className="border-b border-black/5">
+              {columns.map(([column]) => (
+                <td key={column} className="px-2 py-1">
+                  {/* A column the reader may not see was deleted by the
+                      masking interceptor, so it is absent, not blank. */}
+                  {column in row ? (
+                    String(row[column] ?? "—")
+                  ) : (
+                    <Text type="secondary">
+                      {messages.requestDetail.masked}
+                    </Text>
+                  )}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function RequestFacts({ request }: { request: RequestDetail }) {
   const properties = request.requestType?.formSchema?.properties ?? {};
   const formData = request.formData ?? {};
@@ -351,7 +435,7 @@ function RequestFacts({ request }: { request: RequestDetail }) {
             {withheld ? (
               <Text type="secondary">{messages.requestDetail.masked}</Text>
             ) : (
-              String(formData[name] ?? "—")
+              <FormAnswer property={property} value={formData[name]} />
             )}
           </Descriptions.Item>
         );

@@ -1,18 +1,7 @@
 "use client";
 
 import { Fragment, useState } from "react";
-import {
-  Alert,
-  Button,
-  Card,
-  Empty,
-  Form,
-  Modal,
-  Segmented,
-  Table,
-  Tag,
-  message,
-} from "antd";
+import { Alert, App, Button, Card, Empty, Form, Modal, Segmented, Table, Tag } from "antd";
 import type { FormInstance } from "antd";
 import Text from "antd/es/typography/Text";
 import Paragraph from "antd/es/typography/Paragraph";
@@ -59,10 +48,25 @@ function subjectOptions(
   types: RequestType[],
   versions: ApprovalMatrixVersion[],
 ): { value: string; label: string }[] {
-  const options = types.map((type) => ({
-    value: subjectOf(type),
-    label: `${type.name} (${subjectOf(type)})`,
-  }));
+  /*
+    Two ladders per type, because a request can be checked twice.
+
+    Publishing a `:pre` ladder is what switches the pre-work stage on — there
+    is no separate flag anywhere, which is why the choice belongs here in the
+    subject rather than in a field of its own. The label says which chart each
+    one climbs, because that is the part an administrator cannot infer from the
+    string and is exactly what was routing the wrong people.
+  */
+  const options = types.flatMap((type) => [
+    {
+      value: `${subjectOf(type)}:pre`,
+      label: `${type.name} — ${messages.matrix.stageBefore} (${subjectOf(type)}:pre)`,
+    },
+    {
+      value: subjectOf(type),
+      label: `${type.name} — ${messages.matrix.stageAfter} (${subjectOf(type)})`,
+    },
+  ]);
 
   const known = new Set(options.map((option) => option.value));
 
@@ -151,6 +155,8 @@ export function ApprovalMatrixAdmin({
   /** The chart, for the `org` levels and for naming the groups a ladder uses. */
   orgUnits: OrgUnitNode[];
 }) {
+  // antd's `message` from context, so it inherits the app theme.
+  const { message } = App.useApp();
   const [activeCompany, setActiveCompany] = useState(companyId);
   const unitTree = buildUnitTree(orgUnits);
   const unitNames = Object.fromEntries(

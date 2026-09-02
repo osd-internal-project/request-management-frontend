@@ -57,9 +57,18 @@ export function saveDraft(
  * a request that moved backwards with nothing said cannot be explained to the
  * person it moved away from.
  */
+/**
+ * REQ-04. `reason_code` is singular and required — one code from the type's
+ * own list, which is what makes bounce causes countable.
+ *
+ * This was typed `reason_codes: string[]` until 1 ก.ย. 2569: a field the API
+ * has never had. Because the wrapper declared the wrong shape faithfully, the
+ * compiler had nothing to object to, and the only symptom was a 400 at the
+ * moment somebody tried to bounce a request.
+ */
 export function returnRequest(
   id: string,
-  input: { reason_codes: string[]; note: string },
+  input: { reason_code: string; note: string },
 ): Promise<ClientResult<RequestRow>> {
   return appApi<RequestRow>(`requests/${id}/return`, {
     method: "POST",

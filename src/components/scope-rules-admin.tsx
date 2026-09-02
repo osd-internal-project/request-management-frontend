@@ -1,15 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import {
-  Alert,
-  Button,
-  Card,
-  Empty,
-  Popconfirm,
-  Space,
-  message,
-} from "antd";
+import { Alert, App, Button, Card, Empty, Popconfirm, Space } from "antd";
 import Text from "antd/es/typography/Text";
 import Paragraph from "antd/es/typography/Paragraph";
 import { replaceScopeRules } from "@/lib/api/client-roles";
@@ -45,6 +37,8 @@ export function ScopeRulesAdmin({
   readonly rules: ScopeRuleRow[];
   readonly roles: RoleRow[];
 }) {
+  // antd's `message` from context, so it inherits the app theme.
+  const { message } = App.useApp();
   const [rows, setRows] = useState<Draft[]>(
     initial.map((rule) => ({
       roleId: rule.roleId,

@@ -3,19 +3,10 @@ import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
 import { ApprovalMatrixAdmin } from "@/components/approval-matrix-admin";
 import admin, { getAdminRequestTypes } from "@/lib/api/admin";
-import { apiGet } from "@/lib/api/core";
+import { getAllDirectoryUsers } from "@/lib/api/users";
 import { messages } from "@/lib/messages";
 import orgUnitsApi from "@/lib/api/org-units";
 import { getSession } from "@/lib/session";
-
-interface Paginated<T> {
-  data: T[];
-}
-
-interface DirectoryUser {
-  id: string;
-  displayName: string;
-}
 
 /**
  * Screen §16 A1 — ตารางอำนาจอนุมัติ (APV-01, APV-02).
@@ -42,13 +33,13 @@ export default async function ApprovalMatrixPage() {
    */
   const [result, users, types, units] = await Promise.all([
     admin.getApprovalMatrix(),
-    apiGet<Paginated<DirectoryUser>>("/users?page_size=100"),
+    getAllDirectoryUsers(),
     getAdminRequestTypes(),
     orgUnitsApi.getOrgUnits(),
   ]);
 
   const userNames = Object.fromEntries(
-    (users.ok ? users.data.data : []).map((user) => [
+    (users.ok ? users.data : []).map((user) => [
       user.id,
       user.displayName,
     ]),

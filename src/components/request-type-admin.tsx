@@ -1,20 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import {
-  Alert,
-  Button,
-  Card,
-  Checkbox,
-  Empty,
-  Input,
-  InputNumber,
-  Modal,
-  Tabs,
-  Space,
-  Tag,
-  message,
-} from "antd";
+import { Alert, App, Button, Card, Checkbox, Empty, Input, InputNumber, Modal, Space, Tabs, Tag } from "antd";
 import Text from "antd/es/typography/Text";
 import Paragraph from "antd/es/typography/Paragraph";
 import {
@@ -34,15 +21,13 @@ import { SLA_COVERAGES } from "@/lib/api/types";
 import type {
   SlaCoverage,
   CodedLabel,
+  FormSchema,
   FormSchemaProperty,
   OrgUnitNode,
   RequestType,
 } from "@/lib/api/types";
 import { messages } from "@/lib/messages";
-import {
-  SearchSelect,
-  SearchTreeSelect,
-} from "@/components/search-select";
+import { SearchSelect, SearchTreeSelect } from "@/components/search-select";
 
 /** One editable row of the form schema, flattened for display. */
 interface FieldRow {
@@ -58,9 +43,23 @@ interface FieldRow {
    * not quietly strip the parts of its schema the editor has no control for.
    */
   extra: FormSchemaProperty;
+  /** `type === "array"` only: the table's columns, edited as rows themselves. */
+  columns?: FieldRow[];
+  /** `type === "array"` only: how many rows a requester may add. */
+  maxItems?: number | null;
 }
 
-const FIELD_TYPES = ["string", "number", "boolean"];
+const FIELD_TYPES = ["string", "number", "boolean", "array"];
+
+/**
+ * Types a *column* may be.
+ *
+ * `array` is missing on purpose: the backend refuses a table inside a table,
+ * the grid on หน้าที่ 3 has nowhere to draw one, and the masking interceptor
+ * walks exactly one level into rows. Offering it here would let an admin save
+ * a type nobody can fill in.
+ */
+const COLUMN_TYPES = ["string", "number", "boolean"];
 
 /** The schema keys this editor owns; everything else survives a round trip. */
 const OWNED_PROPERTY_KEYS = [
@@ -71,6 +70,11 @@ const OWNED_PROPERTY_KEYS = [
   "x-sensitive",
   "x-multiline",
   "x-order",
+  // The table's own two keys. Without them here they fall into `extra` and
+  // get written twice — once from `extra`, once from the editor — and the two
+  // copies drift the moment somebody edits the columns.
+  "items",
+  "maxItems",
 ] as const;
 
 const EMPTY_FIELD: FieldRow = {
@@ -82,6 +86,9 @@ const EMPTY_FIELD: FieldRow = {
   multiline: false,
   extra: {},
 };
+
+/** A column starts as a plain field; only its allowed types are narrower. */
+const EMPTY_COLUMN: FieldRow = { ...EMPTY_FIELD };
 
 /**
  * Rows in the order the submit screen will draw them.
@@ -113,6 +120,37 @@ function toRows(
         sensitive: isSensitiveField(property),
         multiline: isMultilineField(property),
         extra,
+        // A table's columns are fields in their own right, so they read back
+        // through the same function — one editor, one shape, one round trip.
+        ...(property.type === "array"
+          ? {
+              columns: columnRows(property.items),
+              maxItems: property.maxItems ?? null,
+            }
+          : {}),
+      };
+    });
+}
+
+/** The columns of a table, in the order they will be drawn. */
+function columnRows(items: FormSchema | undefined): FieldRow[] {
+  const properties = items?.properties ?? {};
+  const required = new Set(items?.required ?? []);
+
+  return Object.entries(properties)
+    .sort(([, a], [, b]) => fieldOrder(a) - fieldOrder(b))
+    .map(([key, property]) => {
+      const extra: FormSchemaProperty = { ...property };
+      for (const owned of OWNED_PROPERTY_KEYS) delete extra[owned];
+
+      return {
+        key,
+        title: property.title ?? key,
+        type: property.type ?? "string",
+        required: required.has(key),
+        sensitive: isSensitiveField(property),
+        multiline: false,
+        extra,
       };
     });
 }
@@ -130,6 +168,17 @@ function toSchema(rows: FieldRow[]) {
       "x-order": index + 1,
       ...(row.sensitive ? { "x-sensitive": true } : {}),
       ...(row.multiline ? { "x-multiline": true } : {}),
+      ...(row.type === "array"
+        ? {
+            // `toSchema` calls itself for the columns: a table's `items` is a
+            // schema, and writing a second builder for it is how the two would
+            // stop agreeing about `x-order`.
+            items: toSchema(row.columns ?? []),
+            // Absent rather than null when uncapped — the backend reads
+            // "no `maxItems`" as "as many rows as they like".
+            ...(row.maxItems ? { maxItems: row.maxItems } : {}),
+          }
+        : {}),
     };
   });
 
@@ -188,6 +237,8 @@ export function RequestTypeAdmin({
   /** §16 heads the list with the company these types belong to. */
   readonly companyName: string | null;
 }) {
+  // antd's `message` from context, so it inherits the app theme.
+  const { message } = App.useApp();
   const [types, setTypes] = useState(initial);
   const [selectedCode, setSelectedCode] = useState<string | null>(
     initial[0]?.code ?? null,
@@ -212,9 +263,14 @@ export function RequestTypeAdmin({
   const [receiver, setReceiver] = useState<string | null>(
     initial[0]?.receiverOrgUnitId ?? null,
   );
-  const [docs, setDocs] = useState<CodedLabel[]>(initial[0]?.requiredDocs ?? []);
+  const [docs, setDocs] = useState<CodedLabel[]>(
+    initial[0]?.requiredDocs ?? [],
+  );
   const [reasons, setReasons] = useState<CodedLabel[]>(
     initial[0]?.returnReasonCodes ?? [],
+  );
+  const [refRequired, setRefRequired] = useState(
+    initial[0]?.refRequired ?? false,
   );
   const [creating, setCreating] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -235,6 +291,7 @@ export function RequestTypeAdmin({
     setReceiver(type.receiverOrgUnitId ?? null);
     setDocs(type.requiredDocs ?? []);
     setReasons(type.returnReasonCodes ?? []);
+    setRefRequired(type.refRequired ?? false);
     setError(null);
   }
 
@@ -256,6 +313,7 @@ export function RequestTypeAdmin({
       // raise this", so omitting it when nothing is selected would make the
       // selector unable to reopen a type to everybody.
       eligible_org_unit_ids: eligibleUnits,
+      ref_required: refRequired,
       // Sent even when cleared. Omitting it made `allowClear` on the ทีมผู้รับ
       // selector a lie: the field emptied on screen, the save left the old
       // team in place, and reopening the type put it back.
@@ -383,7 +441,7 @@ export function RequestTypeAdmin({
             <div className="space-y-4">
               {error && <Alert type="error" showIcon title={error} />}
 
-              <div className="grid gap-4 sm:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-4">
                 <label className="block">
                   <Text strong>{messages.requestTypes.name}</Text>
                   <Input
@@ -410,27 +468,25 @@ export function RequestTypeAdmin({
 
                 <label className="block">
                   <Text strong>{messages.requestTypes.sla}</Text>
-                  <InputNumber
-                    className="mt-1 w-full"
-                    min={1}
-                    value={slaHours ?? undefined}
-                    onChange={(next) => setSlaHours(next ?? null)}
-                  />
-                  {/*
-                    Three modes, not a checkbox. The boolean could not tell a
-                    desk staffed every day that still closes at 17:30 from one
-                    that only runs Mon–Fri, and until now it changed nothing at
-                    all — the clock counted elapsed time whatever it said.
-                  */}
-                  <SearchSelect
-                    className="mt-1 w-full"
-                    value={coverage}
-                    onChange={setCoverage}
-                    options={SLA_COVERAGES.map((value) => ({
-                      value,
-                      label: messages.requestTypes.coverage[value],
-                    }))}
-                  />
+                  <div className="flex  gap-2">
+                    <div>
+                      <InputNumber
+                        className="mt-1 w-20"
+                        min={1}
+                        value={slaHours ?? undefined}
+                        onChange={(next) => setSlaHours(next ?? null)}
+                      />
+                    </div>
+                    <SearchSelect
+                      className="mt-1 w-full"
+                      value={coverage}
+                      onChange={setCoverage}
+                      options={SLA_COVERAGES.map((value) => ({
+                        value,
+                        label: messages.requestTypes.coverage[value],
+                      }))}
+                    />
+                  </div>
                   <Link href={ROUTES.adminSla}>
                     <Text type="secondary" className="text-xs underline">
                       {messages.requestTypes.workingHoursLink}
@@ -438,6 +494,23 @@ export function RequestTypeAdmin({
                   </Link>
                 </label>
               </div>
+
+              {/*
+                §16 draws `อ้างอิงดีล *` on the DSC mockup, and the submit screen
+                demanded it for every type as a result — including the ones with
+                no deal to point at. It is the type's rule, so it is set here.
+              */}
+              <label className="block">
+                <Checkbox
+                  checked={refRequired}
+                  onChange={(event) => setRefRequired(event.target.checked)}
+                >
+                  {messages.requestTypes.refRequired}
+                </Checkbox>
+                <Text type="secondary" className="block text-xs">
+                  {messages.requestTypes.refRequiredHint}
+                </Text>
+              </label>
 
               <label className="block">
                 <Text strong>{messages.requestTypes.eligibleUnits}</Text>
@@ -544,7 +617,10 @@ function TypeList({
             const active = type.code === selectedCode;
 
             return (
-              <li key={type.code} className="border-b border-black/5 last:border-b-0">
+              <li
+                key={type.code}
+                className="border-b border-black/5 last:border-b-0"
+              >
                 <button
                   type="button"
                   onClick={() => onSelect(type)}
@@ -571,8 +647,9 @@ function TypeList({
                   <Text type="secondary" className="truncate text-xs">
                     {messages.requestTypes.listSubtitle(
                       type.code,
-                      orgUnits.find((unit) => unit.id === type.receiverOrgUnitId)
-                        ?.name ?? messages.requestTypes.noReceiver,
+                      orgUnits.find(
+                        (unit) => unit.id === type.receiverOrgUnitId,
+                      )?.name ?? messages.requestTypes.noReceiver,
                       type.slaHours
                         ? messages.requestTypes.slaShort(
                             type.slaHours,
@@ -681,19 +758,29 @@ function FormSchemaEditor({
 function FieldDialog({
   open,
   row,
+  columnsOnly = false,
   onClose,
   onSave,
   onRemove,
 }: {
   open: boolean;
   row: FieldRow | null;
+  /**
+   * Editing a column of a table rather than a field of the form.
+   *
+   * Narrows the type list — a table inside a table is refused by the backend,
+   * cannot be drawn by the grid, and is only masked one level deep.
+   */
+  columnsOnly?: boolean;
   onClose: () => void;
   onSave: (row: FieldRow) => void;
   onRemove?: () => void;
 }) {
   // Seeded at mount; the caller keys this component per opening so a new
   // selection arrives as a remount rather than as a stale draft.
-  const [draft, setDraft] = useState<FieldRow>(row ?? EMPTY_FIELD);
+  const [draft, setDraft] = useState<FieldRow>(
+    row ?? (columnsOnly ? EMPTY_COLUMN : EMPTY_FIELD),
+  );
 
   function set(patch: Partial<FieldRow>) {
     setDraft((current) => ({ ...current, ...patch }));
@@ -751,7 +838,15 @@ function FieldDialog({
             className="mt-1 w-full"
             value={draft.type}
             onChange={(next: string) => set({ type: next })}
-            options={FIELD_TYPES.map((value) => ({ value, label: value }))}
+            options={(columnsOnly ? COLUMN_TYPES : FIELD_TYPES).map(
+              (value) => ({
+                value,
+                label:
+                  value === "array"
+                    ? messages.requestTypes.fieldTypeTable
+                    : value,
+              }),
+            )}
           />
         </label>
 
@@ -768,15 +863,120 @@ function FieldDialog({
           >
             {messages.requestTypes.fieldSensitive}
           </Checkbox>
-          <Checkbox
-            checked={draft.multiline}
-            onChange={(event) => set({ multiline: event.target.checked })}
-          >
-            {messages.requestTypes.fieldMultiline}
-          </Checkbox>
+          {/* A table has no single value to make long, and a column is drawn
+              in a grid cell — neither has anywhere to put a textarea. */}
+          {draft.type !== "array" && !columnsOnly && (
+            <Checkbox
+              checked={draft.multiline}
+              onChange={(event) => set({ multiline: event.target.checked })}
+            >
+              {messages.requestTypes.fieldMultiline}
+            </Checkbox>
+          )}
         </Space>
+
+        {draft.type === "array" && (
+          <>
+            <label className="block">
+              <Text strong>{messages.requestTypes.tableMaxRows}</Text>
+              <InputNumber
+                className="mt-1 w-32"
+                min={1}
+                value={draft.maxItems ?? undefined}
+                onChange={(next) => set({ maxItems: next ?? null })}
+                placeholder={messages.requestTypes.tableNoCap}
+              />
+              <Text type="secondary" className="block text-xs">
+                {messages.requestTypes.tableMaxRowsHint}
+              </Text>
+            </label>
+
+            {/*
+              The columns, edited by this very dialog one level down. Reusing it
+              is what keeps a column and a field the same shape — and
+              `columnsOnly` is what stops somebody nesting a table in a table,
+              which nothing downstream can draw or mask.
+            */}
+            <TableColumns
+              rows={draft.columns ?? []}
+              onChange={(columns) => set({ columns })}
+            />
+          </>
+        )}
       </Space>
     </Modal>
+  );
+}
+
+/** The column list inside a table field — the same editor, one level down. */
+function TableColumns({
+  rows,
+  onChange,
+}: {
+  readonly rows: FieldRow[];
+  readonly onChange: (next: FieldRow[]) => void;
+}) {
+  const [editing, setEditing] = useState<number | null>(null);
+
+  return (
+    <div>
+      <Text strong>{messages.requestTypes.tableColumns}</Text>
+
+      <ul className="mt-2 m-0 list-none p-0">
+        {rows.map((row, index) => (
+          <li
+            key={`${row.key}-${index}`}
+            className="flex items-center justify-between border-b border-black/5 py-1"
+          >
+            <span>
+              {row.title || row.key}{" "}
+              <Text type="secondary" className="text-xs">
+                {row.key} · {row.type}
+                {row.required ? " · บังคับ" : ""}
+              </Text>
+            </span>
+            <Button size="small" type="link" onClick={() => setEditing(index)}>
+              {messages.requestTypes.tableEditColumn}
+            </Button>
+          </li>
+        ))}
+        {!rows.length && (
+          <li className="py-1">
+            <Text type="secondary">{messages.requestTypes.tableNoColumns}</Text>
+          </li>
+        )}
+      </ul>
+
+      <Button size="small" className="mt-2" onClick={() => setEditing(-1)}>
+        {messages.requestTypes.tableAddColumn}
+      </Button>
+
+      {editing !== null && (
+        <FieldDialog
+          key={editing}
+          open
+          columnsOnly
+          row={editing >= 0 ? rows[editing] : null}
+          onClose={() => setEditing(null)}
+          onSave={(next) => {
+            onChange(
+              editing >= 0
+                ? rows.map((row, at) => (at === editing ? next : row))
+                : [...rows, next],
+            );
+            setEditing(null);
+          }}
+          onRemove={
+            editing >= 0
+              ? () => {
+                  onChange(rows.filter((_, at) => at !== editing));
+                  setEditing(null);
+                }
+              : undefined
+          }
+        />
+      )}
+    </div>
   );
 }
 
@@ -812,9 +1012,7 @@ function RequiredDocs({
               size="small"
               type="link"
               danger
-              onClick={() =>
-                onChange(entries.filter((_, i) => i !== index))
-              }
+              onClick={() => onChange(entries.filter((_, i) => i !== index))}
             >
               {messages.requestTypes.remove}
             </Button>
@@ -926,7 +1124,9 @@ function CodedLabelDialog({
   onClose: () => void;
   onSave: (entry: CodedLabel) => void;
 }) {
-  const [draft, setDraft] = useState<CodedLabel>(entry ?? { code: "", name: "" });
+  const [draft, setDraft] = useState<CodedLabel>(
+    entry ?? { code: "", name: "" },
+  );
 
   return (
     <Modal
@@ -970,7 +1170,6 @@ function CodedLabelDialog({
     </Modal>
   );
 }
-
 
 /**
  * A new type starts **inactive** — the API's default.

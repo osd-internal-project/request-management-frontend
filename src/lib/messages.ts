@@ -358,6 +358,16 @@ export const messages = {
     refRequired: "กรอกเลขอ้างอิงดีลก่อนยื่น",
     requiredDocsTitle: "เอกสารบังคับตามประเภทคำขอ",
     autosaveAt: (time: string) => `บันทึกร่างอัตโนมัติล่าสุด ${time} น.`,
+    /* A `type: "array"` field — the grid a requester adds rows to. */
+    /* A read that failed is a different thing from a list that is empty. */
+    loadPartial: "โหลดข้อมูลบางส่วนไม่สำเร็จ",
+    peopleUnavailable:
+      "อ่านรายชื่อผู้ใช้ไม่ได้ — อาจไม่มีสิทธิ์ ติดต่อผู้ดูแลระบบ",
+    unitsUnavailable:
+      "อ่านผังทีมไม่ได้ — อาจไม่มีสิทธิ์ ช่องทีมผู้รับจึงเลือกไม่ได้",
+    tableEmpty: "ยังไม่มีแถว",
+    tableAddRow: "+ เพิ่มแถว",
+    tableRowCap: (used: number, cap: number) => `${used}/${cap} แถว`,
     sensitiveBadge: "เห็นเฉพาะสายอนุมัติ",
     documents: "เอกสารแนบ",
     dropzone: "ลากไฟล์มาวาง หรือกดเพื่อแนบเอกสารเพิ่มเติม",
@@ -377,6 +387,12 @@ export const messages = {
     /** A level naming several people: any one of them is enough. */
     chainAnyOf: (count: number) => `อนุมัติได้ ${count} คน ใครอนุมัติก็ผ่าน`,
     chainNoMatrix: "ประเภทคำขอนี้ไม่มีชั้นอนุมัติ — ทำเสร็จแล้วจบเลย",
+    /* The three states that used to be collapsed into chainNoMatrix. Saying
+       "ไม่มีชั้นอนุมัติ" before the server has been asked is a claim, not a
+       status — and it is the claim that hid this panel never loading at all. */
+    chainPickType: "เลือกประเภทคำขอก่อน ระบบจะคำนวณเส้นทางอนุมัติให้",
+    chainLoading: "กำลังคำนวณเส้นทางอนุมัติ…",
+    chainLoadError: "ดูเส้นทางอนุมัติไม่ได้",
     slaTitle: "กำหนดเวลา (SLA)",
     slaHours: (hours: number) => `${hours} ชั่วโมงทำการ`,
     slaNote:
@@ -402,6 +418,11 @@ export const messages = {
     noteLabel: "คำอธิบาย",
     noteOptional: "คำอธิบาย (ไม่บังคับ)",
     approveNoteRequired: "ต้องระบุคำอธิบายประกอบการอนุมัติ",
+    /* REQ-04 — the standard bounce cause, which is what makes returns countable. */
+    returnReasonLabel: "เหตุผลการตีกลับ",
+    returnReasonPlaceholder: "เลือกเหตุผล",
+    returnReasonMissing:
+      "ประเภทคำขอนี้ยังไม่ได้ตั้งเหตุผลตีกลับ — ให้ผู้ดูแลตั้งที่หน้าประเภทคำขอก่อน",
     /* H2.2 — comments on the timeline. */
     commentPlaceholder: "เขียนความเห็น…",
     commentSend: "ส่ง",
@@ -444,13 +465,31 @@ export const messages = {
     chainFrom: (amount: string, version: number) =>
       `เส้นทางคำนวณจากวงเงิน ${amount} บาท · ตารางอำนาจเวอร์ชัน ${version}`,
     masked: "••••••",
+    /*
+      Every event type the backend can write, because the fallback prints the
+      raw type: a timeline reading `RECEIVED` beside `ยื่นคำขอ` is the tell that
+      one was added without its label. Walking a request end to end on 1 ก.ย.
+      2569 turned up five of them.
+
+      `request.completed` is the doing team finishing, `request.closed` is the
+      requester accepting — two different moments, so they cannot share "ปิดงาน".
+    */
     events: {
       "request.submitted": "ยื่นคำขอ",
       "request.resubmitted": "ยื่นใหม่หลังแก้ไข",
+      RECEIVED: "รับเรื่อง",
+      ASSIGNED: "มอบหมายผู้ดำเนินการ",
+      HANDOVER: "ส่งต่อผู้ดำเนินการ",
+      "request.completed": "แจ้งงานเสร็จ",
       "request.routed": "เข้าคิวผู้อนุมัติ",
+      "request.review.step": "อนุมัติผ่านหนึ่งชั้น",
+      "request.review.approve": "อนุมัติ",
+      "request.review.reject": "ไม่อนุมัติ",
+      "request.review.return": "ส่งกลับให้แก้ไขงาน",
+      "request.accepted": "รับมอบงาน",
+      "request.closed": "ปิดคำขอ",
       "request.returned": "ตีกลับให้แก้ไข",
       "request.cancelled": "ยกเลิกคำขอ",
-      "request.completed": "ปิดงาน",
       "request.held": "พักงานไว้",
       "request.resumed": "กลับมาดำเนินการ",
       "approval.decided": "ผลการอนุมัติ",
@@ -551,6 +590,19 @@ export const messages = {
       H8X5: "8x5 — นับเฉพาะเวลาทำการ วันทำงาน",
     } as Record<string, string>,
     workingHoursLink: "ตั้งเวลาทำการและวันหยุด",
+    /* REQ-03 — `อ้างอิงดีล` is per type, not a rule of the submit screen. */
+    /* A `type: "array"` field — a grid the requester adds rows to. */
+    fieldTypeTable: "array (ตาราง)",
+    tableColumns: "คอลัมน์ของตาราง",
+    tableEditColumn: "แก้ไข",
+    tableAddColumn: "+ เพิ่มคอลัมน์",
+    tableNoColumns: "ยังไม่มีคอลัมน์ — ตารางจะแสดงว่างเปล่า",
+    tableMaxRows: "จำนวนแถวสูงสุด",
+    tableNoCap: "ไม่จำกัด",
+    tableMaxRowsHint: "เว้นว่างไว้ ผู้ยื่นจะเพิ่มแถวได้ไม่จำกัด",
+    refRequired: "ต้องระบุอ้างอิงดีล",
+    refRequiredHint:
+      "เปิดไว้เมื่อคำขอประเภทนี้ผูกกับดีลเสมอ · ปิดไว้ ผู้ยื่นจะเว้นว่างได้",
     eligibleUnits: "หน่วยงานที่เปิดคำขอนี้ได้",
     eligibleUnitsAll: "ไม่ได้เลือก = ทุกหน่วยงานเปิดได้",
     eligibleUnitsHint:
@@ -661,6 +713,9 @@ export const messages = {
   },
 
   matrix: {
+    /* The two moments a request can be checked — see `approval-stage.ts`. */
+    stageBefore: "ก่อนส่งให้ผู้รับ (หัวหน้าของผู้ยื่น)",
+    stageAfter: "ตรวจผลงาน (หัวหน้าของผู้รับเรื่อง)",
     title: "ตารางอำนาจอนุมัติ",
     subtitle: "สายอนุมัติต่อบริษัทและประเภทงาน (APV-01)",
     empty: "ยังไม่ได้ตั้งค่าตารางอำนาจอนุมัติ",

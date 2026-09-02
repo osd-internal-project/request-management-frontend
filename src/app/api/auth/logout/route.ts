@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { clearSessionCookies } from "@/lib/auth-cookies";
 import {
-  AUTH_COOKIE,
   BACKEND_PREFIX,
-  COMPANY_COOKIE,
   REFRESH_COOKIE,
   USER_SERVICE_URL,
 } from "@/lib/backend";
@@ -42,15 +41,6 @@ async function endSession(request: NextRequest): Promise<string | null> {
   }
 }
 
-function clearCookies(response: NextResponse): NextResponse {
-  response.cookies.delete(AUTH_COOKIE);
-  response.cookies.delete(REFRESH_COOKIE);
-  // The company choice belongs to the session that made it — leaving it behind
-  // would start the next sign-in on this browser in someone else's company.
-  response.cookies.delete(COMPANY_COOKIE);
-  return response;
-}
-
 /**
  * Used by the avatar menu's plain link, so it must redirect rather than JSON.
  *
@@ -71,7 +61,7 @@ export async function GET(request: NextRequest) {
   if (reason) fallback.searchParams.set("error", reason);
   else fallback.searchParams.set("signed_out", "1");
 
-  return clearCookies(
+  return clearSessionCookies(
     NextResponse.redirect(endSessionUrl ?? fallback.toString()),
   );
 }
@@ -80,7 +70,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const endSessionUrl = await endSession(request);
 
-  return clearCookies(
+  return clearSessionCookies(
     NextResponse.json({ ok: true, end_session_url: endSessionUrl }),
   );
 }

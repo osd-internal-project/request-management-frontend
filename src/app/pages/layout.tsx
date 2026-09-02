@@ -1,8 +1,13 @@
 import { redirect } from "next/navigation";
 import { accessMenuItems, type BiMenuDashboard } from "../configs/menu";
 import { AppShell } from "@/components/app-shell";
+import { SessionKeeper } from "@/components/session-keeper";
 import { apiGet } from "@/lib/api/core";
-import { LOGOUT_PATH } from "@/lib/routes";
+import {
+  SESSION_IDLE_TIMEOUT_SECONDS,
+  SESSION_REFRESH_INTERVAL_SECONDS,
+} from "@/lib/backend";
+import { SESSION_EXPIRED_PATH } from "@/lib/routes";
 import { getSession } from "@/lib/session";
 
 /**
@@ -27,7 +32,7 @@ export default async function DashboardLayout({
   // cookie, calls that "authenticated", and sends the browser back here. Going
   // through logout clears the cookies first, so the next request is genuinely
   // unauthenticated and /login renders.
-  if (!session) redirect(`${LOGOUT_PATH}?reason=session_expired`);
+  if (!session) redirect(SESSION_EXPIRED_PATH);
 
   // CD-92 v2: the BI entries come from configuration, already filtered per
   // caller (team visibility) by the backend. A failed fetch just renders the
@@ -54,6 +59,12 @@ export default async function DashboardLayout({
       }}
       menus={accessMenuItems(session, biDashboards)}
     >
+      {/* AUTH-02. The two durations are server env, so they reach the browser
+          as props rather than as NEXT_PUBLIC_ variables. */}
+      <SessionKeeper
+        idleTimeoutSeconds={SESSION_IDLE_TIMEOUT_SECONDS}
+        refreshIntervalSeconds={SESSION_REFRESH_INTERVAL_SECONDS}
+      />
       {children}
     </AppShell>
   );

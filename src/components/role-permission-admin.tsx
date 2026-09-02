@@ -1,20 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import {
-  Alert,
-  Button,
-  Card,
-  Checkbox,
-  Empty,
-  Input,
-  Modal,
-  Space,
-  Spin,
-  Tag,
-  Tooltip,
-  message,
-} from "antd";
+import { Alert, App, Button, Card, Checkbox, Empty, Input, Modal, Space, Spin, Tag, Tooltip } from "antd";
 import Text from "antd/es/typography/Text";
 import Paragraph from "antd/es/typography/Paragraph";
 import {
@@ -100,6 +87,8 @@ export function RolePermissionAdmin({
   initialHolders,
   initialAudit,
 }: Props) {
+  // antd's `message` from context, so it inherits the app theme.
+  const { message } = App.useApp();
   const [roles, setRoles] = useState(initialRoles);
   const [selectedId, setSelectedId] = useState<string | null>(
     initialRoles[0]?.id ?? null,

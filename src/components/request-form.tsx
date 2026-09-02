@@ -1,21 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import {
-  Alert,
-  Button,
-  Card,
-  Empty,
-  Input,
-  InputNumber,
-  Tag,
-  message,
-} from "antd";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Alert, App, Button, Card, Empty, Input, InputNumber, Tag } from "antd";
 import {
   CheckCircleFilled,
   ClockCircleOutlined,
   LockOutlined,
-  SearchOutlined,
 } from "@ant-design/icons";
 import Text from "antd/es/typography/Text";
 import Paragraph from "antd/es/typography/Paragraph";
@@ -35,14 +25,34 @@ import {
 } from "@/lib/api/types";
 import type {
   ChainPreview,
+  DirectoryUser,
   FormSchemaProperty,
+  OrgUnitShape,
   RequestAttachment,
   RequestType,
 } from "@/lib/api/types";
 import { messages } from "@/lib/messages";
-import { SearchSelect } from "@/components/search-select";
+import { SearchSelect, SearchTreeSelect } from "@/components/search-select";
+import { buildUnitTree, subtreeIds } from "@/lib/org-tree";
 import { ROUTES } from "@/lib/routes";
 
+
+/**
+ * Which field of a type carries the money.
+ *
+ * Read from the schema rather than assumed: a type authored in A2 may call it
+ * anything, and the approval ladder is selected from whichever numeric field
+ * the type marks as its amount.
+ */
+function amountFieldOf(type: RequestType | null): string | null {
+  const entries = Object.entries(type?.formSchema?.properties ?? {});
+
+  return (
+    entries.find(([name]) => name === "deal_value")?.[0] ??
+    entries.find(([, prop]) => prop.type === "number")?.[0] ??
+    null
+  );
+}
 
 function fileSize(bytes: number): string {
   return bytes >= 1_048_576
@@ -66,19 +76,19 @@ function fileSize(bytes: number): string {
 export function RequestForm({
   types,
   people,
+  units,
   parentRequestId,
 }: {
   types: RequestType[];
   /** The directory the `ผู้รับเรื่อง` selector draws from. */
-  people: {
-    id: string;
-    displayName: string;
-    username: string;
-    orgUnitId: string | null;
-  }[];
+  people: DirectoryUser[];
+  /** The company's chart — `ทีมผู้รับ` is a tree over it. */
+  units: OrgUnitShape[];
   /** Set when this request is being raised from inside another one. */
   parentRequestId?: string | null;
 }) {
+  // antd's `message` from context, so it inherits the app theme.
+  const { message } = App.useApp();
   const router = useRouter();
 
   const [typeCode, setTypeCode] = useState<string | undefined>(
@@ -109,6 +119,19 @@ export function RequestForm({
   const [draftId, setDraftId] = useState<string | null>(null);
   const [attachments, setAttachments] = useState<RequestAttachment[]>([]);
   const [preview, setPreview] = useState<ChainPreview | null>(null);
+  /**
+   * Why there is no route to show, when there is none.
+   *
+   * `APV_MATRIX_NOT_FOUND` means the type has no approval step — a legitimate
+   * configuration for over a third of the request types. Anything else is a
+   * genuine failure and must not be dressed up as one.
+   */
+  const [chainError, setChainError] = useState<{
+    code?: string;
+    message: string;
+  } | null>(null);
+  /** Sequence number of the newest preview call — see `refreshPreview`. */
+  const previewAttempt = useRef(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   /**
@@ -123,31 +146,47 @@ export function RequestForm({
   const required = schema?.required ?? [];
 
   /**
-   * The teams offered, drawn from the request types themselves.
+   * The whole chart, as a tree.
    *
-   * The org chart is admin-only over the API (`GET /admin/org-units` requires
-   * `admin.org.manage`), and a page that fetches what its viewer cannot read
-   * is a guaranteed 403. The receiving teams travel with `GET /request-types`,
-   * which every requester can read, so the list is exactly the set of teams
-   * this company actually sends work to.
+   * This used to be a flat list built from the receiving teams the request
+   * types happened to name, because the chart was admin-only over the API and
+   * a page that fetches what its viewer cannot read is a guaranteed 403. There
+   * is now `GET /org-units` for exactly this, so the requester can send work
+   * anywhere in the company — the type's team is a starting point, not a fence.
    */
-  const teams = [
-    ...new Map(
-      types
-        .map((entry) => entry.receiverOrgUnit)
-        .filter((unit): unit is { id: string; name: string } => Boolean(unit))
-        .map((unit) => [unit.id, unit]),
-    ).values(),
-  ].sort((left, right) => left.name.localeCompare(right.name, "th"));
+  const teamTree = useMemo(
+    () =>
+      buildUnitTree(units, {
+        // A switched-off team is shown and not choosable, rather than removed:
+        // dropping it would re-hang the teams under it at the root and hide
+        // everybody in them from a pick made further up the chart.
+        disabled: (unit) => !unit.active,
+      }),
+    [units],
+  );
 
   /**
-   * Nobody in the chosen team is a real answer, not a reason to widen the
-   * list: it means the team has no members yet, and handing the ticket to
-   * somebody outside it would hide that.
+   * The chosen team **and everything under it**.
+   *
+   * Matching the unit exactly found nobody once the chart gained a fourth
+   * level: a receiving team is a department, and people sit at positions
+   * beneath it. 36 of the 40 types with a receiving team were offering an
+   * empty receiver list.
+   *
+   * Nobody in the branch is still a real answer, not a reason to widen the
+   * list — it means the team has no members yet, and quietly handing the
+   * ticket to somebody outside it would hide that. Clearing the team is how
+   * the requester asks for everybody, and that is deliberate.
    */
-  const receiverCandidates = receiverOrgUnitId
-    ? people.filter((person) => person.orgUnitId === receiverOrgUnitId)
-    : people;
+  const receiverCandidates = useMemo(() => {
+    if (!receiverOrgUnitId) return people;
+
+    const branch = subtreeIds(units, receiverOrgUnitId);
+
+    return people.filter(
+      (person) => person.orgUnitId && branch.has(person.orgUnitId),
+    );
+  }, [people, units, receiverOrgUnitId]);
 
   /**
    * Which field carries the money.
@@ -156,11 +195,10 @@ export function RequestForm({
    * it anything, and the approval ladder is selected from whichever numeric
    * field the type marks as its amount.
    */
-  const amountEntries = Object.entries(schema?.properties ?? {});
-  const amountField =
-    amountEntries.find(([name]) => name === "deal_value")?.[0] ??
-    amountEntries.find(([, prop]) => prop.type === "number")?.[0] ??
-    null;
+  const amountField = amountFieldOf(type);
+
+  /** REQ-03 — the type decides whether `อ้างอิงดีล` blocks a submit. */
+  const refRequired = type?.refRequired ?? false;
 
   /** The draft row must exist before a document can hang off it. */
   async function ensureDraft(): Promise<string | null> {
@@ -189,13 +227,32 @@ export function RequestForm({
     return created.data.id;
   }
 
-  async function refreshPreview(nextValues: Record<string, unknown>) {
-    if (!typeCode) return;
+  /**
+   * Asks the server for the route, for `code` and the amount in `nextValues`.
+   *
+   * The type is a parameter rather than read from state because the caller
+   * that matters most — picking a type — runs in the same tick as
+   * `setTypeCode`, where `typeCode` is still the previous value.
+   */
+  async function refreshPreview(
+    code: string | undefined,
+    nextValues: Record<string, unknown>,
+  ) {
+    // Nothing to ask about, and nothing to clear: the type selector resets
+    // both before it changes the code, and both start null.
+    if (!code) return;
 
-    const raw = amountField ? nextValues[amountField] : undefined;
+    const field = amountFieldOf(
+      types.find((entry) => entry.code === code) ?? null,
+    );
+    const raw = field ? nextValues[field] : undefined;
+
+    // Typing in the amount fires one call per keystroke, and the answers do
+    // not have to come back in order. Only the newest one may write state.
+    const attempt = ++previewAttempt.current;
 
     const result = await previewChain({
-      subject_type: `request:${typeCode}`,
+      subject_type: `request:${code}`,
       // Sent as a string: money must not be rounded through a JS number on
       // the way to a ceiling comparison.
       ...(raw === undefined || raw === null || raw === ""
@@ -203,13 +260,35 @@ export function RequestForm({
         : { amount: String(raw) }),
     });
 
+    if (attempt !== previewAttempt.current) return;
+
     setPreview(result.ok ? result.data : null);
+    setChainError(
+      result.ok ? null : { code: result.code, message: result.message },
+    );
   }
+
+  /**
+   * The route is a property of the type, not of the amount.
+   *
+   * It used to be fetched only when the amount field changed, so a type with
+   * no numeric field never showed a route at all and one with a numeric field
+   * only showed it after the first keystroke — while the panel meanwhile
+   * announced "ไม่มีชั้นอนุมัติ". Reacting to the type covers the first paint
+   * (a single-type form starts with one chosen) and every later change; the
+   * answers are re-fetched from `setField` when the amount moves.
+   */
+  useEffect(() => {
+    void refreshPreview(typeCode, {});
+    // `refreshPreview` is redefined every render; the type is what should
+    // re-run this.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [typeCode]);
 
   function setField(name: string, value: unknown) {
     const next = { ...values, [name]: value };
     setValues(next);
-    if (name === amountField) void refreshPreview(next);
+    if (name === amountField) void refreshPreview(typeCode, next);
   }
 
   async function onSaveDraft() {
@@ -271,9 +350,10 @@ export function RequestForm({
   }
 
   async function onSubmit() {
-    // §16 marks `อ้างอิงดีล *` required. It is not part of `formSchema`, so no
-    // schema validation covers it — the check has to live here.
-    if (!refId.trim()) {
+    // Not part of `formSchema`, so no schema validation covers it. The backend
+    // checks it too (`assertSubmittable`) — this is only so the person is told
+    // before the round trip, not instead of it.
+    if (refRequired && !refId.trim()) {
       setError(messages.requestForm.refRequired);
       return;
     }
@@ -340,7 +420,11 @@ export function RequestForm({
                   // would submit fields the new form never showed.
                   setTypeCode(next);
                   setValues({});
+                  // Cleared here as well as re-fetched by the effect, so the
+                  // old type's route is not left on screen while the new one
+                  // is still being asked for.
                   setPreview(null);
+                  setChainError(null);
                   setDraftId(null);
                   setAttachments([]);
 
@@ -367,20 +451,18 @@ export function RequestForm({
               label={messages.requestForm.receiverTeam}
               hint={messages.requestForm.receiverTeamHint}
             >
-              <SearchSelect
+              <SearchTreeSelect
                 className="w-full"
                 allowClear
+                treeDefaultExpandAll
                 value={receiverOrgUnitId}
                 onChange={(next?: string) => {
                   setReceiverOrgUnitId(next);
-                  // The person already chosen may not be in the new team.
+                  // The person already chosen may not be in the new branch.
                   setReceiverId(undefined);
                 }}
                 placeholder={messages.requestForm.receiverTeamPlaceholder}
-                options={teams.map((team) => ({
-                  value: team.id,
-                  label: team.name,
-                }))}
+                treeData={teamTree}
               />
             </Field>
 
@@ -410,12 +492,23 @@ export function RequestForm({
               />
             </Field>
 
-            <Field label={messages.requestForm.refLabel} required>
+            {/*
+              Required only when the type says so.
+
+              §16 marks it with `*`, but that mockup is the DSC screen and most
+              types have no deal to point at. The magnifying glass went with the
+              hard-coded rule: it never searched anything, and an icon that says
+              a field is a lookup when it is a text box is a screen lying to the
+              person filling it in.
+            */}
+            <Field
+              label={messages.requestForm.refLabel}
+              required={refRequired}
+            >
               <Input
                 value={refId}
                 onChange={(event) => setRefId(event.target.value)}
                 placeholder="D-501"
-                suffix={<SearchOutlined className="text-black/25" />}
               />
             </Field>
 
@@ -564,7 +657,11 @@ export function RequestForm({
       </div>
 
       <div className="space-y-4">
-        <ChainPanel preview={preview} />
+        <ChainPanel
+          preview={preview}
+          typeChosen={Boolean(typeCode)}
+          error={chainError}
+        />
 
         <Card title={messages.requestForm.slaTitle} size="small">
           {type?.slaHours ? (
@@ -589,6 +686,141 @@ export function RequestForm({
 }
 
 /** One field, rendered from what the schema says it is. */
+/**
+ * A `type: "array"` field: a grid the person filling it in adds rows to.
+ *
+ * The columns come from `items`, ordered by the same `x-order` the top-level
+ * fields use, so a table authored in A2 draws in the order the admin arranged
+ * it. `maxItems` caps the rows — absent means they may keep going, which is
+ * what the requirement asked for.
+ *
+ * Cells reuse nothing from `SchemaField`: that renders a labelled block, and a
+ * table already carries its labels in the header. Only the input itself is
+ * shared in spirit — number columns get `InputNumber`, everything else a text
+ * box, which is the same distinction one level up.
+ */
+function TableField({
+  property,
+  value,
+  onChange,
+}: {
+  readonly property: FormSchemaProperty;
+  readonly value: unknown;
+  readonly onChange: (value: unknown) => void;
+}) {
+  const columns = Object.entries(property.items?.properties ?? {}).sort(
+    ([, a], [, b]) => fieldOrder(a) - fieldOrder(b),
+  );
+  const requiredColumns = new Set(property.items?.required ?? []);
+
+  /*
+    A value that is not an array is treated as no rows rather than crashing the
+    form: `formData` is `jsonb` an admin can reshape, and a screen that throws
+    on unexpected data is a screen nobody can correct the data from.
+  */
+  const rows = Array.isArray(value)
+    ? (value as Record<string, unknown>[])
+    : [];
+
+  const full =
+    property.maxItems !== undefined && rows.length >= property.maxItems;
+
+  function setCell(index: number, column: string, next: unknown) {
+    onChange(
+      rows.map((row, at) => (at === index ? { ...row, [column]: next } : row)),
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[32rem] text-sm">
+          <thead>
+            <tr className="border-b border-black/10 text-left">
+              {columns.map(([column, spec]) => (
+                <th key={column} className="px-2 py-1 font-medium">
+                  {spec.title ?? column}
+                  {requiredColumns.has(column) && (
+                    <span className="text-red-500"> *</span>
+                  )}
+                  {isSensitiveField(spec) && (
+                    <Tag color="gold" className="ml-1 m-0!">
+                      {messages.requestForm.sensitiveBadge}
+                    </Tag>
+                  )}
+                </th>
+              ))}
+              <th className="w-10" />
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, index) => (
+              // The index is the identity: rows carry no id of their own, and
+              // any key derived from the contents changes as somebody types.
+              <tr key={index} className="border-b border-black/5">
+                {columns.map(([column, spec]) => (
+                  <td key={column} className="px-2 py-1">
+                    {spec.type === "number" ? (
+                      <InputNumber
+                        className="w-full"
+                        value={row[column] as number | undefined}
+                        min={spec.minimum}
+                        max={spec.maximum}
+                        onChange={(next) => setCell(index, column, next)}
+                      />
+                    ) : (
+                      <Input
+                        value={row[column] as string | undefined}
+                        maxLength={spec.maxLength}
+                        onChange={(event) =>
+                          setCell(index, column, event.target.value)
+                        }
+                      />
+                    )}
+                  </td>
+                ))}
+                <td className="px-2 py-1">
+                  <Button
+                    size="small"
+                    type="text"
+                    danger
+                    onClick={() =>
+                      onChange(rows.filter((_, at) => at !== index))
+                    }
+                  >
+                    {messages.requestForm.remove}
+                  </Button>
+                </td>
+              </tr>
+            ))}
+            {!rows.length && (
+              <tr>
+                <td
+                  colSpan={columns.length + 1}
+                  className="px-2 py-3 text-center"
+                >
+                  <Text type="secondary">{messages.requestForm.tableEmpty}</Text>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <Button size="small" disabled={full} onClick={() => onChange([...rows, {}])}>
+          {messages.requestForm.tableAddRow}
+        </Button>
+        {property.maxItems !== undefined && (
+          <Text type="secondary" className="text-xs">
+            {messages.requestForm.tableRowCap(rows.length, property.maxItems)}
+          </Text>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function SchemaField({
   name,
   property,
@@ -603,12 +835,14 @@ export function SchemaField({
   onChange: (value: unknown) => void;
 }) {
   const multiline = isMultilineField(property);
+  const isTable = property.type === "array" && Boolean(property.items);
 
   return (
     <Field
       label={property.title ?? name}
       required={required}
-      wide={multiline}
+      // A grid of inputs never fits a form column.
+      wide={multiline || isTable}
       badge={
         // SCOPE-04 — states who will see the value, next to the value itself.
         isSensitiveField(property) ? (
@@ -618,7 +852,9 @@ export function SchemaField({
         ) : null
       }
     >
-      {property.enum ? (
+      {isTable ? (
+        <TableField property={property} value={value} onChange={onChange} />
+      ) : property.enum ? (
         <SearchSelect
           className="w-full"
           value={value as string | undefined}
@@ -709,11 +945,53 @@ export function Field({
  * ในเส้นทาง — วงเงินไม่เกินเพดาน …" is what stops a requester wondering
  * whether somebody was missed.
  */
-function ChainPanel({ preview }: { preview: ChainPreview | null }) {
+function ChainPanel({
+  preview,
+  typeChosen,
+  error,
+}: {
+  preview: ChainPreview | null;
+  typeChosen: boolean;
+  /** Why there is no route — `null` when the server has not refused one. */
+  error: { code?: string; message: string } | null;
+}) {
   if (!preview) {
+    /*
+      In flight, derived rather than stored: a type is chosen, the server has
+      neither answered nor refused. Choosing a type clears both, so this can
+      only be true while a call is outstanding — one less state to keep
+      truthful, and no setState inside an effect to get there.
+    */
+    const loading = typeChosen && !error;
+
+    /*
+      Four different silences used to print the same sentence. Told apart,
+      because only one of them means what that sentence says:
+        · no type picked yet          → nothing has been asked
+        · in flight                   → the answer is coming
+        · APV_MATRIX_NOT_FOUND        → genuinely no approval step
+        · anything else               → the panel failed, and saying
+                                        "ทำเสร็จแล้วจบเลย" would be a lie the
+                                        requester acts on
+    */
+    const body = !typeChosen ? (
+      <Text type="secondary">{messages.requestForm.chainPickType}</Text>
+    ) : loading ? (
+      <Text type="secondary">{messages.requestForm.chainLoading}</Text>
+    ) : error && error.code !== "APV_MATRIX_NOT_FOUND" ? (
+      <Alert
+        type="warning"
+        showIcon
+        title={messages.requestForm.chainLoadError}
+        description={error.message}
+      />
+    ) : (
+      <Text type="secondary">{messages.requestForm.chainNoMatrix}</Text>
+    );
+
     return (
       <Card title={messages.requestForm.chainTitle} size="small">
-        <Text type="secondary">{messages.requestForm.chainNoMatrix}</Text>
+        {body}
       </Card>
     );
   }

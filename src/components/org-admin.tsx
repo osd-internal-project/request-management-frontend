@@ -1,20 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useRef, useState } from "react";
-import {
-  Alert,
-  Avatar,
-  Button,
-  Card,
-  Checkbox,
-  Empty,
-  Form,
-  Input,
-  Modal,
-  Spin,
-  Tag,
-  message,
-} from "antd";
+import { Alert, App, Avatar, Button, Card, Checkbox, Empty, Form, Input, Modal, Spin, Tag } from "antd";
 import Text from "antd/es/typography/Text";
 import Paragraph from "antd/es/typography/Paragraph";
 import { messages } from "@/lib/messages";
@@ -264,6 +251,8 @@ export function OrgAdmin({
    */
   canManageRoles: boolean;
 }) {
+  // antd's `message` from context, so it inherits the app theme.
+  const { message } = App.useApp();
   const [units, setUnits] = useState(initialUnits);
   const [unassigned, setUnassigned] = useState(initialUnassigned);
   const [selectedId, setSelectedId] = useState<string | null>(
@@ -415,7 +404,7 @@ export function OrgAdmin({
         },
       });
     },
-    [refreshTree, refreshQueue, reloadMembers],
+    [refreshTree, refreshQueue, reloadMembers, message],
   );
 
   const setUnitActive = useCallback(
@@ -433,7 +422,7 @@ export function OrgAdmin({
       void message.success(messages.org.saved);
       await refreshTree();
     },
-    [refreshTree],
+    [refreshTree, message],
   );
 
   /**
@@ -466,7 +455,7 @@ export function OrgAdmin({
         onOk: () => setUnitActive(unit, false),
       });
     },
-    [units, setUnitActive],
+    [units, setUnitActive, message],
   );
 
   const visibleUnits = useMemo(
@@ -501,7 +490,7 @@ export function OrgAdmin({
         },
       });
     },
-    [refreshTree],
+    [refreshTree, message],
   );
 
   /**
@@ -561,6 +550,7 @@ export function OrgAdmin({
                 {!unit.active && (
                   <Tag className="m-0! shrink-0">{messages.org.inactive}</Tag>
                 )}
+                {/* <Tag className="m-0! shrink-0" >{unit.kind}</Tag> */}
               </span>
               <Text
                 type="secondary"

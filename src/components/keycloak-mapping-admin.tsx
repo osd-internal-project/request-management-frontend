@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Alert, Button, Card, Empty, Input, Space, message } from "antd";
+import { Alert, App, Button, Card, Empty, Input, Space } from "antd";
 import Paragraph from "antd/es/typography/Paragraph";
 import { replaceKeycloakMappings } from "@/lib/api/client-roles";
 import type { KeycloakRoleMappingRow, RoleRow } from "@/lib/api/types";
@@ -32,6 +32,8 @@ export function KeycloakMappingAdmin({
   readonly roles: RoleRow[];
   readonly companyId: string;
 }) {
+  // antd's `message` from context, so it inherits the app theme.
+  const { message } = App.useApp();
   const [rows, setRows] = useState<Draft[]>(
     initial.map((mapping) => ({
       keycloakRole: mapping.keycloakRole,

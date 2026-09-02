@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Alert, Button, Card, message } from "antd";
+import { Alert, App, Button, Card } from "antd";
 import Paragraph from "antd/es/typography/Paragraph";
 import { completeRequest } from "@/lib/api/client-requests";
 import { SchemaField } from "@/components/request-form";
@@ -36,6 +36,8 @@ export function ReceiverForm({
   /** Whatever was already saved — a completion can be attempted twice. */
   readonly initial: Record<string, unknown>;
 }) {
+  // antd's `message` from context, so it inherits the app theme.
+  const { message } = App.useApp();
   const router = useRouter();
   const [values, setValues] = useState<Record<string, unknown>>(initial);
   const [busy, setBusy] = useState(false);

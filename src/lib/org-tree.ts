@@ -78,3 +78,45 @@ export function buildUnitTree<T extends TreeUnit>(
 
   return roots;
 }
+
+/**
+ * A unit and everything beneath it.
+ *
+ * What "the receiving team" has to mean when the chart is four levels deep:
+ * people sit at positions under a department, so a picker that matched the
+ * department exactly offered nobody. 36 of the 40 request types with a
+ * receiving team were showing an empty receiver list on 1 ก.ย. 2569 for
+ * exactly this reason.
+ *
+ * Computed here rather than asked of the server because the requester picks
+ * **any** unit in the chart, not only the one their request type names — a
+ * list of descendants shipped with the type could never cover that.
+ *
+ * A cycle in `parentId` would be a corrupt chart; the visited set means this
+ * returns rather than hangs the page if one ever appears.
+ */
+export function subtreeIds<T extends TreeUnit>(
+  units: readonly T[],
+  rootId: string,
+): Set<string> {
+  const childrenOf = new Map<string, string[]>();
+
+  for (const unit of units) {
+    if (!unit.parentId) continue;
+    const siblings = childrenOf.get(unit.parentId) ?? [];
+    siblings.push(unit.id);
+    childrenOf.set(unit.parentId, siblings);
+  }
+
+  const found = new Set<string>();
+  const queue = [rootId];
+
+  while (queue.length) {
+    const id = queue.shift() as string;
+    if (found.has(id)) continue;
+    found.add(id);
+    queue.push(...(childrenOf.get(id) ?? []));
+  }
+
+  return found;
+}

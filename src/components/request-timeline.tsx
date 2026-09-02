@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Empty, Input, message } from "antd";
+import { App, Button, Empty, Input } from "antd";
 import Text from "antd/es/typography/Text";
 import { addComment } from "@/lib/api/client-requests";
 import type { RequestComment, RequestEventRow } from "@/lib/api/types";
@@ -61,6 +61,8 @@ export function RequestTimeline({
   /** False for somebody reading a request they are not involved in. */
   readonly canComment: boolean;
 }) {
+  // antd's `message` from context, so it inherits the app theme.
+  const { message } = App.useApp();
   const router = useRouter();
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);

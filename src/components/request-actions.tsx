@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Alert, Button, Input, Modal, Space, message } from "antd";
+import { Alert, App, Button, Input, Modal, Space } from "antd";
 import Text from "antd/es/typography/Text";
 import {
   assignRequest,
@@ -16,6 +16,7 @@ import {
   resumeRequest,
   returnRequest,
 } from "@/lib/api/client-requests";
+import type { CodedLabel } from "@/lib/api/types";
 import { messages } from "@/lib/messages";
 import { SearchSelect } from "@/components/search-select";
 import { ROUTES } from "@/lib/routes";
@@ -48,9 +49,17 @@ export function RequestActions({
     approverCandidateIds?: string[];
     /** The type asks the receiver for a form — see `ReceiverForm`. */
     hasReceiverForm?: boolean;
+    /**
+     * REQ-04 — the bounce causes this request may be returned with, taken from
+     * the snapshot it was raised under so the picker offers exactly what the
+     * server will accept.
+     */
+    returnReasons?: readonly CodedLabel[];
   };
   readonly viewerId: string;
 }) {
+  // antd's `message` from context, so it inherits the app theme.
+  const { message } = App.useApp();
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -181,8 +190,10 @@ export function RequestActions({
       <ReasonDialog
         action={asking}
         busy={busy !== null}
+        reasons={request.returnReasons ?? []}
+        returnToRequester={request.status !== "pending_approval"}
         onCancel={() => setAsking(null)}
-        onConfirm={async (note) => {
+        onConfirm={async (note, reasonCode) => {
           const action = asking;
           if (!action) return;
 
@@ -203,7 +214,10 @@ export function RequestActions({
                       note,
                     })
                   : returnRequest(request.id, {
-                      reason_codes: [],
+                      // `reason_code`, singular. This read `reason_codes: []`
+                      // — a field the API has never had — so every return of a
+                      // request that was not awaiting approval answered 400.
+                      reason_code: reasonCode ?? "",
                       note,
                     });
               case "hold":
@@ -252,18 +266,52 @@ const ACTION_TITLE: Record<ReasonAction, string> = {
 function ReasonDialog({
   action,
   busy,
+  reasons,
+  returnToRequester,
   onCancel,
   onConfirm,
 }: {
   readonly action: ReasonAction | null;
   readonly busy: boolean;
+  /**
+   * REQ-04's standard bounce causes, from the type. Only `return` uses them.
+   *
+   * Empty means the type declares none, which the backend treats as "nothing
+   * may be returned" — said on screen rather than met as a 400.
+   */
+  readonly reasons: readonly CodedLabel[];
+  /**
+   * Whether "ตีกลับ" sends the request back to its requester (`REQ-04`) or
+   * merely returns the approval decision to the doing team.
+   *
+   * The two are different endpoints with different rules, and only the first
+   * asks for a coded reason.
+   */
+  readonly returnToRequester: boolean;
   readonly onCancel: () => void;
-  readonly onConfirm: (note: string) => void | Promise<void>;
+  readonly onConfirm: (
+    note: string,
+    reasonCode?: string,
+  ) => void | Promise<void>;
 }) {
   const [note, setNote] = useState("");
+  const [reasonCode, setReasonCode] = useState<string | undefined>();
 
   const optional = action ? OPTIONAL_NOTE.has(action) : false;
-  const ready = optional || note.trim().length > 0;
+  /*
+    Returning a request to its requester needs a code as well as a remark:
+    REQ-04 exists so "why do requests bounce?" can be counted, and free text
+    alone cannot be. Returning a *decision* is a different move — it goes
+    through the approval case, which asks only for the remark.
+  */
+  const needsReason = action === "return" && returnToRequester;
+  const ready =
+    (optional || note.trim().length > 0) && (!needsReason || Boolean(reasonCode));
+
+  function reset() {
+    setNote("");
+    setReasonCode(undefined);
+  }
 
   return (
     <Modal
@@ -274,16 +322,35 @@ function ReasonDialog({
       confirmLoading={busy}
       okButtonProps={{ disabled: !ready }}
       onCancel={() => {
-        setNote("");
+        reset();
         onCancel();
       }}
       onOk={() => {
-        const value = note;
-        setNote("");
-        void onConfirm(value);
+        const values = [note, reasonCode] as const;
+        reset();
+        void onConfirm(values[0], values[1]);
       }}
       destroyOnHidden
     >
+      {needsReason && (
+        <div className="mb-2">
+          <Text strong className="mb-1 block">
+            {messages.requestDetail.returnReasonLabel}
+          </Text>
+          <SearchSelect
+            className="w-full"
+            value={reasonCode}
+            onChange={(value) => setReasonCode(value as string)}
+            placeholder={messages.requestDetail.returnReasonPlaceholder}
+            options={reasons.map((reason) => ({
+              value: reason.code,
+              label: reason.name || reason.code,
+            }))}
+            notFoundContent={messages.requestDetail.returnReasonMissing}
+          />
+        </div>
+      )}
+
       <Input.TextArea
         rows={4}
         autoFocus
@@ -295,9 +362,14 @@ function ReasonDialog({
             : messages.requestDetail.reasonLabel
         }
       />
-      {!optional && !ready && (
+      {!optional && !note.trim() && (
         <Text type="secondary" className="mt-1 block text-xs">
           {messages.requestDetail.reasonRequired}
+        </Text>
+      )}
+      {needsReason && !reasons.length && (
+        <Text type="danger" className="mt-1 block text-xs">
+          {messages.requestDetail.returnReasonMissing}
         </Text>
       )}
     </Modal>

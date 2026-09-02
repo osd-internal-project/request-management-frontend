@@ -1,21 +1,7 @@
 "use client";
 
 import { ExportOutlined, PlusOutlined } from "@ant-design/icons";
-import {
-  Alert,
-  Button,
-  Card,
-  Form,
-  Input,
-  InputNumber,
-  Modal,
-  Popconfirm,
-  Space,
-  Spin,
-  Table,
-  Tag,
-  message,
-} from "antd";
+import { Alert, App, Button, Card, Form, Input, InputNumber, Modal, Popconfirm, Space, Spin, Table, Tag } from "antd";
 import Paragraph from "antd/es/typography/Paragraph";
 import Text from "antd/es/typography/Text";
 import Title from "antd/es/typography/Title";
@@ -54,6 +40,8 @@ interface FormValues {
 }
 
 export default function AdminBiPage() {
+  // antd's `message` from context, so it inherits the app theme.
+  const { message } = App.useApp();
   const [dashboards, setDashboards] = useState<BiDashboardConfig[] | null>(
     null,
   );

@@ -1,21 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { setSessionCookies, type TokenResponse } from "@/lib/auth-cookies";
 import {
-  AUTH_COOKIE,
-  authCookieOptions,
   BACKEND_PREFIX,
   PKCE_STATE_COOKIE,
   PKCE_VERIFIER_COOKIE,
-  REFRESH_COOKIE,
   USER_SERVICE_URL,
 } from "@/lib/backend";
 import { HOME_PATH, LOGIN_PATH } from "@/lib/routes";
-
-interface TokenResponse {
-  access_token: string;
-  refresh_token: string;
-  expires_in: number;
-  refresh_expires_in: number;
-}
 
 function failTo(request: NextRequest, reason: string) {
   const response = NextResponse.redirect(
@@ -79,16 +70,7 @@ export async function GET(request: NextRequest) {
   const destination = from && from.startsWith("/") ? from : HOME_PATH;
   const response = NextResponse.redirect(new URL(destination, request.url));
 
-  response.cookies.set(
-    AUTH_COOKIE,
-    tokens.access_token,
-    authCookieOptions(tokens.expires_in),
-  );
-  response.cookies.set(
-    REFRESH_COOKIE,
-    tokens.refresh_token,
-    authCookieOptions(tokens.refresh_expires_in),
-  );
+  setSessionCookies(response, tokens);
   response.cookies.delete(PKCE_VERIFIER_COOKIE);
   response.cookies.delete(PKCE_STATE_COOKIE);
 

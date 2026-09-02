@@ -8,6 +8,7 @@
 import { apiGet, type ApiResult } from "../core";
 import {
   type OrgUnitNode,
+  type OrgUnitShape,
   type OrgMember,
   type UnassignedUser,
 } from "../types";
@@ -15,6 +16,18 @@ import {
 /** Get the organization unit tree */
 export async function getOrgUnits(): Promise<ApiResult<OrgUnitNode[]>> {
   return apiGet<OrgUnitNode[]>("/admin/org-units");
+}
+
+/**
+ * The chart's shape, readable by anyone who may read the directory.
+ *
+ * The submit screen offers a receiving team as a tree and narrows the receiver
+ * list to that team and everything under it, and `getOrgUnits` above is
+ * admin-only — calling it from there would be a guaranteed 403. This carries
+ * no manager name and no member count, which is the difference.
+ */
+export async function getOrgUnitShapes(): Promise<ApiResult<OrgUnitShape[]>> {
+  return apiGet<OrgUnitShape[]>("/org-units");
 }
 
 /** Get members of a specific organization unit */
@@ -34,6 +47,7 @@ export async function getUnassignedUsers(): Promise<
 /** Grouped for `import orgUnitsApi from …` at call sites. */
 const orgUnitsApi = {
   getOrgUnits,
+  getOrgUnitShapes,
   getOrgUnitMembers,
   getUnassignedUsers,
 };
