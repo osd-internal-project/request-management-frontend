@@ -5,7 +5,7 @@ import {
   REFRESH_COOKIE,
   USER_SERVICE_URL,
 } from "@/lib/backend";
-import { LOGIN_PATH } from "@/lib/routes";
+import { AUTH_LOGIN_PATH } from "@/lib/routes";
 
 interface LogoutResponse {
   end_session_url?: string;
@@ -47,22 +47,23 @@ async function endSession(request: NextRequest): Promise<string | null> {
  * Also the escape hatch for a dead session: the shell sends the browser here
  * with `?reason=` when a cookie exists but `/auth/me` rejects it. Clearing the
  * cookies is what breaks the redirect loop — the proxy then stops treating the
- * request as authenticated, so `/login` finally renders instead of bouncing
- * back to `/pages`.
+ * request as authenticated, and the browser goes on to Keycloak instead of
+ * bouncing back to `/pages`.
+ *
+ * There is no page of ours in between. Keycloak's end-session endpoint has
+ * just killed the SSO session, so the login form it lands on is a real prompt,
+ * not a silent sign-in. `?reason=` survives as context for the caller and for
+ * the logs; it no longer picks the destination.
  */
 export async function GET(request: NextRequest) {
   const endSessionUrl = await endSession(request);
-  const reason = request.nextUrl.searchParams.get("reason");
 
-  const fallback = new URL(LOGIN_PATH, request.url);
-  // `signed_out` is what stops `/login` bouncing the browser to Keycloak: the
-  // realm session may well still be alive, and the user would be signed back in
-  // before they saw anything. `reason` already renders for the same reason.
-  if (reason) fallback.searchParams.set("error", reason);
-  else fallback.searchParams.set("signed_out", "1");
+  // Reached only when Keycloak could not be told to end the session — the
+  // cookies below are still cleared, so this is a real logout either way.
+  const fallback = new URL(AUTH_LOGIN_PATH, request.url).toString();
 
   return clearSessionCookies(
-    NextResponse.redirect(endSessionUrl ?? fallback.toString()),
+    NextResponse.redirect(endSessionUrl ?? fallback),
   );
 }
 

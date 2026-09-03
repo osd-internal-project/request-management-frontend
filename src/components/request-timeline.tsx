@@ -1,11 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { App, Button, Empty, Input } from "antd";
-import Text from "antd/es/typography/Text";
-import { addComment } from "@/lib/api/client-requests";
-import type { RequestComment, RequestEventRow } from "@/lib/api/types";
+import type { ReactNode } from "react";
+import { Empty, Typography } from "antd";
+import {
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  CloseCircleOutlined,
+  SyncOutlined,
+} from "@ant-design/icons";
+import type { RequestEventRow } from "@/lib/api/types";
 import { messages } from "@/lib/messages";
 
 /** Thai date + time as §16 prints it: `23 ส.ค. 16:40 น.` */
@@ -36,144 +39,140 @@ function reasonOf(event: RequestEventRow): string | null {
   return typeof value === "string" && value.trim() ? value : null;
 }
 
-type Entry =
-  | { kind: "event"; at: string; event: RequestEventRow }
-  | { kind: "comment"; at: string; comment: RequestComment };
+type Tone = "green" | "red" | "gold" | "blue";
+
+/** Which way an event leans, from its type string. */
+function toneOf(type: string): Tone {
+  if (
+    type.includes("reject") ||
+    type.includes("return") ||
+    type.includes("cancel") ||
+    type.includes("held") ||
+    type.includes("deny")
+  ) {
+    return "red";
+  }
+  if (
+    type.includes("approve") ||
+    type.includes("completed") ||
+    type.includes("closed") ||
+    type.includes("accepted")
+  ) {
+    return "green";
+  }
+  if (type.includes("review") || type.includes("routed")) return "gold";
+
+  return "blue";
+}
+
+const DOT_STYLE: Record<Tone, string> = {
+  green: "bg-green-50 text-green-600",
+  red: "bg-red-50 text-red-500",
+  gold: "bg-amber-50 text-amber-500",
+  blue: "bg-sky-50 text-sky-500",
+};
+
+const DOT_ICON: Record<Tone, ReactNode> = {
+  green: <CheckCircleOutlined />,
+  red: <CloseCircleOutlined />,
+  gold: <ClockCircleOutlined />,
+  blue: <SyncOutlined />,
+};
 
 /**
- * REQ-07 + H2.2 — what happened to this request, and what people said about it.
+ * REQ-07 — what happened to this request, in order.
  *
- * One list, in time order. They are different tables and different kinds of
- * fact — an event is something the system recorded, a comment is something a
- * person chose to say — but the people on a request read them as one thread,
- * and splitting them into two boxes makes the reader interleave by timestamp
- * in their head.
+ * Comments live next door in [[RequestComments]] now: an event is something
+ * the system recorded, not something a person said, and the two read as
+ * different kinds of fact once they are not interleaved in one list.
+ *
+ * Hand-rolled rather than antd's `Timeline`: that component sizes its own
+ * dot and rail from a fixed 8px marker, so a custom icon dot (needed to tell
+ * an approval from a bounce at a glance) threw the rail off-centre no matter
+ * how the item's CSS variables were overridden. A three-column row — label,
+ * dot-and-rail, card — gives the same picture with alignment that doesn't
+ * fight the library.
  */
 export function RequestTimeline({
-  requestId,
   events,
-  comments,
-  canComment,
 }: {
-  readonly requestId: string;
   readonly events: RequestEventRow[];
-  readonly comments: RequestComment[];
-  /** False for somebody reading a request they are not involved in. */
-  readonly canComment: boolean;
 }) {
-  // antd's `message` from context, so it inherits the app theme.
-  const { message } = App.useApp();
-  const router = useRouter();
-  const [draft, setDraft] = useState("");
-  const [busy, setBusy] = useState(false);
-
-  const entries: Entry[] = [
-    ...events.map((event) => ({
-      kind: "event" as const,
-      at: event.createdAt,
-      event,
-    })),
-    ...comments.map((comment) => ({
-      kind: "comment" as const,
-      at: comment.createdAt,
-      comment,
-    })),
-  ].sort((left, right) => left.at.localeCompare(right.at));
-
-  async function send() {
-    const body = draft.trim();
-    if (!body) return;
-
-    setBusy(true);
-    const result = await addComment(requestId, body);
-    setBusy(false);
-
-    if (!result.ok) {
-      void message.error(result.message);
-      return;
-    }
-
-    setDraft("");
-    router.refresh();
+  if (!events.length) {
+    return (
+      <Empty
+        image={Empty.PRESENTED_IMAGE_SIMPLE}
+        description={messages.requestDetail.timelineEmpty}
+      />
+    );
   }
 
   return (
-    <div className="space-y-3">
-      {entries.length ? (
-        <ol className="space-y-3">
-          {entries.map((entry) =>
-            entry.kind === "comment" ? (
-              <li key={`c-${entry.comment.id}`} className="text-sm">
-                <div>
-                  <Text strong>
-                    {entry.comment.author?.displayName ??
-                      messages.requestDetail.system}
-                  </Text>{" "}
-                  <Text type="secondary">· {when(entry.at)}</Text>
+    <ol className="m-0 list-none p-0">
+      {events.map((event, index) => {
+        const actor =
+          event.actorLabel === "system"
+            ? messages.requestDetail.system
+            : (event.actor?.displayName ?? messages.requestDetail.system);
+        const title = messages.requestDetail.events[event.type] ?? event.type;
+        const fromStatus =
+          event.fromStatus &&
+          (messages.myWork.status[event.fromStatus] ?? event.fromStatus);
+        const toStatus =
+          event.toStatus &&
+          (messages.myWork.status[event.toStatus] ?? event.toStatus);
+        const tone = toneOf(event.type);
+        const reason = reasonOf(event);
+        const isLast = index === events.length - 1;
+
+        return (
+          <li key={event.id} className={`flex gap-3 ${isLast ? "" : "pb-4"}`}>
+            <span className="w-20 shrink-0 pt-1 text-right text-xs whitespace-nowrap text-gray-500">
+              {when(event.createdAt)}
+            </span>
+
+            <div className="flex flex-col items-center">
+              <span
+                className={`flex size-6 shrink-0 items-center justify-center rounded-full text-sm ring-4 ring-white ${DOT_STYLE[tone]}`}
+              >
+                {DOT_ICON[tone]}
+              </span>
+              {!isLast && (
+                <span className="-mb-4 mt-1 w-px flex-1 bg-slate-200" />
+              )}
+            </div>
+
+            <div className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50/70 p-3 shadow-sm transition-shadow duration-200 hover:shadow-md">
+              <div className="mb-1 flex flex-wrap items-center gap-2">
+                <Typography.Text strong className="text-sm text-gray-800">
+                  {title}
+                </Typography.Text>
+                <Typography.Text type="secondary" className="text-xs">
+                  {actor}
+                </Typography.Text>
+              </div>
+
+              {(fromStatus || toStatus) && (
+                <div className="mb-1 text-xs text-gray-500">
+                  {fromStatus && toStatus ? (
+                    <>
+                      {fromStatus} → {toStatus}
+                    </>
+                  ) : (
+                    (fromStatus ?? toStatus)
+                  )}
                 </div>
-                <div className="whitespace-pre-wrap">{entry.comment.body}</div>
-              </li>
-            ) : (
-              <li key={`e-${entry.event.id}`} className="text-sm">
-                <div>
-                  <Text strong>
-                    {messages.requestDetail.events[entry.event.type] ??
-                      entry.event.type}
-                  </Text>{" "}
-                  <Text type="secondary">
-                    —{" "}
-                    {entry.event.actorLabel === "system"
-                      ? messages.requestDetail.system
-                      : (entry.event.actor?.displayName ??
-                        messages.requestDetail.system)}{" "}
-                    · {when(entry.at)}
-                  </Text>
+              )}
+
+              {reason && (
+                <div className="rounded-md border-l-2 border-slate-300 bg-white/70 px-2 py-1 text-sm leading-6 whitespace-pre-wrap text-gray-700">
+                  {reason}
                 </div>
-
-                {entry.event.fromStatus && entry.event.toStatus && (
-                  <Text type="secondary" className="text-xs">
-                    {messages.myWork.status[entry.event.fromStatus] ??
-                      entry.event.fromStatus}{" "}
-                    →{" "}
-                    {messages.myWork.status[entry.event.toStatus] ??
-                      entry.event.toStatus}
-                  </Text>
-                )}
-
-                {reasonOf(entry.event) && (
-                  <div className="mt-0.5 border-l-2 border-black/10 pl-2 whitespace-pre-wrap">
-                    {reasonOf(entry.event)}
-                  </div>
-                )}
-              </li>
-            ),
-          )}
-        </ol>
-      ) : (
-        <Empty
-          image={Empty.PRESENTED_IMAGE_SIMPLE}
-          description={messages.requestDetail.commentEmpty}
-        />
-      )}
-
-      {canComment && (
-        <div className="flex gap-2">
-          <Input.TextArea
-            rows={2}
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            placeholder={messages.requestDetail.commentPlaceholder}
-          />
-          <Button
-            type="primary"
-            loading={busy}
-            disabled={!draft.trim()}
-            onClick={() => void send()}
-          >
-            {messages.requestDetail.commentSend}
-          </Button>
-        </div>
-      )}
-    </div>
+              )}
+            </div>
+          </li>
+        );
+      })}
+    </ol>
   );
 }

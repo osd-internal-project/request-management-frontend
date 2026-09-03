@@ -197,6 +197,19 @@ export function requestColumns(now: number) {
     ];
 }
 
+/**
+ * One tab's worth of work: the rows this page fetched, and how many exist.
+ *
+ * The two are not the same number. The page asks for 100 rows, and the tab
+ * label used to print how many came back — so a queue of 140 read `100`, and
+ * every tab silently agreed with itself while disagreeing with the database.
+ */
+export interface WorkTab {
+  readonly rows: RequestRow[];
+  /** The server's count for the whole filter, not the page. */
+  readonly total: number;
+}
+
 export function MyWork({
   involved,
   created,
@@ -206,13 +219,13 @@ export function MyWork({
   filters,
 }: {
   /** ทั้งหมด — everything this person raised, received, carries, or may approve. */
-  involved: RequestRow[];
+  involved: WorkTab;
   /** สร้าง — raised by them. */
-  created: RequestRow[];
+  created: WorkTab;
   /** รับเรื่อง — handed to them and not finished. */
-  incoming: RequestRow[];
+  incoming: WorkTab;
   /** อนุมัติ — waiting on their decision right now. */
-  approver: RequestRow[];
+  approver: WorkTab;
   types: { code: string; name: string }[];
   /** Applied by the server for the first tab; echoed into the controls. */
   filters: {
@@ -311,13 +324,13 @@ export function MyWork({
         items={[
           {
             key: "involved",
-            label: `${messages.myWork.tabInvolved} · ${involved.length}`,
-            children: table(involved, messages.myWork.empty),
+            label: `${messages.myWork.tabInvolved} · ${involved.total}`,
+            children: table(involved.rows, messages.myWork.empty),
           },
           {
             key: "created",
-            label: `${messages.myWork.tabCreated} · ${created.length}`,
-            children: table(created, messages.myWork.empty),
+            label: `${messages.myWork.tabCreated} · ${created.total}`,
+            children: table(created.rows, messages.myWork.empty),
           },
           /*
             The queue that makes the ticket model work. Without it the person a
@@ -327,13 +340,13 @@ export function MyWork({
           */
           {
             key: "incoming",
-            label: `${messages.myWork.tabIncoming} · ${incoming.length}`,
-            children: table(incoming, messages.myWork.emptyIncoming),
+            label: `${messages.myWork.tabIncoming} · ${incoming.total}`,
+            children: table(incoming.rows, messages.myWork.emptyIncoming),
           },
           {
             key: "approver",
-            label: `${messages.myWork.tabApprovals} · ${approver.length}`,
-            children: table(approver, messages.myWork.emptyApprovals),
+            label: `${messages.myWork.tabApprovals} · ${approver.total}`,
+            children: table(approver.rows, messages.myWork.emptyApprovals),
           },
         ]}
       />

@@ -122,6 +122,30 @@ export function replaceKeycloakMappings(input: {
   });
 }
 
+/** What one name sync changed — mirrors `KeycloakNameSyncReport`. */
+export interface KeycloakNameSyncReport {
+  linked: string[];
+  renamed: { from: string; to: string }[];
+  missing: string[];
+  checked: number;
+}
+
+/**
+ * Re-reads the realm and corrects any mapping whose role was renamed there.
+ *
+ * One way: the realm decides the names, this system decides the permissions.
+ * A rename used to go unnoticed until everyone holding that role silently lost
+ * it at their next sign-in.
+ */
+export function syncKeycloakMappingNames(
+  companyId: string,
+): Promise<ClientResult<KeycloakNameSyncReport>> {
+  return adminApi<KeycloakNameSyncReport>(
+    `keycloak-role-mappings/sync-names?company_id=${encodeURIComponent(companyId)}`,
+    { method: "POST" },
+  );
+}
+
 /**
  * Screen A4 loads a role's holders and its recent changes on click.
  *

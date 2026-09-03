@@ -22,9 +22,9 @@ export const messages = {
     marketingDescription:
       "แพลตฟอร์มคำขอและการอนุมัติกลางของกลุ่มบริษัท เลิกไล่งานในอีเมลและแชท",
     /**
-     * Shown after logout. Without this state the page would bounce to Keycloak,
-     * whose SSO session is often still alive, and sign the user straight back
-     * in — a logout button that logs you in.
+     * No longer rendered anywhere: logout now ends at Keycloak's own login
+     * form, with the SSO session already killed, so there is no page of ours
+     * left to say this on. Kept for `app/login/page.tsx.bak`.
      */
     signedOut: "ออกจากระบบเรียบร้อยแล้ว",
     pendingTitle: "เข้าระบบครั้งแรกแล้วยังไม่เห็นเมนู?",
@@ -48,6 +48,16 @@ export const messages = {
       session_expired:
         "เซสชันหมดอายุหรือถูกยกเลิก กรุณาเข้าสู่ระบบอีกครั้ง",
       default: "เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง",
+    },
+
+    /** `/login/reconnect` — the only screen shown instead of Keycloak's. */
+    reconnect: {
+      title: "เชื่อมต่อระบบยืนยันตัวตนไม่ได้",
+      subtitle:
+        "ยังไปต่อที่หน้าเข้าสู่ระบบไม่ได้ในตอนนี้ ระบบไม่ได้พาคุณวนกลับไปซ้ำ เพราะจะไม่สำเร็จจนกว่าการเชื่อมต่อจะกลับมา",
+      retryButton: "ลองเชื่อมต่ออีกครั้ง",
+      hint: "มักเกิดจากระบบหลังบ้านหรือ Keycloak กำลังปิดปรับปรุงหรือเครือข่ายภายในขัดข้อง หากกดลองใหม่แล้วยังไม่ได้ ให้แจ้งผู้ดูแลระบบ",
+      contactPrefix: "ยังเชื่อมต่อไม่ได้หลังลองใหม่หลายครั้ง แจ้งผู้ดูแลระบบที่",
     },
   },
 
@@ -167,12 +177,71 @@ export const messages = {
     tabs: {
       tree: "ผังทีม",
       roles: "Role และ Permission",
-      scope: "Scope Rules",
+      scope: "การมองเห็นข้อมูล",
       keycloak: "Keycloak Mapping",
     },
   },
 
   /** Screen §16 A4 — Role และ Permission. */
+  /** The A3 "การมองเห็นข้อมูล" pane — an explanation, not a setting. */
+  /** The editable half of the pane — which group sees which group's work. */
+  groupScope: {
+    title: "ขอบเขตข้อมูลของ Group",
+    intro:
+      "เลือกระดับและ Group ที่ต้องการตั้งสิทธิ์ แล้วระบุว่า Group นั้นเห็นงานของ Group ไหนได้บ้าง นอกเหนือจากงานที่ตนเกี่ยวข้องและงานของ Group ที่ตนเป็นหัวหน้า",
+    level: "ระดับ",
+    viewer: "Group ที่ได้รับสิทธิ์",
+    pickViewer: "เลือก Group ก่อน",
+    noUnitsAtLevel: "ยังไม่มี Group ที่ระดับนี้",
+    targets: "เห็นงานของ Group",
+    addTarget: "+ เพิ่ม Group",
+    pickTarget: "เลือก Group ปลายทาง",
+    columnTarget: "Group ปลายทาง",
+    columnDescendants: "รวม Group ย่อย",
+    columnAct: "ทำงานต่อได้",
+    columnRemove: "",
+    remove: "ลบ",
+    empty: "ยังไม่ได้ให้สิทธิ์เห็นงานของ Group ใด",
+    save: "บันทึก",
+    saved: "บันทึกแล้ว",
+    /* Said on the screen because it is not obvious and it is asked every time. */
+    inheritNote:
+      "สิทธิ์ถ่ายทอดลงล่าง — ตั้งที่ระดับบริษัทจะมีผลกับทุกคนในบริษัท ตั้งที่ฝ่ายจะมีผลกับแผนกใต้ฝ่ายนั้น",
+    actWarning:
+      "ติ๊ก “ทำงานต่อได้” แล้วคนใน Group นี้จะกดรับงาน/ปิดงานของ Group ปลายทางได้ ไม่ใช่แค่เปิดอ่าน",
+    /*
+      core-service caches the principal for the access token's lifetime, so a
+      grant saved here does not reach a session already open. Said plainly
+      rather than left for an admin to discover by testing.
+    */
+    reloginNote:
+      "การเปลี่ยนแปลงจะมีผลกับผู้ใช้หลังเข้าสู่ระบบใหม่ (สิทธิ์ถูก cache ไว้ตามอายุ token)",
+  },
+
+  scopeInfo: {
+    sourceTitle: "กฎที่แก้ไม่ได้จากหน้านี้",
+    sourceBody:
+      "ด้านบนตั้งได้ว่า Group ไหนเห็นงานของ Group ไหน · ส่วนกฎด้านล่างอยู่ในโค้ด (access-rules.ts) ปรับจากหน้าจอไม่ได้ · ระดับ scope แบบเดิม (own/team/department/company/all) ถูกยกเลิกเมื่อ 31 ส.ค. 2569 ตาราง scope_rules ยังอยู่แต่ไม่มีผลกับการอนุญาตใดๆ แล้ว",
+    everyoneTitle: "กฎที่ใช้กับทุกคน",
+    everyoneRules: [
+      "เห็นได้เฉพาะข้อมูลของบริษัทที่กำลังเปิดอยู่ ไม่มีข้อยกเว้น",
+      "เห็นคำขอที่ตนเกี่ยวข้อง 4 ทาง — ผู้ยื่น · ผู้รับเรื่อง · ผู้ดำเนินการ · ถูกเสนอชื่อเป็นผู้อนุมัติ",
+      "หัวหน้า Group เห็นคำขอของ Group ตนเอง รวมทุก Group ที่อยู่ใต้ลงไปทุกชั้น",
+      "ผู้รับมอบอำนาจอนุมัติ (delegation) เห็นและอนุมัติงานของผู้มอบได้ตลอดช่วงที่ได้รับมอบ",
+      "Group ที่ได้รับสิทธิ์ตามตารางด้านบน เห็นงานของ Group ปลายทางเพิ่มจากกฎเหล่านี้",
+      "สิทธิ์ในการ *กระทำ* กับคำขอมาจากความเกี่ยวข้องและผังองค์กร ไม่ได้มาจาก role",
+    ],
+    rolesTitle: "role ที่มีสิทธิ์ขยายการมองเห็น",
+    columnRole: "role",
+    columnWidening: "เห็นได้กว้างกว่าปกติเพราะ",
+    columnHolders: "ผู้ถือ",
+    involvedOnly: "เฉพาะที่ตนเกี่ยวข้องและที่ตนเป็นหัวหน้า",
+    readAll: "เห็นทุกคำขอในบริษัท",
+    sensitive: "เห็นฟิลด์ที่ปิดบัง",
+    reports: "เห็นรายงาน",
+    audit: "เห็น Audit Log",
+  },
+
   roleAdmin: {
     listTitle: (count: number) => `Role ทั้งหมด · ${count}`,
     newRole: "+ สร้าง role",
@@ -293,6 +362,13 @@ export const messages = {
 
   /** ROLE-03 — no mockup; designed to sit beside A4. */
   keycloakMapping: {
+    /* ROLE-03 — the realm owns the names; this system owns the permissions. */
+    syncNames: "ดึงชื่อจาก Keycloak",
+    syncDone: "ซิงก์ชื่อเรียบร้อย",
+    syncSummary: (renamed: number, linked: number, checked: number) =>
+      `ตรวจ ${checked} รายการ · เปลี่ยนชื่อตาม Keycloak ${renamed} · ผูกรหัสครั้งแรก ${linked}`,
+    syncMissing: (names: string) =>
+      `ไม่พบใน Keycloak แล้ว: ${names} — ยังไม่ลบให้ ตรวจสอบก่อนว่าตั้งใจถอดออกจริง`,
     title: "Keycloak Mapping",
     subtitle:
       "จับคู่ role ใน Keycloak กับ role ในระบบ ต่อบริษัท — ระบบประเมินใหม่ทุกครั้งที่ล็อกอินหรือ refresh token (ROLE-03)",
@@ -423,10 +499,12 @@ export const messages = {
     returnReasonPlaceholder: "เลือกเหตุผล",
     returnReasonMissing:
       "ประเภทคำขอนี้ยังไม่ได้ตั้งเหตุผลตีกลับ — ให้ผู้ดูแลตั้งที่หน้าประเภทคำขอก่อน",
-    /* H2.2 — comments on the timeline. */
+    /* H2.2 — comments, in their own card above the timeline. */
+    commentsTitle: (count: number) => `ความเห็น (${count})`,
     commentPlaceholder: "เขียนความเห็น…",
     commentSend: "ส่ง",
     commentEmpty: "ยังไม่มีความเห็น",
+    commentReadOnly: "คุณไม่ได้เกี่ยวข้องกับคำขอนี้ จึงแสดงความเห็นไม่ได้",
     /* H2.2 ข้อ 4 — the request chain. */
     treeTitle: "สายคำขอ",
     /* Written when the panel was first planned; it exists now. */
@@ -453,6 +531,7 @@ export const messages = {
     attachments: (count: number) => `เอกสารแนบ (${count})`,
     noDownload: "ดาวน์โหลดยังไม่เปิดใช้งาน — รอบนี้เก็บเฉพาะรายการเอกสาร",
     timelineTitle: "ไทม์ไลน์ (บันทึกทุกการเปลี่ยนสถานะ)",
+    timelineEmpty: "ยังไม่มีการเปลี่ยนสถานะ",
     system: "ระบบ",
     chainTitle: "เส้นทางอนุมัติ",
     chainStep: (n: number) => `ขั้น ${n}`,

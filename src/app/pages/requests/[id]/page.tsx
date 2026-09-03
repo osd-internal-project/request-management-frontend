@@ -11,6 +11,7 @@ import type {
 import { fieldOrder } from "@/lib/api/types";
 import { RequestActions } from "@/components/request-actions";
 import { ReceiverForm } from "@/components/receiver-form";
+import { RequestComments } from "@/components/request-comments";
 import { RequestTimeline } from "@/components/request-timeline";
 import { RequestTreePanel } from "@/components/request-tree";
 import { getSession } from "@/lib/session";
@@ -37,9 +38,9 @@ function fileSize(bytes: number): string {
 
 /** What actually happened at a rung, in the words §16 uses. */
 function stepOutcome(status: string, decision: string | null): string {
-  if (decision === 'approved') return messages.requestDetail.stepApproved;
-  if (decision === 'rejected') return messages.requestDetail.stepRejected;
-  if (status === 'pending') return messages.requestDetail.stepPending;
+  if (decision === "approved") return messages.requestDetail.stepApproved;
+  if (decision === "rejected") return messages.requestDetail.stepRejected;
+  if (status === "pending") return messages.requestDetail.stepPending;
 
   return messages.requestDetail.stepWaiting;
 }
@@ -189,119 +190,139 @@ export default async function RequestDetailPage({
         </span>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-        <div className="space-y-4">
-          <Card title={messages.requestDetail.infoTitle} size="small">
-            <RequestFacts request={request} />
-          </Card>
-
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,0.5fr)]">
+        <div className="space-y-2">
+          <div>
+            <Card title={messages.requestDetail.infoTitle} size="small">
+              <RequestFacts request={request} />
+            </Card>
+          </div>
           {/*
             What the receiver recorded, once they have. The approver deciding on
             this request is deciding on *the work*, not on the ask — so a
             completed request that shows only what was requested asks them to
             approve something they cannot see.
           */}
-          {receiverSchema &&
-            Object.keys(request.receiverFormData ?? {}).length > 0 && (
-              <Card
-                title={messages.requestDetail.receiverFormTitle}
-                size="small"
-              >
-                <SchemaAnswers
-                  schema={receiverSchema}
-                  answers={request.receiverFormData ?? {}}
-                />
-              </Card>
-            )}
+          <div>
+            {receiverSchema &&
+              Object.keys(request.receiverFormData ?? {}).length > 0 && (
+                <Card
+                  title={messages.requestDetail.receiverFormTitle}
+                  size="small"
+                >
+                  <SchemaAnswers
+                    schema={receiverSchema}
+                    answers={request.receiverFormData ?? {}}
+                  />
+                </Card>
+              )}
+          </div>
+          <div>
+            <Card
+              title={messages.requestDetail.attachments(attachments.length)}
+              size="small"
+            >
+              <ul className="divide-y divide-black/5">
+                {attachments.map((entry) => (
+                  <li key={entry.id} className="py-2 text-sm">
+                    {entry.fileName}{" "}
+                    <Text type="secondary">· {fileSize(entry.sizeBytes)}</Text>
+                  </li>
+                ))}
+              </ul>
 
-          <Card
-            title={messages.requestDetail.attachments(attachments.length)}
-            size="small"
-          >
-            <ul className="divide-y divide-black/5">
-              {attachments.map((entry) => (
-                <li key={entry.id} className="py-2 text-sm">
-                  {entry.fileName}{" "}
-                  <Text type="secondary">· {fileSize(entry.sizeBytes)}</Text>
-                </li>
-              ))}
-            </ul>
-
-            {/*
+              {/*
               Stated rather than offered as a button that could only ever fail:
               nothing was stored, so there is nothing to download (question G).
             */}
-            <Paragraph type="secondary" className="mt-2! mb-0! text-xs">
-              {messages.requestDetail.noDownload}
-            </Paragraph>
-          </Card>
-
+              <Paragraph type="secondary" className="mt-2! mb-0! text-xs">
+                {messages.requestDetail.noDownload}
+              </Paragraph>
+            </Card>
+          </div>
           {/*
             H2.2 ข้อ 4 — the chain this request sits in. Above the timeline
             because it is about what the request *is*, and the timeline is
             about what has happened to it.
           */}
-          {receiverSchema && showReceiverForm && (
-            <ReceiverForm
-              requestId={request.id}
-              schema={receiverSchema}
-              initial={request.receiverFormData ?? {}}
-            />
-          )}
-
-          <Card title={messages.requestDetail.treeTitle} size="small">
-            <RequestTreePanel requestId={request.id} tree={tree} />
-          </Card>
-
-          <Card title={messages.requestDetail.timelineTitle} size="small">
-            <RequestTimeline
-              requestId={request.id}
-              events={events}
-              comments={request.comments ?? []}
-              canComment={involved}
-            />
-          </Card>
-        </div>
-
-        <Card title={messages.requestDetail.chainTitle} size="small">
-          {approvalCase ? (
-            <>
-              <Steps
-                orientation="vertical"
-                size="small"
-                current={approvalCase.currentStep - 1}
-                items={approvalCase.steps.map((step) => ({
-                  title: `${messages.requestDetail.chainStep(step.stepNo)} · ${step.approverRole}`,
-                  description: (
-                    <span className="text-xs">
-                      {step.approver?.displayName ?? "—"}
-                      {" · "}
-                      {stepOutcome(step.status, step.decision)}
-                      {step.decidedAt && ` · ${when(step.decidedAt)}`}
-                    </span>
-                  ),
-                }))}
+          <div>
+            {receiverSchema && showReceiverForm && (
+              <ReceiverForm
+                requestId={request.id}
+                schema={receiverSchema}
+                initial={request.receiverFormData ?? {}}
               />
+            )}
+          </div>
+          <div>
+            <Card title={messages.requestDetail.treeTitle} size="small">
+              <RequestTreePanel requestId={request.id} tree={tree} />
+            </Card>
+          </div>
+          <div>
+            <Card
+              title={messages.requestDetail.commentsTitle(
+                (request.comments ?? []).length,
+              )}
+              size="small"
+            >
+              <RequestComments
+                requestId={request.id}
+                comments={request.comments ?? []}
+                canComment={involved}
+              />
+            </Card>
+          </div>
+        </div>
+        <div className=" space-y-2">
+          <div>
+            <Card title={messages.requestDetail.chainTitle} size="small">
+              {approvalCase ? (
+                <>
+                  <Steps
+                    orientation="vertical"
+                    size="small"
+                    current={approvalCase.currentStep - 1}
+                    items={approvalCase.steps.map((step) => ({
+                      title: `${messages.requestDetail.chainStep(step.stepNo)} · ${step.approverRole}`,
+                      description: (
+                        <span className="text-xs">
+                          {step.approver?.displayName ?? "—"}
+                          {" · "}
+                          {stepOutcome(step.status, step.decision)}
+                          {step.decidedAt && ` · ${when(step.decidedAt)}`}
+                        </span>
+                      ),
+                    }))}
+                  />
 
-              {/* The two lines §16 requires under the stepper. */}
-              <Paragraph type="secondary" className="mt-3! mb-1! text-xs">
-                {messages.requestDetail.chainFrom(
-                  approvalCase.amount
-                    ? Number(approvalCase.amount).toLocaleString("th-TH")
-                    : "—",
-                  approvalCase.matrixVersion,
-                )}
-              </Paragraph>
-              <Paragraph type="secondary" className="mb-0! text-xs">
-                {messages.requestDetail.voidNote}
-              </Paragraph>
-            </>
-          ) : (
-            <Text type="secondary">
-              {messages.requestForm.chainNoMatrix}
-            </Text>
-          )}
-        </Card>
+                  {/* The two lines §16 requires under the stepper. */}
+                  <Paragraph type="secondary" className="mt-3! mb-1! text-xs">
+                    {messages.requestDetail.chainFrom(
+                      approvalCase.amount
+                        ? Number(approvalCase.amount).toLocaleString("th-TH")
+                        : "—",
+                      approvalCase.matrixVersion,
+                    )}
+                  </Paragraph>
+                  <Paragraph type="secondary" className="mb-0! text-xs">
+                    {messages.requestDetail.voidNote}
+                  </Paragraph>
+                </>
+              ) : (
+                <Text type="secondary">
+                  {messages.requestForm.chainNoMatrix}
+                </Text>
+              )}
+            </Card>
+          </div>
+
+          <div>
+            <Card title={messages.requestDetail.timelineTitle} size="small">
+              <RequestTimeline events={events} />
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -330,21 +351,24 @@ function SchemaAnswers({
   answers: Record<string, unknown>;
 }) {
   return (
-    <Descriptions column={1} size="small" bordered>
+    <div className="grid sm:grid-cols-1 md:grid-cols-3 gap-4">
       {Object.entries(schema.properties ?? {}).map(([name, property]) => {
         const withheld = !(name in answers);
 
         return (
-          <Descriptions.Item key={name} label={property.title ?? name}>
+          <div key={name}>
+            <p className="text-sm font-medium text-gray-500">
+              {property.title ?? name}
+            </p>
             {withheld ? (
               <Text type="secondary">{messages.requestDetail.masked}</Text>
             ) : (
               String(answers[name] ?? "—")
             )}
-          </Descriptions.Item>
+          </div>
         );
       })}
-    </Descriptions>
+    </div>
   );
 }
 
@@ -418,28 +442,57 @@ function RequestFacts({ request }: { request: RequestDetail }) {
   const formData = request.formData ?? {};
 
   return (
-    <Descriptions column={1} size="small" bordered>
-      <Descriptions.Item label={messages.requestDetail.submittedAt}>
-        {request.submittedAt ? when(request.submittedAt) : "—"}
-      </Descriptions.Item>
-
-      <Descriptions.Item label={messages.requestDetail.reference}>
-        {request.refId ? `${request.refType ?? "ref"} ${request.refId}` : "—"}
-      </Descriptions.Item>
-
+    <div className="grid sm:grid-cols-1 md:grid-cols-3 gap-4">
+      <div>
+        <p className="text-sm font-medium text-gray-500">
+          {messages.requestDetail.submittedAt}
+        </p>
+        <p className="text-sm">
+          {request.submittedAt ? when(request.submittedAt) : "—"}
+        </p>
+      </div>
+      <div>
+        <p className="text-sm font-medium text-gray-500">
+          {messages.requestDetail.reference}
+        </p>
+        <p className="text-sm">
+          {request.refId ? `${request.refType ?? "ref"} ${request.refId}` : "—"}
+        </p>
+      </div>
       {Object.entries(properties).map(([name, property]) => {
         const withheld = !(name in formData);
 
         return (
-          <Descriptions.Item key={name} label={property.title ?? name}>
+          <div key={name} className="mb-2">
+            <p className="text-sm font-medium text-gray-500">
+              {property.title ?? name}
+            </p>
             {withheld ? (
               <Text type="secondary">{messages.requestDetail.masked}</Text>
             ) : (
               <FormAnswer property={property} value={formData[name]} />
             )}
-          </Descriptions.Item>
+          </div>
         );
       })}
-    </Descriptions>
+    </div>
+    //   <Descriptions.Item label={messages.requestDetail.reference}>
+    //     {request.refId ? `${request.refType ?? "ref"} ${request.refId}` : "—"}
+    //   </Descriptions.Item>
+
+    //   {Object.entries(properties).map(([name, property]) => {
+    //     const withheld = !(name in formData);
+
+    //     return (
+    //       <Descriptions.Item key={name} label={property.title ?? name}>
+    //         {withheld ? (
+    //           <Text type="secondary">{messages.requestDetail.masked}</Text>
+    //         ) : (
+    //           <FormAnswer property={property} value={formData[name]} />
+    //         )}
+    //       </Descriptions.Item>
+    //     );
+    //   })}
+    // </Descriptions>
   );
 }

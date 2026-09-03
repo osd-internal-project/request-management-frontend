@@ -2,7 +2,7 @@ import { Alert, Button } from "antd";
 import Link from "next/link";
 import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
-import { MyWork } from "@/components/my-work";
+import { MyWork, type WorkTab } from "@/components/my-work";
 import { PendingAssignment } from "@/components/pending-assignment";
 import requests from "@/lib/api/requests";
 
@@ -17,6 +17,25 @@ import { getSession } from "@/lib/session";
  * at the backend, so this page renders whatever it is given without deciding
  * visibility itself (SCOPE-02).
  */
+/**
+ * One tab, from one result.
+ *
+ * The count comes from the envelope's `total`, not from how many rows arrived:
+ * the page asks for 100, and a queue longer than that would otherwise label
+ * itself `100` for ever.
+ *
+ * A failed call yields an empty tab reading zero — the error banner above the
+ * tabs is what says the page is broken, and a tab that renders nothing at all
+ * would make three working tabs look like a crash.
+ */
+function toTab(
+  result: Awaited<ReturnType<typeof requests.getRequests>>,
+): WorkTab {
+  return result.ok
+    ? { rows: result.data.data, total: result.data.total }
+    : { rows: [], total: 0 };
+}
+
 export default async function MyWorkPage({
   searchParams,
 }: {
@@ -106,10 +125,10 @@ export default async function MyWorkPage({
       )}
 
       <MyWork
-        involved={involvedResult.ok ? involvedResult.data.data : []}
-        created={createdResult.ok ? createdResult.data.data : []}
-        incoming={incomingResult.ok ? incomingResult.data.data : []}
-        approver={approverResult.ok ? approverResult.data.data : []}
+        involved={toTab(involvedResult)}
+        created={toTab(createdResult)}
+        incoming={toTab(incomingResult)}
+        approver={toTab(approverResult)}
         filters={filters}
         types={typesResult.ok ? typesResult.data : []}
       />
