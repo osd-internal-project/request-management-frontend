@@ -71,6 +71,7 @@ export const messages = {
     adminGroup: "ผู้ดูแลระบบ",
     adminApprovalMatrix: "ตารางอำนาจอนุมัติ",
     adminRequestTypes: "ประเภทคำขอ",
+    adminWorkflow: "ผังงาน (Workflow)",
     adminSla: "เวลาทำการและวันหยุด",
     adminOrg: "ผังทีมและสิทธิ์",
     adminUsers: "ผู้ใช้",
@@ -80,6 +81,119 @@ export const messages = {
     logout: "ออกจากระบบ",
     company: "บริษัท",
     switchFailed: "สลับบริษัทไม่สำเร็จ",
+  },
+
+  /**
+   * หน้า Set Workflow — the states a request type travels, the buttons out of
+   * each, and the data flow between them.
+   *
+   * A published version is immutable, so the screen offers "publish a new
+   * version" rather than "edit": a request already running keeps the route it
+   * started on (§7).
+   */
+  workflow: {
+    title: "ผังงาน (Workflow)",
+    subtitle:
+      "ตั้งสถานะ ฟอร์มของแต่ละสถานะ ปุ่มที่กดได้ และการไหลของข้อมูล — เผยแพร่แล้วแก้ไม่ได้ ต้องสร้างเวอร์ชันใหม่",
+    selectType: "ประเภทคำขอ",
+    versions: "เวอร์ชัน",
+    newDraft: "+ สร้างเวอร์ชันใหม่",
+    newDraftName: "ชื่อผังงาน",
+    draft: "ฉบับร่าง",
+    published: "เผยแพร่แล้ว",
+    retired: "เลิกใช้",
+    publish: "เผยแพร่",
+    publishConfirm: "เผยแพร่ผังงานนี้?",
+    publishConfirmBody:
+      "เผยแพร่แล้วแก้ไม่ได้ และคำขอที่ยื่นหลังจากนี้จะเดินตามผังนี้ — คำขอที่วิ่งอยู่แล้วยังใช้ผังเดิม",
+    save: "บันทึกฉบับร่าง",
+    saved: "บันทึกแล้ว",
+    publishedOk: "เผยแพร่ผังงานเรียบร้อยแล้ว",
+    readOnly: "เวอร์ชันนี้เผยแพร่แล้ว ดูได้อย่างเดียว",
+    empty: "ยังไม่มีผังงานของประเภทคำขอนี้",
+    emptyHint: "กด “สร้างเวอร์ชันใหม่” เพื่อเริ่มร่างผังงานแรก",
+
+    tabs: {
+      states: "สถานะ",
+      forms: "ฟอร์ม",
+      actions: "ปุ่มและเส้นทาง",
+      dataFlow: "การไหลของข้อมูล",
+    },
+
+    state: {
+      key: "รหัสสถานะ",
+      name: "ชื่อสถานะ",
+      /** Explained on screen because it is the least obvious field here. */
+      phase: "สถานะตาม §7.1",
+      phaseHint:
+        "ทุกสถานะต้องเทียบกลับมาเป็น 1 ใน 11 สถานะเดิม — ค่านี้คือสิ่งที่ SLA รายงานคอขวด และทุกหน้าจออ่าน",
+      kind: "ชนิด",
+      kinds: {
+        user_task: "รอคนทำ",
+        approval: "รออนุมัติ",
+        end: "จบงาน",
+      },
+      isStart: "สถานะเริ่มต้น",
+      slaHours: "SLA (ชั่วโมง)",
+      slaHint: "เว้นว่างไว้ = ใช้ค่าของประเภทคำขอ",
+      add: "+ เพิ่มสถานะ",
+      remove: "ลบสถานะ",
+      empty: "ยังไม่มีสถานะ",
+    },
+
+    action: {
+      fromState: "จากสถานะ",
+      actionKey: "รหัสปุ่ม",
+      toState: "ไปสถานะ",
+      label: "ข้อความบนปุ่ม",
+      authority: "ใครกดได้",
+      condition: "เงื่อนไข",
+      conditionHint: "เงื่อนไขบนตัวแปรของ workflow เช่น amount > 100000 เว้นว่างได้",
+      confirmRequired: "ถามยืนยันก่อน",
+      add: "+ เพิ่มปุ่ม",
+      remove: "ลบปุ่ม",
+      empty: "ยังไม่มีปุ่ม — สถานะที่ไม่มีปุ่มและไม่ใช่สถานะจบ จะเผยแพร่ไม่ได้",
+      /** The `Authority` union in `available-actions.ts`, in Thai. */
+      authorities: {
+        requester: "ผู้ยื่น",
+        receiver: "ผู้รับเรื่องที่ถูกระบุ",
+        carrier: "ผู้ถืองาน (ผู้รับเรื่องหรือผู้ดำเนินการ)",
+        carrier_or_lead: "ผู้ถืองานหรือหัวหน้า",
+        requester_or_lead: "ผู้ยื่นหรือหัวหน้า",
+        decider: "ผู้มีสิทธิ์อนุมัติขั้นนั้น",
+        viewer: "ทุกคนที่เห็นคำขอนี้",
+      },
+    },
+
+    dataFlow: {
+      title: "การไหลของข้อมูล",
+      hint: "ค่าที่กรอกในฟอร์มของปุ่ม จะกลายเป็นตัวแปรใน workflow แล้ว workflow เขียนกลับลงคอลัมน์ที่เลือก",
+      sourceField: "ฟิลด์ในฟอร์ม",
+      variableName: "ตัวแปรใน workflow",
+      targetColumn: "เขียนลงคอลัมน์",
+      add: "+ เพิ่มการแมป",
+      remove: "ลบ",
+      empty: "ยังไม่มีการแมปข้อมูลของปุ่มนี้",
+      /** `WRITABLE_TARGET_COLUMNS` — the allow-list the server enforces. */
+      columns: {
+        form_data: "ข้อมูลฟอร์มผู้ยื่น (form_data)",
+        receiver_form_data: "ข้อมูลฟอร์มผู้รับ (receiver_form_data)",
+      },
+    },
+
+    formSchema: {
+      title: "JSON Schema ของฟอร์ม",
+      stateHint: "ฟอร์มที่แสดงเมื่อคำขออยู่ในสถานะนี้ เว้นว่างได้ถ้าสถานะนี้ไม่ต้องกรอกอะไร",
+      actionHint: "ฟอร์มที่ถามตอนกดปุ่มนี้ เว้นว่างได้",
+      invalid: "JSON ไม่ถูกต้อง",
+    },
+
+    errors: {
+      /** The server sends every fault at once; the screen lists them. */
+      invalid: "ผังงานนี้ยังเผยแพร่ไม่ได้",
+      immutable: "เวอร์ชันนี้เผยแพร่แล้ว แก้ไม่ได้",
+      engineDown: "ติดต่อระบบ workflow ไม่ได้ — ตรวจว่า Flowable ทำงานอยู่",
+    },
   },
 
   pending: {

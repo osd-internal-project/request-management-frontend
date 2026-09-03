@@ -58,6 +58,12 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     group: messages.nav.adminGroup,
   },
   {
+    label: messages.nav.adminWorkflow,
+    href: ROUTES.adminWorkflow,
+    permissions: ["admin.workflow.manage"],
+    group: messages.nav.adminGroup,
+  },
+  {
     label: messages.nav.adminSla,
     href: ROUTES.adminSla,
     permissions: ["admin.sla.manage"],

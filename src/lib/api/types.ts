@@ -593,3 +593,80 @@ export interface KeycloakRoleMappingRow {
   keycloakRole: string;
   roleId: string;
 }
+
+// ---------------------------------------------------------------------------
+// Workflow — the route a request type travels (หน้า Set Workflow)
+// ---------------------------------------------------------------------------
+
+/** `WRITABLE_TARGET_COLUMNS` on the server — the allow-list publish enforces. */
+export type WorkflowTargetColumn = "form_data" | "receiver_form_data";
+
+/** One row of the data flow: form answer → workflow variable → column. */
+export interface WorkflowDataMap {
+  id?: string;
+  sourceField: string;
+  variableName: string;
+  targetColumn: string;
+}
+
+/** One button, and where pressing it goes. */
+export interface WorkflowAction {
+  id?: string;
+  fromStateKey: string;
+  actionKey: string;
+  toStateKey: string;
+  /** The Thai text on the button. */
+  label: string;
+  /** A value of the server's `Authority` union — see `available-actions.ts`. */
+  authority: string;
+  /** JSON Schema asked when the button is pressed. */
+  formSchema?: Record<string, unknown> | null;
+  /** Guard on workflow variables, e.g. `amount > 100000`. */
+  condition?: string | null;
+  confirmRequired?: boolean;
+  sortOrder?: number;
+  dataMaps?: WorkflowDataMap[];
+}
+
+/**
+ * A node the request sits on.
+ *
+ * `phase` is the §7.1 status this state reports as, and is what
+ * `Request.status` is set to — which is how SLA, the bottleneck report and
+ * every §16 screen keep working while the steps become configuration.
+ */
+export interface WorkflowState {
+  id?: string;
+  key: string;
+  name: string;
+  phase: string;
+  kind: "user_task" | "approval" | "end";
+  formSchema?: Record<string, unknown> | null;
+  slaHours?: number | null;
+  isStart: boolean;
+  sortOrder?: number;
+}
+
+/**
+ * One version of a route.
+ *
+ * Immutable once `published`, exactly like `ApprovalMatrixVersion`: editing
+ * means publishing N+1, so a request already running keeps the route it
+ * started on.
+ */
+export interface WorkflowDefinition {
+  id: string;
+  companyId: string;
+  requestTypeId: string;
+  version: number;
+  name: string;
+  status: "draft" | "published" | "retired";
+  flowableDeploymentId?: string | null;
+  flowableProcessKey?: string | null;
+  publishedAt?: string | null;
+  createdAt?: string;
+  createdBy?: string | null;
+  /** Present only on the single-version read the editor loads. */
+  states?: WorkflowState[];
+  actions?: WorkflowAction[];
+}

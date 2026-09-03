@@ -30,6 +30,15 @@ export type ClientResult<T> =
        * would break the moment a Thai string is reworded.
        */
       code?: string;
+      /**
+       * The `details` array of the same envelope, field by field.
+       *
+       * Carried because some endpoints answer with *every* fault at once
+       * rather than the first — publishing a workflow is the case this was
+       * added for. A screen that showed one error per save would make an
+       * administrator fix a route one round-trip at a time.
+       */
+      details?: { field: string; reason: string }[];
     };
 
 /** The BFF namespaces. `admin` is the admin API, `app` everything else. */
@@ -100,7 +109,11 @@ async function send<T>(
   if (response.status === 204) return { ok: true, data: undefined as T };
 
   const body = (await response.json().catch(() => null)) as
-    | (T & { code?: string; message?: string })
+    | (T & {
+        code?: string;
+        message?: string;
+        details?: { field: string; reason: string }[];
+      })
     | null;
 
   return response.ok
@@ -109,6 +122,7 @@ async function send<T>(
         ok: false,
         code: body?.code,
         message: body?.message ?? `HTTP ${response.status}`,
+        details: body?.details,
       };
 }
 

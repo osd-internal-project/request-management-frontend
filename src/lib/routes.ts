@@ -82,6 +82,14 @@ export const ROUTES = {
   adminApprovalMatrix: `${HOME_PATH}/admin/approval-matrix`,
   /** Screen A2 — ประเภทคำขอ */
   adminRequestTypes: `${HOME_PATH}/admin/request-types`,
+  /**
+   * ผังงาน — the states a request type travels and the buttons out of each.
+   *
+   * Beside A2 rather than inside it on purpose: A2 edits what a type *asks
+   * for*, this edits how work *moves*, and publishing here re-routes every
+   * request raised afterwards.
+   */
+  adminWorkflow: `${HOME_PATH}/admin/workflow`,
   /** SUP-01 — เวลาทำการและวันหยุด, what a business-hours SLA is measured against. */
   adminSla: `${HOME_PATH}/admin/sla`,
   /** Screen A3 — ผังทีมและสิทธิ์ */
