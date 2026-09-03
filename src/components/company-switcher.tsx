@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { App } from "antd";
-import { useRouter } from "next/navigation";
 import { messages } from "@/lib/messages";
 import { SearchSelect } from "@/components/search-select";
 
@@ -19,9 +18,13 @@ export interface SwitcherCompany {
  * switch between.
  *
  * Switching is a server round trip rather than local state because the backend
- * resolves roles, scopes, and visible sensitive fields per company (ROLE-04) —
- * the menu and every list on screen have to be rebuilt from the new company's
- * permissions, which is what `router.refresh()` does.
+ * resolves roles and visible sensitive fields per company (ROLE-04) — the menu
+ * and every list on screen have to be rebuilt from the new company's
+ * permissions.
+ *
+ * A full `window.location.reload()` rather than `router.refresh()`: the company
+ * lives in an httpOnly cookie the server reads per request, and a soft refresh
+ * leaves client state from the previous company in place.
  */
 export function CompanySwitcher({
   companies,
@@ -32,7 +35,6 @@ export function CompanySwitcher({
 }) {
   // antd's `message` from context, so it inherits the app theme.
   const { message } = App.useApp();
-  const router = useRouter();
   const [switching, setSwitching] = useState(false);
 
   const active = companies.find((company) => company.id === activeCompanyId);
@@ -61,13 +63,10 @@ export function CompanySwitcher({
         } | null;
 
         void message.error(body?.message ?? messages.nav.switchFailed);
-        window.location.reload();
+       
         return;
-      }
-
-      // Server components hold the data; refreshing is what re-renders every
-      // list, count, and menu entry against the company just selected.
-      router.refresh();
+      } 
+      window.location.reload();
     } catch {
       void message.error(messages.common.loadError);
     } finally {

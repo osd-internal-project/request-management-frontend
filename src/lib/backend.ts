@@ -53,6 +53,14 @@ export const CORE_SERVICE_PREFIXES = [
   "/request-types",
   "/reports",
   "/integrations",
+  /*
+    The chatbot API. No screen calls it — an outside system does, with a
+    service-account token this frontend never holds. Listed anyway because
+    this array is what says which service owns a prefix, and an unlisted one
+    silently resolves to user-service, where a future mistake would 404 with
+    nothing explaining why.
+  */
+  "/external",
   "/admin/approval-matrix",
   "/admin/bi",
   "/admin/request-types",

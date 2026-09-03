@@ -22,11 +22,13 @@ import type { OrgTabKey } from "@/lib/org-tabs";
 export function OrgPermissionTabs({
   tree,
   roles,
+  scope,
   keycloak,
   initialTab = "tree",
 }: {
   readonly tree: ReactNode;
   readonly roles: ReactNode;
+  readonly scope: ReactNode;
   readonly keycloak: ReactNode;
   /** From `?tab=` — lets an admin link straight to one tab. */
   readonly initialTab?: OrgTabKey;
@@ -37,6 +39,7 @@ export function OrgPermissionTabs({
       items={[
         { key: "tree", label: messages.org.tabs.tree, children: tree },
         { key: "roles", label: messages.org.tabs.roles, children: roles },
+        { key: "scope", label: messages.org.tabs.scope, children: scope },
         {
           key: "keycloak",
           label: messages.org.tabs.keycloak,

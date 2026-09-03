@@ -3,7 +3,11 @@
 import { useState } from "react";
 import { Alert, App, Button, Card, Empty, Input, Space } from "antd";
 import Paragraph from "antd/es/typography/Paragraph";
-import { replaceKeycloakMappings } from "@/lib/api/client-roles";
+import {
+  replaceKeycloakMappings,
+  syncKeycloakMappingNames,
+  type KeycloakNameSyncReport,
+} from "@/lib/api/client-roles";
 import type { KeycloakRoleMappingRow, RoleRow } from "@/lib/api/types";
 import { messages } from "@/lib/messages";
 import { SearchSelect } from "@/components/search-select";
@@ -42,6 +46,43 @@ export function KeycloakMappingAdmin({
   );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncReport, setSyncReport] = useState<KeycloakNameSyncReport | null>(
+    null,
+  );
+
+  /**
+   * Pulls the realm's current role names back over this table.
+   *
+   * One way, by design: this never writes to Keycloak. It exists because a
+   * rename there used to be invisible here — the mapping kept the old name,
+   * nothing matched the new one, and every holder of that role lost it at their
+   * next sign-in with nothing on screen to explain it.
+   */
+  async function syncNames() {
+    setSyncing(true);
+    setError(null);
+
+    const result = await syncKeycloakMappingNames(companyId);
+
+    setSyncing(false);
+
+    if (!result.ok) {
+      setError(result.message);
+      return;
+    }
+
+    setSyncReport(result.data);
+    setRows((current) =>
+      current.map((row) => {
+        const renamed = result.data.renamed.find(
+          (entry) => entry.from === row.keycloakRole,
+        );
+        return renamed ? { ...row, keycloakRole: renamed.to } : row;
+      }),
+    );
+    void message.success(messages.keycloakMapping.syncDone);
+  }
 
   function update(index: number, patch: Partial<Draft>) {
     setRows((current) =>
@@ -87,6 +128,9 @@ export function KeycloakMappingAdmin({
           >
             {messages.keycloakMapping.addMapping}
           </Button>
+          <Button size="small" loading={syncing} onClick={() => void syncNames()}>
+            {messages.keycloakMapping.syncNames}
+          </Button>
           <Button
             size="small"
             type="primary"
@@ -104,6 +148,40 @@ export function KeycloakMappingAdmin({
         </Paragraph>
 
         {error && <Alert type="error" showIcon title={error} />}
+
+        {/*
+          What the sync did, in the words an admin needs: which names moved, and
+          which mappings now point at a realm role that is gone. `missing` is a
+          warning rather than an error — the row was kept on purpose, so that a
+          half-configured realm cannot strip everyone's permissions in one pass.
+        */}
+        {syncReport && (
+          <Alert
+            type={syncReport.missing.length ? "warning" : "success"}
+            showIcon
+            title={messages.keycloakMapping.syncSummary(
+              syncReport.renamed.length,
+              syncReport.linked.length,
+              syncReport.checked,
+            )}
+            description={
+              <>
+                {syncReport.renamed.map((entry) => (
+                  <div key={entry.from}>
+                    {entry.from} → {entry.to}
+                  </div>
+                ))}
+                {syncReport.missing.length > 0 && (
+                  <div>
+                    {messages.keycloakMapping.syncMissing(
+                      syncReport.missing.join(", "),
+                    )}
+                  </div>
+                )}
+              </>
+            }
+          />
+        )}
 
         <Alert
           type="info"

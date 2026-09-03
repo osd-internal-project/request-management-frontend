@@ -1,13 +1,39 @@
 /** Landing route once a session exists; there is no `/` page. */
 export const HOME_PATH = "/pages";
 
-export const LOGIN_PATH = "/login";
+/**
+ * PKCE leg 1 — the single entry point for signing in (AUTH-01).
+ *
+ * There is no login page in this application: everything that finds a request
+ * unauthenticated sends the browser here, and this route sends it on to
+ * Keycloak's own login form.
+ */
+export const AUTH_LOGIN_PATH = "/api/auth/login";
+
+/**
+ * The one page an unauthenticated browser is allowed to render.
+ *
+ * Reached only when the identity provider cannot be talked to at all — the
+ * BFF's `fetch` to the backend threw. Redirecting again would repeat a call
+ * that has no way of succeeding, so this page stops the bouncing and offers a
+ * retry the user controls.
+ */
+export const RECONNECT_PATH = "/login/reconnect";
+
+/**
+ * Everything that used to live under `/login`.
+ *
+ * Only `RECONNECT_PATH` is a real page now; the rest of this prefix is old
+ * links and bookmarks, which the proxy redirects rather than letting 404.
+ */
+export const LOGIN_PREFIX = "/login";
 
 /**
  * Clears the session cookies and ends the Keycloak session.
  *
  * Also the only safe destination when a session cannot be resolved — see the
- * comment in `app/pages/layout.tsx` about the redirect loop.
+ * comment in `app/pages/layout.tsx` about the redirect loop. The browser comes
+ * out of it at Keycloak's login form, not at a page of ours.
  */
 export const LOGOUT_PATH = "/api/auth/logout";
 

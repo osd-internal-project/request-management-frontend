@@ -75,6 +75,25 @@ export interface OrgUnitNode {
 }
 
 /**
+ * One grant on screen A4: this group may see that group's work.
+ *
+ * The level an administrator picks (บริษัท / ฝ่าย / แผนก / ตำแหน่ง) is the
+ * viewer's `kind`, so it is not a field of its own — a group's level is
+ * already a property of the group.
+ */
+export interface OrgUnitScopeRow {
+  id: string;
+  viewerOrgUnitId: string;
+  targetOrgUnitId: string;
+  /** Whether the grant reaches the groups beneath the target. */
+  includeDescendants: boolean;
+  /** Whether the viewer may move those requests, or only read them. */
+  canAct: boolean;
+  viewer: { id: string; name: string; kind: OrgUnitNode["kind"] };
+  target: { id: string; name: string; kind: OrgUnitNode["kind"] };
+}
+
+/**
  * The chart as a requester sees it — shape only, no manager, no member count.
  *
  * Declared separately from `OrgUnitNode` rather than derived from it, to match

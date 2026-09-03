@@ -4,6 +4,8 @@ import Text from "antd/es/typography/Text";
 import { KeycloakMappingAdmin } from "@/components/keycloak-mapping-admin";
 import { OrgAdmin } from "@/components/org-admin";
 import { OrgPermissionTabs } from "@/components/org-permission-tabs";
+import { GroupScopeAdmin } from "@/components/group-scope-admin";
+import { ScopeRulesAdmin } from "@/components/scope-rules-admin";
 import { RolePermissionAdmin } from "@/components/role-permission-admin";
 import audit from "@/lib/api/audit";
 import orgUnits from "@/lib/api/org-units";
@@ -68,9 +70,15 @@ export default async function AdminOrgPage({
     units[0]?.id ??
     null;
 
-  const membersResult = initialSelectedId
-    ? await orgUnits.getOrgUnitMembers(initialSelectedId)
-    : null;
+  // The scope pane opens on the same group as the tree, so its grants come
+  // with the first paint too — picking a *different* group loads from the
+  // client, like the member panel above.
+  const [membersResult, scopesResult] = initialSelectedId
+    ? await Promise.all([
+        orgUnits.getOrgUnitMembers(initialSelectedId),
+        orgUnits.getOrgUnitScopes(initialSelectedId),
+      ])
+    : [null, null];
 
   // The other tabs. Fetched here rather than lazily on tab change so
   // switching tabs is instant and the whole screen fails or succeeds as one —
@@ -154,6 +162,21 @@ export default async function AdminOrgPage({
             initialHolders={holderResult?.ok ? holderResult.data : []}
             initialAudit={auditResult?.ok ? auditResult.data.data : []}
           />
+        }
+        scope={
+          <div className="space-y-4">
+            {/*
+              The editable half first: an administrator opening this tab is
+              almost always here to change something, and the rules that
+              cannot be changed are context for that, not the point of it.
+            */}
+            <GroupScopeAdmin
+              units={unitsResult.data}
+              initialViewerId={initialSelectedId}
+              initialScopes={scopesResult?.ok ? scopesResult.data : []}
+            />
+            <ScopeRulesAdmin roles={roleRows} />
+          </div>
         }
         keycloak={
           <KeycloakMappingAdmin
