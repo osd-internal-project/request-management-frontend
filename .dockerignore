@@ -1,0 +1,11 @@
+node_modules
+.next
+.git
+.github
+*.tsbuildinfo
+yarn-error.log
+.env
+.env.local
+README.md
+AGENTS.md
+CLAUDE.md

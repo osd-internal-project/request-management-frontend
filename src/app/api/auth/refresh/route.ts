@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { appOrigin, isSecureOrigin } from "@/lib/app-origin";
 import {
   clearSessionCookies,
   setSessionCookies,
@@ -64,7 +65,7 @@ export async function POST(request: NextRequest) {
     ok: true,
     expires_in: tokens.expires_in,
   });
-  setSessionCookies(response, tokens);
+  setSessionCookies(response, tokens, isSecureOrigin(request));
 
   return response;
 }
@@ -83,7 +84,7 @@ export async function GET(request: NextRequest) {
     // Through logout, not straight to /login: the cookies must be cleared and
     // the Keycloak session ended, or the proxy bounces the browser back here.
     return NextResponse.redirect(
-      new URL(`${LOGOUT_PATH}?reason=session_expired`, request.url),
+      new URL(`${LOGOUT_PATH}?reason=session_expired`, appOrigin(request)),
     );
   }
 
@@ -96,8 +97,8 @@ export async function GET(request: NextRequest) {
   );
   const destination = isLocalPath ? from! : HOME_PATH;
 
-  const response = NextResponse.redirect(new URL(destination, request.url));
-  setSessionCookies(response, tokens);
+  const response = NextResponse.redirect(new URL(destination, appOrigin(request)));
+  setSessionCookies(response, tokens, isSecureOrigin(request));
 
   return response;
 }

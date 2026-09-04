@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { appOrigin } from "@/lib/app-origin";
 import { clearSessionCookies } from "@/lib/auth-cookies";
 import {
   BACKEND_PREFIX,
@@ -60,7 +61,7 @@ export async function GET(request: NextRequest) {
 
   // Reached only when Keycloak could not be told to end the session — the
   // cookies below are still cleared, so this is a real logout either way.
-  const fallback = new URL(AUTH_LOGIN_PATH, request.url).toString();
+  const fallback = new URL(AUTH_LOGIN_PATH, appOrigin(request)).toString();
 
   return clearSessionCookies(
     NextResponse.redirect(endSessionUrl ?? fallback),

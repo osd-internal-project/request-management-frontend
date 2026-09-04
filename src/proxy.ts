@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { appOrigin } from "@/lib/app-origin";
 import { AUTH_COOKIE, REFRESH_COOKIE } from "@/lib/backend";
 import {
   AUTH_LOGIN_PATH,
@@ -32,7 +33,7 @@ export function proxy(request: NextRequest) {
    * fifteen minutes arrives with neither and falls through to login below.
    */
   if (!isAuthenticated && canRenew && !isReconnectPage) {
-    const renewUrl = new URL("/api/auth/refresh", request.url);
+    const renewUrl = new URL("/api/auth/refresh", appOrigin(request));
     renewUrl.searchParams.set("from", pathname);
 
     return NextResponse.redirect(renewUrl);
@@ -51,7 +52,7 @@ export function proxy(request: NextRequest) {
    * proxy and cannot loop.
    */
   if (!isAuthenticated && !isReconnectPage) {
-    const loginUrl = new URL(AUTH_LOGIN_PATH, request.url);
+    const loginUrl = new URL(AUTH_LOGIN_PATH, appOrigin(request));
     if (pathname !== "/") {
       loginUrl.searchParams.set("from", pathname);
     }
@@ -64,7 +65,7 @@ export function proxy(request: NextRequest) {
     isAuthenticated &&
     (isReconnectPage || isStaleLoginLink || pathname === "/")
   ) {
-    return NextResponse.redirect(new URL(HOME_PATH, request.url));
+    return NextResponse.redirect(new URL(HOME_PATH, appOrigin(request)));
   }
 
   return NextResponse.next();

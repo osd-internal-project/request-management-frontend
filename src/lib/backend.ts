@@ -142,12 +142,19 @@ export const SESSION_REFRESH_INTERVAL_SECONDS = Number(
 
 export const isProduction = process.env.NODE_ENV === "production";
 
-/** The cookie options every auth cookie shares. */
-export function authCookieOptions(maxAge: number) {
+/**
+ * The cookie options every auth cookie shares.
+ *
+ * `secure` is passed in rather than read from `NODE_ENV`, which a standalone
+ * build always reports as `production` however it is served. Pass
+ * `isSecureOrigin(request)` from `@/lib/app-origin` — see the note there for
+ * what a wrongly-set flag does to the login loop.
+ */
+export function authCookieOptions(maxAge: number, secure: boolean) {
   return {
     httpOnly: true,
     sameSite: "lax" as const,
-    secure: isProduction,
+    secure,
     path: "/",
     maxAge,
   };

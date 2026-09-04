@@ -31,12 +31,14 @@ export interface TokenResponse {
 export function setSessionCookies(
   response: NextResponse,
   tokens: TokenResponse,
+  secure: boolean,
 ): void {
   response.cookies.set(
     AUTH_COOKIE,
     tokens.access_token,
     authCookieOptions(
       Math.min(tokens.expires_in, SESSION_IDLE_TIMEOUT_SECONDS),
+      secure,
     ),
   );
   response.cookies.set(
@@ -44,6 +46,7 @@ export function setSessionCookies(
     tokens.refresh_token,
     authCookieOptions(
       Math.min(tokens.refresh_expires_in, SESSION_IDLE_TIMEOUT_SECONDS),
+      secure,
     ),
   );
 }

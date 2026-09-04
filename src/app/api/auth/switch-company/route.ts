@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isSecureOrigin } from "@/lib/app-origin";
 import {
   AUTH_COOKIE,
   authCookieOptions,
@@ -79,7 +80,7 @@ export async function POST(request: NextRequest) {
   });
 
   response.cookies.set(COMPANY_COOKIE, body.company_id, {
-    ...authCookieOptions(COMPANY_COOKIE_TTL_SECONDS),
+    ...authCookieOptions(COMPANY_COOKIE_TTL_SECONDS, isSecureOrigin(request)),
   });
 
   return response;

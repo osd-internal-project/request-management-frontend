@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { appOrigin, isSecureOrigin } from "@/lib/app-origin";
 import { setSessionCookies, type TokenResponse } from "@/lib/auth-cookies";
 import {
   BACKEND_PREFIX,
@@ -82,7 +83,7 @@ export async function GET(request: NextRequest) {
       body: JSON.stringify({
         code,
         codeVerifier: verifier,
-        redirectUri: new URL("/api/auth/callback", request.url).toString(),
+        redirectUri: new URL("/api/auth/callback", appOrigin(request)).toString(),
       }),
     });
   } catch {
@@ -100,9 +101,9 @@ export async function GET(request: NextRequest) {
   const { from } = attempt;
   const destination =
     from && from.startsWith("/") && !from.startsWith("//") ? from : HOME_PATH;
-  const response = NextResponse.redirect(new URL(destination, request.url));
+  const response = NextResponse.redirect(new URL(destination, appOrigin(request)));
 
-  setSessionCookies(response, tokens);
+  setSessionCookies(response, tokens, isSecureOrigin(request));
   response.cookies.delete(PKCE_VERIFIER_COOKIE);
   response.cookies.delete(PKCE_STATE_COOKIE);
 

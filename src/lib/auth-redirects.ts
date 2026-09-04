@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { appOrigin } from "@/lib/app-origin";
 import { AUTH_LOGIN_PATH, RECONNECT_PATH } from "@/lib/routes";
 
 /** Marks a login attempt that is already the automatic second try. */
@@ -16,7 +17,7 @@ export function reconnectRedirect(
   reason: string,
   from?: string | null,
 ) {
-  const url = new URL(RECONNECT_PATH, request.url);
+  const url = new URL(RECONNECT_PATH, appOrigin(request));
   url.searchParams.set("error", reason);
   if (from) url.searchParams.set("from", from);
 
@@ -29,7 +30,7 @@ export function loginRedirect(
   from?: string | null,
   retry = false,
 ) {
-  const url = new URL(AUTH_LOGIN_PATH, request.url);
+  const url = new URL(AUTH_LOGIN_PATH, appOrigin(request));
   if (from) url.searchParams.set("from", from);
   if (retry) url.searchParams.set(RETRY_PARAM, "1");
 

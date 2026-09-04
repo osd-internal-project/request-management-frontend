@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { appOrigin, isSecureOrigin } from "@/lib/app-origin";
 import {
   authCookieOptions,
   BACKEND_PREFIX,
@@ -37,7 +38,7 @@ interface AuthorizationResponse {
 export async function GET(request: NextRequest) {
   const from = request.nextUrl.searchParams.get("from");
   const retried = request.nextUrl.searchParams.get(RETRY_PARAM) === "1";
-  const redirectUri = new URL("/api/auth/callback", request.url).toString();
+  const redirectUri = new URL("/api/auth/callback", appOrigin(request)).toString();
 
   let backendResponse: Response;
   try {
@@ -59,7 +60,7 @@ export async function GET(request: NextRequest) {
   response.cookies.set(
     PKCE_VERIFIER_COOKIE,
     authorization.code_verifier,
-    authCookieOptions(PKCE_TTL_SECONDS),
+    authCookieOptions(PKCE_TTL_SECONDS, isSecureOrigin(request)),
   );
   response.cookies.set(
     PKCE_STATE_COOKIE,
@@ -69,7 +70,7 @@ export async function GET(request: NextRequest) {
     // this cookie is the only way leg 2 can tell a first attempt from the
     // automatic second one and stop retrying.
     `${authorization.state}|${from ?? ""}|${retried ? "1" : ""}`,
-    authCookieOptions(PKCE_TTL_SECONDS),
+    authCookieOptions(PKCE_TTL_SECONDS, isSecureOrigin(request)),
   );
 
   return response;
