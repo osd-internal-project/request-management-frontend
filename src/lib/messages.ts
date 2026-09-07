@@ -203,7 +203,20 @@ export const messages = {
     pickTargetUser: "เลือกบุคคลปลายทาง",
     columnTarget: "ปลายทาง",
     columnDescendants: "รวมกลุ่มย่อย",
-    columnAct: "ทำงานต่อได้",
+    columnAct: "ทำอะไรได้บ้าง",
+    /**
+     * The closed set the backend's `SCOPE_PERMISSIONS` declares, in the order
+     * an administrator thinks about them: work on it, hand it back, drop it,
+     * decide it.
+     */
+    permissions: {
+      "request.complete": "รับงาน · มอบหมาย · ปิดงาน",
+      "request.hold": "พักงาน · ทำต่อ",
+      "request.return": "ตีกลับ",
+      "request.cancel.any": "ยกเลิก",
+      "approval.decide": "อนุมัติ",
+    } as Record<string, string>,
+    permissionsPlaceholder: "อ่านอย่างเดียว",
     columnRemove: "",
     remove: "ลบ",
     /* A person has no subtree, so the checkbox has nothing to reach. */
@@ -216,7 +229,15 @@ export const messages = {
     inheritNote:
       "สิทธิ์ที่ตั้งให้กลุ่มถ่ายทอดลงล่าง — ตั้งที่ระดับบริษัทจะมีผลกับทุกคนในบริษัท ตั้งที่ฝ่ายจะมีผลกับแผนกใต้ฝ่ายนั้น · สิทธิ์ที่ตั้งให้บุคคลมีผลกับคนนั้นคนเดียว",
     actWarning:
-      "ติ๊ก “ทำงานต่อได้” แล้วผู้รับสิทธิ์จะกดรับงาน/ปิดงานของปลายทางได้ ไม่ใช่แค่เปิดอ่าน",
+      "สิทธิ์ที่เลือกในคอลัมน์ “ทำอะไรได้บ้าง” ทำให้ผู้รับสิทธิ์ลงมือกับงานของปลายทางได้จริง ไม่ใช่แค่เปิดอ่าน · ว่างไว้ = อ่านอย่างเดียว",
+    /*
+      The intersection, said on the screen because an administrator ticking a
+      box that then does nothing has no way to tell why.
+    */
+    intersectionNote:
+      "สิทธิ์ที่ติ๊กไว้จะมีผลก็ต่อเมื่อ role ของผู้รับสิทธิ์มีสิทธิ์นั้นอยู่แล้ว — ขอบเขตจำกัดให้แคบลงได้ แต่ให้สิทธิ์ใหม่ไม่ได้",
+    approveNote:
+      "ติ๊ก “อนุมัติ” แล้วผู้รับสิทธิ์จะอนุมัติชั้นที่ค้างอยู่ของงานปลายทางได้ เพิ่มจากผู้อนุมัติที่ตารางอำนาจกำหนดไว้ — ไม่ได้แทนที่ใคร",
     /*
       core-service caches the principal for the access token's lifetime, so a
       grant saved here does not reach a session already open. Said plainly

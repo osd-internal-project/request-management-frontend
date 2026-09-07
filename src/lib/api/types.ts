@@ -96,7 +96,19 @@ export interface OrgUnitScopeRow {
   targetUserId: string | null;
   /** Whether the grant reaches the groups beneath the target. */
   includeDescendants: boolean;
-  /** Whether the viewer may move those requests, or only read them. */
+  /**
+   * What the viewer may *do* with those requests, beyond reading them
+   * (7 ก.ย. 2569).
+   *
+   * Codes from the backend's `SCOPE_PERMISSIONS`. Empty means read-only. The
+   * grant is always intersected with what the holder's roles carry, so a code
+   * here is a ceiling, never a grant of its own.
+   */
+  permissions: string[];
+  /**
+   * The single switch this replaced, still returned so an older client keeps
+   * working. Derived from `permissions`; nothing on this screen reads it.
+   */
   canAct: boolean;
   viewer: { id: string; name: string; kind: OrgUnitNode["kind"] } | null;
   viewerUser: ScopePerson | null;

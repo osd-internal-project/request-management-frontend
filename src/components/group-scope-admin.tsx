@@ -34,6 +34,21 @@ import { messages } from "@/lib/messages";
 /** The levels the target picker filters by, widest first. */
 const LEVELS = ["COMPANY", "DIVISION", "DEPARTMENT", "POSITION"] as const;
 
+/**
+ * What a grant may carry, mirroring the backend's `SCOPE_PERMISSIONS`.
+ *
+ * Listed here rather than fetched: it is a closed set declared in code, and the
+ * API validates every entry anyway. Going stale would make the screen offer
+ * less than the API accepts — never more.
+ */
+const SCOPE_PERMISSIONS = [
+  "request.complete",
+  "request.hold",
+  "request.return",
+  "request.cancel.any",
+  "approval.decide",
+] as const;
+
 type Level = (typeof LEVELS)[number];
 
 /** Who the grants being edited belong to. */
@@ -70,6 +85,13 @@ interface Draft extends OrgUnitScopeInput {
  * in: an administrator picks the thing they are thinking about. `level`
  * survives on the right, where it is what it always was — a way to shorten a
  * long list of groups.
+ *
+ * **`ทำงานต่อได้` became a list of actions on 7 ก.ย. 2569.** One tick could only
+ * say "everything this person role allows" or "nothing", so an organisation
+ * that wanted "อนุมัติงาน RND ได้ แต่งาน Sale ดูอย่างเดียว" had to choose one for
+ * both. The column now names the actions, and an empty cell is the old
+ * unticked box. Every entry is still a ceiling rather than a grant: the API
+ * intersects it with what the holder's roles carry.
  */
 export function GroupScopeAdmin({
   units,
@@ -191,7 +213,7 @@ export function GroupScopeAdmin({
         include_descendants: kind === "unit",
         // Read-only by default: acting on somebody else's tickets is a
         // deliberate tick, never a side effect of granting a view.
-        can_act: false,
+        permissions: [],
       },
     ]);
   }
@@ -215,7 +237,7 @@ export function GroupScopeAdmin({
         target_org_unit_id: draft.target_org_unit_id,
         target_user_id: draft.target_user_id,
         include_descendants: draft.include_descendants,
-        can_act: draft.can_act,
+        permissions: draft.permissions,
       })),
     );
     setSaving(false);
@@ -229,7 +251,10 @@ export function GroupScopeAdmin({
     void message.success(messages.groupScope.saved);
   }
 
-  const granting = drafts.some((draft) => draft.can_act);
+  const granting = drafts.some((draft) => draft.permissions.length > 0);
+  const deciding = drafts.some((draft) =>
+    draft.permissions.includes("approval.decide"),
+  );
 
   return (
     <Card title={messages.groupScope.title} size="small">
@@ -374,6 +399,21 @@ export function GroupScopeAdmin({
                   showIcon
                   className="mb-3!"
                   title={messages.groupScope.actWarning}
+                  description={messages.groupScope.intersectionNote}
+                />
+              )}
+
+              {/*
+                Approving is the one grant that puts somebody on a ladder they
+                were not routed onto, so it says so separately rather than
+                sharing a line with returning and cancelling.
+              */}
+              {deciding && (
+                <Alert
+                  type="info"
+                  showIcon
+                  className="mb-3!"
+                  title={messages.groupScope.approveNote}
                 />
               )}
 
@@ -423,13 +463,29 @@ export function GroupScopeAdmin({
                   {
                     title: messages.groupScope.columnAct,
                     key: "act",
-                    width: 120,
+                    width: 280,
+                    /*
+                      A multi-select rather than a row of checkboxes: the set is
+                      short but the column sits beside two single ticks, and
+                      five more boxes in the same row reads as five more
+                      switches of the same weight. Empty is read-only and says
+                      so in the placeholder.
+                    */
                     render: (_: unknown, row: Draft) => (
-                      <Checkbox
-                        checked={row.can_act}
-                        onChange={(event) =>
-                          update(row.key, { can_act: event.target.checked })
+                      <SearchSelect
+                        mode="multiple"
+                        value={row.permissions}
+                        onChange={(value: string[]) =>
+                          update(row.key, { permissions: value })
                         }
+                        style={{ width: "100%" }}
+                        placeholder={
+                          messages.groupScope.permissionsPlaceholder
+                        }
+                        options={SCOPE_PERMISSIONS.map((code) => ({
+                          value: code,
+                          label: messages.groupScope.permissions[code] ?? code,
+                        }))}
                       />
                     ),
                   },
@@ -602,7 +658,7 @@ function toDrafts(rows: OrgUnitScopeRow[]): Draft[] {
       target_org_unit_id: row.targetOrgUnitId ?? undefined,
       target_user_id: row.targetUserId ?? undefined,
       include_descendants: row.includeDescendants,
-      can_act: row.canAct,
+      permissions: row.permissions ?? [],
     };
   });
 }

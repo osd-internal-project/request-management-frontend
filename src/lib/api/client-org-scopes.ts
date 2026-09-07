@@ -22,7 +22,15 @@ export interface OrgUnitScopeInput {
   target_org_unit_id?: string;
   target_user_id?: string;
   include_descendants: boolean;
-  can_act: boolean;
+  /**
+   * What this grant lets the viewer do, beyond reading — an empty array is
+   * read-only and is the default a new row is added with.
+   *
+   * Sent instead of the old `can_act`: the API ignores that field entirely
+   * when this one is present, so a row that used to mean "may act" now says
+   * which actions it means.
+   */
+  permissions: string[];
 }
 
 /** Which kind of thing a grant is written to. */
