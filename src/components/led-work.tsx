@@ -3,29 +3,27 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card, Checkbox, Empty, Input, Space, Table } from "antd";
+import Text from "antd/es/typography/Text";
 import type { RequestRow } from "@/lib/api/types";
 import { requestColumns } from "@/components/my-work";
 import { SearchSelect } from "@/components/search-select";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
+import type { Session } from "@/lib/session-shape";
 
 /**
- * "งานทั้งหมด" — the work of the groups this person heads, subtrees included.
+ * "งานทั้งหมด" — every request this person may open: their own, the groups they
+ * head with subtrees, and the groups a scope grant reaches.
  *
- * **Read-only, deliberately.** A head opening this screen is answering "what is
- * happening under me", not "what must I do next" — that is the four tabs on the
- * landing page. There are no action buttons here at all: a head who wants to
- * act on one of these rows opens the request, where the same rules apply to
- * them as to anybody else. Offering `รับเรื่อง` beside a ticket that is
- * somebody else's to accept would be a button that answers 403.
- *
- * Which rows those are is decided by `AccessService.ledUnitIdsOf`, not here —
- * this screen is one caller of the rule, not a second copy of it.
+ * Which rows those are is decided by `visibleRequestsWhere` in the backend, not
+ * here — this screen is one caller of the rule, not a second copy of it.
  */
 export function LedWork({
   rows,
   types,
   filters,
+  leadsUnits,
+  session,
 }: {
   rows: RequestRow[];
   types: { code: string; name: string }[];
@@ -35,6 +33,10 @@ export function LedWork({
     q?: string;
     overdue: boolean;
   };
+  /** Whether the viewer heads any group — only used to explain an empty list. */
+  leadsUnits: boolean;
+  /** Gates the action buttons in each row — see `requestColumns`. */
+  session: Session | null;
 }) {
   const router = useRouter();
   const params = useSearchParams();
@@ -98,7 +100,7 @@ export function LedWork({
           rowKey="id"
           size="small"
           dataSource={rows}
-          columns={requestColumns(now)}
+          columns={requestColumns(now, session)}
           pagination={{ pageSize: 20, hideOnSinglePage: true }}
           scroll={{ x: true }}
           onRow={(row) => ({
@@ -107,7 +109,23 @@ export function LedWork({
           })}
         />
       ) : (
-        <Empty description={messages.allWork.empty} />
+        /*
+          An empty list has two very different causes, and they looked the same
+          until 4 ก.ย. 2569: there is genuinely no work, or this person reaches
+          no groups at all. Only the second needs an administrator.
+        */
+        <Empty
+          description={
+            <>
+              <div>{messages.allWork.empty}</div>
+              {!leadsUnits && (
+                <Text type="secondary" className="mt-1 block text-xs">
+                  {messages.allWork.emptyReason}
+                </Text>
+              )}
+            </>
+          }
+        />
       )}
     </Card>
   );

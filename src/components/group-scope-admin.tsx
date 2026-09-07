@@ -8,33 +8,50 @@ import {
   Card,
   Checkbox,
   Empty,
+  Input,
+  Segmented,
   Space,
   Table,
+  Tag,
+  Tooltip,
+  Tree,
 } from "antd";
 import Text from "antd/es/typography/Text";
 import { SearchSelect } from "@/components/search-select";
 import {
-  fetchOrgUnitScopes,
-  replaceOrgUnitScopes,
+  fetchScopes,
+  replaceScopes,
   type OrgUnitScopeInput,
+  type ScopeViewerKind,
 } from "@/lib/api/client-org-scopes";
-import type { OrgUnitNode, OrgUnitScopeRow } from "@/lib/api/types";
+import type {
+  DirectoryUser,
+  OrgUnitNode,
+  OrgUnitScopeRow,
+} from "@/lib/api/types";
 import { messages } from "@/lib/messages";
 
-/** The levels an administrator picks between, widest first. */
+/** The levels the target picker filters by, widest first. */
 const LEVELS = ["COMPANY", "DIVISION", "DEPARTMENT", "POSITION"] as const;
 
 type Level = (typeof LEVELS)[number];
 
+/** Who the grants being edited belong to. */
+interface Viewer {
+  readonly kind: ScopeViewerKind;
+  readonly id: string;
+  readonly label: string;
+}
+
 /** One row of the list being edited, before it is saved. */
 interface Draft extends OrgUnitScopeInput {
-  /** For the table's key. Grants are unique per target within one viewer. */
+  /** For the table's key. A viewer names each target at most once. */
   readonly key: string;
+  readonly kind: ScopeViewerKind;
 }
 
 /**
- * "ขอบเขตข้อมูลของ Group" — which group may see (and optionally work on) the
- * work of which other group.
+ * "ขอบเขตข้อมูล" — who may see (and optionally work on) whose requests.
  *
  * The replacement for the `(role, resource) → level` rules withdrawn on
  * 31 ส.ค. 2569. Those could say "this role sees its department"; they could
@@ -42,65 +59,89 @@ interface Draft extends OrgUnitScopeInput {
  * asks. Visibility still resolves in one place — `access-rules.ts` — and this
  * screen only supplies it with rows.
  *
- * Two steps, in the order §16 A4 words them: pick a level, pick the group at
- * that level, then name the groups it may see. The level is not stored; it is
- * `OrgUnit.kind` of the viewer, so it is a filter over the picker rather than
- * a field of the grant.
+ * **Redesigned 4 ก.ย. 2569.** It used to be three selects in a row: level, then
+ * the group at that level, then the target. That put `level` first, which made
+ * it look like the first decision, when it is not a decision at all — nothing
+ * stores it. It is `OrgUnit.kind`, a filter over a picker. Worse, a grant may
+ * now be written to one *person*, and a person has no level, so the first step
+ * excluded half the answers.
+ *
+ * The chart goes on the left instead, with people under the groups they sit
+ * in: an administrator picks the thing they are thinking about. `level`
+ * survives on the right, where it is what it always was — a way to shorten a
+ * long list of groups.
  */
 export function GroupScopeAdmin({
   units,
-  /** The selected group's saved grants, if the page resolved one server-side. */
+  people,
   initialViewerId,
   initialScopes,
 }: {
   readonly units: OrgUnitNode[];
+  /** The whole company directory, so the tree can show who is in each group. */
+  readonly people: DirectoryUser[];
+  /** The group the page resolved server-side, so the first paint is filled. */
   readonly initialViewerId: string | null;
   readonly initialScopes: OrgUnitScopeRow[];
 }) {
   const { message } = App.useApp();
 
-  const initialLevel =
-    units.find((unit) => unit.id === initialViewerId)?.kind ?? "DEPARTMENT";
+  const [viewer, setViewer] = useState<Viewer | null>(() => {
+    const unit = units.find((each) => each.id === initialViewerId);
 
-  const [level, setLevel] = useState<Level>(
-    LEVELS.includes(initialLevel as Level) ? (initialLevel as Level) : "DEPARTMENT",
-  );
-  const [viewerId, setViewerId] = useState<string | null>(initialViewerId);
+    return unit ? { kind: "unit", id: unit.id, label: unit.name } : null;
+  });
   const [drafts, setDrafts] = useState<Draft[]>(() => toDrafts(initialScopes));
+  const [search, setSearch] = useState("");
+  const [targetKind, setTargetKind] = useState<ScopeViewerKind>("unit");
+  const [level, setLevel] = useState<Level>("DEPARTMENT");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const byId = useMemo(
+  const unitsById = useMemo(
     () => new Map(units.map((unit) => [unit.id, unit])),
     [units],
   );
+  const peopleById = useMemo(
+    () => new Map(people.map((person) => [person.id, person])),
+    [people],
+  );
 
-  const viewersAtLevel = useMemo(
-    () => units.filter((unit) => unit.kind === level && unit.active),
-    [units, level],
+  const treeData = useMemo(
+    () => buildTree(units, people, search.trim().toLowerCase()),
+    [units, people, search],
   );
 
   /**
-   * Every group except the one being granted the view.
+   * Every group except the one holding the grants.
    *
-   * A group already sees its own work, so offering it would produce a grant
+   * A viewer already sees its own work, so offering it would produce a grant
    * the backend refuses — better not to offer it than to explain the refusal.
    */
-  const targetOptions = useMemo(
+  const unitOptions = useMemo(
     () =>
       units
-        .filter((unit) => unit.id !== viewerId)
-        .map((unit) => ({
-          value: unit.id,
-          label: `${messages.org.unitKinds[unit.kind]} · ${unit.name}`,
+        .filter((unit) => unit.kind === level && unit.active)
+        .filter((unit) => !(viewer?.kind === "unit" && unit.id === viewer.id))
+        .map((unit) => ({ value: unit.id, label: unit.name })),
+    [units, level, viewer],
+  );
+
+  const personOptions = useMemo(
+    () =>
+      people
+        .filter((person) => !(viewer?.kind === "user" && person.id === viewer.id))
+        .map((person) => ({
+          value: person.id,
+          label: `${person.displayName} · ${person.username}`,
         })),
-    [units, viewerId],
+    [people, viewer],
   );
 
   const load = useCallback(
-    async (unitId: string) => {
+    async (next: Viewer) => {
       setLoading(true);
-      const result = await fetchOrgUnitScopes(unitId);
+      const result = await fetchScopes(next.kind, next.id);
       setLoading(false);
 
       if (!result.ok) {
@@ -115,59 +156,64 @@ export function GroupScopeAdmin({
   );
 
   /*
-    Selecting a group is a user action, so it loads from the handler rather
-    than from an effect watching the state it just set — the same shape the
-    member panel on the tree tab uses. The first paint is already filled from
-    the server, so the group the page opened on is never fetched twice.
+    Selecting is a user action, so it loads from the handler rather than from
+    an effect watching the state it just set. The first paint is already filled
+    from the server, so the group the page opened on is never fetched twice.
   */
-  function selectViewer(unitId: string | null) {
-    setViewerId(unitId);
+  function select(next: Viewer | null) {
+    setViewer(next);
 
-    if (!unitId) {
+    if (!next) {
       setDrafts([]);
       return;
     }
 
-    if (unitId === initialViewerId) {
+    if (next.kind === "unit" && next.id === initialViewerId) {
       setDrafts(toDrafts(initialScopes));
       return;
     }
 
-    void load(unitId);
+    void load(next);
   }
 
-  function addTarget(targetId: string) {
-    if (drafts.some((draft) => draft.target_org_unit_id === targetId)) return;
+  function addTarget(kind: ScopeViewerKind, targetId: string) {
+    if (drafts.some((draft) => draft.key === targetId)) return;
 
     setDrafts((current) => [
       ...current,
       {
         key: targetId,
-        target_org_unit_id: targetId,
-        include_descendants: true,
-        // Read-only by default: acting on another group's tickets is a
+        kind,
+        ...(kind === "unit"
+          ? { target_org_unit_id: targetId }
+          : { target_user_id: targetId }),
+        // A person has no subtree, so the flag has nothing to reach.
+        include_descendants: kind === "unit",
+        // Read-only by default: acting on somebody else's tickets is a
         // deliberate tick, never a side effect of granting a view.
         can_act: false,
       },
     ]);
   }
 
-  function update(targetId: string, patch: Partial<Draft>) {
+  function update(key: string, patch: Partial<Draft>) {
     setDrafts((current) =>
       current.map((draft) =>
-        draft.target_org_unit_id === targetId ? { ...draft, ...patch } : draft,
+        draft.key === key ? { ...draft, ...patch } : draft,
       ),
     );
   }
 
   async function save() {
-    if (!viewerId) return;
+    if (!viewer) return;
 
     setSaving(true);
-    const result = await replaceOrgUnitScopes(
-      viewerId,
+    const result = await replaceScopes(
+      viewer.kind,
+      viewer.id,
       drafts.map((draft) => ({
         target_org_unit_id: draft.target_org_unit_id,
+        target_user_id: draft.target_user_id,
         include_descendants: draft.include_descendants,
         can_act: draft.can_act,
       })),
@@ -191,165 +237,372 @@ export function GroupScopeAdmin({
         {messages.groupScope.intro}
       </Text>
 
-      <Space wrap className="mb-3 flex">
-        <SearchSelect
-          value={level}
-          onChange={(value: Level) => {
-            setLevel(value);
-            selectViewer(null);
-          }}
-          style={{ width: 150 }}
-          placeholder={messages.groupScope.level}
-          options={LEVELS.map((value) => ({
-            value,
-            label: messages.org.unitKinds[value],
-          }))}
-        />
-        <SearchSelect
-          value={viewerId ?? undefined}
-          onChange={(value?: string) => selectViewer(value ?? null)}
-          style={{ width: 280 }}
-          allowClear
-          placeholder={
-            viewersAtLevel.length
-              ? messages.groupScope.pickViewer
-              : messages.groupScope.noUnitsAtLevel
-          }
-          disabled={!viewersAtLevel.length}
-          options={viewersAtLevel.map((unit) => ({
-            value: unit.id,
-            label: unit.name,
-          }))}
-        />
-        <SearchSelect
-          value={null}
-          onChange={(value?: string) => value && addTarget(value)}
-          style={{ width: 280 }}
-          disabled={!viewerId}
-          placeholder={messages.groupScope.pickTarget}
-          options={targetOptions}
-        />
-        <Button type="primary" disabled={!viewerId} loading={saving} onClick={save}>
-          {messages.groupScope.save}
-        </Button>
-      </Space>
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
+        <Card size="small" title={messages.groupScope.viewerPanel}>
+          <Input.Search
+            allowClear
+            className="mb-2"
+            placeholder={messages.groupScope.searchViewer}
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
 
-      <Alert
-        type="info"
-        showIcon
-        className="mb-3!"
-        title={messages.groupScope.inheritNote}
-        description={messages.groupScope.reloginNote}
-      />
+          {treeData.length ? (
+            <Tree
+              treeData={treeData}
+              /*
+                Expanded by whatever the search left, not by a state this
+                component keeps: filtering a tree and then leaving it collapsed
+                shows the user an empty box and a match count they cannot see.
+              */
+              defaultExpandAll
+              key={search}
+              selectedKeys={viewer ? [`${viewer.kind}:${viewer.id}`] : []}
+              onSelect={(keys) => {
+                const key = keys[0];
+                if (typeof key !== "string") return select(null);
 
-      {/*
-        Shown only once a grant actually carries it. A standing warning about
-        something nobody has ticked is noise, and noise is what makes the real
-        warning invisible.
-      */}
-      {granting && (
-        <Alert
-          type="warning"
-          showIcon
-          className="mb-3!"
-          title={messages.groupScope.actWarning}
-        />
-      )}
+                const [kind, id] = key.split(":") as [ScopeViewerKind, string];
+                const label =
+                  kind === "unit"
+                    ? (unitsById.get(id)?.name ?? id)
+                    : (peopleById.get(id)?.displayName ?? id);
 
-      {viewerId ? (
-        <Table
+                select({ kind, id, label });
+              }}
+              className="max-h-96 overflow-auto"
+            />
+          ) : (
+            <Empty description={messages.groupScope.noMatch} />
+          )}
+        </Card>
+
+        <Card
           size="small"
-          rowKey="key"
-          loading={loading}
-          pagination={false}
-          dataSource={drafts}
-          locale={{ emptyText: <Empty description={messages.groupScope.empty} /> }}
-          columns={[
-            {
-              title: messages.groupScope.columnTarget,
-              key: "target",
-              render: (_: unknown, row: Draft) => {
-                const unit = byId.get(row.target_org_unit_id);
-
-                return unit ? (
-                  <span>
-                    {unit.name}{" "}
-                    <Text type="secondary" className="text-xs">
-                      {messages.org.unitKinds[unit.kind]}
-                    </Text>
-                  </span>
-                ) : (
-                  <Text type="secondary">{row.target_org_unit_id}</Text>
-                );
-              },
-            },
-            {
-              title: messages.groupScope.columnDescendants,
-              key: "descendants",
-              width: 130,
-              render: (_: unknown, row: Draft) => (
-                <Checkbox
-                  checked={row.include_descendants}
-                  onChange={(event) =>
-                    update(row.target_org_unit_id, {
-                      include_descendants: event.target.checked,
-                    })
-                  }
-                />
-              ),
-            },
-            {
-              title: messages.groupScope.columnAct,
-              key: "act",
-              width: 120,
-              render: (_: unknown, row: Draft) => (
-                <Checkbox
-                  checked={row.can_act}
-                  onChange={(event) =>
-                    update(row.target_org_unit_id, {
-                      can_act: event.target.checked,
-                    })
-                  }
-                />
-              ),
-            },
-            {
-              title: messages.groupScope.columnRemove,
-              key: "remove",
-              width: 60,
-              render: (_: unknown, row: Draft) => (
-                <Button
+          title={
+            viewer ? (
+              <Space size={6}>
+                <span>{viewer.label}</span>
+                <Tag color={viewer.kind === "unit" ? "blue" : "green"}>
+                  {viewer.kind === "unit"
+                    ? messages.groupScope.kindUnit
+                    : messages.groupScope.kindUser}
+                </Tag>
+              </Space>
+            ) : (
+              messages.groupScope.targetPanel
+            )
+          }
+          extra={
+            <Button
+              type="primary"
+              size="small"
+              disabled={!viewer}
+              loading={saving}
+              onClick={() => void save()}
+            >
+              {messages.groupScope.save}
+            </Button>
+          }
+        >
+          {viewer ? (
+            <>
+              <Space wrap className="mb-3 flex">
+                <Text type="secondary" className="text-xs">
+                  {messages.groupScope.addTitle}
+                </Text>
+                <Segmented
                   size="small"
-                  danger
-                  type="link"
-                  onClick={() =>
-                    setDrafts((current) =>
-                      current.filter(
-                        (draft) =>
-                          draft.target_org_unit_id !== row.target_org_unit_id,
-                      ),
-                    )
+                  value={targetKind}
+                  onChange={(value) => setTargetKind(value as ScopeViewerKind)}
+                  options={[
+                    { value: "unit", label: messages.groupScope.kindUnit },
+                    { value: "user", label: messages.groupScope.kindUser },
+                  ]}
+                />
+                {/*
+                  `level` is a filter over the picker beside it, never a stored
+                  field — which is why it appears here rather than as the first
+                  step of the screen, and why the person picker has none.
+                */}
+                {targetKind === "unit" && (
+                  <SearchSelect
+                    value={level}
+                    onChange={(value: Level) => setLevel(value)}
+                    style={{ width: 140 }}
+                    placeholder={messages.groupScope.level}
+                    options={LEVELS.map((value) => ({
+                      value,
+                      label: messages.org.unitKinds[value],
+                    }))}
+                  />
+                )}
+                <SearchSelect
+                  value={null}
+                  onChange={(value?: string) =>
+                    value && addTarget(targetKind, value)
                   }
-                >
-                  {messages.groupScope.remove}
-                </Button>
-              ),
-            },
-          ]}
-        />
-      ) : (
-        <Empty description={messages.groupScope.pickViewer} />
-      )}
+                  style={{ width: 280 }}
+                  disabled={targetKind === "unit" && !unitOptions.length}
+                  placeholder={
+                    targetKind === "user"
+                      ? messages.groupScope.pickTargetUser
+                      : unitOptions.length
+                        ? messages.groupScope.pickTarget
+                        : messages.groupScope.noUnitsAtLevel
+                  }
+                  options={targetKind === "unit" ? unitOptions : personOptions}
+                />
+              </Space>
+
+              <Alert
+                type="info"
+                showIcon
+                className="mb-3!"
+                title={messages.groupScope.inheritNote}
+                description={messages.groupScope.reloginNote}
+              />
+
+              {/*
+                Shown only once a grant actually carries it. A standing warning
+                about something nobody has ticked is noise, and noise is what
+                makes the real warning invisible.
+              */}
+              {granting && (
+                <Alert
+                  type="warning"
+                  showIcon
+                  className="mb-3!"
+                  title={messages.groupScope.actWarning}
+                />
+              )}
+
+              <Table
+                size="small"
+                rowKey="key"
+                loading={loading}
+                pagination={false}
+                dataSource={drafts}
+                locale={{
+                  emptyText: <Empty description={messages.groupScope.empty} />,
+                }}
+                columns={[
+                  {
+                    title: messages.groupScope.columnTarget,
+                    key: "target",
+                    render: (_: unknown, row: Draft) => (
+                      <TargetCell
+                        row={row}
+                        unitsById={unitsById}
+                        peopleById={peopleById}
+                      />
+                    ),
+                  },
+                  {
+                    title: messages.groupScope.columnDescendants,
+                    key: "descendants",
+                    width: 130,
+                    render: (_: unknown, row: Draft) =>
+                      row.kind === "unit" ? (
+                        <Checkbox
+                          checked={row.include_descendants}
+                          onChange={(event) =>
+                            update(row.key, {
+                              include_descendants: event.target.checked,
+                            })
+                          }
+                        />
+                      ) : (
+                        <Tooltip
+                          title={messages.groupScope.descendantsNotForUser}
+                        >
+                          <Checkbox disabled checked={false} />
+                        </Tooltip>
+                      ),
+                  },
+                  {
+                    title: messages.groupScope.columnAct,
+                    key: "act",
+                    width: 120,
+                    render: (_: unknown, row: Draft) => (
+                      <Checkbox
+                        checked={row.can_act}
+                        onChange={(event) =>
+                          update(row.key, { can_act: event.target.checked })
+                        }
+                      />
+                    ),
+                  },
+                  {
+                    title: messages.groupScope.columnRemove,
+                    key: "remove",
+                    width: 60,
+                    render: (_: unknown, row: Draft) => (
+                      <Button
+                        size="small"
+                        danger
+                        type="link"
+                        onClick={() =>
+                          setDrafts((current) =>
+                            current.filter((draft) => draft.key !== row.key),
+                          )
+                        }
+                      >
+                        {messages.groupScope.remove}
+                      </Button>
+                    ),
+                  },
+                ]}
+              />
+            </>
+          ) : (
+            <Empty description={messages.groupScope.pickViewer} />
+          )}
+        </Card>
+      </div>
     </Card>
   );
 }
 
+/** One target, named rather than shown as the id the row actually carries. */
+function TargetCell({
+  row,
+  unitsById,
+  peopleById,
+}: {
+  readonly row: Draft;
+  readonly unitsById: Map<string, OrgUnitNode>;
+  readonly peopleById: Map<string, DirectoryUser>;
+}) {
+  if (row.kind === "unit") {
+    const unit = row.target_org_unit_id
+      ? unitsById.get(row.target_org_unit_id)
+      : undefined;
+
+    return unit ? (
+      <span>
+        {unit.name}{" "}
+        <Text type="secondary" className="text-xs">
+          {messages.org.unitKinds[unit.kind]}
+        </Text>
+      </span>
+    ) : (
+      <Text type="secondary">{row.target_org_unit_id}</Text>
+    );
+  }
+
+  const person = row.target_user_id
+    ? peopleById.get(row.target_user_id)
+    : undefined;
+
+  return person ? (
+    <span>
+      {person.displayName}{" "}
+      <Text type="secondary" className="text-xs">
+        {person.username}
+      </Text>
+    </span>
+  ) : (
+    <Text type="secondary">{row.target_user_id}</Text>
+  );
+}
+
+/**
+ * The chart, with the people who sit in each group beneath it.
+ *
+ * A group is kept when it matches the filter *or* anything under it does —
+ * dropping an unmatched parent would orphan a matching child, and the tree
+ * would show nothing for a search that has results.
+ */
+function buildTree(
+  units: OrgUnitNode[],
+  people: DirectoryUser[],
+  filter: string,
+) {
+  const membersOf = new Map<string, DirectoryUser[]>();
+
+  for (const person of people) {
+    if (!person.orgUnitId) continue;
+
+    const list = membersOf.get(person.orgUnitId) ?? [];
+    list.push(person);
+    membersOf.set(person.orgUnitId, list);
+  }
+
+  const childrenOf = new Map<string | null, OrgUnitNode[]>();
+
+  for (const unit of units) {
+    const list = childrenOf.get(unit.parentId) ?? [];
+    list.push(unit);
+    childrenOf.set(unit.parentId, list);
+  }
+
+  interface Node {
+    key: string;
+    title: React.ReactNode;
+    children?: Node[];
+  }
+
+  function build(unit: OrgUnitNode): Node | null {
+    const members = (membersOf.get(unit.id) ?? [])
+      .filter(
+        (person) =>
+          !filter ||
+          person.displayName.toLowerCase().includes(filter) ||
+          person.username.toLowerCase().includes(filter),
+      )
+      .map((person) => ({
+        key: `user:${person.id}`,
+        title: (
+          <span>
+            👤 {person.displayName}{" "}
+            <Text type="secondary" className="text-xs">
+              {person.username}
+            </Text>
+          </span>
+        ),
+      }));
+
+    const below = (childrenOf.get(unit.id) ?? [])
+      .map(build)
+      .filter((node): node is Node => node !== null);
+
+    const matches = !filter || unit.name.toLowerCase().includes(filter);
+
+    if (!matches && !members.length && !below.length) return null;
+
+    return {
+      key: `unit:${unit.id}`,
+      title: (
+        <span>
+          🏢 {unit.name}{" "}
+          <Text type="secondary" className="text-xs">
+            {messages.org.unitKinds[unit.kind]}
+          </Text>
+        </span>
+      ),
+      children: [...below, ...members],
+    };
+  }
+
+  return (childrenOf.get(null) ?? [])
+    .map(build)
+    .filter((node): node is Node => node !== null);
+}
+
 /** Saved rows as the table edits them. */
 function toDrafts(rows: OrgUnitScopeRow[]): Draft[] {
-  return rows.map((row) => ({
-    key: row.targetOrgUnitId,
-    target_org_unit_id: row.targetOrgUnitId,
-    include_descendants: row.includeDescendants,
-    can_act: row.canAct,
-  }));
+  return rows.map((row) => {
+    const isUnit = row.targetOrgUnitId !== null;
+    const key = (isUnit ? row.targetOrgUnitId : row.targetUserId) ?? row.id;
+
+    return {
+      key,
+      kind: isUnit ? ("unit" as const) : ("user" as const),
+      target_org_unit_id: row.targetOrgUnitId ?? undefined,
+      target_user_id: row.targetUserId ?? undefined,
+      include_descendants: row.includeDescendants,
+      can_act: row.canAct,
+    };
+  });
 }

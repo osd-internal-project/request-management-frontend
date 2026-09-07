@@ -3,11 +3,23 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Card, Checkbox, Empty, Input, Space, Table, Tabs, Tag } from "antd";
+import {
+  Badge,
+  Card,
+  Checkbox,
+  Empty,
+  Input,
+  Space,
+  Table,
+  Tabs,
+  Tag,
+} from "antd";
 import Text from "antd/es/typography/Text";
 import { messages } from "@/lib/messages";
 import { SearchSelect } from "@/components/search-select";
 import { ROUTES } from "@/lib/routes";
+import { RequestRowActions } from "@/components/request-row-actions";
+import type { Session } from "@/lib/session-shape";
 
 import type {
   RequestRow,
@@ -109,8 +121,13 @@ export function DueCell({ row, now }: { row: RequestRow; now: number }) {
  *
  * `now` is passed in rather than read here: reading the clock during render
  * makes the same row render differently on an incidental re-render.
+ *
+ * `session` gates the action column: a move is offered only when the row says
+ * this person has the authority (`available_actions`, decided by the backend)
+ * *and* the session says their role holds the permission. Pass null to render
+ * the table without any buttons.
  */
-export function requestColumns(now: number) {
+export function requestColumns(now: number, session: Session | null = null) {
   return [
     {
       title: messages.myWork.columns.requestNo,
@@ -194,6 +211,13 @@ export function requestColumns(now: number) {
       key: "due",
       render: (_: unknown, row: RequestRow) => <DueCell row={row} now={now} />,
     },
+    {
+      title: messages.myWork.columns.actions,
+      key: "actions",
+      render: (_: unknown, row: RequestRow) => (
+        <RequestRowActions row={row} session={session} />
+      ),
+    },
     ];
 }
 
@@ -215,8 +239,10 @@ export function MyWork({
   created,
   incoming,
   approver,
+  awaiting,
   types,
   filters,
+  session,
 }: {
   /** ทั้งหมด — everything this person raised, received, carries, or may approve. */
   involved: WorkTab;
@@ -224,9 +250,25 @@ export function MyWork({
   created: WorkTab;
   /** รับเรื่อง — handed to them and not finished. */
   incoming: WorkTab;
-  /** อนุมัติ — waiting on their decision right now. */
-  approver: WorkTab;
+  /**
+   * อนุมัติ — every request naming this person anywhere in its approval route.
+   *
+   * Null for somebody without `approval.decide`: the page does not run the
+   * query for them, and the tab is not rendered. It used to count only cases
+   * *pending* their decision, which made a full approval history read `· 0`.
+   */
+  approver: WorkTab | null;
+  /**
+   * How many of those are actually waiting on this person right now.
+   *
+   * Printed as a badge beside the tab count, which is deliberately broader.
+   * Without it the tab answers "have I ever been an approver" where the reader
+   * is asking "do I owe a decision".
+   */
+  awaiting: number;
   types: { code: string; name: string }[];
+  /** Gates the action buttons in each row — see `requestColumns`. */
+  session: Session | null;
   /** Applied by the server for the first tab; echoed into the controls. */
   filters: {
     status?: string;
@@ -252,7 +294,7 @@ export function MyWork({
     router.push(next.size ? `${ROUTES.myWork}?${next.toString()}` : ROUTES.myWork);
   }
 
-  const columns = requestColumns(now);
+  const columns = requestColumns(now, session);
 
   const table = (rows: RequestRow[], emptyText: string) =>
     rows.length ? (
@@ -315,10 +357,14 @@ export function MyWork({
       </Space>
 
       {/*
-        Four tabs, always all four, in the order the requirement names them.
-        Hiding an empty one used to save a line and cost more: a tab that
+        The first three are always rendered, in the order the requirement names
+        them. Hiding an empty one used to save a line and cost more: a tab that
         appears only when it has work makes the row jump about, and "รับเรื่อง"
         vanishing is indistinguishable from a page that failed to load it.
+
+        "อนุมัติ" is the one exception, and for the opposite reason: somebody
+        without `approval.decide` can never be named on a step, so the tab is
+        not empty-for-now, it is empty-forever. The page skips its query too.
       */}
       <Tabs
         items={[
@@ -343,11 +389,29 @@ export function MyWork({
             label: `${messages.myWork.tabIncoming} · ${incoming.total}`,
             children: table(incoming.rows, messages.myWork.emptyIncoming),
           },
-          {
-            key: "approver",
-            label: `${messages.myWork.tabApprovals} · ${approver.total}`,
-            children: table(approver.rows, messages.myWork.emptyApprovals),
-          },
+          ...(approver
+            ? [
+                {
+                  key: "approver",
+                  label: (
+                    <span>
+                      {messages.myWork.tabApprovals} · {approver.total}
+                      {awaiting > 0 && (
+                        <Badge
+                          count={awaiting}
+                          className="ml-2"
+                          title={messages.myWork.awaitingMe}
+                        />
+                      )}
+                    </span>
+                  ),
+                  children: table(
+                    approver.rows,
+                    messages.myWork.emptyApprovals,
+                  ),
+                },
+              ]
+            : []),
         ]}
       />
     </Card>

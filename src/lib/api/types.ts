@@ -83,14 +83,32 @@ export interface OrgUnitNode {
  */
 export interface OrgUnitScopeRow {
   id: string;
-  viewerOrgUnitId: string;
-  targetOrgUnitId: string;
+  /**
+   * Exactly one of each pair is set — a group grant or a person grant.
+   *
+   * Two nullable columns rather than a kind discriminator, because that is
+   * what the database stores under its CHECK constraint; a third shape in
+   * between would be a third thing to keep in step.
+   */
+  viewerOrgUnitId: string | null;
+  viewerUserId: string | null;
+  targetOrgUnitId: string | null;
+  targetUserId: string | null;
   /** Whether the grant reaches the groups beneath the target. */
   includeDescendants: boolean;
   /** Whether the viewer may move those requests, or only read them. */
   canAct: boolean;
-  viewer: { id: string; name: string; kind: OrgUnitNode["kind"] };
-  target: { id: string; name: string; kind: OrgUnitNode["kind"] };
+  viewer: { id: string; name: string; kind: OrgUnitNode["kind"] } | null;
+  viewerUser: ScopePerson | null;
+  target: { id: string; name: string; kind: OrgUnitNode["kind"] } | null;
+  targetUser: ScopePerson | null;
+}
+
+/** One end of a grant that names a person rather than a group. */
+export interface ScopePerson {
+  id: string;
+  displayName: string;
+  username: string;
 }
 
 /**
@@ -433,9 +451,23 @@ export interface RequestRow {
   requestType?: { name: string };
   slaClock?: { state: string; dueAt: string } | null;
   approvalCases?: {
+    /** The decision endpoint addresses the case, not the request. */
+    id?: string;
     currentStep: number;
     steps: { stepNo: number; approverRole: string }[];
   }[];
+  /**
+   * What this viewer may do with this row, decided by the backend.
+   *
+   * The same table `assertMayAct` consults, so a button offered here is one the
+   * handler behind it will honour. Never recomputed on the client: the row does
+   * not carry the org-chart facts the answer depends on, and a second rule
+   * would drift from the one that is enforced.
+   *
+   * Optional because a page rendered against an older backend simply gets no
+   * buttons, which is the behaviour every list had before 4 ก.ย. 2569.
+   */
+  available_actions?: string[];
 }
 
 /* -------------------------------------------------------------------------- */
@@ -556,6 +588,15 @@ export interface RoleRow {
   description: string | null;
   isSystem: boolean;
   active: boolean;
+  /**
+   * How far up the holder's **own** branch this role's view starts, `null` for
+   * none.
+   *
+   * A level of the chart, not a unit: it resolves against whoever holds the
+   * role, so `DEPARTMENT` reaches RND for somebody in RND and Sale for
+   * somebody in Sale. Read-only — it opens rows, never buttons.
+   */
+  visibilityLevel: OrgUnitNode["kind"] | null;
   updatedAt: string;
   permissions: RolePermissionRow[];
   _count: { users: number };

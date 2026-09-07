@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import type { Session } from "./session-shape";
 import {
   AUTH_COOKIE,
   BACKEND_PREFIX,
@@ -7,34 +8,6 @@ import {
   USER_SERVICE_URL,
 } from "./backend";
 
-/** The §11.2 `GET /auth/me` payload. */
-export interface Session {
-  user: {
-    id: string;
-    username: string;
-    display_name: string;
-    email: string | null;
-    org_unit_id: string | null;
-    supervisor_user_id: string | null;
-    /** AUTH-04: signed in, but an admin has not placed them in the org chart. */
-    pending_org_assignment: boolean;
-  };
-  companies: {
-    id: string;
-    name: string;
-    doc_prefix: string;
-    is_primary: boolean;
-  }[];
-  active_company_id: string;
-  roles: string[];
-  permissions: string[];
-  /**
-   * Whether this person heads any group. Gates the "งานทั้งหมด" screen in the
-   * menu — a page that can only ever be empty reads as one that failed.
-   */
-  leads_units: boolean;
-  sensitive_fields_visible: string[];
-}
 
 /**
  * Reads the signed-in user's identity and permissions.
@@ -90,20 +63,10 @@ async function fetchMe(
   }
 }
 
-/**
- * Permission check for composing the UI.
- *
- * Hiding a menu item is a convenience, never the control — the backend
- * re-checks the same permission on every call, so a hand-typed URL gets a 403
- * regardless of what the menu showed.
- */
-export function can(session: Session | null, permission: string): boolean {
-  return session?.permissions.includes(permission) ?? false;
-}
-
-export function canAny(
-  session: Session | null,
-  permissions: readonly string[],
-): boolean {
-  return permissions.some((permission) => can(session, permission));
-}
+/*
+  Re-exported so every existing `from "@/lib/session"` keeps working. A client
+  component must import from `./session-shape` directly — reaching them through
+  here drags `next/headers` into the browser bundle.
+*/
+export { can, canAny } from "./session-shape";
+export type { Session } from "./session-shape";

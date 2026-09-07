@@ -43,6 +43,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     label: messages.nav.bottleneckReport,
     href: ROUTES.bottleneckReport,
     permissions: ["report.request.read"],
+    group: messages.nav.biGroup,
   },
 
   {

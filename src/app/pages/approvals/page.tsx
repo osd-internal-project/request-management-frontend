@@ -10,11 +10,14 @@ import { getSession } from "@/lib/session";
  * H2.3 — งานทั้งหมด.
  *
  * Replaces "รออนุมัติของฉัน", which asked a different question: that screen was
- * a queue of decisions, and this is a view of what the groups this person heads
- * are doing. The queue moved to the `อนุมัติ` tab on the landing page, beside
- * the other three, which is where somebody looks for their own work.
+ * a queue of decisions. The queue moved to the `อนุมัติ` tab on the landing
+ * page, beside the other three, which is where somebody looks for their own
+ * work.
  *
- * Read-only. See `LedWork` for why there are no buttons on it.
+ * Since 4 ก.ย. 2569 this lists **everything the viewer may open** — their own
+ * requests, the groups they head, and the groups a scope grant reaches. It
+ * listed only the last two before, which made it empty for most people with no
+ * way to tell that from a failed load.
  */
 export default async function AllWorkPage({
   searchParams,
@@ -55,20 +58,18 @@ export default async function AllWorkPage({
         <Text type="secondary">{messages.allWork.subtitle}</Text>
       </div>
 
-      {/*
-        Somebody who heads nothing gets an empty list from the backend, which is
-        correct but silent. Said explicitly, because "no work" and "this screen
-        is not for you" look identical otherwise.
-      */}
-      {!session?.leads_units && (
-        <Alert type="info" showIcon title={messages.allWork.notALead} />
-      )}
-
       {result.ok ? (
         <LedWork
           rows={result.data.data}
           types={types.ok ? types.data : []}
           filters={filters}
+          /*
+            An empty list is a real answer here, but "no work" and "you reach
+            no groups" look identical on screen. The reason travels with the
+            flag so the empty state can say which one it is.
+          */
+          leadsUnits={session?.leads_units ?? false}
+          session={session}
         />
       ) : (
         <Alert

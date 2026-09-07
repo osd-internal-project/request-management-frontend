@@ -16,11 +16,13 @@ import {
 import type {
   AuditLogRow,
   KeycloakRoleMappingRow,
+  OrgUnitNode,
   PermissionRow,
   RoleHolder,
   RoleRow,
 } from "@/lib/api/types";
 import { messages } from "@/lib/messages";
+import { SearchSelect } from "./search-select";
 
 /**
  * §5.4 guardrail 1 — the permissions a role holding `admin.*` may not have.
@@ -31,6 +33,21 @@ import { messages } from "@/lib/messages";
  * unsafe.
  */
 const FORBIDDEN_WITH_ADMIN = ["approval.decide", "request.sensitive.read"];
+
+/**
+ * The levels a role's view may start at, widest first.
+ *
+ * `TEAM` is here because the demo company and older charts are built on it —
+ * a role set to it must stay editable, and a picker that cannot show the value
+ * it holds is how a save silently clears one.
+ */
+const VISIBILITY_LEVELS: readonly OrgUnitNode["kind"][] = [
+  "COMPANY",
+  "DIVISION",
+  "DEPARTMENT",
+  "POSITION",
+  "TEAM",
+];
 
 /** The three columns §16 A4 draws, by permission module. */
 const GROUPS = [
@@ -96,6 +113,9 @@ export function RolePermissionAdmin({
   const [checked, setChecked] = useState<string[]>(
     initialRoles[0]?.permissions.map((p) => p.permissionCode) ?? [],
   );
+  const [level, setLevel] = useState<OrgUnitNode["kind"] | null>(
+    initialRoles[0]?.visibilityLevel ?? null,
+  );
   const [holders, setHolders] = useState(initialHolders);
   const [audit, setAudit] = useState(initialAudit);
   const [panelsLoading, setPanelsLoading] = useState(false);
@@ -127,6 +147,7 @@ export function RolePermissionAdmin({
     setSelectedId(role.id);
     selectedIdRef.current = role.id;
     setChecked(role.permissions.map((p) => p.permissionCode));
+    setLevel(role.visibilityLevel);
     setError(null);
 
     await refreshPanels(role.id);
@@ -181,7 +202,15 @@ export function RolePermissionAdmin({
     setBusy(true);
     setError(null);
 
-    const result = await updateRole(selected.id, { permissions: checked });
+    /*
+      The level goes with the permissions, always — this panel is the one place
+      that shows it, so what is on screen is what the role should end up with.
+      `null` clears it, which is why it is sent rather than omitted.
+    */
+    const result = await updateRole(selected.id, {
+      permissions: checked,
+      visibility_level: level,
+    });
 
     if (result.ok) {
       setRoles((current) =>
@@ -190,6 +219,7 @@ export function RolePermissionAdmin({
             ? {
                 ...role,
                 permissions: checked.map((code) => ({ permissionCode: code })),
+                visibilityLevel: level,
               }
             : role,
         ),
@@ -342,6 +372,40 @@ export function RolePermissionAdmin({
                 mappedRole(selected.id),
               )}
             />
+
+            <div>
+              <Text strong className="text-xs tracking-wide">
+                {messages.roleAdmin.visibilityLevel}
+              </Text>
+
+              <div className="mt-2">
+                <SearchSelect
+                  value={level}
+                  onChange={(value?: OrgUnitNode["kind"]) =>
+                    setLevel(value ?? null)
+                  }
+                  allowClear
+                  style={{ width: 260 }}
+                  placeholder={messages.roleAdmin.visibilityLevelNone}
+                  options={VISIBILITY_LEVELS.map((value) => ({
+                    value,
+                    label: messages.roleAdmin.visibilityLevelOf(
+                      messages.org.unitKinds[value],
+                    ),
+                  }))}
+                />
+              </div>
+
+              <Paragraph type="secondary" className="mt-2! mb-0! text-xs">
+                {messages.roleAdmin.visibilityLevelHint}
+              </Paragraph>
+
+              {level && (
+                <Paragraph type="secondary" className="mt-1! mb-0! text-xs">
+                  {messages.roleAdmin.visibilityLevelUnreachable}
+                </Paragraph>
+              )}
+            </div>
 
             {GROUPS.map((group) => {
               const rows = permissions.filter((permission) =>

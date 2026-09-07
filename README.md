@@ -16,6 +16,14 @@ yarn dev
 > **yarn only.** `packageManager` is pinned to `yarn@1.22.19`; mixing package
 > managers corrupts `node_modules`.
 
+> **`nvm use` first.** `.nvmrc` pins Node 22.13.0. The native modules here
+> (lightningcss, @tailwindcss/oxide, next-swc) are installed for the *architecture
+> of the Node that ran `yarn install`* — on Apple silicon that is arm64. Falling
+> back to an x64 Node (Homebrew's, say) makes `next dev` fail to compile
+> `globals.css` with `Cannot find module '../lightningcss.darwin-x64.node'`, and
+> Turbopack caches that failure: `rm -rf .next` is required even after switching
+> back to the right Node.
+
 The backend `user-service` must be running (`:3001`) — this app has no data of
 its own.
 

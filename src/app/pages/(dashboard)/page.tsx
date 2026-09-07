@@ -8,7 +8,7 @@ import requests from "@/lib/api/requests";
 
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
-import { getSession } from "@/lib/session";
+import { can, getSession } from "@/lib/session";
 
 /**
  * §16 หน้าที่ 2 — งานค้างของฉัน. The landing page after login.
@@ -81,13 +81,33 @@ export default async function MyWorkPage({
     page_size: 100,
   };
 
-  const [involvedResult, createdResult, incomingResult, approverResult, typesResult] =
+  /*
+    "A page must not fetch what its viewer cannot read." Somebody without
+    `approval.decide` can never be named on a step, so the อนุมัติ query is a
+    guaranteed empty result and the tab a guaranteed `· 0` — which reads as a
+    page that failed to load. Skipped, and the tab hidden with it.
+  */
+  const decides = can(session, "approval.decide");
+
+  const [
+    involvedResult,
+    createdResult,
+    incomingResult,
+    approverResult,
+    typesResult,
+    awaitingResult,
+  ] =
     await Promise.all([
       requests.getRequests({ ...filterArgs, view: "involved" }),
       requests.getRequests({ ...filterArgs, view: "created" }),
       requests.getRequests({ ...filterArgs, view: "incoming" }),
-      requests.getRequests({ ...filterArgs, view: "approver" }),
+      decides ? requests.getRequests({ ...filterArgs, view: "approver" }) : null,
       requests.getRequestTypes(),
+      /*
+        The badge count, unfiltered on purpose: "you owe three decisions" must
+        not change because somebody narrowed the table to one request type.
+      */
+      decides ? requests.myWorkViews.awaiting() : null,
     ]);
 
   const failed = [
@@ -95,7 +115,7 @@ export default async function MyWorkPage({
     createdResult,
     incomingResult,
     approverResult,
-  ].find((result) => !result.ok);
+  ].find((result) => result !== null && !result.ok);
 
   return (
     <div className="space-y-4">
@@ -128,9 +148,11 @@ export default async function MyWorkPage({
         involved={toTab(involvedResult)}
         created={toTab(createdResult)}
         incoming={toTab(incomingResult)}
-        approver={toTab(approverResult)}
+        approver={approverResult ? toTab(approverResult) : null}
+        awaiting={awaitingResult?.ok ? awaitingResult.data.total : 0}
         filters={filters}
         types={typesResult.ok ? typesResult.data : []}
+        session={session}
       />
     </div>
   );

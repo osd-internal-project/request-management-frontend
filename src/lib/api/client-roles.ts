@@ -12,6 +12,7 @@ import type {
   KeycloakRoleMappingRow,
   Paginated,
   RoleHolder,
+  OrgUnitNode,
   RoleRow,
   ScopeRuleRow,
 } from "./types";
@@ -21,6 +22,7 @@ export function createRole(input: {
   name: string;
   description?: string;
   permissions: string[];
+  visibility_level?: OrgUnitNode["kind"];
   company_id?: string;
 }): Promise<ClientResult<RoleRow>> {
   return adminApi<RoleRow>("roles", {
@@ -33,6 +35,10 @@ export function createRole(input: {
  * `permissions` replaces the whole set — the API takes it wholesale, so send
  * every permission the role should end up with, not a delta.
  *
+ * `visibility_level` is the other way round: omit it to leave the level as it
+ * is, send `null` to clear it. A caller that always sent the field would take
+ * the level away from every role it saved without showing one.
+ *
  * A set that pairs `admin.*` with `approval.decide` or
  * `request.sensitive.read` is refused with 422 (§5.4 guardrail 1). The screen
  * disables those boxes, but the rule lives in the backend: hiding a control is
@@ -44,6 +50,7 @@ export function updateRole(
     name?: string;
     description?: string;
     permissions?: string[];
+    visibility_level?: OrgUnitNode["kind"] | null;
     active?: boolean;
   },
 ): Promise<ClientResult<RoleRow>> {

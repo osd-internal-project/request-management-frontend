@@ -10,6 +10,7 @@ import { RolePermissionAdmin } from "@/components/role-permission-admin";
 import audit from "@/lib/api/audit";
 import orgUnits from "@/lib/api/org-units";
 import roleApi from "@/lib/api/roles";
+import users from "@/lib/api/users";
 
 import { messages } from "@/lib/messages";
 import { toOrgTab } from "@/lib/org-tabs";
@@ -39,9 +40,16 @@ export default async function AdminOrgPage({
 
   const session = await getSession();
 
-  const [unitsResult, unassignedResult] = await Promise.all([
+  const [unitsResult, unassignedResult, directoryResult] = await Promise.all([
     orgUnits.getOrgUnits(),
     orgUnits.getUnassignedUsers(),
+    /*
+      The scope pane's tree shows people under the groups they sit in, so a
+      grant can be written to one person. Fetched once here rather than per
+      expanded node: the whole directory is ~100 rows, and a request per node
+      would make the tree feel broken while it filled in.
+    */
+    users.getAllDirectoryUsers(),
   ]);
 
   // The unit opened on first paint, and its members, resolved here so the
@@ -172,6 +180,7 @@ export default async function AdminOrgPage({
             */}
             <GroupScopeAdmin
               units={unitsResult.data}
+              people={directoryResult.ok ? directoryResult.data : []}
               initialViewerId={initialSelectedId}
               initialScopes={scopesResult?.ok ? scopesResult.data : []}
             />

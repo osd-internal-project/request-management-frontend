@@ -22,7 +22,13 @@ import {
  */
 export async function getRequests(options?: {
   /** Omit for everything visible, the four tabs' union plus groups I lead. */
-  view?: "involved" | "created" | "incoming" | "approver" | "led";
+  view?:
+    | "involved"
+    | "created"
+    | "incoming"
+    | "approver"
+    | "awaiting"
+    | "led";
   status?: string;
   type_code?: string;
   q?: string;
@@ -55,19 +61,25 @@ export const myWorkViews = {
   /** สร้าง — raised by me. */
   created: (pageSize = 100) =>
     getRequests({ view: "created", page_size: pageSize }),
-  /** รับเรื่อง — handed to me and not finished. */
+  /** รับเรื่อง — handed to me, whatever became of it. */
   incoming: (pageSize = 100) =>
     getRequests({ view: "incoming", page_size: pageSize }),
-  /** อนุมัติ — waiting on my decision right now. */
+  /** อนุมัติ — every request naming me anywhere in its approval route. */
   approver: (pageSize = 100) =>
     getRequests({ view: "approver", page_size: pageSize }),
+  /**
+   * The badge on that tab: the subset actually waiting on my decision.
+   *
+   * One row is fetched, not none — the count lives in the envelope's `total`,
+   * and asking for `page_size: 0` would be a page of nothing with a total the
+   * server still had to compute.
+   */
+  awaiting: () => getRequests({ view: "awaiting", page_size: 1 }),
 };
 
 /**
- * งานทั้งหมด — the work of the groups this person heads, subtrees included.
- *
- * Read-only by design: the screen answers "what is happening under me", and a
- * head who wants to act on one of these opens it like anybody else.
+ * งานทั้งหมด — every request this person may open: their own, the groups they
+ * head with subtrees, and the groups a scope grant reaches.
  */
 export async function getLedRequests(options?: {
   status?: string;

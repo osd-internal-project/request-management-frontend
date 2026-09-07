@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Alert, App, Button, Input, Modal, Space } from "antd";
-import Text from "antd/es/typography/Text";
+import { Alert, App, Button, Modal, Space } from "antd";
 import {
   assignRequest,
   cancelRequest,
@@ -19,6 +18,10 @@ import {
 import type { CodedLabel } from "@/lib/api/types";
 import { messages } from "@/lib/messages";
 import { SearchSelect } from "@/components/search-select";
+import {
+  ReasonDialog,
+  type ReasonAction,
+} from "@/components/reason-dialog";
 import { ROUTES } from "@/lib/routes";
 
 /**
@@ -232,147 +235,6 @@ export function RequestActions({
         }}
       />
     </div>
-  );
-}
-
-/** The moves that ask for a reason before they happen. */
-type ReasonAction =
-  | "approve"
-  | "reject"
-  | "return"
-  | "hold"
-  | "cancel"
-  | "close";
-
-/** Only closing may be done without saying anything — see `CloseRequestDto`. */
-const OPTIONAL_NOTE: ReadonlySet<ReasonAction> = new Set(["close"]);
-
-const ACTION_TITLE: Record<ReasonAction, string> = {
-  approve: messages.requestDetail.approve,
-  reject: messages.requestDetail.reject,
-  return: messages.requestDetail.returnToRequester,
-  hold: messages.requestDetail.hold,
-  cancel: messages.requestDetail.cancel,
-  close: messages.requestDetail.close,
-};
-
-/**
- * Asks for the reason before the move, not after it.
- *
- * The backend refuses every one of these without a note — approvals included
- * since 1 Sep 2026 — so a button that fired first and reported `VALIDATION_
- * FAILED` afterwards would be teaching the rule through an error message.
- */
-function ReasonDialog({
-  action,
-  busy,
-  reasons,
-  returnToRequester,
-  onCancel,
-  onConfirm,
-}: {
-  readonly action: ReasonAction | null;
-  readonly busy: boolean;
-  /**
-   * REQ-04's standard bounce causes, from the type. Only `return` uses them.
-   *
-   * Empty means the type declares none, which the backend treats as "nothing
-   * may be returned" — said on screen rather than met as a 400.
-   */
-  readonly reasons: readonly CodedLabel[];
-  /**
-   * Whether "ตีกลับ" sends the request back to its requester (`REQ-04`) or
-   * merely returns the approval decision to the doing team.
-   *
-   * The two are different endpoints with different rules, and only the first
-   * asks for a coded reason.
-   */
-  readonly returnToRequester: boolean;
-  readonly onCancel: () => void;
-  readonly onConfirm: (
-    note: string,
-    reasonCode?: string,
-  ) => void | Promise<void>;
-}) {
-  const [note, setNote] = useState("");
-  const [reasonCode, setReasonCode] = useState<string | undefined>();
-
-  const optional = action ? OPTIONAL_NOTE.has(action) : false;
-  /*
-    Returning a request to its requester needs a code as well as a remark:
-    REQ-04 exists so "why do requests bounce?" can be counted, and free text
-    alone cannot be. Returning a *decision* is a different move — it goes
-    through the approval case, which asks only for the remark.
-  */
-  const needsReason = action === "return" && returnToRequester;
-  const ready =
-    (optional || note.trim().length > 0) && (!needsReason || Boolean(reasonCode));
-
-  function reset() {
-    setNote("");
-    setReasonCode(undefined);
-  }
-
-  return (
-    <Modal
-      open={Boolean(action)}
-      title={action ? ACTION_TITLE[action] : ""}
-      okText={action ? ACTION_TITLE[action] : ""}
-      cancelText={messages.org.confirmCancel}
-      confirmLoading={busy}
-      okButtonProps={{ disabled: !ready }}
-      onCancel={() => {
-        reset();
-        onCancel();
-      }}
-      onOk={() => {
-        const values = [note, reasonCode] as const;
-        reset();
-        void onConfirm(values[0], values[1]);
-      }}
-      destroyOnHidden
-    >
-      {needsReason && (
-        <div className="mb-2">
-          <Text strong className="mb-1 block">
-            {messages.requestDetail.returnReasonLabel}
-          </Text>
-          <SearchSelect
-            className="w-full"
-            value={reasonCode}
-            onChange={(value) => setReasonCode(value as string)}
-            placeholder={messages.requestDetail.returnReasonPlaceholder}
-            options={reasons.map((reason) => ({
-              value: reason.code,
-              label: reason.name || reason.code,
-            }))}
-            notFoundContent={messages.requestDetail.returnReasonMissing}
-          />
-        </div>
-      )}
-
-      <Input.TextArea
-        rows={4}
-        autoFocus
-        value={note}
-        onChange={(event) => setNote(event.target.value)}
-        placeholder={
-          optional
-            ? messages.requestDetail.noteOptional
-            : messages.requestDetail.reasonLabel
-        }
-      />
-      {!optional && !note.trim() && (
-        <Text type="secondary" className="mt-1 block text-xs">
-          {messages.requestDetail.reasonRequired}
-        </Text>
-      )}
-      {needsReason && !reasons.length && (
-        <Text type="danger" className="mt-1 block text-xs">
-          {messages.requestDetail.returnReasonMissing}
-        </Text>
-      )}
-    </Modal>
   );
 }
 

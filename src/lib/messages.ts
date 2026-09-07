@@ -186,29 +186,37 @@ export const messages = {
   /** The A3 "การมองเห็นข้อมูล" pane — an explanation, not a setting. */
   /** The editable half of the pane — which group sees which group's work. */
   groupScope: {
-    title: "ขอบเขตข้อมูลของ Group",
+    title: "ขอบเขตข้อมูล",
     intro:
-      "เลือกระดับและ Group ที่ต้องการตั้งสิทธิ์ แล้วระบุว่า Group นั้นเห็นงานของ Group ไหนได้บ้าง นอกเหนือจากงานที่ตนเกี่ยวข้องและงานของ Group ที่ตนเป็นหัวหน้า",
+      "เลือกกลุ่มหรือบุคคลจากผังทางซ้าย แล้วระบุว่าเห็นงานของกลุ่มหรือบุคคลใดได้บ้าง นอกเหนือจากงานที่ตนเกี่ยวข้องและงานของกลุ่มที่ตนเป็นหัวหน้า",
+    viewerPanel: "ผู้รับสิทธิ์",
+    targetPanel: "เห็นงานของ",
+    searchViewer: "ค้นหากลุ่มหรือบุคคล",
+    pickViewer: "เลือกกลุ่มหรือบุคคลจากผังทางซ้าย",
+    noMatch: "ไม่พบกลุ่มหรือบุคคลที่ค้นหา",
+    addTitle: "เพิ่มสิทธิ์",
+    kindUnit: "กลุ่ม",
+    kindUser: "บุคคล",
     level: "ระดับ",
-    viewer: "Group ที่ได้รับสิทธิ์",
-    pickViewer: "เลือก Group ก่อน",
-    noUnitsAtLevel: "ยังไม่มี Group ที่ระดับนี้",
-    targets: "เห็นงานของ Group",
-    addTarget: "+ เพิ่ม Group",
-    pickTarget: "เลือก Group ปลายทาง",
-    columnTarget: "Group ปลายทาง",
-    columnDescendants: "รวม Group ย่อย",
+    noUnitsAtLevel: "ยังไม่มีกลุ่มที่ระดับนี้",
+    pickTarget: "เลือกกลุ่มปลายทาง",
+    pickTargetUser: "เลือกบุคคลปลายทาง",
+    columnTarget: "ปลายทาง",
+    columnDescendants: "รวมกลุ่มย่อย",
     columnAct: "ทำงานต่อได้",
     columnRemove: "",
     remove: "ลบ",
-    empty: "ยังไม่ได้ให้สิทธิ์เห็นงานของ Group ใด",
+    /* A person has no subtree, so the checkbox has nothing to reach. */
+    descendantsNotForUser: "ใช้ได้เฉพาะปลายทางที่เป็นกลุ่ม — บุคคลไม่มีกลุ่มย่อย",
+    empty: "ยังไม่ได้ให้สิทธิ์เห็นงานของกลุ่มหรือบุคคลใด",
     save: "บันทึก",
     saved: "บันทึกแล้ว",
+    grantCount: "สิทธิ์",
     /* Said on the screen because it is not obvious and it is asked every time. */
     inheritNote:
-      "สิทธิ์ถ่ายทอดลงล่าง — ตั้งที่ระดับบริษัทจะมีผลกับทุกคนในบริษัท ตั้งที่ฝ่ายจะมีผลกับแผนกใต้ฝ่ายนั้น",
+      "สิทธิ์ที่ตั้งให้กลุ่มถ่ายทอดลงล่าง — ตั้งที่ระดับบริษัทจะมีผลกับทุกคนในบริษัท ตั้งที่ฝ่ายจะมีผลกับแผนกใต้ฝ่ายนั้น · สิทธิ์ที่ตั้งให้บุคคลมีผลกับคนนั้นคนเดียว",
     actWarning:
-      "ติ๊ก “ทำงานต่อได้” แล้วคนใน Group นี้จะกดรับงาน/ปิดงานของ Group ปลายทางได้ ไม่ใช่แค่เปิดอ่าน",
+      "ติ๊ก “ทำงานต่อได้” แล้วผู้รับสิทธิ์จะกดรับงาน/ปิดงานของปลายทางได้ ไม่ใช่แค่เปิดอ่าน",
     /*
       core-service caches the principal for the access token's lifetime, so a
       grant saved here does not reach a session already open. Said plainly
@@ -229,11 +237,16 @@ export const messages = {
       "หัวหน้า Group เห็นคำขอของ Group ตนเอง รวมทุก Group ที่อยู่ใต้ลงไปทุกชั้น",
       "ผู้รับมอบอำนาจอนุมัติ (delegation) เห็นและอนุมัติงานของผู้มอบได้ตลอดช่วงที่ได้รับมอบ",
       "Group ที่ได้รับสิทธิ์ตามตารางด้านบน เห็นงานของ Group ปลายทางเพิ่มจากกฎเหล่านี้",
+      "role ที่ตั้ง “ระดับการมองเห็นข้อมูล” ไว้ เห็นงานทั้งหมดใต้หน่วยงานของผู้ถือเองที่ระดับนั้น — เห็นอย่างเดียว ไม่ได้สิทธิ์ดำเนินการ",
       "สิทธิ์ในการ *กระทำ* กับคำขอมาจากความเกี่ยวข้องและผังองค์กร ไม่ได้มาจาก role",
     ],
     rolesTitle: "role ที่มีสิทธิ์ขยายการมองเห็น",
     columnRole: "role",
     columnWidening: "เห็นได้กว้างกว่าปกติเพราะ",
+    columnLevel: "ระดับการมองเห็น",
+    /** Read from `Role.visibilityLevel`; the branch differs per holder. */
+    levelOf: (label: string) => `ทั้ง${label}ของผู้ถือ`,
+    noLevel: "—",
     columnHolders: "ผู้ถือ",
     involvedOnly: "เฉพาะที่ตนเกี่ยวข้องและที่ตนเป็นหัวหน้า",
     readAll: "เห็นทุกคำขอในบริษัท",
@@ -260,6 +273,20 @@ export const messages = {
     save: "บันทึก",
     saved: "บันทึกแล้ว — มีผลทันทีกับ API call ถัดไป",
     selectFirst: "เลือก role ทางซ้ายเพื่อแก้ไข",
+
+    /**
+     * `Role.visibilityLevel` — a level of the chart, resolved against whoever
+     * holds the role. The hint says "ของตัวเอง" because that is the whole
+     * difference from the levels withdrawn on 31 ส.ค. 2569: it is not a rank
+     * everybody shares, it is each holder's own branch.
+     */
+    visibilityLevel: "ระดับการมองเห็นข้อมูล",
+    visibilityLevelNone: "ไม่กำหนด — เห็นเฉพาะงานที่เกี่ยวข้อง",
+    visibilityLevelHint:
+      "เห็นงานทั้งหมดใต้หน่วยงานของ *ตัวผู้ถือ role เอง* ที่ระดับนี้ เช่น เลือก “แผนก” คนใน RND เห็นทั้ง RND คนใน Sale เห็นทั้ง Sale · เห็นอย่างเดียว ไม่ได้สิทธิ์ดำเนินการ",
+    visibilityLevelUnreachable:
+      "ผู้ถือ role ที่ไม่มีหน่วยงานระดับนี้อยู่เหนือขึ้นไป จะไม่ได้เห็นอะไรเพิ่ม",
+    visibilityLevelOf: (label: string) => `เห็นทั้ง${label}ของตน`,
 
     membershipNote: (keycloakRole: string | null) =>
       keycloakRole
@@ -719,14 +746,21 @@ export const messages = {
     days: ["จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์", "อาทิตย์"],
   },
 
-  /** H2.3 — งานทั้งหมด, the read-only view of what a head's groups are doing. */
+  /**
+   * H2.3 — งานทั้งหมด, every request this person may open.
+   *
+   * The screen used to list only the groups the viewer heads, so it was empty
+   * for everybody who heads nothing — with nothing on the page to say why.
+   * `emptyReason` exists so an empty list can never again be mistaken for a
+   * failed load.
+   */
   allWork: {
     title: "งานทั้งหมด",
     subtitle:
-      "งานของหน่วยงานที่คุณเป็นหัวหน้า รวมหน่วยงานที่อยู่ภายใต้ · ดูอย่างเดียว",
-    empty: "ยังไม่มีงานในหน่วยงานที่คุณดูแล",
-    notALead:
-      "หน้านี้แสดงงานของหน่วยงานที่คุณเป็นหัวหน้า — ตอนนี้คุณยังไม่ได้เป็นหัวหน้าหน่วยงานใด",
+      "ทุกคำขอที่คุณเข้าถึงได้ — งานของคุณเอง งานของหน่วยงานที่คุณเป็นหัวหน้า และหน่วยงานที่ได้รับสิทธิ์ scope",
+    empty: "ยังไม่มีคำขอที่คุณเข้าถึงได้",
+    emptyReason:
+      "คุณยังไม่ได้เป็นหัวหน้าหน่วยงานใด และยังไม่ได้รับสิทธิ์ scope ให้เห็นงานของหน่วยงานอื่น — หน้านี้จึงแสดงเฉพาะคำขอที่คุณเกี่ยวข้องโดยตรง",
   },
 
   myWork: {
@@ -745,6 +779,8 @@ export const messages = {
     tabCreated: "สร้าง",
     tabIncoming: "รับเรื่อง",
     tabApprovals: "อนุมัติ",
+    /** The badge beside it: how many are actually waiting on this person. */
+    awaitingMe: "รอคุณตัดสิน",
     emptyIncoming: "ไม่มีคำขอที่ส่งมาให้คุณ",
     search: "ค้นหาเลขที่ / ลูกค้า / ดีล",
     filterStatus: "สถานะ",
@@ -757,6 +793,7 @@ export const messages = {
       status: "สถานะ",
       currentStep: "ขั้นปัจจุบัน",
       dueAt: "ครบกำหนด",
+      actions: "การดำเนินการ",
       requester: "ผู้ขอ",
     },
     /**

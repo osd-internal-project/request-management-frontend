@@ -121,6 +121,27 @@ export function ScopeRulesAdmin({ roles }: { readonly roles: RoleRow[] }) {
                 ),
             },
             {
+              /*
+                The question this pane exists to answer is "why can this person
+                not see that", and since 7 ก.ย. 2569 a role's level is one of
+                the answers. Read-only here like everything else on this pane —
+                it is set in the Role tab, beside the permissions.
+              */
+              title: messages.scopeInfo.columnLevel,
+              key: "level",
+              width: 140,
+              render: (_: unknown, row: (typeof rows)[number]) =>
+                row.role.visibilityLevel ? (
+                  <Tag color="cyan">
+                    {messages.scopeInfo.levelOf(
+                      messages.org.unitKinds[row.role.visibilityLevel],
+                    )}
+                  </Tag>
+                ) : (
+                  <Text type="secondary">{messages.scopeInfo.noLevel}</Text>
+                ),
+            },
+            {
               title: messages.scopeInfo.columnHolders,
               key: "holders",
               width: 90,
