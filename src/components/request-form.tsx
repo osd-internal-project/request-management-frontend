@@ -78,6 +78,7 @@ export function RequestForm({
   people,
   units,
   parentRequestId,
+  initialRef,
 }: {
   types: RequestType[];
   /** The directory the `ผู้รับเรื่อง` selector draws from. */
@@ -86,6 +87,9 @@ export function RequestForm({
   units: OrgUnitShape[];
   /** Set when this request is being raised from inside another one. */
   parentRequestId?: string | null;
+  /** REQ-06 / C360-06 — raised from an entity page (เช่น หน้า 360° ลูกค้า):
+   * the ref arrives prefilled and typed, ไม่ต้องพิมพ์ซ้ำ. */
+  initialRef?: { type: string; id: string } | null;
 }) {
   // antd's `message` from context, so it inherits the app theme.
   const { message } = App.useApp();
@@ -115,8 +119,12 @@ export function RequestForm({
     string | undefined
   >(types.length === 1 ? (types[0].receiverOrgUnitId ?? undefined) : undefined);
   const [values, setValues] = useState<Record<string, unknown>>({});
-  const [refId, setRefId] = useState("");
+  const [refId, setRefId] = useState(initialRef?.id ?? "");
   const [draftId, setDraftId] = useState<string | null>(null);
+
+  /** The prefilled ref keeps its own type; a hand-typed one stays "deal". */
+  const refTypeOf = (id: string) =>
+    initialRef && id === initialRef.id ? initialRef.type : "deal";
   const [attachments, setAttachments] = useState<RequestAttachment[]>([]);
   const [preview, setPreview] = useState<ChainPreview | null>(null);
   /**
@@ -211,7 +219,7 @@ export function RequestForm({
     const created = await createDraft({
       type_code: typeCode,
       form_data: values,
-      ref_type: refId ? "deal" : undefined,
+      ref_type: refId ? refTypeOf(refId) : undefined,
       ref_id: refId || undefined,
       receiver_user_id: receiverId,
       receiver_org_unit_id: receiverOrgUnitId,
@@ -300,7 +308,7 @@ export function RequestForm({
     if (id) {
       const saved = await saveDraft(id, {
         form_data: values,
-        ref_type: refId ? "deal" : null,
+        ref_type: refId ? refTypeOf(refId) : null,
         ref_id: refId || null,
         receiver_user_id: receiverId ?? null,
         receiver_org_unit_id: receiverOrgUnitId,
@@ -373,7 +381,7 @@ export function RequestForm({
       */
       await saveDraft(id, {
         form_data: values,
-        ref_type: refId ? "deal" : null,
+        ref_type: refId ? refTypeOf(refId) : null,
         ref_id: refId || null,
         receiver_user_id: receiverId ?? null,
         receiver_org_unit_id: receiverOrgUnitId,

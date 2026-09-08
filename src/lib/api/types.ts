@@ -688,6 +688,17 @@ export interface CustomerDetail extends CustomerRow {
   createdBy: string | null;
 }
 
+/** C360-01 — ตัวเลขการ์ดหน้า 360° (GET /customers/:id/summary). */
+export interface CustomerSummary {
+  contacts: number;
+  locations: number;
+  branchCustomers: number;
+  /** null = viewer has no request.read — hide the card (C360-04). */
+  requests: { total: number; open: number | null } | null;
+  /** null until the Odoo connector (ชุดงาน D). */
+  financials: null;
+}
+
 /** CM-10 — one file row's fate from POST /customers/import. */
 export interface ImportRowResult {
   rowNo: number;

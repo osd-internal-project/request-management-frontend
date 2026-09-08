@@ -30,7 +30,9 @@ import { ROUTES } from "@/lib/routes";
 import type {
   CustomerDetail,
   CustomerFieldChange,
+  CustomerSummary,
   CustomerTimelineEvent,
+  RequestRow,
   SegmentOption,
 } from "@/lib/api/types";
 
@@ -56,12 +58,18 @@ export function CustomerDetailView({
   timeline,
   segmentOptions,
   canManage,
+  summary,
+  relatedRequests,
 }: {
   customer: CustomerDetail;
   history: CustomerFieldChange[];
   timeline: CustomerTimelineEvent[];
   segmentOptions: SegmentOption[];
   canManage: boolean;
+  /** C360-01 header-card numbers; null when the fetch failed. */
+  summary: CustomerSummary | null;
+  /** null = viewer has no request.read (C360-04: tab hidden, not empty). */
+  relatedRequests: RequestRow[] | null;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -130,14 +138,23 @@ export function CustomerDetailView({
             )}
           </Space>
         </div>
-        {editable && (
-          <Space>
-            <Link href={ROUTES.customerEdit(customer.id)}>
-              <Button>{m.detail.edit}</Button>
+        <Space>
+          {relatedRequests !== null && (
+            <Link
+              href={`${ROUTES.newRequest}?ref_type=customer&ref_id=${customer.id}`}
+            >
+              <Button type="primary">{m.detail.raiseRequest}</Button>
             </Link>
-            <LifecycleButtons status={customer.status} onAct={act} />
-          </Space>
-        )}
+          )}
+          {editable && (
+            <>
+              <Link href={ROUTES.customerEdit(customer.id)}>
+                <Button>{m.detail.edit}</Button>
+              </Link>
+              <LifecycleButtons status={customer.status} onAct={act} />
+            </>
+          )}
+        </Space>
       </div>
 
       {!customer.kycVerified && (
@@ -216,6 +233,56 @@ export function CustomerDetailView({
         />
       </Card>
 
+      {summary && (
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+          {summary.requests && (
+            <Card size="small">
+              <Text type="secondary" className="block text-xs">
+                {m.detail.cards.openRequests}
+              </Text>
+              <div className="text-xl font-semibold">
+                {summary.requests.open ?? 0}
+              </div>
+              <Text type="secondary" className="text-xs">
+                {m.detail.cards.totalRequestsSuffix(
+                  String(summary.requests.total),
+                )}
+              </Text>
+            </Card>
+          )}
+          <Card size="small">
+            <Text type="secondary" className="block text-xs">
+              {m.detail.cards.contacts}
+            </Text>
+            <div className="text-xl font-semibold">{summary.contacts}</div>
+          </Card>
+          <Card size="small">
+            <Text type="secondary" className="block text-xs">
+              {m.detail.cards.locations}
+            </Text>
+            <div className="text-xl font-semibold">{summary.locations}</div>
+          </Card>
+          <Card size="small">
+            <Text type="secondary" className="block text-xs">
+              {m.detail.cards.branchCustomers}
+            </Text>
+            <div className="text-xl font-semibold">
+              {summary.branchCustomers}
+            </div>
+          </Card>
+          {/* C360-02 — ยอดค้างชำระอ่านจาก Odoo (ชุดงาน D); การ์ดบอกตรง ๆ ว่ารอ */}
+          <Card size="small">
+            <Text type="secondary" className="block text-xs">
+              {m.detail.cards.outstanding}
+            </Text>
+            <div className="text-xl font-semibold">—</div>
+            <Text type="secondary" className="text-xs">
+              {m.detail.cards.outstandingPending}
+            </Text>
+          </Card>
+        </div>
+      )}
+
       <Tabs
         defaultActiveKey={searchParams.get("tab") ?? "contacts"}
         items={[
@@ -265,6 +332,15 @@ export function CustomerDetailView({
               />
             ),
           },
+          ...(relatedRequests !== null
+            ? [
+                {
+                  key: "requests",
+                  label: `${m.detail.tabRequests} · ${relatedRequests.length}`,
+                  children: <RelatedRequestsTab rows={relatedRequests} />,
+                },
+              ]
+            : []),
           {
             key: "history",
             label: m.detail.tabHistory,
@@ -275,14 +351,20 @@ export function CustomerDetailView({
             label: m.detail.tabTimeline,
             children: <TimelineTab timeline={timeline} />,
           },
+          /* C360-01 — โครงหน้าครบตั้งแต่แรก: แท็บที่ยังไม่มา เปิดแล้วบอกว่า
+             มากับโมดูลไหน ไม่ fetch อะไร (C360-04) */
+          ...Object.entries(m.detail.futureTabs).map(([key, tab]) => ({
+            key: `future-${key}`,
+            label: tab.label,
+            children: (
+              <Empty
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                description={m.detail.futureTabNote(tab.phase)}
+              />
+            ),
+          })),
         ]}
       />
-
-      {/* C360-01: the future tabs are named now so the page's shape is
-          settled — each arrives with its module, gated before fetch. */}
-      <Text type="secondary" className="block text-xs">
-        {m.detail.futureTabsHint}
-      </Text>
     </div>
   );
 }
@@ -827,6 +909,58 @@ function LocationsTab({
         )}
       </Modal>
     </div>
+  );
+}
+
+/** C360 — คำขอที่อ้างถึงลูกค้ารายนี้ (REQ-06 ref_type=customer). */
+function RelatedRequestsTab({ rows }: { rows: RequestRow[] }) {
+  if (!rows.length) {
+    return (
+      <Empty
+        image={Empty.PRESENTED_IMAGE_SIMPLE}
+        description={m.detail.noRequests}
+      />
+    );
+  }
+
+  return (
+    <Table<RequestRow>
+      size="small"
+      rowKey="id"
+      pagination={false}
+      dataSource={rows}
+      columns={[
+        {
+          title: m.detail.requestColumns.no,
+          dataIndex: "requestNo",
+          render: (no: string | null, row) => (
+            <Link href={ROUTES.requestDetail(row.id)}>
+              {no ?? messages.myWork.noNumber}
+            </Link>
+          ),
+        },
+        {
+          title: m.detail.requestColumns.type,
+          dataIndex: "requestType",
+          render: (requestType: RequestRow["requestType"], row) =>
+            requestType?.name ?? row.typeCode,
+        },
+        {
+          title: m.detail.requestColumns.status,
+          dataIndex: "status",
+          width: 140,
+          render: (status: string) => (
+            <Tag>{messages.myWork.status[status] ?? status}</Tag>
+          ),
+        },
+        {
+          title: m.detail.requestColumns.due,
+          dataIndex: "dueAt",
+          width: 160,
+          render: (dueAt: string | null) => (dueAt ? formatWhen(dueAt) : "—"),
+        },
+      ]}
+    />
   );
 }
 

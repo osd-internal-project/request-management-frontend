@@ -1154,8 +1154,44 @@ export const messages = {
       deleteLocationConfirm: "ลบที่อยู่/ไซต์นี้?",
       saveSegments: "บันทึกกลุ่ม",
       segmentsSaved: "บันทึกกลุ่มลูกค้าแล้ว",
-      futureTabsHint:
-        "ดีล · ใบเสนอราคา · เคส · การเงิน จะมาในมุมมองลูกค้า 360° (ระยะถัดของสปรินต์นี้)",
+      raiseRequest: "ยื่นคำขอ",
+      cards: {
+        openRequests: "คำขอค้าง",
+        totalRequestsSuffix: (total: string) => `จากทั้งหมด ${total}`,
+        contacts: "ผู้ติดต่อ",
+        locations: "ที่อยู่/ไซต์",
+        branchCustomers: "สาขาในเครือ",
+        outstanding: "ยอดค้างชำระ",
+        outstandingPending: "มาพร้อมตัวเชื่อม Odoo",
+      },
+      tabRequests: "คำขอ",
+      noRequests: "ยังไม่มีคำขอที่อ้างถึงลูกค้ารายนี้",
+      requestColumns: {
+        no: "เลขที่",
+        type: "ประเภท",
+        status: "สถานะ",
+        due: "กำหนด",
+      },
+      /** C360-01 — โครงหน้าครบตั้งแต่แรก: แท็บที่ยังไม่มาระบุระยะไว้เลย */
+      futureTabs: {
+        deals: { label: "ดีล", phase: "มาพร้อมโมดูล Sales (CRM ระยะถัดไป)" },
+        quotations: {
+          label: "ใบเสนอราคา",
+          phase: "มาพร้อมโมดูล Sales (CRM ระยะถัดไป)",
+        },
+        contracts: { label: "สัญญา", phase: "มาพร้อมโมดูล Legal (ระยะ 2)" },
+        projects: { label: "โครงการ", phase: "มาพร้อมโมดูล PM (ระยะ 3)" },
+        cases: { label: "เคส", phase: "มาพร้อมงานเคส/ข้อร้องเรียน (CRM ระยะถัดไป)" },
+        financials: {
+          label: "การเงิน",
+          phase: "มาพร้อมตัวเชื่อม Odoo (ชุดงาน D) — ยอดค้างชำระอ่านจาก Odoo ที่เดียว",
+        },
+        assets: {
+          label: "อุปกรณ์",
+          phase: "มาพร้อมโมดูล Service & Support — ทะเบียนอุปกรณ์สร้างอัตโนมัติตอนส่งมอบ",
+        },
+      },
+      futureTabNote: (phase: string) => `แท็บนี้ ${phase}`,
     },
 
     /** CM-10 — นำเข้าลูกค้าเดิมจาก Excel (admin.crm.manage). */

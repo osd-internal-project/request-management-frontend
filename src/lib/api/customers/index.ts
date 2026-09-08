@@ -14,6 +14,7 @@ import type {
   CustomerDetail,
   CustomerFieldChange,
   CustomerRow,
+  CustomerSummary,
   CustomerTimelineEvent,
   Paginated,
   SegmentDimension,
@@ -61,6 +62,13 @@ export async function getCustomerTimeline(
   return apiGet<CustomerTimelineEvent[]>(`/customers/${id}/timeline`);
 }
 
+/** C360-01 — ตัวเลขการ์ดหน้า 360° นับผ่าน filter เดียวกับแท็บ. */
+export async function getCustomerSummary(
+  id: string,
+): Promise<ApiResult<CustomerSummary>> {
+  return apiGet(`customers/${id}/summary`);
+}
+
 /**
  * CM-07 — active values with their dimensions, for the form's pickers and the
  * register's filter. `crm.customer.read` suffices; the admin surface (which
@@ -85,6 +93,7 @@ const customersApi = {
   getCustomer,
   getCustomerHistory,
   getCustomerTimeline,
+  getCustomerSummary,
   getSegmentOptions,
   getSegmentDimensions,
 };
