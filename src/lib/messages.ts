@@ -1163,6 +1163,8 @@ export const messages = {
         branchCustomers: "สาขาในเครือ",
         outstanding: "ยอดค้างชำระ",
         outstandingPending: "มาพร้อมตัวเชื่อม Odoo",
+        outstandingDetail: (count: string, asOf: string) =>
+          `ค้าง ${count} ใบ · ข้อมูล ${asOf}`,
       },
       tabRequests: "คำขอ",
       noRequests: "ยังไม่มีคำขอที่อ้างถึงลูกค้ารายนี้",

@@ -695,8 +695,12 @@ export interface CustomerSummary {
   branchCustomers: number;
   /** null = viewer has no request.read — hide the card (C360-04). */
   requests: { total: number; open: number | null } | null;
-  /** null until the Odoo connector (ชุดงาน D). */
-  financials: null;
+  /** C360-02 — cached from Odoo by the hourly sync; null = never synced. */
+  financials: {
+    outstanding: number;
+    invoiceCount: number;
+    asOf: string;
+  } | null;
 }
 
 /** CM-10 — one file row's fate from POST /customers/import. */

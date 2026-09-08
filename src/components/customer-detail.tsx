@@ -270,14 +270,24 @@ export function CustomerDetailView({
               {summary.branchCustomers}
             </div>
           </Card>
-          {/* C360-02 — ยอดค้างชำระอ่านจาก Odoo (ชุดงาน D); การ์ดบอกตรง ๆ ว่ารอ */}
+          {/* C360-02 — ยอดค้างชำระจาก cache ของรอบ sync (CM-06); ยังไม่เคย
+              sync = บอกตรง ๆ ว่ารอ Odoo ไม่โชว์ขีดลอย ๆ */}
           <Card size="small">
             <Text type="secondary" className="block text-xs">
               {m.detail.cards.outstanding}
             </Text>
-            <div className="text-xl font-semibold">—</div>
+            <div className="text-xl font-semibold">
+              {summary.financials
+                ? summary.financials.outstanding.toLocaleString("th-TH")
+                : "—"}
+            </div>
             <Text type="secondary" className="text-xs">
-              {m.detail.cards.outstandingPending}
+              {summary.financials
+                ? m.detail.cards.outstandingDetail(
+                    String(summary.financials.invoiceCount),
+                    formatWhen(summary.financials.asOf),
+                  )
+                : m.detail.cards.outstandingPending}
             </Text>
           </Card>
         </div>
