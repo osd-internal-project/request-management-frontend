@@ -1060,6 +1060,18 @@ export const messages = {
       contactPosition: "ตำแหน่ง",
       contactPrimary: "ผู้ติดต่อหลัก",
       addContact: "เพิ่มผู้ติดต่อ",
+      consentColumn: "ความยินยอม (PDPA)",
+      consentEmail: "อีเมล",
+      consentPhone: "โทร",
+      consentStates: {
+        granted: "ยินยอมแล้ว",
+        none: "ยังไม่มีความยินยอม",
+        withdrawn: "ถอนความยินยอมแล้ว",
+        unknown: "ตรวจไม่ได้",
+      } as Record<string, string>,
+      doNotCall: "ห้ามโทร",
+      consentHint:
+        "สถานะอ่านสดจากระบบ PDPA กลาง — ระบบนี้ไม่เก็บสำเนา · ช่องทางที่ไม่มีความยินยอมห้ามใช้ทำแคมเปญ",
 
       errors: {
         nameRequired: "กรุณากรอกชื่อลูกค้า",

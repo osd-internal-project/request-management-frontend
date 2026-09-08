@@ -703,6 +703,16 @@ export interface CustomerSummary {
   } | null;
 }
 
+/** CM-05 — consent badge ต่อผู้ติดต่อ อ่านสดจากระบบ PDPA กลาง (ไม่เก็บซ้ำ). */
+export type ConsentState = "granted" | "none" | "withdrawn" | "unknown";
+
+export interface ContactConsentStatus {
+  contactId: string;
+  email: ConsentState | null;
+  phone: ConsentState | null;
+  doNotCall: boolean;
+}
+
 /** CM-10 — one file row's fate from POST /customers/import. */
 export interface ImportRowResult {
   rowNo: number;

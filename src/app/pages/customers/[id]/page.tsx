@@ -23,13 +23,14 @@ export default async function CustomerDetailPage({
 
   const canReadRequests = can(session, "request.read");
 
-  const [detailResult, historyResult, timelineResult, optionsResult, summaryResult, requestsResult] =
+  const [detailResult, historyResult, timelineResult, optionsResult, summaryResult, consentsResult, requestsResult] =
     await Promise.all([
       customers.getCustomer(id),
       customers.getCustomerHistory(id),
       customers.getCustomerTimeline(id),
       customers.getSegmentOptions(),
       customers.getCustomerSummary(id),
+      customers.getContactConsents(id),
       // C360-04: gate-before-fetch — a viewer without request.read never
       // triggers this call, so no guaranteed-403 lands in the logs.
       canReadRequests
@@ -49,6 +50,7 @@ export default async function CustomerDetailPage({
       segmentOptions={optionsResult.ok ? optionsResult.data : []}
       canManage={can(session, "crm.customer.manage")}
       summary={summaryResult.ok ? summaryResult.data : null}
+      consents={consentsResult.ok ? consentsResult.data : []}
       relatedRequests={
         requestsResult?.ok ? requestsResult.data.data : canReadRequests ? [] : null
       }

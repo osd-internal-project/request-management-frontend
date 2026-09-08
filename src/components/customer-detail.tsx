@@ -28,6 +28,7 @@ import { appApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import type {
+  ContactConsentStatus,
   CustomerDetail,
   CustomerFieldChange,
   CustomerSummary,
@@ -37,6 +38,14 @@ import type {
 } from "@/lib/api/types";
 
 const m = messages.customers;
+
+/** CM-05 badge palette — semantic, not the accent. */
+const CONSENT_COLOR: Record<string, string | undefined> = {
+  granted: "green",
+  none: undefined,
+  withdrawn: "red",
+  unknown: "orange",
+};
 
 function formatWhen(iso: string): string {
   const at = new Date(iso);
@@ -59,6 +68,7 @@ export function CustomerDetailView({
   segmentOptions,
   canManage,
   summary,
+  consents,
   relatedRequests,
 }: {
   customer: CustomerDetail;
@@ -68,6 +78,8 @@ export function CustomerDetailView({
   canManage: boolean;
   /** C360-01 header-card numbers; null when the fetch failed. */
   summary: CustomerSummary | null;
+  /** CM-05 — live consent per contact from the central PDPA service. */
+  consents: ContactConsentStatus[];
   /** null = viewer has no request.read (C360-04: tab hidden, not empty). */
   relatedRequests: RequestRow[] | null;
 }) {
@@ -302,6 +314,7 @@ export function CustomerDetailView({
             children: (
               <ContactsTab
                 customer={customer}
+                consents={consents}
                 editable={editable}
                 onError={setError}
               />
@@ -474,13 +487,16 @@ interface ContactFormState {
 
 function ContactsTab({
   customer,
+  consents,
   editable,
   onError,
 }: {
   customer: CustomerDetail;
+  consents: ContactConsentStatus[];
   editable: boolean;
   onError: (message: string | null) => void;
 }) {
+  const consentOf = new Map(consents.map((row) => [row.contactId, row]));
   const router = useRouter();
   const [editing, setEditing] = useState<ContactFormState | null>(null);
   const [busy, setBusy] = useState(false);
@@ -566,6 +582,32 @@ function ContactsTab({
           { title: m.form.contactPosition, dataIndex: "position" },
           { title: m.form.contactPhone, dataIndex: "phone" },
           { title: m.form.contactEmail, dataIndex: "email" },
+          {
+            /* CM-05 — สถานะอ่านสดจาก PDPA กลาง ไม่มีสำเนาในระบบนี้ */
+            title: m.form.consentColumn,
+            key: "consent",
+            render: (_: unknown, row: CustomerDetail["contacts"][number]) => {
+              const status = consentOf.get(row.id);
+              if (!status) return <Text type="secondary">—</Text>;
+              return (
+                <Space size={4} wrap>
+                  {status.email && (
+                    <Tag color={CONSENT_COLOR[status.email]}>
+                      {`${m.form.consentEmail}: ${m.form.consentStates[status.email]}`}
+                    </Tag>
+                  )}
+                  {status.phone && (
+                    <Tag color={CONSENT_COLOR[status.phone]}>
+                      {`${m.form.consentPhone}: ${m.form.consentStates[status.phone]}`}
+                    </Tag>
+                  )}
+                  {status.doNotCall && (
+                    <Tag color="red">{m.form.doNotCall}</Tag>
+                  )}
+                </Space>
+              );
+            },
+          },
           ...(editable
             ? [
                 {
@@ -608,6 +650,10 @@ function ContactsTab({
             : []),
         ]}
       />
+
+      <Text type="secondary" className="block text-xs">
+        {m.form.consentHint}
+      </Text>
 
       <Modal
         open={editing !== null}

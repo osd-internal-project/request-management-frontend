@@ -11,6 +11,7 @@
 
 import { apiGet, type ApiResult } from "../core";
 import type {
+  ContactConsentStatus,
   CustomerDetail,
   CustomerFieldChange,
   CustomerRow,
@@ -62,6 +63,13 @@ export async function getCustomerTimeline(
   return apiGet<CustomerTimelineEvent[]>(`/customers/${id}/timeline`);
 }
 
+/** CM-05 — consent badge อ่านสดจากระบบ PDPA กลาง. */
+export async function getContactConsents(
+  id: string,
+): Promise<ApiResult<ContactConsentStatus[]>> {
+  return apiGet(`customers/${id}/contacts/consents`);
+}
+
 /** C360-01 — ตัวเลขการ์ดหน้า 360° นับผ่าน filter เดียวกับแท็บ. */
 export async function getCustomerSummary(
   id: string,
@@ -94,6 +102,7 @@ const customersApi = {
   getCustomerHistory,
   getCustomerTimeline,
   getCustomerSummary,
+  getContactConsents,
   getSegmentOptions,
   getSegmentDimensions,
 };
