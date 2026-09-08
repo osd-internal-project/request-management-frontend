@@ -151,6 +151,13 @@ export function CustomerDetailView({
           </Space>
         </div>
         <Space>
+          {relatedRequests !== null && !customer.kycVerified && (
+            <Link
+              href={`${ROUTES.newRequest}?type=KYC&ref_type=customer&ref_id=${customer.id}`}
+            >
+              <Button>{m.detail.raiseKyc}</Button>
+            </Link>
+          )}
           {relatedRequests !== null && (
             <Link
               href={`${ROUTES.newRequest}?ref_type=customer&ref_id=${customer.id}`}

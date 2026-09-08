@@ -19,7 +19,12 @@ import {
 import Text from "antd/es/typography/Text";
 import { adminApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
-import type { CrmConfig, SegmentDimension, SegmentValue } from "@/lib/api/types";
+import type {
+  CrmConfig,
+  KycProductRule,
+  SegmentDimension,
+  SegmentValue,
+} from "@/lib/api/types";
 
 const m = messages.customers.admin;
 
@@ -31,10 +36,12 @@ export function CrmAdmin({
   dimensions,
   config,
   docPrefix,
+  kycProducts,
 }: {
   dimensions: SegmentDimension[];
   config: CrmConfig;
   docPrefix: string;
+  kycProducts: KycProductRule[];
 }) {
   const router = useRouter();
   const { message } = App.useApp();
@@ -62,6 +69,7 @@ export function CrmAdmin({
       {error && <Alert type="error" showIcon title={error} />}
 
       <SegmentSection dimensions={dimensions} onCall={call} />
+      <KycProductSection rows={kycProducts} onCall={call} />
       <ConfigSection config={config} docPrefix={docPrefix} onCall={call} />
     </div>
   );
@@ -354,6 +362,93 @@ function ConfigSection({
       >
         {m.save}
       </Button>
+    </Card>
+  );
+}
+
+/**
+ * CM-04 ชุดงาน B — product ที่ต้องยืนยันตัวตน. โครงพร้อมรับรายการจริงจาก
+ * PO/การเงิน; ปิดใช้ด้วยสวิตช์ ไม่ลบ (ประวัติอยู่ครบ).
+ */
+function KycProductSection({
+  rows,
+  onCall,
+}: {
+  rows: KycProductRule[];
+  onCall: (path: string, method: string, body?: unknown) => Promise<boolean>;
+}) {
+  const [code, setCode] = useState("");
+  const [name, setName] = useState("");
+
+  async function add() {
+    if (!code.trim() || !name.trim()) return;
+    const done = await onCall("kyc-products", "POST", {
+      product_code: code.trim(),
+      name: name.trim(),
+    });
+    if (done) {
+      setCode("");
+      setName("");
+    }
+  }
+
+  return (
+    <Card size="small" title={m.sectionKycProducts}>
+      <Space direction="vertical" size={10} className="w-full">
+        <Text type="secondary" className="text-xs">
+          {m.kycProductsHint}
+        </Text>
+
+        <Space.Compact className="w-full max-w-xl">
+          <Input
+            placeholder={m.kycProductCode}
+            value={code}
+            onChange={(event) => setCode(event.target.value)}
+          />
+          <Input
+            placeholder={m.kycProductName}
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+          />
+          <Button
+            type="primary"
+            disabled={!code.trim() || !name.trim()}
+            onClick={() => void add()}
+          >
+            {m.addKycProduct}
+          </Button>
+        </Space.Compact>
+
+        <Table<KycProductRule>
+          size="small"
+          rowKey="id"
+          pagination={false}
+          dataSource={rows}
+          columns={[
+            {
+              title: m.kycColumns.code,
+              dataIndex: "productCode",
+              width: 220,
+            },
+            { title: m.kycColumns.name, dataIndex: "name" },
+            {
+              title: m.kycColumns.active,
+              dataIndex: "active",
+              width: 100,
+              render: (active: boolean, row) => (
+                <Switch
+                  checked={active}
+                  onChange={(next) =>
+                    void onCall(`kyc-products/${row.id}`, "PATCH", {
+                      active: next,
+                    })
+                  }
+                />
+              ),
+            },
+          ]}
+        />
+      </Space>
     </Card>
   );
 }

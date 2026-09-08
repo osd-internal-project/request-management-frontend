@@ -89,6 +89,13 @@ export async function getSegmentOptions(): Promise<
   return apiGet<SegmentOption[]>(`/customers/segment-options`);
 }
 
+/** CM-04 ชุดงาน B — ตาราง product ที่ต้อง KYC (admin, รวม inactive). */
+export async function getKycProducts(): Promise<
+  ApiResult<import("@/lib/api/types").KycProductRule[]>
+> {
+  return apiGet(`/admin/crm/kyc-products`);
+}
+
 /** The admin screen's read — dimensions with every value, inactive included. */
 export async function getSegmentDimensions(): Promise<
   ApiResult<SegmentDimension[]>
@@ -103,6 +110,7 @@ const customersApi = {
   getCustomerTimeline,
   getCustomerSummary,
   getContactConsents,
+  getKycProducts,
   getSegmentOptions,
   getSegmentDimensions,
 };

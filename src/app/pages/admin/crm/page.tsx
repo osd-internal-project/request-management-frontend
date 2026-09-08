@@ -19,9 +19,10 @@ export default async function CrmAdminPage() {
   const session = await getSession();
   if (!can(session, "admin.crm.manage")) redirect(HOME_PATH);
 
-  const [dimensionsResult, configResult] = await Promise.all([
+  const [dimensionsResult, configResult, kycProductsResult] = await Promise.all([
     customers.getSegmentDimensions(),
     apiGet<CrmConfig>("/admin/crm/config"),
+    customers.getKycProducts(),
   ]);
 
   const failed = !dimensionsResult.ok
@@ -52,6 +53,7 @@ export default async function CrmAdminPage() {
 
       <CrmAdmin
         dimensions={dimensionsResult.ok ? dimensionsResult.data : []}
+        kycProducts={kycProductsResult.ok ? kycProductsResult.data : []}
         config={
           configResult.ok
             ? configResult.data

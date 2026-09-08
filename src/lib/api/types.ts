@@ -703,6 +703,14 @@ export interface CustomerSummary {
   } | null;
 }
 
+/** CM-04 ชุดงาน B — product ที่ต้องยืนยันตัวตน (KYC), configuration ล้วน. */
+export interface KycProductRule {
+  id: string;
+  productCode: string;
+  name: string;
+  active: boolean;
+}
+
 /** CM-05 — consent badge ต่อผู้ติดต่อ อ่านสดจากระบบ PDPA กลาง (ไม่เก็บซ้ำ). */
 export type ConsentState = "granted" | "none" | "withdrawn" | "unknown";
 

@@ -1167,6 +1167,7 @@ export const messages = {
       saveSegments: "บันทึกกลุ่ม",
       segmentsSaved: "บันทึกกลุ่มลูกค้าแล้ว",
       raiseRequest: "ยื่นคำขอ",
+      raiseKyc: "ยื่น KYC",
       cards: {
         openRequests: "คำขอค้าง",
         totalRequestsSuffix: (total: string) => `จากทั้งหมด ${total}`,
@@ -1280,6 +1281,17 @@ export const messages = {
     admin: {
       title: "ตั้งค่า CRM",
       sectionSegments: "มิติการแบ่งกลุ่มลูกค้า",
+      sectionKycProducts: "Product ที่ต้องยืนยันตัวตน (KYC)",
+      kycProductsHint:
+        "KYC ไม่บังคับทุกราย — โมดูลดีลจะใช้ตารางนี้แจ้งเตือนเมื่อดีลมี product ที่เข้าเงื่อนไข · รายการตั้งต้นรอยืนยันจาก PO/การเงิน กรอกได้เลยเมื่อได้รายการ",
+      kycProductCode: "รหัส product (ตรงกับ Odoo)",
+      kycProductName: "ชื่อ product",
+      addKycProduct: "เพิ่ม product",
+      kycColumns: {
+        code: "รหัส",
+        name: "ชื่อ",
+        active: "ใช้งาน",
+      },
       segmentsHint:
         "เพิ่ม/แก้ค่ากลุ่มได้โดยไม่ต้อง deploy — โมดูล Pricing ระยะ 2 จะอ่านค่ากลุ่มจากที่นี่",
       addDimension: "เพิ่มมิติ",
