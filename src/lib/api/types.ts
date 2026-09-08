@@ -688,6 +688,22 @@ export interface CustomerDetail extends CustomerRow {
   createdBy: string | null;
 }
 
+/** CM-10 — one file row's fate from POST /customers/import. */
+export interface ImportRowResult {
+  rowNo: number;
+  action: "create" | "skip_duplicate" | "error";
+  reasons: string[];
+  customerCode?: string;
+  headOfficeCode?: string;
+}
+
+export interface ImportResult {
+  importId: string;
+  mode: "dry_run" | "commit";
+  summary: { create: number; skip: number; error: number };
+  results: ImportRowResult[];
+}
+
 /** CM-01 — one field change: who, when, before/after. */
 export interface CustomerFieldChange {
   id: string;

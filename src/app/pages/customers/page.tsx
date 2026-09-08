@@ -59,11 +59,18 @@ export default async function CustomersPage({
             {messages.customers.scopeNote}
           </Text>
         </div>
-        {can(session, "crm.customer.manage") && (
-          <Link href={ROUTES.newCustomer}>
-            <Button type="primary">{messages.customers.newCustomer}</Button>
-          </Link>
-        )}
+        <div className="flex gap-2">
+          {can(session, "admin.crm.manage") && (
+            <Link href={ROUTES.customerImport}>
+              <Button>{messages.customers.importer.openButton}</Button>
+            </Link>
+          )}
+          {can(session, "crm.customer.manage") && (
+            <Link href={ROUTES.newCustomer}>
+              <Button type="primary">{messages.customers.newCustomer}</Button>
+            </Link>
+          )}
+        </div>
       </div>
 
       {!listResult.ok && (

@@ -76,6 +76,7 @@ export const ROUTES = {
   /** CRM ระยะ 1 — ทะเบียนลูกค้า (CM-01, spec artifact 856c08fd). */
   customers: `${HOME_PATH}/customers`,
   newCustomer: `${HOME_PATH}/customers/new`,
+  customerImport: `${HOME_PATH}/customers/import`,
   /** หน้ารายละเอียดลูกค้า — จะโตเป็นมุมมอง 360° (C360). */
   customerDetail: (id: string) => `${HOME_PATH}/customers/${id}`,
   customerEdit: (id: string) => `${HOME_PATH}/customers/${id}/edit`,
