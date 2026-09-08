@@ -30,6 +30,7 @@ import { ROUTES } from "@/lib/routes";
 import type {
   ContactConsentStatus,
   CustomerDetail,
+  DealRow,
   CustomerFieldChange,
   CustomerSummary,
   CustomerTimelineEvent,
@@ -70,6 +71,7 @@ export function CustomerDetailView({
   summary,
   consents,
   relatedRequests,
+  customerDeals,
 }: {
   customer: CustomerDetail;
   history: CustomerFieldChange[];
@@ -82,6 +84,8 @@ export function CustomerDetailView({
   consents: ContactConsentStatus[];
   /** null = viewer has no request.read (C360-04: tab hidden, not empty). */
   relatedRequests: RequestRow[] | null;
+  /** null = viewer has no crm.sales.read. */
+  customerDeals: DealRow[] | null;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -254,6 +258,19 @@ export function CustomerDetailView({
 
       {summary && (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+          {summary.deals && (
+            <Card size="small">
+              <Text type="secondary" className="block text-xs">
+                {m.detail.cards.openDeals}
+              </Text>
+              <div className="text-xl font-semibold">{summary.deals.open}</div>
+              <Text type="secondary" className="text-xs">
+                {m.detail.cards.openDealsAmount(
+                  summary.deals.openAmount.toLocaleString("th-TH"),
+                )}
+              </Text>
+            </Card>
+          )}
           {summary.requests && (
             <Card size="small">
               <Text type="secondary" className="block text-xs">
@@ -362,6 +379,15 @@ export function CustomerDetailView({
               />
             ),
           },
+          ...(customerDeals !== null
+            ? [
+                {
+                  key: "deals",
+                  label: `${m.detail.tabDeals} · ${customerDeals.length}`,
+                  children: <CustomerDealsTab rows={customerDeals} />,
+                },
+              ]
+            : []),
           ...(relatedRequests !== null
             ? [
                 {
@@ -383,7 +409,9 @@ export function CustomerDetailView({
           },
           /* C360-01 — โครงหน้าครบตั้งแต่แรก: แท็บที่ยังไม่มา เปิดแล้วบอกว่า
              มากับโมดูลไหน ไม่ fetch อะไร (C360-04) */
-          ...Object.entries(m.detail.futureTabs).map(([key, tab]) => ({
+          ...Object.entries(m.detail.futureTabs)
+            .filter(([key]) => !(key === "deals" && customerDeals !== null))
+            .map(([key, tab]) => ({
             key: `future-${key}`,
             label: tab.label,
             children: (
@@ -972,6 +1000,54 @@ function LocationsTab({
         )}
       </Modal>
     </div>
+  );
+}
+
+/** C360-01 — ดีลของลูกค้ารายนี้ (ข้อมูลจริงจากโมดูล sales). */
+function CustomerDealsTab({ rows }: { rows: DealRow[] }) {
+  const ms = messages.sales.deals;
+  if (!rows.length) {
+    return (
+      <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={ms.empty} />
+    );
+  }
+
+  return (
+    <Table<DealRow>
+      size="small"
+      rowKey="id"
+      pagination={false}
+      dataSource={rows}
+      columns={[
+        {
+          title: ms.columns.code,
+          dataIndex: "dealCode",
+          width: 150,
+          render: (code: string, row) => (
+            <Link href={ROUTES.dealDetail(row.id)}>{code}</Link>
+          ),
+        },
+        { title: ms.columns.title, dataIndex: "title" },
+        {
+          title: ms.columns.stage,
+          dataIndex: "stage",
+          width: 110,
+          render: (stage: string) => (
+            <Tag color={ms.stageColor[stage]}>{ms.stage[stage] ?? stage}</Tag>
+          ),
+        },
+        {
+          title: ms.columns.amount,
+          dataIndex: "amount",
+          width: 130,
+          align: "right" as const,
+          render: (amount: DealRow["amount"]) =>
+            amount === null || amount === undefined
+              ? "—"
+              : Number(amount).toLocaleString("th-TH"),
+        },
+      ]}
+    />
   );
 }
 

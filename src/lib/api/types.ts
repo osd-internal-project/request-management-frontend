@@ -693,6 +693,8 @@ export interface CustomerSummary {
   contacts: number;
   locations: number;
   branchCustomers: number;
+  /** null = viewer has no crm.sales.read — hide the card (C360-04). */
+  deals: { open: number; openAmount: number } | null;
   /** null = viewer has no request.read — hide the card (C360-04). */
   requests: { total: number; open: number | null } | null;
   /** C360-02 — cached from Odoo by the hourly sync; null = never synced. */
@@ -701,6 +703,76 @@ export interface CustomerSummary {
     invoiceCount: number;
     asOf: string;
   } | null;
+}
+
+/* -------------------------------------------------------------------------- */
+/* CRM — Lead + โอกาสการขาย (ดีล)                                              */
+/* -------------------------------------------------------------------------- */
+
+export type LeadStatus = "new" | "qualified" | "disqualified" | "converted";
+export type DealStage =
+  | "qualifying"
+  | "proposing"
+  | "negotiating"
+  | "won"
+  | "lost";
+
+export interface LeadRow {
+  id: string;
+  name: string;
+  contactName: string | null;
+  phone: string | null;
+  email: string | null;
+  note: string | null;
+  sourceCode: string | null;
+  status: LeadStatus;
+  disqualifyReason: string | null;
+  customerId: string | null;
+  customer: { id: string; customerCode: string; nameTh: string } | null;
+  convertedDeal: { id: string; dealCode: string } | null;
+  ownerUserId: string;
+  createdAt: string;
+}
+
+export interface DealRow {
+  id: string;
+  dealCode: string;
+  title: string;
+  stage: DealStage;
+  amount: string | number | null;
+  currency: string;
+  probability: number | null;
+  expectedCloseAt: string | null;
+  customerId: string;
+  customer: { id: string; customerCode: string; nameTh: string } | null;
+  ownerUserId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DealDetail extends DealRow {
+  companyId: string;
+  wonAt: string | null;
+  lostAt: string | null;
+  lostReasonCode: string | null;
+  lostReasonText: string | null;
+  customer: {
+    id: string;
+    customerCode: string;
+    nameTh: string;
+    branchCode: string;
+    branchName: string | null;
+    kycVerified: boolean;
+  };
+  products: { productCode: string; name: string | null }[];
+  fromLead: { id: string; name: string; sourceCode: string | null } | null;
+  /** CM-04 ชุดงาน B — เตือน ไม่ block. */
+  kycWarning: { required: boolean; products: string[] };
+}
+
+export interface DealLostReason {
+  code: string;
+  name: string;
 }
 
 /** CM-04 ชุดงาน B — product ที่ต้องยืนยันตัวตน (KYC), configuration ล้วน. */

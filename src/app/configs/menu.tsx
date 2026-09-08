@@ -52,6 +52,18 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     permissions: ["crm.customer.read"],
     group: messages.nav.crmGroup,
   },
+  {
+    label: messages.nav.leads,
+    href: ROUTES.leads,
+    permissions: ["crm.sales.read"],
+    group: messages.nav.crmGroup,
+  },
+  {
+    label: messages.nav.deals,
+    href: ROUTES.deals,
+    permissions: ["crm.sales.read"],
+    group: messages.nav.crmGroup,
+  },
 
   {
     label: messages.nav.adminApprovalMatrix,

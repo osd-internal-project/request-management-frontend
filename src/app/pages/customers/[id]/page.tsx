@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { CustomerDetailView } from "@/components/customer-detail";
 import customers from "@/lib/api/customers";
 import { getRequests } from "@/lib/api/requests";
+import { getDeals } from "@/lib/api/sales";
 import { HOME_PATH } from "@/lib/routes";
 import { can, getSession } from "@/lib/session";
 
@@ -22,8 +23,9 @@ export default async function CustomerDetailPage({
   const { id } = await params;
 
   const canReadRequests = can(session, "request.read");
+  const canReadSales = can(session, "crm.sales.read");
 
-  const [detailResult, historyResult, timelineResult, optionsResult, summaryResult, consentsResult, requestsResult] =
+  const [detailResult, historyResult, timelineResult, optionsResult, summaryResult, consentsResult, requestsResult, dealsResult] =
     await Promise.all([
       customers.getCustomer(id),
       customers.getCustomerHistory(id),
@@ -35,6 +37,10 @@ export default async function CustomerDetailPage({
       // triggers this call, so no guaranteed-403 lands in the logs.
       canReadRequests
         ? getRequests({ ref_type: "customer", ref_id: id, page_size: 50 })
+        : Promise.resolve(null),
+      // C360-04: no crm.sales.read → no call, tab hidden.
+      canReadSales
+        ? getDeals({ customer_id: id, page_size: 50 })
         : Promise.resolve(null),
     ]);
 
@@ -53,6 +59,9 @@ export default async function CustomerDetailPage({
       consents={consentsResult.ok ? consentsResult.data : []}
       relatedRequests={
         requestsResult?.ok ? requestsResult.data.data : canReadRequests ? [] : null
+      }
+      customerDeals={
+        dealsResult?.ok ? dealsResult.data.data : canReadSales ? [] : null
       }
     />
   );
