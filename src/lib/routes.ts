@@ -73,6 +73,19 @@ export const ROUTES = {
   /** REQ-09 — รายงานคอขวด */
   bottleneckReport: `${HOME_PATH}/reports/bottleneck`,
 
+  /** CRM ระยะ 1 — ทะเบียนลูกค้า (CM-01, spec artifact 856c08fd). */
+  customers: `${HOME_PATH}/customers`,
+  newCustomer: `${HOME_PATH}/customers/new`,
+  customerImport: `${HOME_PATH}/customers/import`,
+  leads: `${HOME_PATH}/leads`,
+  deals: `${HOME_PATH}/deals`,
+  dealDetail: (id: string) => `${HOME_PATH}/deals/${id}`,
+  /** หน้ารายละเอียดลูกค้า — จะโตเป็นมุมมอง 360° (C360). */
+  customerDetail: (id: string) => `${HOME_PATH}/customers/${id}`,
+  customerEdit: (id: string) => `${HOME_PATH}/customers/${id}/edit`,
+  /** CM-07/CM-02/CM-03 configuration — มิติกลุ่มลูกค้า, รูปแบบรหัส, threshold. */
+  adminCrm: `${HOME_PATH}/admin/crm`,
+
   /** CD-92 — แดชบอร์ด Metabase ฝังผ่าน signed embed URL. */
   biDashboard: (key: string) => `${HOME_PATH}/bi/${key}`,
   /** CD-92 — ลิงก์เข้าหน้า setting ของ Metabase (แอดมิน BI). */

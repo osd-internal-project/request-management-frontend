@@ -48,6 +48,7 @@ export function backendUrl(path: string): string {
 export const CORE_SERVICE_PREFIXES = [
   "/approvals",
   "/bi",
+  "/customers",
   "/notifications",
   "/requests",
   "/request-types",
@@ -63,6 +64,7 @@ export const CORE_SERVICE_PREFIXES = [
   "/external",
   "/admin/approval-matrix",
   "/admin/bi",
+  "/admin/crm",
   "/admin/request-types",
   "/admin/sla-configs",
   "/admin/holiday-calendars",

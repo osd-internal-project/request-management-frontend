@@ -183,7 +183,6 @@ export function RequestRowActions({
                 ? void perform(action, "")
                 : setAsking(action)
             }
-            li
           >
             {LABEL_FOR[action]}
           </Button>

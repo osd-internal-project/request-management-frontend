@@ -646,3 +646,296 @@ export interface KeycloakRoleMappingRow {
   keycloakRole: string;
   roleId: string;
 }
+
+/* -------------------------------------------------------------------------- */
+/* CRM — Customer Master (CM-xx, spec artifact 856c08fd)                       */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * One row of the register (`GET /customers`).
+ *
+ * `taxId` is optional twice over: a customer may not have one, and the
+ * SensitiveFieldInterceptor deletes the field entirely for callers without
+ * `crm.customer.sensitive.read` (CM-08) — absent, not null, so the screen
+ * cannot tell "withheld" from "none" and must not try.
+ */
+export interface CustomerRow {
+  id: string;
+  customerCode: string;
+  type: "corporate" | "individual" | "government";
+  nameTh: string;
+  nameEn: string | null;
+  taxId?: string | null;
+  branchCode: string;
+  branchName: string | null;
+  headOfficeId: string | null;
+  status: "draft" | "active" | "suspended" | "inactive";
+  kycVerified: boolean;
+  accountOwnerUserId: string | null;
+  accountOwner: { id: string; displayName: string } | null;
+  segments: {
+    value: {
+      id: string;
+      code: string;
+      nameTh: string;
+      dimension: { id: string; code: string; nameTh: string };
+    };
+  }[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * CM-01 (redesign #2, 8 ก.ย. 2569) — ที่อยู่/ไซต์ของลูกค้ารายนั้น. Branches
+ * are customer rows now; this holds one branch-customer's addresses/sites.
+ */
+export interface CustomerLocation {
+  id: string;
+  name: string | null;
+  line1: string;
+  line2: string | null;
+  subDistrict: string | null;
+  district: string | null;
+  province: string | null;
+  postalCode: string | null;
+  country: string;
+  isBilling: boolean;
+  isSite: boolean;
+  isPrimary: boolean;
+}
+
+export interface CustomerContact {
+  id: string;
+  name: string;
+  role: "decision_maker" | "user" | "procurement" | "finance" | "other";
+  position: string | null;
+  phone: string | null;
+  email: string | null;
+  lineId: string | null;
+  note: string | null;
+  isPrimary: boolean;
+}
+
+/** `GET /customers/:id` — the detail page, and later the 360° header card. */
+export interface CustomerDetail extends CustomerRow {
+  deactivateReason: string | null;
+  suspendReason: string | null;
+  mergedIntoCustomerId: string | null;
+  mergedInto: { id: string; customerCode: string; nameTh: string } | null;
+  locations: CustomerLocation[];
+  headOffice: {
+    id: string;
+    customerCode: string;
+    nameTh: string;
+    branchCode: string;
+  } | null;
+  branchCustomers: {
+    id: string;
+    customerCode: string;
+    nameTh: string;
+    branchCode: string;
+    branchName: string | null;
+    status: "draft" | "active" | "suspended" | "inactive";
+  }[];
+  contacts: CustomerContact[];
+  createdBy: string | null;
+}
+
+/** C360-01 — ตัวเลขการ์ดหน้า 360° (GET /customers/:id/summary). */
+export interface CustomerSummary {
+  contacts: number;
+  locations: number;
+  branchCustomers: number;
+  /** null = viewer has no crm.sales.read — hide the card (C360-04). */
+  deals: { open: number; openAmount: number } | null;
+  /** null = viewer has no request.read — hide the card (C360-04). */
+  requests: { total: number; open: number | null } | null;
+  /** C360-02 — cached from Odoo by the hourly sync; null = never synced. */
+  financials: {
+    outstanding: number;
+    invoiceCount: number;
+    asOf: string;
+  } | null;
+}
+
+/* -------------------------------------------------------------------------- */
+/* CRM — Lead + โอกาสการขาย (ดีล)                                              */
+/* -------------------------------------------------------------------------- */
+
+export type LeadStatus = "new" | "qualified" | "disqualified" | "converted";
+export type DealStage =
+  | "qualifying"
+  | "proposing"
+  | "negotiating"
+  | "won"
+  | "lost";
+
+export interface LeadRow {
+  id: string;
+  name: string;
+  contactName: string | null;
+  phone: string | null;
+  email: string | null;
+  note: string | null;
+  sourceCode: string | null;
+  status: LeadStatus;
+  disqualifyReason: string | null;
+  customerId: string | null;
+  customer: { id: string; customerCode: string; nameTh: string } | null;
+  convertedDeal: { id: string; dealCode: string } | null;
+  ownerUserId: string;
+  createdAt: string;
+}
+
+export interface DealRow {
+  id: string;
+  dealCode: string;
+  title: string;
+  stage: DealStage;
+  amount: string | number | null;
+  currency: string;
+  probability: number | null;
+  expectedCloseAt: string | null;
+  customerId: string;
+  customer: { id: string; customerCode: string; nameTh: string } | null;
+  ownerUserId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DealDetail extends DealRow {
+  companyId: string;
+  wonAt: string | null;
+  lostAt: string | null;
+  lostReasonCode: string | null;
+  lostReasonText: string | null;
+  customer: {
+    id: string;
+    customerCode: string;
+    nameTh: string;
+    branchCode: string;
+    branchName: string | null;
+    kycVerified: boolean;
+  };
+  products: { productCode: string; name: string | null }[];
+  fromLead: { id: string; name: string; sourceCode: string | null } | null;
+  /** CM-04 ชุดงาน B — เตือน ไม่ block. */
+  kycWarning: { required: boolean; products: string[] };
+}
+
+export interface DealLostReason {
+  code: string;
+  name: string;
+}
+
+/** CM-04 ชุดงาน B — product ที่ต้องยืนยันตัวตน (KYC), configuration ล้วน. */
+export interface KycProductRule {
+  id: string;
+  productCode: string;
+  name: string;
+  active: boolean;
+}
+
+/** CM-05 — consent badge ต่อผู้ติดต่อ อ่านสดจากระบบ PDPA กลาง (ไม่เก็บซ้ำ). */
+export type ConsentState = "granted" | "none" | "withdrawn" | "unknown";
+
+export interface ContactConsentStatus {
+  contactId: string;
+  email: ConsentState | null;
+  phone: ConsentState | null;
+  doNotCall: boolean;
+}
+
+/** CM-10 — one file row's fate from POST /customers/import. */
+export interface ImportRowResult {
+  rowNo: number;
+  action: "create" | "skip_duplicate" | "error";
+  reasons: string[];
+  customerCode?: string;
+  headOfficeCode?: string;
+}
+
+export interface ImportResult {
+  importId: string;
+  mode: "dry_run" | "commit";
+  summary: { create: number; skip: number; error: number };
+  results: ImportRowResult[];
+}
+
+/** CM-01 — one field change: who, when, before/after. */
+export interface CustomerFieldChange {
+  id: string;
+  field: string;
+  before: unknown;
+  after: unknown;
+  changedBy: string | null;
+  /** Resolved display name; falls back to the raw id for a departed user. */
+  changedByName: string | null;
+  changedAt: string;
+}
+
+/** C360-03 — one timeline event, already permission-filtered by the backend. */
+export interface CustomerTimelineEvent {
+  id: string;
+  refType: string;
+  refId: string | null;
+  eventType: string;
+  summary: string;
+  actorName: string | null;
+  occurredAt: string;
+}
+
+/** CM-03 — what `POST /customers/check-duplicate` answers. */
+export interface CustomerDuplicateCheck {
+  duplicate: SimilarCustomer | null;
+  /** Same tax id, different branch — the head office the new row links to. */
+  headOffice: SimilarCustomer | null;
+  similar: SimilarCustomer[];
+  threshold: number;
+}
+
+export interface SimilarCustomer {
+  id: string;
+  customerCode: string;
+  nameTh: string;
+  nameEn: string | null;
+  taxId: string | null;
+  branchCode: string;
+  branchName: string | null;
+  status: string;
+  similarity: number;
+}
+
+/** CM-07 — a segmentation dimension with its values, as the admin screen edits it. */
+export interface SegmentDimension {
+  id: string;
+  code: string;
+  nameTh: string;
+  active: boolean;
+  sortOrder: number;
+  values: SegmentValue[];
+}
+
+export interface SegmentValue {
+  id: string;
+  code: string;
+  nameTh: string;
+  active: boolean;
+  sortOrder: number;
+}
+
+/** CM-02/03 per-company configuration. */
+export interface CrmConfig {
+  codePrefix: string;
+  codePadding: number;
+  dedupThreshold: number;
+}
+
+/** CM-07 — one assignable value with its dimension, for pickers and filters. */
+export interface SegmentOption {
+  id: string;
+  code: string;
+  nameTh: string;
+  sortOrder: number;
+  dimension: { id: string; code: string; nameTh: string; sortOrder: number };
+}

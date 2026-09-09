@@ -19,10 +19,15 @@ import { getSession } from "@/lib/session";
 export default async function NewRequestPage({
   searchParams,
 }: {
-  searchParams: Promise<{ parent?: string }>;
+  searchParams: Promise<{
+    parent?: string;
+    type?: string;
+    ref_type?: string;
+    ref_id?: string;
+  }>;
 }) {
   const session = await getSession();
-  const { parent } = await searchParams;
+  const { parent, type, ref_type, ref_id } = await searchParams;
 
   /**
    * The directory feeds the `ผู้รับเรื่อง` selector.
@@ -113,7 +118,11 @@ export default async function NewRequestPage({
         people={users.ok ? users.data : []}
         units={units.ok ? units.data : []}
         parentRequestId={parent ?? null}
-      />
+        initialRef={
+        ref_type && ref_id ? { type: ref_type, id: ref_id } : undefined
+      }
+      initialTypeCode={type}
+    />
     </div>
   );
 }

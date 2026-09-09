@@ -46,6 +46,26 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     group: messages.nav.biGroup,
   },
 
+  /** CRM ระยะ 1 (CD-59) — หน้ารายละเอียดลูกค้าจะโตเป็นมุมมอง 360°. */
+  {
+    label: messages.nav.customers,
+    href: ROUTES.customers,
+    permissions: ["crm.customer.read"],
+    group: messages.nav.crmGroup,
+  },
+  {
+    label: messages.nav.leads,
+    href: ROUTES.leads,
+    permissions: ["crm.sales.read"],
+    group: messages.nav.crmGroup,
+  },
+  {
+    label: messages.nav.deals,
+    href: ROUTES.deals,
+    permissions: ["crm.sales.read"],
+    group: messages.nav.crmGroup,
+  },
+
   {
     label: messages.nav.adminApprovalMatrix,
     href: ROUTES.adminApprovalMatrix,
@@ -86,6 +106,12 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     label: messages.nav.adminBi,
     href: ROUTES.adminBi,
     permissions: ["admin.bi.manage"],
+    group: messages.nav.adminGroup,
+  },
+  {
+    label: messages.nav.adminCrm,
+    href: ROUTES.adminCrm,
+    permissions: ["admin.crm.manage"],
     group: messages.nav.adminGroup,
   },
 ];

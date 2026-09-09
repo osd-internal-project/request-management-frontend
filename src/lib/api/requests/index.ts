@@ -33,12 +33,17 @@ export async function getRequests(options?: {
   type_code?: string;
   q?: string;
   overdue?: boolean;
+  /** REQ-06 / C360 — คำขอที่อ้างเอนทิตีต้นทาง เช่น ref_type=customer. */
+  ref_type?: string;
+  ref_id?: string;
   page?: number;
   page_size?: number;
 }): Promise<ApiResult<Paginated<RequestRow>>> {
   const params = new URLSearchParams();
   if (options?.view) params.set("view", options.view);
   if (options?.status) params.set("status", options.status);
+  if (options?.ref_type) params.set("ref_type", options.ref_type);
+  if (options?.ref_id) params.set("ref_id", options.ref_id);
   if (options?.type_code) params.set("type_code", options.type_code);
   if (options?.q) params.set("q", options.q);
   if (options?.overdue) params.set("overdue", "true");
