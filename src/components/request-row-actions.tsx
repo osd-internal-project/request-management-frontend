@@ -174,7 +174,8 @@ export function RequestRowActions({
           <Button
             key={action}
             size="small"
-            type={action === "approve" || action === "receive" ? "primary" : "default"}
+            // type={action === "approve" || action === "receive" ? "primary" : "default"}
+            type="link"
             danger={action === "reject" || action === "cancel"}
             loading={busy === action}
             onClick={() =>
@@ -182,6 +183,7 @@ export function RequestRowActions({
                 ? void perform(action, "")
                 : setAsking(action)
             }
+            li
           >
             {LABEL_FOR[action]}
           </Button>
