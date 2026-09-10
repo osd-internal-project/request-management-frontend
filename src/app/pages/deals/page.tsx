@@ -34,7 +34,7 @@ export default async function DealsPage({
       page_size: 50,
     }),
     can(session, "crm.customer.read")
-      ? getCustomers({ page: 1, page_size: 200 })
+      ? getCustomers({ page: 1, page_size: 100 })
       : Promise.resolve(null),
   ]);
 

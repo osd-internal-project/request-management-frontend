@@ -35,7 +35,7 @@ export default async function LeadsPage({
     }),
     // ตัวเลือกลูกค้าสำหรับ modal แปลงเป็นดีล — ทะเบียนที่ผู้ใช้เห็นอยู่แล้ว
     can(session, "crm.customer.read")
-      ? getCustomers({ page: 1, page_size: 200 })
+      ? getCustomers({ page: 1, page_size: 100 })
       : Promise.resolve(null),
   ]);
 
