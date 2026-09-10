@@ -23,7 +23,9 @@ export const BACKEND_PREFIX = "/api/v1";
 
 /** The full backend URL for a path, e.g. `/requests` → `…/api/v1/requests`. */
 export function backendUrl(path: string): string {
-  return `${serviceUrlFor(path)}${BACKEND_PREFIX}${path}`;
+  const normalised = path.startsWith("/") ? path : `/${path}`;
+
+  return `${serviceUrlFor(normalised)}${BACKEND_PREFIX}${normalised}`;
 }
 
 /**
