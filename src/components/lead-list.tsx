@@ -195,9 +195,14 @@ export function LeadList({
         </Checkbox>
         <div className="grow" />
         {canManage && (
-          <Button type="primary" onClick={() => setEditing({ name: "" })}>
-            {m.newLead}
-          </Button>
+          <Space>
+            <Link href={ROUTES.leadImport}>
+              <Button>{m.importer.openButton}</Button>
+            </Link>
+            <Button type="primary" onClick={() => setEditing({ name: "" })}>
+              {m.newLead}
+            </Button>
+          </Space>
         )}
       </div>
 

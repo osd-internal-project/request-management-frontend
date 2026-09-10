@@ -1073,6 +1073,44 @@ export const messages = {
       disqualifyTitle: "คัดออก Lead",
       disqualifyReason: "เหตุผลที่คัดออก",
       disqualified: "คัดออกแล้ว",
+      importer: {
+        title: "นำเข้า Lead จาก Excel",
+        subtitle:
+          "เช่นรายชื่อจากงานอีเวนต์หรือไฟล์เดิม — อีเมล/เบอร์ที่มี Lead อยู่แล้วจะถูกข้าม นำเข้าไฟล์เดิมซ้ำไม่สร้างซ้ำ",
+        openButton: "นำเข้า Excel",
+        templateFile: "lead-import-template.xlsx",
+        templateHint:
+          "คอลัมน์โทรศัพท์ตั้งเป็นข้อความไว้แล้ว — อย่าเปลี่ยนเป็นตัวเลข เลข 0 นำหน้าจะหาย",
+        headers: {
+          name: "ชื่อ Lead (บริษัท/บุคคล)",
+          contactName: "ผู้ติดต่อ",
+          phone: "โทรศัพท์",
+          email: "อีเมล",
+          source: "แหล่งที่มา",
+          note: "บันทึก",
+        },
+        missingNameColumn:
+          "ไม่พบคอลัมน์ \"ชื่อ Lead (บริษัท/บุคคล)\" — ใช้ไฟล์ต้นแบบเป็นตัวตั้ง",
+        reasonLabels: {
+          "name: required": "ไม่มีชื่อ Lead",
+          "email: format": "อีเมลไม่ถูกต้อง",
+          "phone: format": "เบอร์โทรไม่ถูกต้อง",
+        } as Record<string, string>,
+        columns: {
+          row: "แถว",
+          name: "Lead",
+          contact: "ช่องทางติดต่อ",
+          action: "ผล",
+          detail: "รายละเอียด",
+        },
+        actionLabel: {
+          create: "สร้าง",
+          skip_duplicate: "ข้าม — มี Lead นี้แล้ว",
+          error: "ติดปัญหา",
+        } as Record<string, string>,
+        done: (n: string) => `นำเข้าสำเร็จ ${n} ราย`,
+        backToList: "ไปหน้า Lead",
+      },
       convertTitle: "แปลงเป็นดีล",
       convertHint:
         "ต้องเลือกลูกค้าในทะเบียนก่อน — ถ้ายังไม่มี ให้สร้างลูกค้าใหม่จากหน้าทะเบียนลูกค้าแล้วกลับมาแปลง",
