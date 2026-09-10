@@ -7,6 +7,11 @@ import Paragraph from "antd/es/typography/Paragraph";
 import { messages } from "@/lib/messages";
 import { SearchSelect, SearchTreeSelect } from "@/components/search-select";
 import { buildUnitTree } from "@/lib/org-tree";
+import {
+  canHoldMembers,
+  kindUnder,
+  ORG_UNIT_LEVELS,
+} from "@/lib/org-levels";
 
 import type {
   OrgUnitNode,
@@ -501,12 +506,13 @@ export function OrgAdmin({
    * tree is the source of truth for "หัวหน้าของผู้ยื่น", so an admin has to be
    * able to see at a glance which unit has nobody in charge.
    *
-   * Keyed on having members rather than on `kind === "TEAM"`: the real OSD
-   * chart is บริษัท → ฝ่าย → แผนก with no TEAM level at all, and the kind test
-   * left every one of its units printing the branch form.
+   * Keyed on the level being one people sit in (แผนก and below) or on the box
+   * actually holding somebody. The kind test used to be `=== "TEAM"`, written
+   * when ทีม was the only level with members; ฝ่าย and แผนก then printed the
+   * branch form for a chart that had no ทีม in it at all.
    */
   function nodeDetail(unit: OrgUnitNode): string {
-    if (unit.kind === "TEAM" || unit.memberCount > 0) {
+    if (canHoldMembers(unit.kind) || unit.memberCount > 0) {
       const lead = unit.managerDisplayName
         ? `${messages.org.manager}: ${unit.managerDisplayName} · `
         : "";
@@ -550,7 +556,17 @@ export function OrgAdmin({
                 {!unit.active && (
                   <Tag className="m-0! shrink-0">{messages.org.inactive}</Tag>
                 )}
-                {/* <Tag className="m-0! shrink-0" >{unit.kind}</Tag> */}
+                {/*
+                  Which level a box sits at is not guessable from its name —
+                  "RND" is a แผนก and "INF" the ฝ่าย above it — and the level
+                  decides what may hang under it and whether people may sit in
+                  it. Printed on every node rather than on selection, because
+                  the question an admin has while reading the tree is where a
+                  new box is allowed to go.
+                */}
+                <Tag className="m-0! shrink-0" color="default">
+                  {messages.org.unitKinds[unit.kind]}
+                </Tag>
               </span>
               <Text
                 type="secondary"
@@ -1147,15 +1163,6 @@ function MemberRolesDialog({
   );
 }
 
-/** The `OrgUnitKind` options, widest first — the order the enum declares. */
-const UNIT_KINDS = [
-  "COMPANY",
-  "DIVISION",
-  "DEPARTMENT",
-  "POSITION",
-  "TEAM",
-] as const;
-
 /**
  * Rename a unit, change what kind of unit it is, or move it elsewhere in the
  * chart. Re-parenting rebuilds `org_closure` on the backend inside the same
@@ -1182,6 +1189,24 @@ function EditUnitDialog({
     () => (unit ? subtreeIds(units, unit.id) : new Set<string>()),
     [units, unit],
   );
+
+  /*
+    Only one level fits under any given parent, so the picker offers that one
+    and nothing else — moving a box is what changes its level, not a separate
+    decision. It stays a visible field rather than a hidden derived value
+    because the level is what an admin is checking when they open this dialog.
+
+    Every level is still listed while the parent is one the backend would
+    refuse anyway (an older chart that skips a level), so the dialog can be
+    used to correct such a unit instead of being the thing that blocks it.
+  */
+  const parentId = Form.useWatch("parent_id", form) as string | undefined;
+  const parent = units.find((candidate) => candidate.id === parentId) ?? null;
+  const allowed = kindUnder(parent);
+  const offered = allowed ? [allowed] : [...ORG_UNIT_LEVELS];
+  const kindOptions = [
+    ...new Set([...offered, ...(unit ? [unit.kind] : [])]),
+  ].map((kind) => ({ value: kind, label: messages.org.unitKinds[kind] }));
 
   async function submit() {
     if (!unit) return;
@@ -1248,12 +1273,7 @@ function EditUnitDialog({
           label={messages.org.unitKind}
           rules={[{ required: true }]}
         >
-          <SearchSelect
-            options={UNIT_KINDS.map((kind) => ({
-              value: kind,
-              label: messages.org.unitKinds[kind],
-            }))}
-          />
+          <SearchSelect options={kindOptions} />
         </Form.Item>
         {/*
           A group cannot hang from itself or from one of its own descendants —
@@ -1354,11 +1374,16 @@ function MoveMemberDialog({
             }}
             placeholder={messages.org.selectUnit}
             /*
-              A deactivated group is on its way out of the chart, and the group
-              they are already in is not a move. Both stay visible so the tree
-              reads the same as it does everywhere else.
+              A deactivated group is on its way out of the chart, the group they
+              are already in is not a move, and บริษัท/ฝ่าย hold no people at
+              all (`MEMBER_LEVELS`). All three stay visible so the tree reads
+              the same as it does everywhere else.
             */
-            disabled={(unit) => !unit.active || unit.id === currentUnitId}
+            disabled={(unit) =>
+              !unit.active ||
+              unit.id === currentUnitId ||
+              !canHoldMembers(unit.kind)
+            }
           />
         </Form.Item>
         <Form.Item
@@ -1437,8 +1462,9 @@ function AssignDialog({
             onChange={setOrgUnitId}
             placeholder={messages.org.selectUnit}
             // Placing somebody in a group that is on its way out of the chart
-            // would undo the deactivation the moment they were assigned.
-            disabled={(unit) => !unit.active}
+            // would undo the deactivation the moment they were assigned, and
+            // people sit at แผนก or below — the backend refuses anything wider.
+            disabled={(unit) => !unit.active || !canHoldMembers(unit.kind)}
           />
         </Form.Item>
       </Form>
@@ -1473,11 +1499,20 @@ function AddTeamDialog({
     setSaving(true);
     setError(null);
 
+    const parent =
+      units.find((candidate) => candidate.id === values.parent_id) ?? null;
+
     const result = await adminApi("org-units", {
       method: "POST",
-      // A unit added by hand is a team under whatever was selected; ฝ่าย and
-      // แผนก come from the HR register through the importer, not from here.
-      body: JSON.stringify({ ...values, kind: "TEAM", company_id: companyId }),
+      // The level follows the parent — one level down from whatever was
+      // selected, บริษัท at the root. This used to send `TEAM` for every box
+      // regardless of where it was dropped, which the backend now refuses
+      // outright anywhere but under a แผนก.
+      body: JSON.stringify({
+        ...values,
+        kind: kindUnder(parent),
+        company_id: companyId,
+      }),
     });
 
     setSaving(false);

@@ -30,9 +30,14 @@ import type {
   OrgUnitScopeRow,
 } from "@/lib/api/types";
 import { messages } from "@/lib/messages";
+import { ORG_UNIT_LEVELS } from "@/lib/org-levels";
 
-/** The levels the target picker filters by, widest first. */
-const LEVELS = ["COMPANY", "DIVISION", "DEPARTMENT", "POSITION"] as const;
+/**
+ * The levels the target picker filters by, widest first — the chart's five,
+ * from `@/lib/org-levels`. ทีม was missing here while it was treated as a
+ * legacy kind, so a grant on one could not be found through the filter.
+ */
+const LEVELS = ORG_UNIT_LEVELS;
 
 /**
  * What a grant may carry, mirroring the backend's `SCOPE_PERMISSIONS`.

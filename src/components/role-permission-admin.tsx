@@ -22,6 +22,7 @@ import type {
   RoleRow,
 } from "@/lib/api/types";
 import { messages } from "@/lib/messages";
+import { ORG_UNIT_LEVELS } from "@/lib/org-levels";
 import { SearchSelect } from "./search-select";
 
 /**
@@ -35,19 +36,10 @@ import { SearchSelect } from "./search-select";
 const FORBIDDEN_WITH_ADMIN = ["approval.decide", "request.sensitive.read"];
 
 /**
- * The levels a role's view may start at, widest first.
- *
- * `TEAM` is here because the demo company and older charts are built on it —
- * a role set to it must stay editable, and a picker that cannot show the value
- * it holds is how a save silently clears one.
+ * The levels a role's view may start at, widest first — the chart's five, in
+ * chart order rather than the enum's declaration order, which puts ทีม last.
  */
-const VISIBILITY_LEVELS: readonly OrgUnitNode["kind"][] = [
-  "COMPANY",
-  "DIVISION",
-  "DEPARTMENT",
-  "POSITION",
-  "TEAM",
-];
+const VISIBILITY_LEVELS: readonly OrgUnitNode["kind"][] = ORG_UNIT_LEVELS;
 
 /** The three columns §16 A4 draws, by permission module. */
 const GROUPS = [

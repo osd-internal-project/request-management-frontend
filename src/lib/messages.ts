@@ -133,13 +133,16 @@ export const messages = {
     manualGrant: "ผูกมือ",
     leadFromCompany: "เลือกหัวหน้าได้จากคนทั้งบริษัท ไม่จำเป็นต้องเป็นสมาชิกหน่วยงานนี้",
     unitKind: "ประเภทหน่วยงาน",
-    /** `OrgUnitKind` — widest first, the order the enum declares. */
+    /**
+     * `OrgUnitKind`. The chart order is บริษัท → ฝ่าย → แผนก → ทีม → ตำแหน่ง and
+     * lives in `@/lib/org-levels`, not in this object nor in the enum's own
+     * declaration order — both put ทีม last for historical reasons.
+     */
     unitKinds: {
       COMPANY: "บริษัท",
       DIVISION: "ฝ่าย",
       DEPARTMENT: "แผนก",
       POSITION: "ตำแหน่ง",
-      /** Kept for the demo company and older charts; new units use ตำแหน่ง. */
       TEAM: "ทีม",
     },
     moveMember: "ย้ายทีม",
