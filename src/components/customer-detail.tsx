@@ -30,7 +30,7 @@ import { ROUTES } from "@/lib/routes";
 import type {
   ContactConsentStatus,
   CustomerDetail,
-  DealRow,
+  OpportunityRow,
   CustomerFieldChange,
   CustomerSummary,
   CustomerTimelineEvent,
@@ -71,7 +71,7 @@ export function CustomerDetailView({
   summary,
   consents,
   relatedRequests,
-  customerDeals,
+  customerOpportunities,
 }: {
   customer: CustomerDetail;
   history: CustomerFieldChange[];
@@ -85,7 +85,7 @@ export function CustomerDetailView({
   /** null = viewer has no request.read (C360-04: tab hidden, not empty). */
   relatedRequests: RequestRow[] | null;
   /** null = viewer has no crm.sales.read. */
-  customerDeals: DealRow[] | null;
+  customerOpportunities: OpportunityRow[] | null;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -258,15 +258,15 @@ export function CustomerDetailView({
 
       {summary && (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-          {summary.deals && (
+          {summary.opportunities && (
             <Card size="small">
               <Text type="secondary" className="block text-xs">
-                {m.detail.cards.openDeals}
+                {m.detail.cards.openOpportunities}
               </Text>
-              <div className="text-xl font-semibold">{summary.deals.open}</div>
+              <div className="text-xl font-semibold">{summary.opportunities.open}</div>
               <Text type="secondary" className="text-xs">
-                {m.detail.cards.openDealsAmount(
-                  summary.deals.openAmount.toLocaleString("th-TH"),
+                {m.detail.cards.openOpportunitiesAmount(
+                  summary.opportunities.openAmount.toLocaleString("th-TH"),
                 )}
               </Text>
             </Card>
@@ -379,12 +379,12 @@ export function CustomerDetailView({
               />
             ),
           },
-          ...(customerDeals !== null
+          ...(customerOpportunities !== null
             ? [
                 {
-                  key: "deals",
-                  label: `${m.detail.tabDeals} · ${customerDeals.length}`,
-                  children: <CustomerDealsTab rows={customerDeals} />,
+                  key: "opportunities",
+                  label: `${m.detail.tabOpportunities} · ${customerOpportunities.length}`,
+                  children: <CustomerOpportunitiesTab rows={customerOpportunities} />,
                 },
               ]
             : []),
@@ -410,7 +410,7 @@ export function CustomerDetailView({
           /* C360-01 — โครงหน้าครบตั้งแต่แรก: แท็บที่ยังไม่มา เปิดแล้วบอกว่า
              มากับโมดูลไหน ไม่ fetch อะไร (C360-04) */
           ...Object.entries(m.detail.futureTabs)
-            .filter(([key]) => !(key === "deals" && customerDeals !== null))
+            .filter(([key]) => !(key === "opportunities" && customerOpportunities !== null))
             .map(([key, tab]) => ({
             key: `future-${key}`,
             label: tab.label,
@@ -1003,9 +1003,9 @@ function LocationsTab({
   );
 }
 
-/** C360-01 — ดีลของลูกค้ารายนี้ (ข้อมูลจริงจากโมดูล sales). */
-function CustomerDealsTab({ rows }: { rows: DealRow[] }) {
-  const ms = messages.sales.deals;
+/** C360-01 — โอกาสการขายของลูกค้ารายนี้ (ข้อมูลจริงจากโมดูล sales). */
+function CustomerOpportunitiesTab({ rows }: { rows: OpportunityRow[] }) {
+  const ms = messages.sales.opportunities;
   if (!rows.length) {
     return (
       <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={ms.empty} />
@@ -1013,7 +1013,7 @@ function CustomerDealsTab({ rows }: { rows: DealRow[] }) {
   }
 
   return (
-    <Table<DealRow>
+    <Table<OpportunityRow>
       size="small"
       rowKey="id"
       pagination={false}
@@ -1021,10 +1021,10 @@ function CustomerDealsTab({ rows }: { rows: DealRow[] }) {
       columns={[
         {
           title: ms.columns.code,
-          dataIndex: "dealCode",
+          dataIndex: "opportunityCode",
           width: 150,
           render: (code: string, row) => (
-            <Link href={ROUTES.dealDetail(row.id)}>{code}</Link>
+            <Link href={ROUTES.opportunityDetail(row.id)}>{code}</Link>
           ),
         },
         { title: ms.columns.title, dataIndex: "title" },
@@ -1041,7 +1041,7 @@ function CustomerDealsTab({ rows }: { rows: DealRow[] }) {
           dataIndex: "amount",
           width: 130,
           align: "right" as const,
-          render: (amount: DealRow["amount"]) =>
+          render: (amount: OpportunityRow["amount"]) =>
             amount === null || amount === undefined
               ? "—"
               : Number(amount).toLocaleString("th-TH"),

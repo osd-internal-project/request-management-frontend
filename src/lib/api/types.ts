@@ -277,7 +277,7 @@ export interface RequestType {
    * **Empty means every group may** — that is the default, not "nobody".
    */
   eligibleUnits?: { orgUnitId: string }[];
-  /** REQ-03 — whether ยื่นคำขอ demands an `อ้างอิงดีล` for this type. */
+  /** REQ-03 — whether ยื่นคำขอ demands an `อ้างอิงโอกาสการขาย` for this type. */
   refRequired?: boolean;
   active?: boolean;
 }
@@ -747,7 +747,7 @@ export interface CustomerSummary {
   locations: number;
   branchCustomers: number;
   /** null = viewer has no crm.sales.read — hide the card (C360-04). */
-  deals: { open: number; openAmount: number } | null;
+  opportunities: { open: number; openAmount: number } | null;
   /** null = viewer has no request.read — hide the card (C360-04). */
   requests: { total: number; open: number | null } | null;
   /** C360-02 — cached from Odoo by the hourly sync; null = never synced. */
@@ -759,11 +759,11 @@ export interface CustomerSummary {
 }
 
 /* -------------------------------------------------------------------------- */
-/* CRM — Lead + โอกาสการขาย (ดีล)                                              */
+/* CRM — Lead + โอกาสการขาย (Opportunity)                                              */
 /* -------------------------------------------------------------------------- */
 
 export type LeadStatus = "new" | "qualified" | "disqualified" | "converted";
-export type DealStage =
+export type OpportunityStage =
   | "qualifying"
   | "proposing"
   | "negotiating"
@@ -782,16 +782,16 @@ export interface LeadRow {
   disqualifyReason: string | null;
   customerId: string | null;
   customer: { id: string; customerCode: string; nameTh: string } | null;
-  convertedDeal: { id: string; dealCode: string } | null;
+  convertedOpportunity: { id: string; opportunityCode: string } | null;
   ownerUserId: string;
   createdAt: string;
 }
 
-export interface DealRow {
+export interface OpportunityRow {
   id: string;
-  dealCode: string;
+  opportunityCode: string;
   title: string;
-  stage: DealStage;
+  stage: OpportunityStage;
   amount: string | number | null;
   currency: string;
   probability: number | null;
@@ -803,7 +803,7 @@ export interface DealRow {
   updatedAt: string;
 }
 
-export interface DealDetail extends DealRow {
+export interface OpportunityDetail extends OpportunityRow {
   companyId: string;
   wonAt: string | null;
   lostAt: string | null;
@@ -823,7 +823,7 @@ export interface DealDetail extends DealRow {
   kycWarning: { required: boolean; products: string[] };
 }
 
-export interface DealLostReason {
+export interface OpportunityLostReason {
   code: string;
   name: string;
 }

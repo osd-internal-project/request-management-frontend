@@ -23,17 +23,17 @@ import { SearchSelect } from "@/components/search-select";
 import { appApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
-import type { CustomerRow, DealRow } from "@/lib/api/types";
+import type { CustomerRow, OpportunityRow } from "@/lib/api/types";
 
-const m = messages.sales.deals;
+const m = messages.sales.opportunities;
 
-export function formatAmount(amount: DealRow["amount"]): string {
+export function formatAmount(amount: OpportunityRow["amount"]): string {
   if (amount === null || amount === undefined) return "—";
   return Number(amount).toLocaleString("th-TH");
 }
 
-/** ทะเบียนดีล — ตาราง+ฟิลเตอร์ตามขั้น และเปิดดีลใหม่. */
-export function DealList({
+/** ทะเบียนโอกาสการขาย — ตาราง+ฟิลเตอร์ตามขั้น และเปิดโอกาสการขายใหม่. */
+export function OpportunityList({
   rows,
   total,
   page,
@@ -42,7 +42,7 @@ export function DealList({
   customers,
   canManage,
 }: {
-  rows: DealRow[];
+  rows: OpportunityRow[];
   total: number;
   page: number;
   pageSize: number;
@@ -67,7 +67,7 @@ export function DealList({
     if (merged.search) params.set("search", merged.search);
     if (merged.stage) params.set("stage", merged.stage);
     if (merged.mineOnly) params.set("view", "mine");
-    router.push(`${ROUTES.deals}?${params.toString()}`);
+    router.push(`${ROUTES.opportunities}?${params.toString()}`);
   }
 
   async function create() {
@@ -75,7 +75,7 @@ export function DealList({
     setBusy(true);
     setError(null);
 
-    const result = await appApi<{ id: string; dealCode: string }>("deals", {
+    const result = await appApi<{ id: string; opportunityCode: string }>("opportunities", {
       method: "POST",
       body: JSON.stringify({
         customer_id: customerId,
@@ -91,9 +91,9 @@ export function DealList({
       setError(result.message);
       return;
     }
-    message.success(m.form.created(result.data.dealCode));
+    message.success(m.form.created(result.data.opportunityCode));
     setCreating(false);
-    router.push(ROUTES.dealDetail(result.data.id));
+    router.push(ROUTES.opportunityDetail(result.data.id));
   }
 
   return (
@@ -130,12 +130,12 @@ export function DealList({
         <div className="grow" />
         {canManage && (
           <Button type="primary" onClick={() => setCreating(true)}>
-            {m.newDeal}
+            {m.newOpportunity}
           </Button>
         )}
       </div>
 
-      <Table<DealRow>
+      <Table<OpportunityRow>
         size="small"
         rowKey="id"
         dataSource={rows}
@@ -151,23 +151,23 @@ export function DealList({
             if (filters.stage) params.set("stage", filters.stage);
             if (filters.mineOnly) params.set("view", "mine");
             params.set("page", String(next));
-            router.push(`${ROUTES.deals}?${params.toString()}`);
+            router.push(`${ROUTES.opportunities}?${params.toString()}`);
           },
         }}
         columns={[
           {
             title: m.columns.code,
-            dataIndex: "dealCode",
+            dataIndex: "opportunityCode",
             width: 150,
             render: (code: string, row) => (
-              <Link href={ROUTES.dealDetail(row.id)}>{code}</Link>
+              <Link href={ROUTES.opportunityDetail(row.id)}>{code}</Link>
             ),
           },
           { title: m.columns.title, dataIndex: "title" },
           {
             title: m.columns.customer,
             dataIndex: "customer",
-            render: (customer: DealRow["customer"]) =>
+            render: (customer: OpportunityRow["customer"]) =>
               customer ? (
                 <Link href={ROUTES.customerDetail(customer.id)}>
                   {customer.nameTh}
@@ -189,7 +189,7 @@ export function DealList({
             dataIndex: "amount",
             width: 130,
             align: "right" as const,
-            render: (amount: DealRow["amount"]) => formatAmount(amount),
+            render: (amount: OpportunityRow["amount"]) => formatAmount(amount),
           },
           {
             title: m.columns.expectedClose,
@@ -203,7 +203,7 @@ export function DealList({
 
       <Modal
         open={creating}
-        title={m.newDeal}
+        title={m.newOpportunity}
         okText={m.form.save}
         confirmLoading={busy}
         okButtonProps={{ disabled: !customerId || !title.trim() }}

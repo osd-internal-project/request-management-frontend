@@ -1,15 +1,15 @@
 import { redirect } from "next/navigation";
 import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
-import { DealList } from "@/components/deal-list";
-import { getDeals } from "@/lib/api/sales";
+import { OpportunityList } from "@/components/opportunity-list";
+import { getOpportunities } from "@/lib/api/sales";
 import { getCustomers } from "@/lib/api/customers";
 import { messages } from "@/lib/messages";
 import { HOME_PATH } from "@/lib/routes";
 import { can, getSession } from "@/lib/session";
 
 /** CRM โอกาสการขาย — ตามขั้น มูลค่า วันคาดปิด. Gate-before-fetch. */
-export default async function DealsPage({
+export default async function OpportunitiesPage({
   searchParams,
 }: {
   searchParams: Promise<{
@@ -26,7 +26,7 @@ export default async function DealsPage({
   const page = Number(query.page) || 1;
 
   const [listResult, customersResult] = await Promise.all([
-    getDeals({
+    getOpportunities({
       search: query.search,
       stage: query.stage,
       view: query.view === "mine" ? "mine" : undefined,
@@ -42,14 +42,14 @@ export default async function DealsPage({
     <div className="space-y-4">
       <div>
         <Title level={4} className="mb-0!">
-          {messages.sales.deals.title}
+          {messages.sales.opportunities.title}
         </Title>
         <Text type="secondary" className="text-xs">
-          {messages.sales.deals.scopeNote}
+          {messages.sales.opportunities.scopeNote}
         </Text>
       </div>
 
-      <DealList
+      <OpportunityList
         rows={listResult.ok ? listResult.data.data : []}
         total={listResult.ok ? listResult.data.total : 0}
         page={page}

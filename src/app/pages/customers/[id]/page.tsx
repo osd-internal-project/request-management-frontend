@@ -2,14 +2,14 @@ import { notFound, redirect } from "next/navigation";
 import { CustomerDetailView } from "@/components/customer-detail";
 import customers from "@/lib/api/customers";
 import { getRequests } from "@/lib/api/requests";
-import { getDeals } from "@/lib/api/sales";
+import { getOpportunities } from "@/lib/api/sales";
 import { HOME_PATH } from "@/lib/routes";
 import { can, getSession } from "@/lib/session";
 
 /**
  * หน้ารายละเอียดลูกค้า (CM-01) — ข้อมูลหลัก + แท็บผู้ติดต่อ / ที่อยู่ /
  * ประวัติการแก้ไข / ไทม์ไลน์. This page grows into มุมมองลูกค้า 360° (C360):
- * the future ดีล/ใบเสนอราคา/เคส/การเงิน tabs mount here, each gated with
+ * the future โอกาสการขาย/ใบเสนอราคา/เคส/การเงิน tabs mount here, each gated with
  * `can()` before any fetch (C360-04).
  */
 export default async function CustomerDetailPage({
@@ -25,7 +25,7 @@ export default async function CustomerDetailPage({
   const canReadRequests = can(session, "request.read");
   const canReadSales = can(session, "crm.sales.read");
 
-  const [detailResult, historyResult, timelineResult, optionsResult, summaryResult, consentsResult, requestsResult, dealsResult] =
+  const [detailResult, historyResult, timelineResult, optionsResult, summaryResult, consentsResult, requestsResult, opportunitiesResult] =
     await Promise.all([
       customers.getCustomer(id),
       customers.getCustomerHistory(id),
@@ -40,7 +40,7 @@ export default async function CustomerDetailPage({
         : Promise.resolve(null),
       // C360-04: no crm.sales.read → no call, tab hidden.
       canReadSales
-        ? getDeals({ customer_id: id, page_size: 50 })
+        ? getOpportunities({ customer_id: id, page_size: 50 })
         : Promise.resolve(null),
     ]);
 
@@ -60,8 +60,8 @@ export default async function CustomerDetailPage({
       relatedRequests={
         requestsResult?.ok ? requestsResult.data.data : canReadRequests ? [] : null
       }
-      customerDeals={
-        dealsResult?.ok ? dealsResult.data.data : canReadSales ? [] : null
+      customerOpportunities={
+        opportunitiesResult?.ok ? opportunitiesResult.data.data : canReadSales ? [] : null
       }
     />
   );

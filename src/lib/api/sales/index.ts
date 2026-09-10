@@ -1,12 +1,12 @@
 /**
- * CRM sales API — Lead + โอกาสการขาย (ดีล). Server-side reads; mutations go
+ * CRM sales API — Lead + โอกาสการขาย (Opportunity). Server-side reads; mutations go
  * through `appApi` from client components, same split as customers.
  */
 import { apiGet, type ApiResult } from "../core";
 import type {
-  DealDetail,
-  DealLostReason,
-  DealRow,
+  OpportunityDetail,
+  OpportunityLostReason,
+  OpportunityRow,
   LeadRow,
   Paginated,
 } from "../types";
@@ -27,7 +27,7 @@ export async function getLeads(options?: {
   return apiGet(`leads?${params.toString()}`);
 }
 
-export async function getDeals(options?: {
+export async function getOpportunities(options?: {
   search?: string;
   stage?: string;
   open?: boolean;
@@ -35,7 +35,7 @@ export async function getDeals(options?: {
   view?: "mine";
   page?: number;
   page_size?: number;
-}): Promise<ApiResult<Paginated<DealRow>>> {
+}): Promise<ApiResult<Paginated<OpportunityRow>>> {
   const params = new URLSearchParams();
   if (options?.search) params.set("search", options.search);
   if (options?.stage) params.set("stage", options.stage);
@@ -44,16 +44,16 @@ export async function getDeals(options?: {
   if (options?.view) params.set("view", options.view);
   params.set("page", String(options?.page ?? 1));
   params.set("page_size", String(options?.page_size ?? 50));
-  return apiGet(`deals?${params.toString()}`);
+  return apiGet(`opportunities?${params.toString()}`);
 }
 
-export async function getDeal(id: string): Promise<ApiResult<DealDetail>> {
-  return apiGet(`deals/${id}`);
+export async function getOpportunity(id: string): Promise<ApiResult<OpportunityDetail>> {
+  return apiGet(`opportunities/${id}`);
 }
 
-export async function getLostReasons(): Promise<ApiResult<DealLostReason[]>> {
-  return apiGet(`deals/lost-reasons`);
+export async function getLostReasons(): Promise<ApiResult<OpportunityLostReason[]>> {
+  return apiGet(`opportunities/lost-reasons`);
 }
 
-const salesApi = { getLeads, getDeals, getDeal, getLostReasons };
+const salesApi = { getLeads, getOpportunities, getOpportunity, getLostReasons };
 export default salesApi;

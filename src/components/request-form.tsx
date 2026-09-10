@@ -128,9 +128,9 @@ export function RequestForm({
   const [refId, setRefId] = useState(initialRef?.id ?? "");
   const [draftId, setDraftId] = useState<string | null>(null);
 
-  /** The prefilled ref keeps its own type; a hand-typed one stays "deal". */
+  /** The prefilled ref keeps its own type; a hand-typed one stays "opportunity". */
   const refTypeOf = (id: string) =>
-    initialRef && id === initialRef.id ? initialRef.type : "deal";
+    initialRef && id === initialRef.id ? initialRef.type : "opportunity";
   const [attachments, setAttachments] = useState<RequestAttachment[]>([]);
   const [preview, setPreview] = useState<ChainPreview | null>(null);
   /**
@@ -211,7 +211,7 @@ export function RequestForm({
    */
   const amountField = amountFieldOf(type);
 
-  /** REQ-03 — the type decides whether `อ้างอิงดีล` blocks a submit. */
+  /** REQ-03 — the type decides whether `อ้างอิงโอกาสการขาย` blocks a submit. */
   const refRequired = type?.refRequired ?? false;
 
   /** The draft row must exist before a document can hang off it. */
@@ -510,7 +510,7 @@ export function RequestForm({
               Required only when the type says so.
 
               §16 marks it with `*`, but that mockup is the DSC screen and most
-              types have no deal to point at. The magnifying glass went with the
+              types have no opportunity to point at. The magnifying glass went with the
               hard-coded rule: it never searched anything, and an icon that says
               a field is a lookup when it is a text box is a screen lying to the
               person filling it in.
@@ -914,7 +914,7 @@ export function SchemaField({
 /**
  * Label, required marker, and optional badge above a control.
  *
- * Shared so a schema-driven field and a hand-written one (type, deal ref) come
+ * Shared so a schema-driven field and a hand-written one (type, opportunity ref) come
  * out the same height and weight — that is what makes the two columns line up.
  */
 export function Field({

@@ -496,9 +496,9 @@ export function RequestTypeAdmin({
               </div>
 
               {/*
-                §16 draws `อ้างอิงดีล *` on the DSC mockup, and the submit screen
+                §16 draws `อ้างอิงโอกาสการขาย *` on the DSC mockup, and the submit screen
                 demanded it for every type as a result — including the ones with
-                no deal to point at. It is the type's rule, so it is set here.
+                no opportunity to point at. It is the type's rule, so it is set here.
               */}
               <label className="block">
                 <Checkbox

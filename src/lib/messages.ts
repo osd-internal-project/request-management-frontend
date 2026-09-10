@@ -71,7 +71,7 @@ export const messages = {
     crmGroup: "ลูกค้า (CRM)",
     customers: "ทะเบียนลูกค้า",
     leads: "Lead",
-    deals: "ดีล (โอกาสการขาย)",
+    opportunities: "โอกาสการขาย",
     adminGroup: "ผู้ดูแลระบบ",
     adminCrm: "ตั้งค่า CRM",
     adminApprovalMatrix: "ตารางอำนาจอนุมัติ",
@@ -483,8 +483,8 @@ export const messages = {
     draftBanner: "สถานะ: ร่าง — เลขคำขอจะออกเมื่อกดยื่น",
     type: "ประเภทคำขอ",
     typeRequired: "เลือกประเภทคำขอก่อน",
-    refLabel: "อ้างอิงดีล",
-    refRequired: "กรอกเลขอ้างอิงดีลก่อนยื่น",
+    refLabel: "อ้างอิงโอกาสการขาย",
+    refRequired: "กรอกเลขอ้างอิงโอกาสการขายก่อนยื่น",
     requiredDocsTitle: "เอกสารบังคับตามประเภทคำขอ",
     autosaveAt: (time: string) => `บันทึกร่างอัตโนมัติล่าสุด ${time} น.`,
     /* A `type: "array"` field — the grid a requester adds rows to. */
@@ -722,7 +722,7 @@ export const messages = {
       H8X5: "8x5 — นับเฉพาะเวลาทำการ วันทำงาน",
     } as Record<string, string>,
     workingHoursLink: "ตั้งเวลาทำการและวันหยุด",
-    /* REQ-03 — `อ้างอิงดีล` is per type, not a rule of the submit screen. */
+    /* REQ-03 — `อ้างอิงโอกาสการขาย` is per type, not a rule of the submit screen. */
     /* A `type: "array"` field — a grid the requester adds rows to. */
     fieldTypeTable: "array (ตาราง)",
     tableColumns: "คอลัมน์ของตาราง",
@@ -732,9 +732,9 @@ export const messages = {
     tableMaxRows: "จำนวนแถวสูงสุด",
     tableNoCap: "ไม่จำกัด",
     tableMaxRowsHint: "เว้นว่างไว้ ผู้ยื่นจะเพิ่มแถวได้ไม่จำกัด",
-    refRequired: "ต้องระบุอ้างอิงดีล",
+    refRequired: "ต้องระบุอ้างอิงโอกาสการขาย",
     refRequiredHint:
-      "เปิดไว้เมื่อคำขอประเภทนี้ผูกกับดีลเสมอ · ปิดไว้ ผู้ยื่นจะเว้นว่างได้",
+      "เปิดไว้เมื่อคำขอประเภทนี้ผูกกับโอกาสการขายเสมอ · ปิดไว้ ผู้ยื่นจะเว้นว่างได้",
     eligibleUnits: "หน่วยงานที่เปิดคำขอนี้ได้",
     eligibleUnitsAll: "ไม่ได้เลือก = ทุกหน่วยงานเปิดได้",
     eligibleUnitsHint:
@@ -808,7 +808,7 @@ export const messages = {
     /** The badge beside it: how many are actually waiting on this person. */
     awaitingMe: "รอคุณตัดสิน",
     emptyIncoming: "ไม่มีคำขอที่ส่งมาให้คุณ",
-    search: "ค้นหาเลขที่ / ลูกค้า / ดีล",
+    search: "ค้นหาเลขที่ / ลูกค้า / โอกาสการขาย",
     filterStatus: "สถานะ",
     filterType: "ประเภท",
     filterAll: "ทั้งหมด",
@@ -1043,7 +1043,7 @@ export const messages = {
         new: "ใหม่",
         qualified: "ผ่านคัดกรอง",
         disqualified: "คัดออก",
-        converted: "แปลงเป็นดีลแล้ว",
+        converted: "แปลงเป็นโอกาสการขายแล้ว",
       } as Record<string, string>,
       columns: {
         name: "Lead",
@@ -1068,7 +1068,7 @@ export const messages = {
       actions: {
         edit: "แก้ไข",
         disqualify: "คัดออก",
-        convert: "แปลงเป็นดีล",
+        convert: "แปลงเป็นโอกาสการขาย",
       },
       disqualifyTitle: "คัดออก Lead",
       disqualifyReason: "เหตุผลที่คัดออก",
@@ -1111,23 +1111,23 @@ export const messages = {
         done: (n: string) => `นำเข้าสำเร็จ ${n} ราย`,
         backToList: "ไปหน้า Lead",
       },
-      convertTitle: "แปลงเป็นดีล",
+      convertTitle: "แปลงเป็นโอกาสการขาย",
       convertHint:
         "ต้องเลือกลูกค้าในทะเบียนก่อน — ถ้ายังไม่มี ให้สร้างลูกค้าใหม่จากหน้าทะเบียนลูกค้าแล้วกลับมาแปลง",
       convertCustomer: "ลูกค้า",
-      convertTitleField: "ชื่อดีล (ว่าง = ใช้ชื่อ Lead)",
+      convertTitleField: "ชื่อโอกาสการขาย (ว่าง = ใช้ชื่อ Lead)",
       convertAmount: "มูลค่าคาดการณ์ (THB)",
-      converted: (code: string) => `แปลงเป็นดีล ${code} แล้ว`,
+      converted: (code: string) => `แปลงเป็นโอกาสการขาย ${code} แล้ว`,
     },
 
-    deals: {
-      title: "ดีล (โอกาสการขาย)",
-      scopeNote: "เห็นเฉพาะดีลของคุณและของทีม ตามสิทธิ์ที่ได้รับ",
-      newDeal: "เปิดดีลใหม่",
-      searchPlaceholder: "ค้นหา ชื่อดีล / เลขดีล / ลูกค้า",
+    opportunities: {
+      title: "โอกาสการขาย (Opportunity)",
+      scopeNote: "เห็นเฉพาะโอกาสการขายของคุณและของทีม ตามสิทธิ์ที่ได้รับ",
+      newOpportunity: "เปิดโอกาสการขายใหม่",
+      searchPlaceholder: "ค้นหา ชื่อโอกาสการขาย / เลขโอกาสการขาย / ลูกค้า",
       filterStage: "ขั้น: ทั้งหมด",
       mineOnly: "เฉพาะของฉัน",
-      empty: "ยังไม่มีดีล",
+      empty: "ยังไม่มีโอกาสการขาย",
       stage: {
         qualifying: "คัดกรอง",
         proposing: "เสนอราคา",
@@ -1143,8 +1143,8 @@ export const messages = {
         lost: "red",
       } as Record<string, string>,
       columns: {
-        code: "เลขดีล",
-        title: "ดีล",
+        code: "เลขโอกาสการขาย",
+        title: "โอกาสการขาย",
         customer: "ลูกค้า",
         stage: "ขั้น",
         amount: "มูลค่า",
@@ -1152,36 +1152,36 @@ export const messages = {
       },
       form: {
         customer: "ลูกค้า",
-        title: "ชื่อดีล",
+        title: "ชื่อโอกาสการขาย",
         amount: "มูลค่า (THB)",
         probability: "ความน่าจะเป็น (%)",
         expectedClose: "วันคาดว่าจะปิด",
         products: "product ที่เกี่ยวข้อง (รหัสตรงกับ Odoo)",
         productsHint: "พิมพ์รหัสแล้ว Enter เพิ่มได้หลายตัว",
         save: "บันทึก",
-        created: (code: string) => `เปิดดีล ${code} แล้ว`,
+        created: (code: string) => `เปิดโอกาสการขาย ${code} แล้ว`,
         saved: "บันทึกแล้ว",
       },
       detail: {
         stageLabel: "ขั้นปัจจุบัน",
-        win: "ปิดดีล — ชนะ",
-        lose: "ปิดดีล — แพ้",
-        won: "ปิดดีลสำเร็จ (ชนะ)",
-        lostTitle: "ปิดดีล — แพ้",
+        win: "ปิดโอกาสการขาย — ชนะ",
+        lose: "ปิดโอกาสการขาย — แพ้",
+        won: "ปิดโอกาสการขายสำเร็จ (ชนะ)",
+        lostTitle: "ปิดโอกาสการขาย — แพ้",
         lostReason: "เหตุผล (รายการมาตรฐาน)",
         lostReasonText: "รายละเอียดเพิ่มเติม",
         lostDone: "บันทึกปิดแพ้แล้ว",
-        closedWonBanner: "ดีลนี้ปิดแล้ว — ชนะ",
-        closedLostBanner: (reason: string) => `ดีลนี้ปิดแล้ว — แพ้ (${reason})`,
-        kycWarningTitle: "ดีลนี้มี product ที่ต้องยืนยันตัวตน (KYC)",
+        closedWonBanner: "โอกาสการขายนี้ปิดแล้ว — ชนะ",
+        closedLostBanner: (reason: string) => `โอกาสการขายนี้ปิดแล้ว — แพ้ (${reason})`,
+        kycWarningTitle: "โอกาสการขายนี้มี product ที่ต้องยืนยันตัวตน (KYC)",
         kycWarningBody: (products: string, customer: string) =>
           `${products} อยู่ในเงื่อนไขต้องทำ KYC และลูกค้า ${customer} ยังไม่ผ่านการยืนยันตัวตน — ยื่น KYC ได้เลย ธุรกรรมยังเดินต่อได้`,
         raiseKyc: "ยื่น KYC ให้ลูกค้า",
         customerLabel: "ลูกค้า",
         fromLead: (name: string) => `มาจาก Lead: ${name}`,
-        tabRequests: "คำขอที่อ้างดีลนี้",
+        tabRequests: "คำขอที่อ้างโอกาสการขายนี้",
         raiseRequest: "ยื่นคำขอ",
-        noRequests: "ยังไม่มีคำขอที่อ้างดีลนี้",
+        noRequests: "ยังไม่มีคำขอที่อ้างโอกาสการขายนี้",
         edit: "แก้ไข",
       },
     },
@@ -1220,7 +1220,7 @@ export const messages = {
     kycVerified: "ยืนยันตัวตนแล้ว (KYC)",
     kycNotVerified: "ยังไม่ผ่าน KYC",
     kycHint:
-      "KYC บังคับเฉพาะเมื่อดีลมี product ที่ต้องยืนยันตัวตน — ลูกค้าทั่วไปใช้งานได้ทันที",
+      "KYC บังคับเฉพาะเมื่อโอกาสการขายมี product ที่ต้องยืนยันตัวตน — ลูกค้าทั่วไปใช้งานได้ทันที",
 
     form: {
       createTitle: "สร้างลูกค้าใหม่",
@@ -1386,8 +1386,8 @@ export const messages = {
       raiseRequest: "ยื่นคำขอ",
       raiseKyc: "ยื่น KYC",
       cards: {
-        openDeals: "ดีลเปิด",
-        openDealsAmount: (amount: string) => `มูลค่ารวม ${amount} บาท`,
+        openOpportunities: "โอกาสการขายเปิด",
+        openOpportunitiesAmount: (amount: string) => `มูลค่ารวม ${amount} บาท`,
         openRequests: "คำขอค้าง",
         totalRequestsSuffix: (total: string) => `จากทั้งหมด ${total}`,
         contacts: "ผู้ติดต่อ",
@@ -1398,7 +1398,7 @@ export const messages = {
         outstandingDetail: (count: string, asOf: string) =>
           `ค้าง ${count} ใบ · ข้อมูล ${asOf}`,
       },
-      tabDeals: "ดีล",
+      tabOpportunities: "โอกาสการขาย",
       tabRequests: "คำขอ",
       noRequests: "ยังไม่มีคำขอที่อ้างถึงลูกค้ารายนี้",
       requestColumns: {
@@ -1409,7 +1409,7 @@ export const messages = {
       },
       /** C360-01 — โครงหน้าครบตั้งแต่แรก: แท็บที่ยังไม่มาระบุระยะไว้เลย */
       futureTabs: {
-        deals: { label: "ดีล", phase: "มาพร้อมโมดูล Sales (CRM ระยะถัดไป)" },
+        opportunities: { label: "โอกาสการขาย", phase: "มาพร้อมโมดูล Sales (CRM ระยะถัดไป)" },
         quotations: {
           label: "ใบเสนอราคา",
           phase: "มาพร้อมโมดูล Sales (CRM ระยะถัดไป)",
@@ -1503,7 +1503,7 @@ export const messages = {
       sectionSegments: "มิติการแบ่งกลุ่มลูกค้า",
       sectionKycProducts: "Product ที่ต้องยืนยันตัวตน (KYC)",
       kycProductsHint:
-        "KYC ไม่บังคับทุกราย — โมดูลดีลจะใช้ตารางนี้แจ้งเตือนเมื่อดีลมี product ที่เข้าเงื่อนไข · รายการตั้งต้นรอยืนยันจาก PO/การเงิน กรอกได้เลยเมื่อได้รายการ",
+        "KYC ไม่บังคับทุกราย — โมดูลโอกาสการขายจะใช้ตารางนี้แจ้งเตือนเมื่อโอกาสการขายมี product ที่เข้าเงื่อนไข · รายการตั้งต้นรอยืนยันจาก PO/การเงิน กรอกได้เลยเมื่อได้รายการ",
       kycProductCode: "รหัส product (ตรงกับ Odoo)",
       kycProductName: "ชื่อ product",
       addKycProduct: "เพิ่ม product",

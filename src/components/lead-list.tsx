@@ -43,7 +43,7 @@ interface LeadFormState {
 
 /**
  * Lead register — รับเข้า แก้ไข คัดออก (เหตุผลบังคับ ไม่มีการลบ) และแปลงเป็น
- * ดีลโดยข้อมูลไหลต่อ. Mutations call the backend then refresh, like every
+ * โอกาสการขายโดยข้อมูลไหลต่อ. Mutations call the backend then refresh, like every
  * CRM screen.
  */
 export function LeadList({
@@ -140,7 +140,7 @@ export function LeadList({
     setBusy(true);
     setError(null);
 
-    const result = await appApi<{ id: string; dealCode: string }>(
+    const result = await appApi<{ id: string; opportunityCode: string }>(
       `leads/${converting.id}/convert`,
       {
         method: "POST",
@@ -157,9 +157,9 @@ export function LeadList({
       setError(result.message);
       return;
     }
-    message.success(m.converted(result.data.dealCode));
+    message.success(m.converted(result.data.opportunityCode));
     setConverting(null);
-    router.push(ROUTES.dealDetail(result.data.id));
+    router.push(ROUTES.opportunityDetail(result.data.id));
   }
 
   return (
@@ -264,10 +264,10 @@ export function LeadList({
                 <Tag color={STATUS_COLOR[status]}>
                   {m.status[status] ?? status}
                 </Tag>
-                {row.convertedDeal && (
-                  <Link href={ROUTES.dealDetail(row.convertedDeal.id)}>
+                {row.convertedOpportunity && (
+                  <Link href={ROUTES.opportunityDetail(row.convertedOpportunity.id)}>
                     <Text type="secondary" className="text-xs">
-                      {row.convertedDeal.dealCode}
+                      {row.convertedOpportunity.opportunityCode}
                     </Text>
                   </Link>
                 )}
@@ -403,7 +403,7 @@ export function LeadList({
         />
       </Modal>
 
-      {/* แปลงเป็นดีล — ข้อมูลไหลต่อ */}
+      {/* แปลงเป็นโอกาสการขาย — ข้อมูลไหลต่อ */}
       <Modal
         open={converting !== null}
         title={m.convertTitle}

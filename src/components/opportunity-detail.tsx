@@ -21,27 +21,27 @@ import Text from "antd/es/typography/Text";
 import Title from "antd/es/typography/Title";
 import dayjs from "dayjs";
 import { SearchSelect } from "@/components/search-select";
-import { formatAmount } from "@/components/deal-list";
+import { formatAmount } from "@/components/opportunity-list";
 import { appApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
-import type { DealDetail, DealLostReason, RequestRow } from "@/lib/api/types";
+import type { OpportunityDetail, OpportunityLostReason, RequestRow } from "@/lib/api/types";
 
-const m = messages.sales.deals;
+const m = messages.sales.opportunities;
 const md = m.detail;
 
 /**
- * รายละเอียดดีล — และจุดที่ชุดงาน B จบ: ดีลที่มี product เข้าเงื่อนไข KYC +
+ * รายละเอียดโอกาสการขาย — และจุดที่ชุดงาน B จบ: โอกาสการขายที่มี product เข้าเงื่อนไข KYC +
  * ลูกค้ายังไม่ verified แสดง banner เตือนพร้อมทางไปยื่น KYC (ไม่ block).
  */
-export function DealDetailView({
-  deal,
+export function OpportunityDetailView({
+  opportunity,
   lostReasons,
   relatedRequests,
   canManage,
 }: {
-  deal: DealDetail;
-  lostReasons: DealLostReason[];
+  opportunity: OpportunityDetail;
+  lostReasons: OpportunityLostReason[];
   /** null = viewer has no request.read (C360-04: hidden, not empty). */
   relatedRequests: RequestRow[] | null;
   canManage: boolean;
@@ -54,13 +54,13 @@ export function DealDetailView({
   const [loseReason, setLoseReason] = useState<string>();
   const [loseText, setLoseText] = useState("");
 
-  const closed = deal.stage === "won" || deal.stage === "lost";
+  const closed = opportunity.stage === "won" || opportunity.stage === "lost";
   const editable = canManage && !closed;
 
   async function act(path: string, body?: unknown) {
     setError(null);
     setBusy(true);
-    const result = await appApi(`deals/${deal.id}${path}`, {
+    const result = await appApi(`opportunities/${opportunity.id}${path}`, {
       method: path ? "POST" : "PATCH",
       body: body ? JSON.stringify(body) : undefined,
     });
@@ -75,7 +75,7 @@ export function DealDetailView({
 
   async function setStage(stage: string) {
     setError(null);
-    const result = await appApi(`deals/${deal.id}`, {
+    const result = await appApi(`opportunities/${opportunity.id}`, {
       method: "PATCH",
       body: JSON.stringify({ stage }),
     });
@@ -100,39 +100,39 @@ export function DealDetailView({
   }
 
   const reasonName =
-    lostReasons.find((reason) => reason.code === deal.lostReasonCode)?.name ??
-    deal.lostReasonCode ??
+    lostReasons.find((reason) => reason.code === opportunity.lostReasonCode)?.name ??
+    opportunity.lostReasonCode ??
     "";
 
   return (
     <div className="space-y-4">
       {error && <Alert type="error" showIcon title={error} />}
 
-      {deal.stage === "won" && (
+      {opportunity.stage === "won" && (
         <Alert type="success" showIcon title={md.closedWonBanner} />
       )}
-      {deal.stage === "lost" && (
+      {opportunity.stage === "lost" && (
         <Alert
           type="warning"
           showIcon
           title={md.closedLostBanner(reasonName)}
-          description={deal.lostReasonText ?? undefined}
+          description={opportunity.lostReasonText ?? undefined}
         />
       )}
 
       {/* CM-04 ชุดงาน B — เตือน ไม่ block: ธุรกรรมเดินต่อได้ */}
-      {deal.kycWarning.required && !closed && (
+      {opportunity.kycWarning.required && !closed && (
         <Alert
           type="warning"
           showIcon
           title={md.kycWarningTitle}
           description={md.kycWarningBody(
-            deal.kycWarning.products.join(", "),
-            deal.customer.nameTh,
+            opportunity.kycWarning.products.join(", "),
+            opportunity.customer.nameTh,
           )}
           action={
             <Link
-              href={`${ROUTES.newRequest}?type=KYC&ref_type=customer&ref_id=${deal.customer.id}`}
+              href={`${ROUTES.newRequest}?type=KYC&ref_type=customer&ref_id=${opportunity.customer.id}`}
             >
               <Button size="small" type="primary">
                 {md.raiseKyc}
@@ -145,15 +145,15 @@ export function DealDetailView({
       <div className="flex items-start justify-between gap-3">
         <div>
           <Title level={4} className="mb-1!">
-            {deal.dealCode} · {deal.title}
+            {opportunity.opportunityCode} · {opportunity.title}
           </Title>
           <Space size={6} wrap>
-            <Tag color={m.stageColor[deal.stage]}>
-              {m.stage[deal.stage] ?? deal.stage}
+            <Tag color={m.stageColor[opportunity.stage]}>
+              {m.stage[opportunity.stage] ?? opportunity.stage}
             </Tag>
-            {deal.fromLead && (
+            {opportunity.fromLead && (
               <Text type="secondary" className="text-xs">
-                {md.fromLead(deal.fromLead.name)}
+                {md.fromLead(opportunity.fromLead.name)}
               </Text>
             )}
           </Space>
@@ -162,7 +162,7 @@ export function DealDetailView({
           <Space wrap>
             <SearchSelect
               className="min-w-36"
-              value={deal.stage}
+              value={opportunity.stage}
               onChange={(value) => void setStage(value as string)}
               options={["qualifying", "proposing", "negotiating"].map(
                 (stage) => ({ value: stage, label: m.stage[stage] }),
@@ -187,10 +187,10 @@ export function DealDetailView({
               key: "customer",
               label: md.customerLabel,
               children: (
-                <Link href={ROUTES.customerDetail(deal.customer.id)}>
-                  {deal.customer.customerCode} · {deal.customer.nameTh}
-                  {deal.customer.branchName
-                    ? ` · ${deal.customer.branchName}`
+                <Link href={ROUTES.customerDetail(opportunity.customer.id)}>
+                  {opportunity.customer.customerCode} · {opportunity.customer.nameTh}
+                  {opportunity.customer.branchName
+                    ? ` · ${opportunity.customer.branchName}`
                     : ""}
                 </Link>
               ),
@@ -198,21 +198,21 @@ export function DealDetailView({
             {
               key: "amount",
               label: m.columns.amount,
-              children: `${formatAmount(deal.amount)} ${deal.currency}`,
+              children: `${formatAmount(opportunity.amount)} ${opportunity.currency}`,
             },
             {
               key: "expectedClose",
               label: m.columns.expectedClose,
-              children: deal.expectedCloseAt
-                ? dayjs(deal.expectedCloseAt).format("D MMM YYYY")
+              children: opportunity.expectedCloseAt
+                ? dayjs(opportunity.expectedCloseAt).format("D MMM YYYY")
                 : "—",
             },
             {
               key: "products",
               label: m.form.products,
-              children: deal.products.length ? (
+              children: opportunity.products.length ? (
                 <Space size={4} wrap>
-                  {deal.products.map((product) => (
+                  {opportunity.products.map((product) => (
                     <Tag key={product.productCode}>{product.productCode}</Tag>
                   ))}
                 </Space>
@@ -230,7 +230,7 @@ export function DealDetailView({
           title={`${md.tabRequests} · ${relatedRequests.length}`}
           extra={
             <Link
-              href={`${ROUTES.newRequest}?ref_type=deal&ref_id=${deal.dealCode}`}
+              href={`${ROUTES.newRequest}?ref_type=opportunity&ref_id=${opportunity.opportunityCode}`}
             >
               <Button size="small" type="primary">
                 {md.raiseRequest}
