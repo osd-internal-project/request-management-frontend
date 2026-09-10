@@ -79,6 +79,8 @@ export const ROUTES = {
   customerImport: `${HOME_PATH}/customers/import`,
   leads: `${HOME_PATH}/leads`,
   leadImport: `${HOME_PATH}/leads/import`,
+  /** หน้ารายละเอียด Lead — pipeline, ข้อมูลบริษัท/ที่อยู่, กิจกรรม. */
+  leadDetail: (id: string) => `${HOME_PATH}/leads/${id}`,
   opportunities: `${HOME_PATH}/opportunities`,
   opportunityDetail: (id: string) => `${HOME_PATH}/opportunities/${id}`,
   /** หน้ารายละเอียดลูกค้า — จะโตเป็นมุมมอง 360° (C360). */

@@ -4,6 +4,7 @@
  */
 import { apiGet, type ApiResult } from "../core";
 import type {
+  LeadDetail,
   OpportunityDetail,
   OpportunityLostReason,
   OpportunityRow,
@@ -25,6 +26,10 @@ export async function getLeads(options?: {
   params.set("page", String(options?.page ?? 1));
   params.set("page_size", String(options?.page_size ?? 50));
   return apiGet(`leads?${params.toString()}`);
+}
+
+export async function getLead(id: string): Promise<ApiResult<LeadDetail>> {
+  return apiGet(`leads/${id}`);
 }
 
 export async function getOpportunities(options?: {
@@ -55,5 +60,11 @@ export async function getLostReasons(): Promise<ApiResult<OpportunityLostReason[
   return apiGet(`opportunities/lost-reasons`);
 }
 
-const salesApi = { getLeads, getOpportunities, getOpportunity, getLostReasons };
+const salesApi = {
+  getLeads,
+  getLead,
+  getOpportunities,
+  getOpportunity,
+  getLostReasons,
+};
 export default salesApi;

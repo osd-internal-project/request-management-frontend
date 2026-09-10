@@ -762,7 +762,14 @@ export interface CustomerSummary {
 /* CRM — Lead + โอกาสการขาย (Opportunity)                                              */
 /* -------------------------------------------------------------------------- */
 
-export type LeadStatus = "new" | "qualified" | "disqualified" | "converted";
+export type LeadStatus =
+  | "new"
+  | "cannot_contact"
+  | "contacted"
+  | "qualified"
+  | "disqualified"
+  | "converted";
+export type LeadActivityType = "call" | "email" | "meeting" | "task" | "note";
 export type OpportunityStage =
   | "qualifying"
   | "proposing"
@@ -774,10 +781,25 @@ export interface LeadRow {
   id: string;
   name: string;
   contactName: string | null;
+  contactPosition: string | null;
   phone: string | null;
   email: string | null;
   note: string | null;
   sourceCode: string | null;
+  /** ข้อมูลบริษัท/ลูกค้าเป้าหมาย — free text ระหว่างคัดกรอง (หน้ารายละเอียด Lead). */
+  nameEn: string | null;
+  taxId: string | null;
+  industry: string | null;
+  companySize: string | null;
+  employeeCount: number | null;
+  productGroup: string | null;
+  subProduct: string | null;
+  projectRevenue: string | number | null;
+  addressLine: string | null;
+  district: string | null;
+  province: string | null;
+  postalCode: string | null;
+  country: string;
   status: LeadStatus;
   disqualifyReason: string | null;
   customerId: string | null;
@@ -785,6 +807,44 @@ export interface LeadRow {
   convertedOpportunity: { id: string; opportunityCode: string } | null;
   ownerUserId: string;
   createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * กิจกรรมบน Lead — ไม่มี `dueAt` = บันทึกสิ่งที่ทำไปแล้ว (ปิดตั้งแต่สร้าง),
+ * มี `dueAt` = นัด/งานที่ต้องตามต่อ จน `completedAt` ถูกติ๊ก.
+ */
+export interface LeadActivity {
+  id: string;
+  leadId: string;
+  type: LeadActivityType;
+  subject: string;
+  detail: string | null;
+  dueAt: string | null;
+  completedAt: string | null;
+  completedBy: string | null;
+  completedByName: string | null;
+  createdAt: string;
+  createdBy: string;
+  createdByName: string;
+}
+
+/** `GET /leads/:id` — หน้ารายละเอียด Lead. */
+export interface LeadDetail extends LeadRow {
+  customer: {
+    id: string;
+    customerCode: string;
+    nameTh: string;
+    branchName: string | null;
+  } | null;
+  convertedOpportunity: {
+    id: string;
+    opportunityCode: string;
+    title: string;
+    stage: OpportunityStage;
+  } | null;
+  owner: { id: string; displayName: string };
+  activities: LeadActivity[];
 }
 
 export interface OpportunityRow {
@@ -796,6 +856,35 @@ export interface OpportunityRow {
   currency: string;
   probability: number | null;
   expectedCloseAt: string | null;
+  /**
+   * PO 10 ก.ย. 2569: null = ผู้มุ่งหวัง — การเปิดโอกาสการขายยังไม่ถือเป็นลูกค้า;
+   * ทะเบียนลูกค้าเกิดเมื่อเปิดใบสั่งขาย แล้วค่านี้ถูกผูกกลับ.
+   */
+  customerId: string | null;
+  customer: { id: string; customerCode: string; nameTh: string } | null;
+  /** ชื่อผู้มุ่งหวัง — แสดงแทนลูกค้าระหว่างที่ `customerId` ยังว่าง. */
+  prospectName: string | null;
+  prospectTaxId: string | null;
+  ownerUserId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type SaleOrderStatus = "open" | "cancelled";
+
+/** ใบสั่งขาย (CD-77 โครงระยะ 1) — จุดที่ผู้มุ่งหวังกลายเป็นลูกค้า. */
+export interface SaleOrderRow {
+  id: string;
+  saleOrderCode: string;
+  status: SaleOrderStatus;
+  amount: string | number | null;
+  currency: string;
+  note: string | null;
+  orderedAt: string;
+  cancelledAt: string | null;
+  cancelReason: string | null;
+  opportunityId: string;
+  opportunity: { id: string; opportunityCode: string; title: string } | null;
   customerId: string;
   customer: { id: string; customerCode: string; nameTh: string } | null;
   ownerUserId: string;
@@ -816,9 +905,13 @@ export interface OpportunityDetail extends OpportunityRow {
     branchCode: string;
     branchName: string | null;
     kycVerified: boolean;
-  };
+  } | null;
+  prospectContactName: string | null;
+  prospectPhone: string | null;
+  prospectEmail: string | null;
   products: { productCode: string; name: string | null }[];
   fromLead: { id: string; name: string; sourceCode: string | null } | null;
+  saleOrders: SaleOrderRow[];
   /** CM-04 ชุดงาน B — เตือน ไม่ block. */
   kycWarning: { required: boolean; products: string[] };
 }

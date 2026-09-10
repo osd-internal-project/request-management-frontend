@@ -12,6 +12,7 @@ import {
   Input,
   InputNumber,
   Modal,
+  Segmented,
   Select,
   Space,
   Table,
@@ -31,6 +32,33 @@ export function formatAmount(amount: OpportunityRow["amount"]): string {
   if (amount === null || amount === undefined) return "—";
   return Number(amount).toLocaleString("th-TH");
 }
+
+/**
+ * ลูกค้า หรือ ผู้มุ่งหวัง ของโอกาสการขาย — PO 10 ก.ย. 2569: การเปิดโอกาสการขาย
+ * ยังไม่ถือเป็นลูกค้า จึงมีสองหน้าตา: ลิงก์ไปทะเบียนลูกค้า หรือชื่อผู้มุ่งหวัง
+ * พร้อมป้าย "ยังไม่เป็นลูกค้า".
+ */
+export function OpportunityParty({
+  row,
+}: {
+  row: Pick<OpportunityRow, "customer" | "prospectName">;
+}) {
+  if (row.customer) {
+    return (
+      <Link href={ROUTES.customerDetail(row.customer.id)}>
+        {row.customer.nameTh}
+      </Link>
+    );
+  }
+  return (
+    <Space size={6} wrap>
+      <span>{row.prospectName ?? "—"}</span>
+      <Tag color="orange">{m.prospectTag}</Tag>
+    </Space>
+  );
+}
+
+type PartyMode = "prospect" | "existing";
 
 /** ทะเบียนโอกาสการขาย — ตาราง+ฟิลเตอร์ตามขั้น และเปิดโอกาสการขายใหม่. */
 export function OpportunityList({
@@ -55,11 +83,21 @@ export function OpportunityList({
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [busy, setBusy] = useState(false);
+  // ค่าตั้งต้น = ผู้มุ่งหวัง: ทางปกติของ PO (ลูกค้าเกิดตอนเปิดใบสั่งขาย)
+  const [partyMode, setPartyMode] = useState<PartyMode>("prospect");
   const [customerId, setCustomerId] = useState<string>();
+  const [prospectName, setProspectName] = useState("");
+  const [prospectTaxId, setProspectTaxId] = useState("");
+  const [prospectContact, setProspectContact] = useState("");
+  const [prospectPhone, setProspectPhone] = useState("");
+  const [prospectEmail, setProspectEmail] = useState("");
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState<number | null>(null);
   const [expectedClose, setExpectedClose] = useState<string | null>(null);
   const [productCodes, setProductCodes] = useState<string[]>([]);
+
+  const partyReady =
+    partyMode === "existing" ? Boolean(customerId) : Boolean(prospectName.trim());
 
   function applyFilters(next: Partial<typeof filters>) {
     const params = new URLSearchParams();
@@ -71,14 +109,25 @@ export function OpportunityList({
   }
 
   async function create() {
-    if (!customerId || !title.trim()) return;
+    if (!partyReady || !title.trim()) return;
     setBusy(true);
     setError(null);
+
+    const party =
+      partyMode === "existing"
+        ? { customer_id: customerId }
+        : {
+            prospect_name: prospectName.trim(),
+            prospect_tax_id: prospectTaxId.trim() || undefined,
+            prospect_contact_name: prospectContact.trim() || undefined,
+            prospect_phone: prospectPhone.trim() || undefined,
+            prospect_email: prospectEmail.trim() || undefined,
+          };
 
     const result = await appApi<{ id: string; opportunityCode: string }>("opportunities", {
       method: "POST",
       body: JSON.stringify({
-        customer_id: customerId,
+        ...party,
         title: title.trim(),
         amount: amount ?? undefined,
         expected_close_at: expectedClose ?? undefined,
@@ -166,15 +215,8 @@ export function OpportunityList({
           { title: m.columns.title, dataIndex: "title" },
           {
             title: m.columns.customer,
-            dataIndex: "customer",
-            render: (customer: OpportunityRow["customer"]) =>
-              customer ? (
-                <Link href={ROUTES.customerDetail(customer.id)}>
-                  {customer.nameTh}
-                </Link>
-              ) : (
-                "—"
-              ),
+            key: "party",
+            render: (_: unknown, row) => <OpportunityParty row={row} />,
           },
           {
             title: m.columns.stage,
@@ -206,24 +248,73 @@ export function OpportunityList({
         title={m.newOpportunity}
         okText={m.form.save}
         confirmLoading={busy}
-        okButtonProps={{ disabled: !customerId || !title.trim() }}
+        okButtonProps={{ disabled: !partyReady || !title.trim() }}
         onCancel={() => setCreating(false)}
         onOk={() => void create()}
         destroyOnHidden
       >
         <Space direction="vertical" className="w-full">
-          <SearchSelect
-            className="w-full"
-            placeholder={m.form.customer}
-            value={customerId}
-            onChange={(value) => setCustomerId(value as string)}
-            options={customers.map((customer) => ({
-              value: customer.id,
-              label: `${customer.customerCode} · ${customer.nameTh}${
-                customer.branchName ? ` (${customer.branchName})` : ""
-              }`,
-            }))}
+          <Segmented<PartyMode>
+            block
+            value={partyMode}
+            onChange={(value) => setPartyMode(value)}
+            options={[
+              { value: "prospect", label: m.form.partyMode.prospect },
+              { value: "existing", label: m.form.partyMode.existing },
+            ]}
           />
+
+          {partyMode === "existing" ? (
+            <SearchSelect
+              className="w-full"
+              placeholder={m.form.customer}
+              value={customerId}
+              onChange={(value) => setCustomerId(value as string)}
+              options={customers.map((customer) => ({
+                value: customer.id,
+                label: `${customer.customerCode} · ${customer.nameTh}${
+                  customer.branchName ? ` (${customer.branchName})` : ""
+                }`,
+              }))}
+            />
+          ) : (
+            <>
+              <Input
+                placeholder={m.form.prospectName}
+                value={prospectName}
+                onChange={(e) => setProspectName(e.target.value)}
+              />
+              <Space.Compact className="w-full">
+                <Input
+                  placeholder={m.form.prospectTaxId}
+                  value={prospectTaxId}
+                  maxLength={20}
+                  onChange={(e) => setProspectTaxId(e.target.value)}
+                />
+                <Input
+                  placeholder={m.form.prospectContact}
+                  value={prospectContact}
+                  onChange={(e) => setProspectContact(e.target.value)}
+                />
+              </Space.Compact>
+              <Space.Compact className="w-full">
+                <Input
+                  placeholder={m.form.prospectPhone}
+                  value={prospectPhone}
+                  onChange={(e) => setProspectPhone(e.target.value)}
+                />
+                <Input
+                  placeholder={m.form.prospectEmail}
+                  value={prospectEmail}
+                  onChange={(e) => setProspectEmail(e.target.value)}
+                />
+              </Space.Compact>
+              <Text type="secondary" className="text-xs">
+                {m.form.prospectHint}
+              </Text>
+            </>
+          )}
+
           <Input
             placeholder={m.form.title}
             value={title}
