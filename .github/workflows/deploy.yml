@@ -1,0 +1,161 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_env:
+        description: 'Deploy env'
+        required: true
+        type: choice
+        default: sit
+        options:
+          - sit
+          - uat
+          - prod
+
+env:
+  DEPLOY_ENV: ${{ inputs.deploy_env || 'sit' }}
+  APP_NAME: request-management-frontend
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deploy-${{ inputs.deploy_env || 'sit' }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    outputs:
+      image_version: ${{ steps.pkg.outputs.ver }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Read Package Info
+        id: pkg
+        run: |
+          echo "ver=$(jq -r .version package.json)" >> "$GITHUB_OUTPUT"
+          echo "📦 Version: $(jq -r .version package.json)"
+
+      - name: Build Docker Image
+        run: |
+          docker build --no-cache --platform linux/amd64 \
+            -t ${{ env.APP_NAME }}:${{ steps.pkg.outputs.ver }} \
+            -f ./Dockerfile .
+
+      - name: Login to Huawei Cloud SWR
+        run: |
+          docker login -u ap-southeast-2@HPUAGIPPWFA7YCNYJIGE \
+            -p ${{ secrets.HUAWEI_REGISTRY_PASSWORD }} \
+            swr.ap-southeast-2.myhuaweicloud.com
+
+      - name: Tag and Push Docker Image
+        run: |
+          docker tag ${{ env.APP_NAME }}:${{ steps.pkg.outputs.ver }} \
+            swr.ap-southeast-2.myhuaweicloud.com/osd-internal/${{ env.APP_NAME }}:${{ steps.pkg.outputs.ver }}
+          docker push swr.ap-southeast-2.myhuaweicloud.com/osd-internal/${{ env.APP_NAME }}:${{ steps.pkg.outputs.ver }}
+
+      - name: Cleanup Docker Images
+        if: always()
+        run: |
+          docker rmi ${{ env.APP_NAME }}:${{ steps.pkg.outputs.ver }} || true
+          docker rmi swr.ap-southeast-2.myhuaweicloud.com/osd-internal/${{ env.APP_NAME }}:${{ steps.pkg.outputs.ver }} || true
+          docker image prune -f
+          docker builder prune -f
+
+  deploy:
+    runs-on: [self-hosted, k8s]
+    needs: build-and-push
+    environment: ${{ inputs.deploy_env == 'sit' && 'SIT' || inputs.deploy_env == 'uat' && 'UAT' || inputs.deploy_env == 'prod' && 'PROD' || 'SIT' }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Create Image Pull Secret
+        run: |
+          kubectl create secret docker-registry huawei-swr-secret \
+            --docker-server=swr.ap-southeast-2.myhuaweicloud.com \
+            --docker-username=ap-southeast-2@HPUAGIPPWFA7YCNYJIGE \
+            --docker-password=${{ secrets.HUAWEI_REGISTRY_PASSWORD }} \
+            --namespace=request-management-${{ env.DEPLOY_ENV }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Fix Stuck Helm Release
+        run: |
+          NS="request-management-${{ env.DEPLOY_ENV }}"
+          STATUS=$(helm status ${{ env.APP_NAME }} -n ${NS} -o json 2>/dev/null | jq -r '.info.status' || echo "not-found")
+          if [[ "$STATUS" == "pending-"* ]]; then
+            echo "⚠️ Found stuck release (status: ${STATUS}), rolling back..."
+            helm rollback ${{ env.APP_NAME }} 0 -n ${NS} || helm uninstall ${{ env.APP_NAME }} -n ${NS}
+          fi
+
+      - name: Set Chart appVersion
+        run: |
+          VER="${{ needs.build-and-push.outputs.image_version }}"
+          sed -i "s/^appVersion:.*/appVersion: \"${VER}\"/" chart/${{ env.APP_NAME }}/Chart.yaml
+          echo "Set appVersion to ${VER}"
+
+      - name: Helm Upgrade
+        run: |
+          set -e
+          DEPLOY_ENV="${{ env.DEPLOY_ENV }}"
+          VER="${{ needs.build-and-push.outputs.image_version }}"
+
+          echo "🚀 Helm upgrade ${{ env.APP_NAME }} (env: ${DEPLOY_ENV})"
+          echo "📦 Image: swr.ap-southeast-2.myhuaweicloud.com/osd-internal/${{ env.APP_NAME }}:${VER}"
+
+          helm upgrade --install ${{ env.APP_NAME }} ./chart/${{ env.APP_NAME }} \
+            -f ./chart/${{ env.APP_NAME }}/values-${DEPLOY_ENV}.yaml \
+            --set image.repository=swr.ap-southeast-2.myhuaweicloud.com/osd-internal/${{ env.APP_NAME }} \
+            --set image.tag=${VER} \
+            --namespace request-management-${DEPLOY_ENV} \
+            --atomic \
+            --timeout 5m \
+            --history-max 10
+
+          echo "✅ Deployment completed: ${{ env.APP_NAME }}:${VER} (env: ${DEPLOY_ENV})"
+
+      - name: Debug on Failure
+        if: failure()
+        run: |
+          NS="request-management-${{ env.DEPLOY_ENV }}"
+          echo "====== POD STATUS ======"
+          kubectl get pods -n ${NS} -l app=${{ env.APP_NAME }} -o wide
+
+          echo "====== POD EVENTS ======"
+          kubectl get events -n ${NS} --sort-by='.lastTimestamp' \
+            --field-selector involvedObject.kind=Pod | tail -40
+
+          echo "====== POD DESCRIBE ======"
+          kubectl describe pods -n ${NS} -l app=${{ env.APP_NAME }} | tail -80
+
+          echo "====== POD LOGS (last 50 lines each) ======"
+          for pod in $(kubectl get pods -n ${NS} -l app=${{ env.APP_NAME }} \
+            --no-headers -o custom-columns=':metadata.name'); do
+            echo "--- Logs: ${pod} ---"
+            kubectl logs -n ${NS} ${pod} --tail=50 2>/dev/null || echo "(no logs)"
+          done
+
+      - name: Verify Deployment
+        run: |
+          kubectl rollout status deployment/${{ env.APP_NAME }} \
+            -n request-management-${{ env.DEPLOY_ENV }}
+          kubectl get pods -n request-management-${{ env.DEPLOY_ENV }} \
+            -l app=${{ env.APP_NAME }}
+
+      - name: Tag Deployment
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          VER="${{ needs.build-and-push.outputs.image_version }}"
+          DEPLOY_ENV="${{ env.DEPLOY_ENV }}"
+          TAG="${{ env.APP_NAME }}/${DEPLOY_ENV}/v${VER}"
+
+          echo "Tagging deployment: ${TAG}"
+          git tag -f "${TAG}" -m "Deployed ${{ env.APP_NAME }}:${VER} to ${DEPLOY_ENV}"
+          git push origin "${TAG}" --force
