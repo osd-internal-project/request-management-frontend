@@ -6,7 +6,7 @@
 #     up -d --pull always --wait
 #
 # A separate compose project from the API stack, so either side can be deployed
-# without restarting the other. They meet on the external `rm-labs` network.
+# without restarting the other. They meet on the external `rm-net` network.
 
 name: request-management-labs-frontend
 
@@ -20,7 +20,7 @@ services:
     # same-named variable in the backend stack.
     env_file: /home/chareefm/docker-env/.frontend-env
     ports: ["3000:3000"]
-    networks: [rm-labs]
+    networks: [rm-net]
     healthcheck:
       # src/app/api/health/route.ts. Every other route either redirects to
       # login or renders a page, and a check that follows a redirect proves
@@ -35,6 +35,8 @@ services:
       options: { max-size: "10m", max-file: "3" }
 
 networks:
-  rm-labs:
-    # Created once by hand on the VM; the API stack joins the same network.
+  rm-net:
+    # External so that no compose project owns it; the API stack joins the same
+    # network. The deploy workflow's `Ensure Shared Network` step creates it
+    # when it is missing, because `external` also means compose will not.
     external: true
