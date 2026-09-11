@@ -1,4 +1,4 @@
-import { Alert, Card, Descriptions, Steps, Tag } from "antd";
+import { Alert, Card, Collapse, Steps, Tag } from "antd";
 import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
 import Paragraph from "antd/es/typography/Paragraph";
@@ -328,20 +328,88 @@ export default async function RequestDetailPage({
   );
 }
 
+/** A field whose answer is rows, not a value — drawn as a table. */
+function isTableField(property: FormSchemaProperty): boolean {
+  return (
+    property.type === "array" &&
+    Object.keys(property.items?.properties ?? {}).length > 0
+  );
+}
+
 /**
- * The answers, labelled by the schema that collected them.
+ * One answer in the grid, labelled by the field that collected it.
  *
  * A field the caller may not see is *absent* from the payload — the backend
  * strips it (SCOPE-04) — so a name the schema declares but the data does not
- * carry is printed as `••••••`. That is exactly the `margin` case in the
- * mockup, and it means the mask cannot be lifted by reading the page source.
+ * carry prints as `••••••` rather than as empty. That is the `margin` case in
+ * the mockup, and it means the mask cannot be lifted by reading the page
+ * source.
+ *
+ * A table field takes the **whole row** and folds into a `Collapse` whose
+ * header is the field's own name. Squeezed into one of three columns, a table
+ * of five columns was legible only by scrolling it sideways — and the label
+ * above it repeated what the header now says.
  */
+function AnswerField({
+  name,
+  property,
+  answers,
+}: {
+  readonly name: string;
+  readonly property: FormSchemaProperty;
+  readonly answers: Record<string, unknown>;
+}) {
+  const withheld = !(name in answers);
+  const label = property.title ?? name;
+  const value = answers[name];
+
+  if (!withheld && isTableField(property)) {
+    const rows = Array.isArray(value) ? value.length : 0;
+
+    return (
+      <div className="md:col-span-3">
+        <Collapse
+          ghost
+          size="small"
+          /* Open on arrival: this page exists to be read, and an approver
+             deciding on a folded table is deciding on what they cannot see. */
+          defaultActiveKey={[name]}
+          items={[
+            {
+              key: name,
+              label: (
+                <span className="text-sm font-medium text-gray-500">
+                  {label}
+                  {rows > 0 && ` · ${messages.requestDetail.tableRows(rows)}`}
+                </span>
+              ),
+              children: <FormAnswer property={property} value={value} />,
+            },
+          ]}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <p className="text-sm font-medium text-gray-500">{label}</p>
+      {withheld ? (
+        <Text type="secondary">{messages.requestDetail.masked}</Text>
+      ) : (
+        <FormAnswer property={property} value={value} />
+      )}
+    </div>
+  );
+}
+
 /**
  * A schema's answers, as a labelled list.
  *
- * A field the caller may not see is *absent* from the payload — the backend
- * strips it (SCOPE-04) — so a name the schema declares but the data does not
- * carry prints as `••••••` rather than as empty.
+ * Shares `AnswerField` with the request's own facts: this used to print its
+ * values with `String(...)`, which turned a table field into
+ * `[object Object],[object Object]` — the very defect `FormAnswer` was written
+ * to fix, fixed in only one of the two places that needed it.
  */
 function SchemaAnswers({
   schema,
@@ -352,22 +420,14 @@ function SchemaAnswers({
 }) {
   return (
     <div className="grid sm:grid-cols-1 md:grid-cols-3 gap-4">
-      {Object.entries(schema.properties ?? {}).map(([name, property]) => {
-        const withheld = !(name in answers);
-
-        return (
-          <div key={name}>
-            <p className="text-sm font-medium text-gray-500">
-              {property.title ?? name}
-            </p>
-            {withheld ? (
-              <Text type="secondary">{messages.requestDetail.masked}</Text>
-            ) : (
-              String(answers[name] ?? "—")
-            )}
-          </div>
-        );
-      })}
+      {Object.entries(schema.properties ?? {}).map(([name, property]) => (
+        <AnswerField
+          key={name}
+          name={name}
+          property={property}
+          answers={answers}
+        />
+      ))}
     </div>
   );
 }
@@ -459,40 +519,14 @@ function RequestFacts({ request }: { request: RequestDetail }) {
           {request.refId ? `${request.refType ?? "ref"} ${request.refId}` : "—"}
         </p>
       </div>
-      {Object.entries(properties).map(([name, property]) => {
-        const withheld = !(name in formData);
-
-        return (
-          <div key={name} className="mb-2">
-            <p className="text-sm font-medium text-gray-500">
-              {property.title ?? name}
-            </p>
-            {withheld ? (
-              <Text type="secondary">{messages.requestDetail.masked}</Text>
-            ) : (
-              <FormAnswer property={property} value={formData[name]} />
-            )}
-          </div>
-        );
-      })}
+      {Object.entries(properties).map(([name, property]) => (
+        <AnswerField
+          key={name}
+          name={name}
+          property={property}
+          answers={formData}
+        />
+      ))}
     </div>
-    //   <Descriptions.Item label={messages.requestDetail.reference}>
-    //     {request.refId ? `${request.refType ?? "ref"} ${request.refId}` : "—"}
-    //   </Descriptions.Item>
-
-    //   {Object.entries(properties).map(([name, property]) => {
-    //     const withheld = !(name in formData);
-
-    //     return (
-    //       <Descriptions.Item key={name} label={property.title ?? name}>
-    //         {withheld ? (
-    //           <Text type="secondary">{messages.requestDetail.masked}</Text>
-    //         ) : (
-    //           <FormAnswer property={property} value={formData[name]} />
-    //         )}
-    //       </Descriptions.Item>
-    //     );
-    //   })}
-    // </Descriptions>
   );
 }

@@ -122,6 +122,12 @@ export default async function NewRequestPage({
         ref_type && ref_id ? { type: ref_type, id: ref_id } : undefined
       }
       initialTypeCode={type}
+      /* The first band of the route panel — who is raising this. */
+      requesterName={
+        session?.user.display_name ??
+        session?.user.username ??
+        messages.requestForm.flowRequester
+      }
     />
     </div>
   );

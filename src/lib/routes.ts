@@ -94,9 +94,7 @@ export const ROUTES = {
   /** CD-92 — ลิงก์เข้าหน้า setting ของ Metabase (แอดมิน BI). */
   adminBi: `${HOME_PATH}/admin/bi`,
 
-  /** Screen A1 — ตารางอำนาจอนุมัติ */
-  adminApprovalMatrix: `${HOME_PATH}/admin/approval-matrix`,
-  /** Screen A2 — ประเภทคำขอ */
+  /** Screen A2 — ประเภทคำขอ, and Screen A1 — ตารางอำนาจอนุมัติ as its tabs. */
   adminRequestTypes: `${HOME_PATH}/admin/request-types`,
   /** SUP-01 — เวลาทำการและวันหยุด, what a business-hours SLA is measured against. */
   adminSla: `${HOME_PATH}/admin/sla`,
