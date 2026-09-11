@@ -115,12 +115,6 @@ jobs:
           docker compose -f infra/labs/docker-compose.yml \
             up -d --pull always --wait --wait-timeout 180
 
-      - name: Verify
-        run: |
-          set -e
-          curl -fsS http://127.0.0.1:3000/api/health | tee /dev/stderr | grep -q '"status":"ok"'
-          echo "✅ deployed ${{ needs.build-and-push.outputs.image_tag }}" >> "$GITHUB_STEP_SUMMARY"
-
       - name: Debug on Failure
         if: failure()
         run: |

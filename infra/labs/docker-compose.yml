@@ -13,13 +13,15 @@ name: request-management-labs-frontend
 services:
   frontend:
     image: ${REGISTRY}/${SWR_ORG}/request-management-frontend:${IMAGE_TAG}
-    container_name: frontend
+    container_name: rm-fe
     restart: unless-stopped
     # Real values live on the VM, outside the repo. See .env.labs.example —
     # note that USER_SERVICE_URL here is an ORIGIN, the opposite of the
     # same-named variable in the backend stack.
     env_file: /home/chareefm/docker-env/.frontend-env
-    ports: ["3000:3000"]
+    # Host 3500 → container 3000. This is the port a browser uses, so it is the
+    # one that has to appear in APP_ORIGIN and in the Keycloak redirect URIs.
+    ports: ["3500:3000"]
     networks: [rm-net]
     healthcheck:
       # src/app/api/health/route.ts. Every other route either redirects to
