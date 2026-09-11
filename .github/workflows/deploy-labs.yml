@@ -1,0 +1,126 @@
+# Builds the app, pushes it to Huawei SWR (ap-southeast-2), and restarts the
+# labs stack on the VM.
+#
+# The deploy half runs on a self-hosted runner on that VM. Preparing the machine
+# is a one-time job documented in the backend repo's docs/labs-server-setup.md.
+# `deploys/cloudpond` carries a separate Helm pipeline against a k8s cluster —
+# that one is not touched by this workflow.
+name: Labs deploy
+
+on:
+  push:
+    branches: [deploys/labs]
+  workflow_dispatch:
+
+env:
+  APP_NAME: request-management-frontend
+  REGISTRY: swr.ap-southeast-2.myhuaweicloud.com
+  # Set the `HUAWEI_SWR_ORG` repository variable if the organisation in this
+  # region is not `osd-internal`.
+  SWR_ORG: ${{ vars.HUAWEI_SWR_ORG || 'osd-internal' }}
+
+concurrency:
+  group: labs-deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.pkg.outputs.tag }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # The image tag carries the commit, so it can never be pushed over. A tag
+      # of the package.json version alone is reused whenever someone forgets to
+      # bump it, and the deploy then silently ships the previous build.
+      - name: Read Package Info
+        id: pkg
+        run: |
+          VER=$(jq -r .version package.json)
+          SHA=$(git rev-parse --short=7 HEAD)
+          echo "tag=${VER}-${SHA}" >> "$GITHUB_OUTPUT"
+          echo "📦 ${VER} → tag ${VER}-${SHA}"
+
+      - name: Build Docker Image
+        run: |
+          docker build --platform linux/amd64 \
+            -t ${{ env.APP_NAME }}:${{ steps.pkg.outputs.tag }} \
+            -f ./Dockerfile .
+
+      # --password-stdin, not -p: with -p the login key is visible in the
+      # runner's process list and docker prints a warning about it.
+      - name: Login to Huawei Cloud SWR
+        run: |
+          echo "${{ secrets.HUAWEI_REGISTRY_PASSWORD }}" \
+            | docker login -u "${{ secrets.HUAWEI_REGISTRY_USERNAME }}" \
+                --password-stdin "${{ env.REGISTRY }}"
+
+      - name: Tag and Push Docker Image
+        run: |
+          LOCAL=${{ env.APP_NAME }}:${{ steps.pkg.outputs.tag }}
+          REMOTE=${{ env.REGISTRY }}/${{ env.SWR_ORG }}/${LOCAL}
+          docker tag "${LOCAL}" "${REMOTE}"
+          docker push "${REMOTE}"
+          echo "- \`${REMOTE}\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Cleanup Docker Images
+        if: always()
+        run: |
+          LOCAL=${{ env.APP_NAME }}:${{ steps.pkg.outputs.tag }}
+          docker rmi "${LOCAL}" || true
+          docker rmi "${{ env.REGISTRY }}/${{ env.SWR_ORG }}/${LOCAL}" || true
+          docker image prune -f
+
+  deploy:
+    needs: build-and-push
+    # The labs VM. Matched on the bare `self-hosted` label because this repo's
+    # runner (`worker-02`) carries only the automatic labels — a name is not a
+    # label. Add a distinguishing label here the moment this repo gains a second
+    # self-hosted runner, or a deploy will land on whichever one is free.
+    # The backend repo's docs/labs-server-setup.md covers registering it and
+    # confirming it is up; with none online this job queues without an error.
+    runs-on: [self-hosted]
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # A different machine from the build job, with its own docker credentials.
+      - name: Login to Huawei Cloud SWR
+        run: |
+          echo "${{ secrets.HUAWEI_REGISTRY_PASSWORD }}" \
+            | docker login -u "${{ secrets.HUAWEI_REGISTRY_USERNAME }}" \
+                --password-stdin "${{ env.REGISTRY }}"
+
+      # --wait blocks until the healthcheck passes, so a container that starts
+      # and immediately fails its check fails the deploy rather than being
+      # reported as shipped.
+      - name: Pull and Start
+        env:
+          IMAGE_TAG: ${{ needs.build-and-push.outputs.image_tag }}
+        run: |
+          docker compose -f infra/labs/docker-compose.yml \
+            up -d --pull always --wait --wait-timeout 180
+
+      - name: Verify
+        run: |
+          set -e
+          curl -fsS http://127.0.0.1:3000/api/health | tee /dev/stderr | grep -q '"status":"ok"'
+          echo "✅ deployed ${{ needs.build-and-push.outputs.image_tag }}" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Debug on Failure
+        if: failure()
+        run: |
+          echo "====== CONTAINERS ======"
+          docker compose -f infra/labs/docker-compose.yml ps
+          echo "====== LOGS ======"
+          docker compose -f infra/labs/docker-compose.yml logs --tail=50
+
+      # Old tags accumulate on the VM — every deploy leaves the previous image
+      # behind, and nothing else reclaims it.
+      - name: Prune Old Images
+        if: always()
+        run: docker image prune -af --filter "until=168h"
