@@ -3,9 +3,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Alert, App, Button, Card, Empty, Input, InputNumber, Tag } from "antd";
 import {
+  AuditOutlined,
   CheckCircleFilled,
   ClockCircleOutlined,
   LockOutlined,
+  SafetyCertificateOutlined,
+  SolutionOutlined,
+  UserOutlined,
 } from "@ant-design/icons";
 import Text from "antd/es/typography/Text";
 import Paragraph from "antd/es/typography/Paragraph";
@@ -23,6 +27,7 @@ import {
   isMultilineField,
   isSensitiveField,
 } from "@/lib/api/types";
+import type { ClientResult } from "@/lib/api/client";
 import type {
   ChainPreview,
   DirectoryUser,
@@ -54,6 +59,30 @@ function amountFieldOf(type: RequestType | null): string | null {
   );
 }
 
+/**
+ * One approval stage's answer, as the panel needs it.
+ *
+ * A request can be checked twice — before the work is handed over, and again
+ * when it comes back — and the two are configured independently. They are kept
+ * apart here rather than merged because "not configured" is a real answer for
+ * either one, and a merged shape cannot say which half is missing.
+ */
+interface StageChain {
+  preview: ChainPreview | null;
+  /** `APV_MATRIX_NOT_FOUND` = this stage is off; anything else = it broke. */
+  error: { code?: string; message: string } | null;
+}
+
+/** Before a type is chosen, nothing has been asked and nothing has failed. */
+const EMPTY_STAGE: StageChain = { preview: null, error: null };
+
+/** One `previewChain` answer, as the panel reads it. */
+function toStage(result: ClientResult<ChainPreview>): StageChain {
+  return result.ok
+    ? { preview: result.data, error: null }
+    : { preview: null, error: { code: result.code, message: result.message } };
+}
+
 function fileSize(bytes: number): string {
   return bytes >= 1_048_576
     ? `${(bytes / 1_048_576).toFixed(1)} MB`
@@ -80,6 +109,7 @@ export function RequestForm({
   parentRequestId,
   initialRef,
   initialTypeCode,
+  requesterName,
 }: {
   types: RequestType[];
   /** The directory the `ผู้รับเรื่อง` selector draws from. */
@@ -93,6 +123,8 @@ export function RequestForm({
   initialRef?: { type: string; id: string } | null;
   /** Preselect a type (เช่น ปุ่ม "ยื่น KYC" ส่ง type=KYC) — ผู้ใช้เปลี่ยนได้. */
   initialTypeCode?: string;
+  /** Who is raising it — the first band of the route panel. */
+  requesterName: string;
 }) {
   // antd's `message` from context, so it inherits the app theme.
   const { message } = App.useApp();
@@ -132,18 +164,16 @@ export function RequestForm({
   const refTypeOf = (id: string) =>
     initialRef && id === initialRef.id ? initialRef.type : "opportunity";
   const [attachments, setAttachments] = useState<RequestAttachment[]>([]);
-  const [preview, setPreview] = useState<ChainPreview | null>(null);
   /**
-   * Why there is no route to show, when there is none.
+   * One stage's answer: the route, or why there is none.
    *
-   * `APV_MATRIX_NOT_FOUND` means the type has no approval step — a legitimate
-   * configuration for over a third of the request types. Anything else is a
-   * genuine failure and must not be dressed up as one.
+   * `APV_MATRIX_NOT_FOUND` means this stage is not configured — a legitimate
+   * setup, and the common one: a type may be checked before the work, after
+   * it, both, or neither. Anything else is a genuine failure and must not be
+   * dressed up as one.
    */
-  const [chainError, setChainError] = useState<{
-    code?: string;
-    message: string;
-  } | null>(null);
+  const [preWork, setPreWork] = useState<StageChain>(EMPTY_STAGE);
+  const [afterWork, setAfterWork] = useState<StageChain>(EMPTY_STAGE);
   /** Sequence number of the newest preview call — see `refreshPreview`. */
   const previewAttempt = useRef(0);
   const [busy, setBusy] = useState(false);
@@ -203,6 +233,22 @@ export function RequestForm({
   }, [people, units, receiverOrgUnitId]);
 
   /**
+   * Who the route panel names as the receiving band.
+   *
+   * The person once one is chosen, the team while one is not — a team is a
+   * truthful answer at that point, and leaving the band blank would read as a
+   * step the route is missing rather than one not yet filled in.
+   */
+  const receiverName = useMemo(() => {
+    const person = people.find((entry) => entry.id === receiverId);
+    if (person) return person.displayName;
+
+    return (
+      units.find((unit) => unit.id === receiverOrgUnitId)?.name ?? null
+    );
+  }, [people, units, receiverId, receiverOrgUnitId]);
+
+  /**
    * Which field carries the money.
    *
    * Read from the schema rather than assumed: a type authored in A2 may call
@@ -251,6 +297,7 @@ export function RequestForm({
   async function refreshPreview(
     code: string | undefined,
     nextValues: Record<string, unknown>,
+    nextReceiverId: string | undefined = receiverId,
   ) {
     // Nothing to ask about, and nothing to clear: the type selector resets
     // both before it changes the code, and both start null.
@@ -261,25 +308,45 @@ export function RequestForm({
     );
     const raw = field ? nextValues[field] : undefined;
 
+    // Sent as a string: money must not be rounded through a JS number on the
+    // way to a ceiling comparison.
+    const amount =
+      raw === undefined || raw === null || raw === ""
+        ? {}
+        : { amount: String(raw) };
+
     // Typing in the amount fires one call per keystroke, and the answers do
-    // not have to come back in order. Only the newest one may write state.
+    // not have to come back in order. Only the newest one may write state —
+    // one counter for both stages, so the panel can never show half of one
+    // answer beside half of another.
     const attempt = ++previewAttempt.current;
 
-    const result = await previewChain({
-      subject_type: `request:${code}`,
-      // Sent as a string: money must not be rounded through a JS number on
-      // the way to a ceiling comparison.
-      ...(raw === undefined || raw === null || raw === ""
-        ? {}
-        : { amount: String(raw) }),
-    });
+    /*
+      Two ladders, asked for together.
+
+      This screen used to ask only for `request:<CODE>` — the ladder that
+      reviews finished work — and read `APV_MATRIX_NOT_FOUND` as "this type
+      needs no approval at all". A type checked *before* the work stores its
+      ladder under `:pre`, so those types previewed as having no approver and
+      then routed to one on submit.
+
+      The chart owner differs too: the pre-work ladder climbs the requester's
+      chart (the caller, so it is left unsaid) and the after-work one climbs
+      the chart of whoever carries the request — the receiver chosen here.
+    */
+    const [pre, post] = await Promise.all([
+      previewChain({ subject_type: `request:${code}:pre`, ...amount }),
+      previewChain({
+        subject_type: `request:${code}`,
+        ...amount,
+        ...(nextReceiverId ? { chart_owner_user_id: nextReceiverId } : {}),
+      }),
+    ]);
 
     if (attempt !== previewAttempt.current) return;
 
-    setPreview(result.ok ? result.data : null);
-    setChainError(
-      result.ok ? null : { code: result.code, message: result.message },
-    );
+    setPreWork(toStage(pre));
+    setAfterWork(toStage(post));
   }
 
   /**
@@ -303,6 +370,17 @@ export function RequestForm({
     const next = { ...values, [name]: value };
     setValues(next);
     if (name === amountField) void refreshPreview(typeCode, next);
+  }
+
+  /**
+   * The after-work ladder climbs the receiver's chart, so changing who
+   * receives the work changes who reviews it. Passed through rather than read
+   * from state for the same reason the type is: this runs in the same tick as
+   * the `setState` beside it.
+   */
+  function selectReceiver(next: string | undefined) {
+    setReceiverId(next);
+    void refreshPreview(typeCode, values, next);
   }
 
   async function onSaveDraft() {
@@ -437,8 +515,8 @@ export function RequestForm({
                   // Cleared here as well as re-fetched by the effect, so the
                   // old type's route is not left on screen while the new one
                   // is still being asked for.
-                  setPreview(null);
-                  setChainError(null);
+                  setPreWork(EMPTY_STAGE);
+                  setAfterWork(EMPTY_STAGE);
                   setDraftId(null);
                   setAttachments([]);
 
@@ -472,8 +550,9 @@ export function RequestForm({
                 value={receiverOrgUnitId}
                 onChange={(next?: string) => {
                   setReceiverOrgUnitId(next);
-                  // The person already chosen may not be in the new branch.
-                  setReceiverId(undefined);
+                  // The person already chosen may not be in the new branch —
+                  // and the review ladder climbs that person's chart.
+                  selectReceiver(undefined);
                 }}
                 placeholder={messages.requestForm.receiverTeamPlaceholder}
                 treeData={teamTree}
@@ -497,7 +576,7 @@ export function RequestForm({
               <SearchSelect
                 className="w-full"
                 value={receiverId}
-                onChange={setReceiverId}
+                onChange={selectReceiver}
                 placeholder={messages.requestForm.receiverPlaceholder}
                 options={receiverCandidates.map((person) => ({
                   value: person.id,
@@ -672,9 +751,11 @@ export function RequestForm({
 
       <div className="space-y-4">
         <ChainPanel
-          preview={preview}
+          preWork={preWork}
+          afterWork={afterWork}
           typeChosen={Boolean(typeCode)}
-          error={chainError}
+          requesterName={requesterName}
+          receiverName={receiverName}
         />
 
         <Card title={messages.requestForm.slaTitle} size="small">
@@ -952,63 +1033,224 @@ export function Field({
   );
 }
 
-/**
- * `เส้นทางอนุมัติที่จะใช้` — the panel §16 หน้าที่ 3 puts on the right.
- *
- * States an absent approver as a rule rather than leaving a gap: "CEO ไม่อยู่
- * ในเส้นทาง — วงเงินไม่เกินเพดาน …" is what stops a requester wondering
- * whether somebody was missed.
- */
-function ChainPanel({
-  preview,
-  typeChosen,
-  error,
+/** The rail: a disc, and a line down to whatever comes next. */
+function Rail({
+  mark,
+  tone = "step",
+  last = false,
 }: {
-  preview: ChainPreview | null;
-  typeChosen: boolean;
-  /** Why there is no route — `null` when the server has not refused one. */
-  error: { code?: string; message: string } | null;
+  /**
+   * An approval step's number, or the icon of a band's role.
+   *
+   * The numbers are the ladder's own ordering and stay numbers — turning them
+   * into icons would lose the one thing they say. The bands around them are
+   * not steps, so they carry what they *are* instead.
+   */
+  mark: React.ReactNode;
+  /** `step` is an approver; `person` is the requester or the receiver. */
+  tone?: "step" | "person";
+  last?: boolean;
 }) {
-  if (!preview) {
-    /*
-      In flight, derived rather than stored: a type is chosen, the server has
-      neither answered nor refused. Choosing a type clears both, so this can
-      only be true while a call is outstanding — one less state to keep
-      truthful, and no setState inside an effect to get there.
-    */
-    const loading = typeChosen && !error;
+  return (
+    <div className="flex flex-col items-center">
+      <span
+        className={`flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
+          tone === "step"
+            ? "bg-blue-600 text-white"
+            : "bg-black/5 text-black/60"
+        }`}
+      >
+        {mark}
+      </span>
+      {!last && <span className="my-1 w-px flex-1 bg-black/10" />}
+    </div>
+  );
+}
 
-    /*
-      Four different silences used to print the same sentence. Told apart,
-      because only one of them means what that sentence says:
-        · no type picked yet          → nothing has been asked
-        · in flight                   → the answer is coming
-        · APV_MATRIX_NOT_FOUND        → genuinely no approval step
-        · anything else               → the panel failed, and saying
-                                        "ทำเสร็จแล้วจบเลย" would be a lie the
-                                        requester acts on
-    */
-    const body = !typeChosen ? (
-      <Text type="secondary">{messages.requestForm.chainPickType}</Text>
-    ) : loading ? (
-      <Text type="secondary">{messages.requestForm.chainLoading}</Text>
-    ) : error && error.code !== "APV_MATRIX_NOT_FOUND" ? (
+/** One band of the flow — a person, or one approval step. */
+function FlowRow({
+  rail,
+  title,
+  children,
+  last = false,
+}: {
+  rail: React.ReactNode;
+  title: React.ReactNode;
+  children?: React.ReactNode;
+  last?: boolean;
+}) {
+  return (
+    <li className="flex gap-3">
+      {rail}
+      <div className={`min-w-0 ${last ? "" : "pb-4"}`}>
+        <div className="text-sm">{title}</div>
+        {children}
+      </div>
+    </li>
+  );
+}
+
+/**
+ * What one stage has to say, when it has no steps to show.
+ *
+ * Four different silences used to print the same sentence, and only one of
+ * them meant it:
+ *   · no type picked yet     → nothing has been asked
+ *   · in flight              → the answer is coming
+ *   · APV_MATRIX_NOT_FOUND   → this stage is genuinely not configured
+ *   · anything else          → the panel failed, and saying "ไม่ต้องอนุมัติ"
+ *                              would be a lie the requester acts on
+ */
+function StageNote({
+  stage,
+  typeChosen,
+  absent,
+}: {
+  stage: StageChain;
+  typeChosen: boolean;
+  /** What "this stage is not configured" reads as, in this stage's words. */
+  absent: string;
+}) {
+  if (!typeChosen) {
+    return (
+      <Text type="secondary" className="text-xs">
+        {messages.requestForm.chainPickType}
+      </Text>
+    );
+  }
+
+  // In flight, derived rather than stored: a type is chosen and the server has
+  // neither answered nor refused. Choosing a type clears both stages, so this
+  // can only be true while a call is outstanding.
+  if (!stage.error) {
+    return (
+      <Text type="secondary" className="text-xs">
+        {messages.requestForm.chainLoading}
+      </Text>
+    );
+  }
+
+  if (stage.error.code !== "APV_MATRIX_NOT_FOUND") {
+    return (
       <Alert
         type="warning"
         showIcon
         title={messages.requestForm.chainLoadError}
-        description={error.message}
+        description={stage.error.message}
       />
-    ) : (
-      <Text type="secondary">{messages.requestForm.chainNoMatrix}</Text>
-    );
-
-    return (
-      <Card title={messages.requestForm.chainTitle} size="small">
-        {body}
-      </Card>
     );
   }
+
+  return (
+    <Text type="secondary" className="text-xs">
+      {absent}
+    </Text>
+  );
+}
+
+/**
+ * What a level is called, when the person filling it has no name to show.
+ *
+ * `position` is storage — `supervisor:1`, `org` — written to
+ * `ApprovalStep.approverRole`, and printing it raw is what put "supervisor:1"
+ * on screen where the head of a department belonged. The server now resolves
+ * names from the `user` table, so this is the last resort (a deleted account,
+ * somebody moved out of the company); it must still read as Thai.
+ */
+function positionLabel(position: string): string {
+  const up = Number(position.split(":")[1]);
+
+  return (
+    messages.matrix.supervisorLevel[up] ?? messages.matrix.levelOrg
+  );
+}
+
+/** The approvers of one stage, as rows of the flow. */
+function stageRows(
+  stage: StageChain,
+  keyPrefix: string,
+  /** Whether the last of these rows ends the whole flow. */
+  endsFlow = false,
+): React.ReactNode[] {
+  const steps = stage.preview?.steps ?? [];
+
+  return steps.map((step, index) => {
+    const last = endsFlow && index === steps.length - 1;
+
+    return (
+    <FlowRow
+      key={`${keyPrefix}-${step.step_no}`}
+      rail={<Rail mark={step.step_no} last={last} />}
+      title={
+        <Text strong>
+          {step.display_name ?? positionLabel(step.position)}
+        </Text>
+      }
+      last={last}
+    >
+      {/*
+        A level can name several people and any one of them may decide. Said
+        explicitly: showing only the first name would read as "this person must
+        approve", which is not what the ladder says.
+      */}
+      {step.candidate_user_ids.length > 1 && (
+        <Text type="secondary" className="text-xs">
+          {messages.requestForm.chainAnyOf(step.candidate_user_ids.length)}
+        </Text>
+      )}
+
+      {step.step_no === 1 && (
+        <Text type="secondary" className="block text-xs">
+          {messages.requestForm.stepReasonFirst}
+        </Text>
+      )}
+
+      {/*
+        A configured level with nobody in it. Shown rather than dropped: the
+        submit will refuse over exactly this, and a ladder that silently came
+        back one step shorter is what hid it.
+      */}
+      {!step.user_id && (
+        <div className="mt-1">
+          <Tag color="red">{messages.requestForm.chainUnresolved}</Tag>
+        </div>
+      )}
+    </FlowRow>
+    );
+  });
+}
+
+/**
+ * `เส้นทางอนุมัติที่จะใช้` — the panel §16 หน้าที่ 3 puts on the right.
+ *
+ * Draws the whole route, not one stage of it: ผู้ยื่น → อนุมัติก่อนส่ง →
+ * ผู้รับงาน → ตรวจผลงาน. A request can be checked twice, and the panel used to
+ * ask only about the second check — so a type configured for the first
+ * announced that it needed no approval at all, and then routed to an approver
+ * on submit.
+ *
+ * States an absent approver as a rule rather than leaving a gap: a stage that
+ * is not configured says so in its own words, which is what stops a requester
+ * wondering whether somebody was missed.
+ */
+function ChainPanel({
+  preWork,
+  afterWork,
+  typeChosen,
+  requesterName,
+  receiverName,
+}: {
+  /** Before the work is handed over — climbs the requester's chart. */
+  preWork: StageChain;
+  /** When the work comes back — climbs the chart of whoever carried it. */
+  afterWork: StageChain;
+  typeChosen: boolean;
+  requesterName: string;
+  /** The person, or the team, or nothing yet — whatever has been chosen. */
+  receiverName: string | null;
+}) {
+  const preSteps = stageRows(preWork, "pre");
+  const postSteps = stageRows(afterWork, "post", true);
 
   return (
     <Card title={messages.requestForm.chainTitle} size="small">
@@ -1019,54 +1261,75 @@ function ChainPanel({
         — {messages.requestForm.chainNoPick}
       </Paragraph>
 
-      <ol>
-        {preview.steps.map((step, index) => (
-          <li key={step.step_no} className="flex gap-3">
-            {/* The rail: a numbered disc, and a line down to the next step.
-                Drawn per-item so the last step ends the line cleanly. */}
-            <div className="flex flex-col items-center">
-              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-semibold text-white">
-                {step.step_no}
-              </span>
-              {index < preview.steps.length - 1 && (
-                <span className="my-1 w-px flex-1 bg-black/10" />
-              )}
-            </div>
+      <ol className="m-0 list-none p-0">
+        <FlowRow
+          rail={<Rail mark={<UserOutlined />} tone="person" />}
+          title={<Text strong>{requesterName}</Text>}
+        >
+          <Text type="secondary" className="text-xs">
+            {messages.requestForm.flowRequester}
+          </Text>
+        </FlowRow>
 
-            <div className="min-w-0 pb-4">
-              <div className="text-sm">
-                <Text strong>
-                  {step.display_name ?? step.position}
-                </Text>
-              </div>
+        <FlowRow
+          rail={<Rail mark={<SafetyCertificateOutlined />} tone="person" />}
+          title={
+            <Text type="secondary" className="text-xs">
+              {messages.requestForm.flowBeforeWork}
+            </Text>
+          }
+        >
+          {preSteps.length ? null : (
+            <StageNote
+              stage={preWork}
+              typeChosen={typeChosen}
+              absent={messages.requestForm.flowNoBeforeWork}
+            />
+          )}
+        </FlowRow>
+        {preSteps}
 
-              {/*
-                A level can name several people and any one of them may decide.
-                Said explicitly: showing only the first name would read as "this
-                person must approve", which is not what the ladder says.
-              */}
-              {step.candidate_user_ids.length > 1 && (
-                <Text type="secondary" className="text-xs">
-                  {messages.requestForm.chainAnyOf(
-                    step.candidate_user_ids.length,
-                  )}
-                </Text>
-              )}
+        <FlowRow
+          rail={<Rail mark={<SolutionOutlined />} tone="person" />}
+          title={
+            <Text strong>
+              {receiverName ?? messages.requestForm.flowReceiverUnset}
+            </Text>
+          }
+        >
+          <Text type="secondary" className="text-xs">
+            {messages.requestForm.flowReceiver}
+          </Text>
+        </FlowRow>
 
-              {step.step_no === 1 && (
-                <Text type="secondary" className="block text-xs">
-                  {messages.requestForm.stepReasonFirst}
-                </Text>
-              )}
-
-              {!step.user_id && (
-                <div className="mt-1">
-                  <Tag color="red">{messages.requestForm.chainUnresolved}</Tag>
-                </div>
-              )}
-            </div>
-          </li>
-        ))}
+        <FlowRow
+          rail={<Rail mark={<AuditOutlined />} tone="person" last={!postSteps.length} />}
+          title={
+            <Text type="secondary" className="text-xs">
+              {messages.requestForm.flowAfterWork}
+            </Text>
+          }
+          last={!postSteps.length}
+        >
+          {postSteps.length ? (
+            /*
+              The people are resolved from the receiver chosen here, but the
+              request may be accepted or passed on by somebody else — the
+              ladder climbs `assigneeUserId ?? receiverUserId` at the time the
+              work is finished, not at the time it is raised.
+            */
+            <Text type="secondary" className="text-xs">
+              {messages.requestForm.flowAfterWorkHint}
+            </Text>
+          ) : (
+            <StageNote
+              stage={afterWork}
+              typeChosen={typeChosen}
+              absent={messages.requestForm.flowNoAfterWork}
+            />
+          )}
+        </FlowRow>
+        {postSteps}
       </ol>
     </Card>
   );

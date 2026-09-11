@@ -225,6 +225,14 @@ export function submitRequest(id: string): Promise<ClientResult<RequestRow>> {
 export function previewChain(input: {
   subject_type: string;
   amount?: string;
+  /**
+   * Whose chart a `หัวหน้าทีม` level climbs.
+   *
+   * Omitted means the caller, which is right for the `:pre` ladder and wrong
+   * for the one that reviews finished work — that one follows whoever carries
+   * the request, so the receiver chosen on this screen is who to send.
+   */
+  chart_owner_user_id?: string;
 }): Promise<ClientResult<ChainPreview>> {
   return appApi<ChainPreview>("approvals/preview", {
     method: "POST",

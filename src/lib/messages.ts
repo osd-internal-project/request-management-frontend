@@ -74,7 +74,6 @@ export const messages = {
     opportunities: "โอกาสการขาย",
     adminGroup: "ผู้ดูแลระบบ",
     adminCrm: "ตั้งค่า CRM",
-    adminApprovalMatrix: "ตารางอำนาจอนุมัติ",
     adminRequestTypes: "ประเภทคำขอ",
     adminSla: "เวลาทำการและวันหยุด",
     adminOrg: "ผังทีมและสิทธิ์",
@@ -518,6 +517,14 @@ export const messages = {
     chainUnresolved: "ยังไม่มีผู้รับผิดชอบขั้นนี้ในผังทีม",
     /** A level naming several people: any one of them is enough. */
     chainAnyOf: (count: number) => `อนุมัติได้ ${count} คน ใครอนุมัติก็ผ่าน`,
+    /**
+     * Only for a type with **neither** ladder.
+     *
+     * It used to print whenever the one subject this screen asked about came
+     * back missing — which said "no approval at all" about a type whose
+     * before-work ladder then routed the submit to somebody. Each stage now
+     * says its own absence: `flowNoBeforeWork` / `flowNoAfterWork`.
+     */
     chainNoMatrix: "ประเภทคำขอนี้ไม่มีชั้นอนุมัติ — ทำเสร็จแล้วจบเลย",
     /* The three states that used to be collapsed into chainNoMatrix. Saying
        "ไม่มีชั้นอนุมัติ" before the server has been asked is a claim, not a
@@ -525,6 +532,21 @@ export const messages = {
     chainPickType: "เลือกประเภทคำขอก่อน ระบบจะคำนวณเส้นทางอนุมัติให้",
     chainLoading: "กำลังคำนวณเส้นทางอนุมัติ…",
     chainLoadError: "ดูเส้นทางอนุมัติไม่ได้",
+    /*
+      The four bands of the route, in the order the work travels. The two
+      approval stages are the same two an admin configures on the request
+      type's อำนาจอนุมัติ tabs — same words, so the screen that sets them and
+      the screen that shows them read as one thing.
+    */
+    flowRequester: "ผู้ยื่นคำขอ",
+    flowBeforeWork: "อำนาจอนุมัติ (ผู้ยื่น) — ก่อนส่งให้ผู้รับ",
+    flowNoBeforeWork: "ไม่ต้องอนุมัติก่อนส่ง — ยื่นแล้วถึงผู้รับทันที",
+    flowReceiver: "ผู้รับเรื่องและผู้ทำงาน",
+    flowReceiverUnset: "ยังไม่ได้เลือกผู้รับ",
+    flowAfterWork: "อำนาจอนุมัติ (ผู้รับ) — ตรวจผลงาน",
+    flowNoAfterWork: "ไม่มีการตรวจผลงาน — ทำเสร็จแล้วจบเลย",
+    flowAfterWorkHint:
+      "คำนวณจากผังของผู้รับที่เลือกไว้ · ถ้างานถูกส่งต่อ ระบบจะใช้ผังของคนที่ทำจริงตอนปิดงาน",
     slaTitle: "กำหนดเวลา (SLA)",
     slaHours: (hours: number) => `${hours} ชั่วโมงทำการ`,
     slaNote:
@@ -600,6 +622,8 @@ export const messages = {
     chainFrom: (amount: string, version: number) =>
       `เส้นทางคำนวณจากวงเงิน ${amount} บาท · ตารางอำนาจเวอร์ชัน ${version}`,
     masked: "••••••",
+    /** Beside a table field's name, so its size is known before it is read. */
+    tableRows: (count: number) => `${count} แถว`,
     /*
       Every event type the backend can write, because the fallback prints the
       raw type: a timeline reading `RECEIVED` beside `ยื่นคำขอ` is the tell that
@@ -670,6 +694,15 @@ export const messages = {
     active: "เปิดใช้",
     inactive: "ยังไม่เปิด",
     edit: (name: string, code: string) => `แก้ไข: ${name} (${code})`,
+    /*
+      The detail pane's three tabs. The two approval ones are §16 A1's two
+      stages (`approval-stage.ts`): the ผู้ยื่น ladder climbs the requester's
+      chart before the work is handed over, the ผู้รับ one climbs the
+      assignee's when the work is checked.
+    */
+    tabDetail: "รายละเอียด",
+    tabApprovalRequester: "อำนาจอนุมัติ(ผู้ยื่น)",
+    tabApprovalReceiver: "อำนาจอนุมัติ(ผู้รับ)",
     name: "ชื่อประเภท",
     receiver: "ทีมผู้รับ",
     sla: "SLA (ชั่วโมงทำการ)",
@@ -857,15 +890,20 @@ export const messages = {
     } as Record<string, string>,
   },
 
+  /*
+    §16 A1 — now the two approval tabs of a request type rather than a screen.
+    The stage labels that used to head it, and its own title and subtitle, went
+    with the screen: `requestTypes.tabApproval*` names the two moments a request
+    can be checked, and the type is named by the card the tabs sit in.
+  */
   matrix: {
-    /* The two moments a request can be checked — see `approval-stage.ts`. */
-    stageBefore: "ก่อนส่งให้ผู้รับ (หัวหน้าของผู้ยื่น)",
-    stageAfter: "ตรวจผลงาน (หัวหน้าของผู้รับเรื่อง)",
-    title: "ตารางอำนาจอนุมัติ",
-    subtitle: "สายอนุมัติต่อบริษัทและประเภทงาน (APV-01)",
     empty: "ยังไม่ได้ตั้งค่าตารางอำนาจอนุมัติ",
-    /** A1 lists subjects from the request-type catalog, so an empty one means A2. */
-    noSubjects: "บริษัทนี้ยังไม่มีประเภทคำขอ — เพิ่มที่หน้าประเภทคำขอก่อน",
+    /**
+     * Shown in place of the ladder to a viewer without
+     * `admin.approval-matrix.manage` — one permission covers both reading and
+     * publishing, so the tab has nothing it may fetch.
+     */
+    noPermission: "ไม่มีสิทธิ์ดูตารางอำนาจอนุมัติ",
     emptyForSubject: "ประเภทงานนี้ยังไม่มีตารางอำนาจอนุมัติ — กด “สร้างเวอร์ชันใหม่” เพื่อเริ่ม",
 
     version: "เวอร์ชัน",
@@ -891,7 +929,6 @@ export const messages = {
      */
     immutableNote: "เวอร์ชันที่ประกาศแล้วแก้ทับไม่ได้ — ต้องสร้างเวอร์ชันใหม่",
     saved: "เผยแพร่แล้ว",
-    subject: "ประเภทงาน",
     currency: "สกุลเงิน",
     createdBy: "สร้างโดย",
     /**

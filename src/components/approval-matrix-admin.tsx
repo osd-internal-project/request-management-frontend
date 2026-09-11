@@ -26,55 +26,19 @@ export type { ApprovalMatrixVersion } from "@/lib/api/types";
 
 
 
-/** APV-02 builds this from the type code at submit; A1 must match it exactly. */
-function subjectOf(type: RequestType): string {
-  return `request:${type.code}`;
-}
-
 /**
- * Everything an administrator can publish a ladder for, in one list.
+ * The subject a request type's after-work ladder is stored under.
  *
- * The catalog comes first because that is the real answer to "which kinds of
- * work does this company have". Subjects that only exist as an old matrix are
- * appended so a ladder never disappears from the screen just because its
- * request type was removed.
+ * APV-02 builds this same string from the type code at submit, and A2 must
+ * match it exactly — the two live in different files now, so a change here is
+ * a change to routing, not to a label.
  *
- * **Reading this off the existing versions alone was a dead end**: a company
- * with no matrix had an empty dropdown, and the publish dialog offered the same
- * empty list — so the first ladder for a subject could never be created from
- * the screen at all. That is why OSD had forty request types and no matrix.
+ * The before-work ladder is this with `:pre` appended. Publishing one is what
+ * switches the pre-work stage on; there is no separate flag anywhere, which is
+ * why the two stages are two tabs rather than a checkbox.
  */
-function subjectOptions(
-  types: RequestType[],
-  versions: ApprovalMatrixVersion[],
-): { value: string; label: string }[] {
-  /*
-    Two ladders per type, because a request can be checked twice.
-
-    Publishing a `:pre` ladder is what switches the pre-work stage on — there
-    is no separate flag anywhere, which is why the choice belongs here in the
-    subject rather than in a field of its own. The label says which chart each
-    one climbs, because that is the part an administrator cannot infer from the
-    string and is exactly what was routing the wrong people.
-  */
-  const options = types.flatMap((type) => [
-    {
-      value: `${subjectOf(type)}:pre`,
-      label: `${type.name} — ${messages.matrix.stageBefore} (${subjectOf(type)}:pre)`,
-    },
-    {
-      value: subjectOf(type),
-      label: `${type.name} — ${messages.matrix.stageAfter} (${subjectOf(type)})`,
-    },
-  ]);
-
-  const known = new Set(options.map((option) => option.value));
-
-  for (const subject of new Set(versions.map((entry) => entry.subjectType))) {
-    if (!known.has(subject)) options.push({ value: subject, label: subject });
-  }
-
-  return options.sort((a, b) => a.label.localeCompare(b.label, "th"));
+export function subjectOf(type: RequestType): string {
+  return `request:${type.code}`;
 }
 
 
@@ -125,138 +89,81 @@ function changeSummary(
 }
 
 /**
- * Screen §16 A1 — ตารางอำนาจอนุมัติ (APV-01, APV-02).
+ * §16 A1 — ตารางอำนาจอนุมัติ for one subject, as a panel inside A2.
  *
- * One company at a time (D-18: each has its own ladder) and one subject type at
- * a time, both chosen from the toolbar §16 draws — **without** switching the
- * company the working screens are showing, which is what the header switcher
- * does.
+ * The subject arrives fixed rather than chosen: A2 has already selected the
+ * request type in its left-hand list, and the two stages are its two approval
+ * tabs, so the selector A1 used to draw would be asking a question that has
+ * already been answered twice.
  *
  * Published versions render read-only, because they are immutable: editing a
  * ladder means publishing the next version, which is what lets work already in
- * flight keep the ceilings it was routed under. An edit control on a published
+ * flight keep the ladder it was routed under. An edit control on a published
  * version would promise something the API deliberately refuses.
  */
-export function ApprovalMatrixAdmin({
-  versions: initial,
-  types: initialTypes,
-  companies,
+export function SubjectMatrixPanel({
+  subject,
   companyId,
+  versions,
+  canManage,
   userNames,
   orgUnits,
+  onPublished,
 }: {
-  versions: ApprovalMatrixVersion[];
-  /** The company's request-type catalog — what a ladder can be published for. */
-  types: RequestType[];
-  companies: { id: string; name: string }[];
+  /** `request:<CODE>` or `request:<CODE>:pre` — see {@link subjectOf}. */
+  subject: string;
   companyId: string;
+  /** Every version the company has; this panel keeps only its own subject's. */
+  versions: ApprovalMatrixVersion[];
+  /** `admin.approval-matrix.manage` — without it the ladder is read-only. */
+  canManage: boolean;
   /** `userId` → display name, so the header can name who published a version. */
   userNames: Record<string, string>;
   /** The chart, for the `org` levels and for naming the groups a ladder uses. */
   orgUnits: OrgUnitNode[];
+  /** Re-read the company's matrix — a published version is new server state. */
+  onPublished: () => void | Promise<void>;
 }) {
   // antd's `message` from context, so it inherits the app theme.
   const { message } = App.useApp();
-  const [activeCompany, setActiveCompany] = useState(companyId);
+  const [publishing, setPublishing] = useState(false);
+
   const unitTree = buildUnitTree(orgUnits);
   const unitNames = Object.fromEntries(
     orgUnits.map((unit) => [unit.id, unit.name]),
   );
-  const [versions, setVersions] = useState(initial);
-  const [types, setTypes] = useState(initialTypes);
-  const [activeSubject, setActiveSubject] = useState<string | null>(
-    subjectOptions(initialTypes, initial)[0]?.value ?? null,
-  );
-  const [publishing, setPublishing] = useState(false);
-
-  /**
-   * Both lists are re-read together, and the subject is re-chosen from what
-   * came back rather than carried over: company B need not run the same kinds
-   * of work as company A, and a stale selection would leave the screen showing
-   * an empty ladder for a subject that company has never had.
-   */
-  async function loadCompany(nextCompanyId: string) {
-    setActiveCompany(nextCompanyId);
-
-    const [matrix, catalog] = await Promise.all([
-      adminApi<ApprovalMatrixVersion[]>(
-        `approval-matrix?company_id=${encodeURIComponent(nextCompanyId)}`,
-      ),
-      adminApi<RequestType[]>(
-        `request-types?company_id=${encodeURIComponent(nextCompanyId)}`,
-      ),
-    ]);
-
-    const loadedVersions = matrix.ok ? matrix.data : [];
-    const loadedTypes = catalog.ok ? catalog.data : [];
-
-    setVersions(loadedVersions);
-    setTypes(loadedTypes);
-    setActiveSubject(
-      subjectOptions(loadedTypes, loadedVersions)[0]?.value ?? null,
-    );
-  }
-
-  const subjects = subjectOptions(types, versions);
-  const shownSubject = activeSubject ?? subjects[0]?.value ?? null;
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <Segmented
-          value={activeCompany}
-          onChange={(key) => void loadCompany(String(key))}
-          options={companies.map((company) => ({
-            value: company.id,
-            // The seed already names companies "บริษัท B"; prefixing again
-            // would read "บริษัท บริษัท B".
-            label: company.name,
-          }))}
-        />
-
-        <span className="flex items-center gap-2">
-          <Text type="secondary" className="text-xs">
-            {messages.matrix.subject}
-          </Text>
-          <SearchSelect
-            value={shownSubject ?? undefined}
-            onChange={setActiveSubject}
-            style={{ minWidth: 320 }}
-            placeholder={messages.matrix.subject}
-            notFoundContent={messages.matrix.noSubjects}
-            options={subjects}
-          />
-        </span>
-
-        <div className="flex-1" />
-
-        <Button type="primary" onClick={() => setPublishing(true)}>
-          {messages.matrix.publishNew}
-        </Button>
-      </div>
+      {canManage && (
+        <div className="flex justify-end">
+          <Button type="primary" onClick={() => setPublishing(true)}>
+            {messages.matrix.publishNew}
+          </Button>
+        </div>
+      )}
 
       <SubjectLadder
         versions={versions.filter(
-          (version) => version.subjectType === shownSubject,
+          (version) => version.subjectType === subject,
         )}
         userNames={userNames}
         unitNames={unitNames}
       />
 
-      {/* Keyed so the subject prefill below follows the toolbar rather than
-          freezing at whatever was selected when the form first mounted. */}
+      {/* Keyed on the subject so switching tabs or request types mounts a fresh
+          form rather than reusing the levels typed for the previous ladder. */}
       <PublishDialog
-        key={shownSubject ?? "none"}
+        key={subject}
         open={publishing}
-        companyId={activeCompany}
-        subject={shownSubject}
-        subjects={subjects}
+        companyId={companyId}
+        subject={subject}
         unitTree={unitTree}
         onClose={() => setPublishing(false)}
         onDone={async () => {
           setPublishing(false);
           void message.success(messages.matrix.saved);
-          await loadCompany(activeCompany);
+          await onPublished();
         }}
       />
     </div>
@@ -649,16 +556,14 @@ function PublishDialog({
   open,
   companyId,
   subject,
-  subjects,
   unitTree,
   onClose,
   onDone,
 }: {
   open: boolean;
   companyId: string;
-  /** The subject the toolbar is showing — what a new version most likely edits. */
-  subject: string | null;
-  subjects: { value: string; label: string }[];
+  /** The tab's own subject — fixed, so the dialog cannot publish another one. */
+  subject: string;
   unitTree: UnitTreeNode[];
   onClose: () => void;
   onDone: () => void;
@@ -669,7 +574,6 @@ function PublishDialog({
 
   async function submit() {
     const values = (await form.validateFields()) as {
-      subject_type: string;
       levels: {
         type: "supervisor" | "org";
         up?: number;
@@ -685,7 +589,7 @@ function PublishDialog({
       method: "POST",
       body: JSON.stringify({
         company_id: companyId,
-        subject_type: values.subject_type,
+        subject_type: subject,
         // Only the fields the chosen shape uses. Sending an `up` on an `org`
         // level would be stored and then never read, which is how a ladder
         // starts describing something it does not do.
@@ -726,19 +630,8 @@ function PublishDialog({
       <Form
         form={form}
         layout="vertical"
-        initialValues={{
-          ...(subject ? { subject_type: subject } : {}),
-          levels: [{ type: "supervisor", up: 1 }],
-        }}
+        initialValues={{ levels: [{ type: "supervisor", up: 1 }] }}
       >
-        <Form.Item
-          name="subject_type"
-          label={messages.matrix.subject}
-          rules={[{ required: true }]}
-        >
-          <SearchSelect showSearch optionFilterProp="label" options={subjects} />
-        </Form.Item>
-
         <Form.List name="levels">
           {(fields, { add, remove }) => (
             <>

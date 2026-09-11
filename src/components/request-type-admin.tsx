@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Alert, App, Button, Card, Checkbox, Empty, Input, InputNumber, Modal, Space, Tabs, Tag } from "antd";
+import { Alert, App, Button, Card, Checkbox, Empty, Input, InputNumber, Modal, Segmented, Space, Tabs, Tag } from "antd";
 import Text from "antd/es/typography/Text";
 import Paragraph from "antd/es/typography/Paragraph";
 import {
@@ -19,6 +19,7 @@ import { buildUnitTree } from "@/lib/org-tree";
 import { ROUTES } from "@/lib/routes";
 import { SLA_COVERAGES } from "@/lib/api/types";
 import type {
+  ApprovalMatrixVersion,
   SlaCoverage,
   CodedLabel,
   FormSchema,
@@ -28,6 +29,11 @@ import type {
 } from "@/lib/api/types";
 import { messages } from "@/lib/messages";
 import { SearchSelect, SearchTreeSelect } from "@/components/search-select";
+import {
+  SubjectMatrixPanel,
+  subjectOf,
+} from "@/components/approval-matrix-admin";
+import { adminApi } from "@/lib/api/client";
 
 /** One editable row of the form schema, flattened for display. */
 interface FieldRow {
@@ -50,6 +56,16 @@ interface FieldRow {
 }
 
 const FIELD_TYPES = ["string", "number", "boolean", "array"];
+
+/**
+ * The detail pane's tabs.
+ *
+ * `approval-requester` is the `:pre` ladder (§8.1 `BEFORE_WORK`, climbing the
+ * requester's chart) and `approval-receiver` the plain one (`AFTER_WORK`,
+ * climbing the assignee's) — the stage is carried in the subject string, so
+ * these keys and `subjectOf` are the only place the mapping is written down.
+ */
+type TabKey = "detail" | "approval-requester" | "approval-receiver";
 
 /**
  * Types a *column* may be.
@@ -229,17 +245,33 @@ function describeField(row: FieldRow): string {
 export function RequestTypeAdmin({
   types: initial,
   orgUnits,
-  companyName,
+  companies,
+  companyId,
+  matrixVersions: initialMatrix,
+  userNames,
+  canManageMatrix,
 }: {
   readonly types: RequestType[];
   /** For the `ทีมผู้รับ` selector — same source A3 uses. */
   readonly orgUnits: OrgUnitNode[];
-  /** §16 heads the list with the company these types belong to. */
-  readonly companyName: string | null;
+  /** D-18: each company has its own catalog *and* its own approval ladders. */
+  readonly companies: readonly { readonly id: string; readonly name: string }[];
+  readonly companyId: string;
+  /** Every ladder the company has; each approval tab keeps its own subject's. */
+  readonly matrixVersions: readonly ApprovalMatrixVersion[];
+  /** `userId` → display name, for naming who published a ladder version. */
+  readonly userNames: Readonly<Record<string, string>>;
+  /** `admin.approval-matrix.manage`; false leaves the approval tabs read-only. */
+  readonly canManageMatrix: boolean;
 }) {
   // antd's `message` from context, so it inherits the app theme.
   const { message } = App.useApp();
   const [types, setTypes] = useState(initial);
+  const [activeCompany, setActiveCompany] = useState(companyId);
+  const [matrixVersions, setMatrixVersions] = useState<ApprovalMatrixVersion[]>([
+    ...initialMatrix,
+  ]);
+  const [tab, setTab] = useState<TabKey>("detail");
   const [selectedCode, setSelectedCode] = useState<string | null>(
     initial[0]?.code ?? null,
   );
@@ -280,8 +312,44 @@ export function RequestTypeAdmin({
 
   const unitTree = useMemo(() => buildUnitTree(orgUnits), [orgUnits]);
 
+  /** The company's ladders, re-read after publishing one. */
+  async function loadMatrix(forCompany: string) {
+    if (!canManageMatrix) return;
+
+    const matrix = await adminApi<ApprovalMatrixVersion[]>(
+      `approval-matrix?company_id=${encodeURIComponent(forCompany)}`,
+    );
+
+    setMatrixVersions(matrix.ok ? matrix.data : []);
+  }
+
+  /**
+   * Catalog and ladders are re-read together, and the selection is dropped
+   * rather than carried over: company B need not run the same kinds of work as
+   * company A, and a stale code would leave the pane editing a type this
+   * company has never had.
+   */
+  async function loadCompany(nextCompanyId: string) {
+    setActiveCompany(nextCompanyId);
+    setSelectedCode(null);
+    setTab("detail");
+    setError(null);
+
+    const [catalog] = await Promise.all([
+      adminApi<RequestType[]>(
+        `request-types?company_id=${encodeURIComponent(nextCompanyId)}`,
+      ),
+      loadMatrix(nextCompanyId),
+    ]);
+
+    setTypes(catalog.ok ? catalog.data : []);
+  }
+
   function select(type: RequestType) {
     setSelectedCode(type.code);
+    // The approval tabs belong to the type that was open; landing on one of
+    // them after switching types would read as that type's ladder.
+    setTab("detail");
     setRows(toRows(type));
     setName(type.name);
     setSlaHours(type.slaHours ?? null);
@@ -369,6 +437,32 @@ export function RequestTypeAdmin({
     });
   }
 
+  /**
+   * One approval tab's body.
+   *
+   * Without `admin.approval-matrix.manage` the tab stays in place but shows why
+   * it is empty: the one permission covers reading as well as publishing, so
+   * there is nothing this viewer may fetch, and asking anyway would earn a
+   * guaranteed 403 and a red alert on a screen where nothing is wrong.
+   */
+  function approvalPanel(subject: string) {
+    if (!canManageMatrix) {
+      return <Alert type="info" showIcon title={messages.matrix.noPermission} />;
+    }
+
+    return (
+      <SubjectMatrixPanel
+        subject={subject}
+        companyId={activeCompany}
+        versions={matrixVersions}
+        canManage={canManageMatrix}
+        userNames={userNames}
+        orgUnits={orgUnits}
+        onPublished={() => loadMatrix(activeCompany)}
+      />
+    );
+  }
+
   async function toggleActive() {
     if (!selected) return;
 
@@ -392,7 +486,27 @@ export function RequestTypeAdmin({
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
+      {/*
+        One switcher for the whole screen. The catalog and the ladders are both
+        per-company (D-18), and two selectors would let the list and the
+        approval tabs show different companies at once.
+      */}
+      <div className="flex flex-wrap items-center gap-3">
+        {companies.length > 1 && (
+          <Segmented
+            value={activeCompany}
+            onChange={(key) => void loadCompany(String(key))}
+            options={companies.map((company) => ({
+              value: company.id,
+              // The seed already names companies "บริษัท B"; prefixing again
+              // would read "บริษัท บริษัท B".
+              label: company.name,
+            }))}
+          />
+        )}
+
+        <div className="flex-1" />
+
         <Button type="primary" onClick={() => setCreating(true)}>
           {messages.requestTypes.newTypeTitle}
         </Button>
@@ -403,7 +517,10 @@ export function RequestTypeAdmin({
           types={types}
           orgUnits={orgUnits}
           selectedCode={selectedCode}
-          companyName={companyName}
+          companyName={
+            companies.find((company) => company.id === activeCompany)?.name ??
+            null
+          }
           onSelect={select}
         />
 
@@ -413,8 +530,14 @@ export function RequestTypeAdmin({
               ? messages.requestTypes.edit(selected.name, selected.code)
               : messages.requestTypes.selectFirst
           }
+          /*
+            All three act on the รายละเอียด form's state — `บันทึก` would write
+            back whatever the fields hold — so they belong to that tab alone.
+            The approval tabs publish through their own button instead.
+          */
           extra={
-            selected && (
+            selected &&
+            tab === "detail" && (
               <Space>
                 <Button danger onClick={() => void toggleActive()}>
                   {selected.active
@@ -438,139 +561,167 @@ export function RequestTypeAdmin({
           {!selected ? (
             <Empty description={messages.requestTypes.selectFirst} />
           ) : (
-            <div className="space-y-4">
-              {error && <Alert type="error" showIcon title={error} />}
+            /*
+              `card` on the outer tabs and `line` on the form tabs inside
+              รายละเอียด: the two levels have to look different, or the four
+              headers read as one row of eight.
+            */
+            <Tabs
+              type="card"
+              activeKey={tab}
+              onChange={(key) => setTab(key as TabKey)}
+              items={[
+                {
+                  key: "detail",
+                  label: messages.requestTypes.tabDetail,
+                  children: (
+                  <div className="space-y-4">
+                    {error && <Alert type="error" showIcon title={error} />}
 
-              <div className="grid gap-4 sm:grid-cols-4">
-                <label className="block">
-                  <Text strong>{messages.requestTypes.name}</Text>
-                  <Input
-                    className="mt-1"
-                    value={name}
-                    onChange={(event) => setName(event.target.value)}
-                  />
-                </label>
+                    <div className="grid gap-4 sm:grid-cols-4">
+                      <label className="block">
+                        <Text strong>{messages.requestTypes.name}</Text>
+                        <Input
+                          className="mt-1"
+                          value={name}
+                          onChange={(event) => setName(event.target.value)}
+                        />
+                      </label>
 
-                <label className="block">
-                  <Text strong>{messages.requestTypes.receiver}</Text>
-                  <SearchSelect
-                    className="mt-1 w-full"
-                    allowClear
-                    value={receiver ?? undefined}
-                    placeholder={messages.requestTypes.noReceiver}
-                    onChange={(next?: string) => setReceiver(next ?? null)}
-                    options={orgUnits.map((unit) => ({
-                      value: unit.id,
-                      label: unit.name,
-                    }))}
-                  />
-                </label>
+                      <label className="block">
+                        <Text strong>{messages.requestTypes.receiver}</Text>
+                        <SearchSelect
+                          className="mt-1 w-full"
+                          allowClear
+                          value={receiver ?? undefined}
+                          placeholder={messages.requestTypes.noReceiver}
+                          onChange={(next?: string) => setReceiver(next ?? null)}
+                          options={orgUnits.map((unit) => ({
+                            value: unit.id,
+                            label: unit.name,
+                          }))}
+                        />
+                      </label>
 
-                <label className="block">
-                  <Text strong>{messages.requestTypes.sla}</Text>
-                  <div className="flex  gap-2">
-                    <div>
-                      <InputNumber
-                        className="mt-1 w-20"
-                        min={1}
-                        value={slaHours ?? undefined}
-                        onChange={(next) => setSlaHours(next ?? null)}
-                      />
+                      <label className="block">
+                        <Text strong>{messages.requestTypes.sla}</Text>
+                        <div className="flex  gap-2">
+                          <div>
+                            <InputNumber
+                              className="mt-1 w-20"
+                              min={1}
+                              value={slaHours ?? undefined}
+                              onChange={(next) => setSlaHours(next ?? null)}
+                            />
+                          </div>
+                          <SearchSelect
+                            className="mt-1 w-full"
+                            value={coverage}
+                            onChange={setCoverage}
+                            options={SLA_COVERAGES.map((value) => ({
+                              value,
+                              label: messages.requestTypes.coverage[value],
+                            }))}
+                          />
+                        </div>
+                        <Link href={ROUTES.adminSla}>
+                          <Text type="secondary" className="text-xs underline">
+                            {messages.requestTypes.workingHoursLink}
+                          </Text>
+                        </Link>
+                      </label>
                     </div>
-                    <SearchSelect
-                      className="mt-1 w-full"
-                      value={coverage}
-                      onChange={setCoverage}
-                      options={SLA_COVERAGES.map((value) => ({
-                        value,
-                        label: messages.requestTypes.coverage[value],
-                      }))}
+
+                    {/*
+                      §16 draws `อ้างอิงโอกาสการขาย *` on the DSC mockup, and the submit screen
+                      demanded it for every type as a result — including the ones with
+                      no opportunity to point at. It is the type's rule, so it is set here.
+                    */}
+                    <label className="block">
+                      <Checkbox
+                        checked={refRequired}
+                        onChange={(event) => setRefRequired(event.target.checked)}
+                      >
+                        {messages.requestTypes.refRequired}
+                      </Checkbox>
+                      <Text type="secondary" className="block text-xs">
+                        {messages.requestTypes.refRequiredHint}
+                      </Text>
+                    </label>
+
+                    <label className="block">
+                      <Text strong>{messages.requestTypes.eligibleUnits}</Text>
+                      <SearchTreeSelect
+                        className="mt-1 w-full"
+                        multiple
+                        allowClear
+                        treeDefaultExpandAll
+                        value={eligibleUnits}
+                        onChange={setEligibleUnits}
+                        placeholder={messages.requestTypes.eligibleUnitsAll}
+                        treeData={unitTree}
+                      />
+                      <Text type="secondary" className="mt-1 block text-xs">
+                        {messages.requestTypes.eligibleUnitsHint}
+                      </Text>
+                    </label>
+
+                    {/*
+                      Two forms, two tabs. Side by side they read as one long form and
+                      an admin loses track of which half the requester will see.
+                    */}
+                    <Tabs
+                      items={[
+                        {
+                          key: "requester",
+                          label: messages.requestTypes.requesterForm,
+                          children: (
+                            <FormSchemaEditor rows={rows} onChange={setRows} />
+                          ),
+                        },
+                        {
+                          key: "receiver",
+                          label: messages.requestTypes.receiverForm,
+                          children: (
+                            <>
+                              <Paragraph type="secondary" className="text-xs">
+                                {messages.requestTypes.receiverFormHint}
+                              </Paragraph>
+                              <FormSchemaEditor
+                                rows={receiverRows}
+                                onChange={setReceiverRows}
+                              />
+                            </>
+                          ),
+                        },
+                      ]}
+                    />
+
+                    <div className="grid gap-6 lg:grid-cols-2">
+                      <RequiredDocs entries={docs} onChange={setDocs} />
+                      <ReturnReasons entries={reasons} onChange={setReasons} />
+                    </div>
+
+                    <Alert
+                      type="info"
+                      showIcon
+                      title={messages.requestTypes.effectNote}
                     />
                   </div>
-                  <Link href={ROUTES.adminSla}>
-                    <Text type="secondary" className="text-xs underline">
-                      {messages.requestTypes.workingHoursLink}
-                    </Text>
-                  </Link>
-                </label>
-              </div>
-
-              {/*
-                §16 draws `อ้างอิงโอกาสการขาย *` on the DSC mockup, and the submit screen
-                demanded it for every type as a result — including the ones with
-                no opportunity to point at. It is the type's rule, so it is set here.
-              */}
-              <label className="block">
-                <Checkbox
-                  checked={refRequired}
-                  onChange={(event) => setRefRequired(event.target.checked)}
-                >
-                  {messages.requestTypes.refRequired}
-                </Checkbox>
-                <Text type="secondary" className="block text-xs">
-                  {messages.requestTypes.refRequiredHint}
-                </Text>
-              </label>
-
-              <label className="block">
-                <Text strong>{messages.requestTypes.eligibleUnits}</Text>
-                <SearchTreeSelect
-                  className="mt-1 w-full"
-                  multiple
-                  allowClear
-                  treeDefaultExpandAll
-                  value={eligibleUnits}
-                  onChange={setEligibleUnits}
-                  placeholder={messages.requestTypes.eligibleUnitsAll}
-                  treeData={unitTree}
-                />
-                <Text type="secondary" className="mt-1 block text-xs">
-                  {messages.requestTypes.eligibleUnitsHint}
-                </Text>
-              </label>
-
-              {/*
-                Two forms, two tabs. Side by side they read as one long form and
-                an admin loses track of which half the requester will see.
-              */}
-              <Tabs
-                items={[
-                  {
-                    key: "requester",
-                    label: messages.requestTypes.requesterForm,
-                    children: (
-                      <FormSchemaEditor rows={rows} onChange={setRows} />
-                    ),
-                  },
-                  {
-                    key: "receiver",
-                    label: messages.requestTypes.receiverForm,
-                    children: (
-                      <>
-                        <Paragraph type="secondary" className="text-xs">
-                          {messages.requestTypes.receiverFormHint}
-                        </Paragraph>
-                        <FormSchemaEditor
-                          rows={receiverRows}
-                          onChange={setReceiverRows}
-                        />
-                      </>
-                    ),
-                  },
-                ]}
-              />
-
-              <div className="grid gap-6 lg:grid-cols-2">
-                <RequiredDocs entries={docs} onChange={setDocs} />
-                <ReturnReasons entries={reasons} onChange={setReasons} />
-              </div>
-
-              <Alert
-                type="info"
-                showIcon
-                title={messages.requestTypes.effectNote}
-              />
-            </div>
+                  ),
+                },
+                {
+                  key: "approval-requester",
+                  label: messages.requestTypes.tabApprovalRequester,
+                  children: approvalPanel(`${subjectOf(selected)}:pre`),
+                },
+                {
+                  key: "approval-receiver",
+                  label: messages.requestTypes.tabApprovalReceiver,
+                  children: approvalPanel(subjectOf(selected)),
+                },
+              ]}
+            />
           )}
         </Card>
       </div>

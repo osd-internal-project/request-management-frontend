@@ -67,12 +67,8 @@ const MENU_ITEMS: readonly MenuEntry[] = [
   },
 
   {
-    label: messages.nav.adminApprovalMatrix,
-    href: ROUTES.adminApprovalMatrix,
-    permissions: ["admin.approval-matrix.manage"],
-    group: messages.nav.adminGroup,
-  },
-  {
+    // ตารางอำนาจอนุมัติ (A1) has no entry of its own: it is two tabs of the
+    // request type it belongs to, reached from ประเภทคำขอ below.
     label: messages.nav.adminRequestTypes,
     href: ROUTES.adminRequestTypes,
     permissions: ["admin.request-type.manage"],
