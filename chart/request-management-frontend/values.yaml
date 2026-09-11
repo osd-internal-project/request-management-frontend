@@ -1,23 +1,45 @@
+# FRONTEND profile — Next.js standalone server, no migration job.
+# Chart directory name is fixed by .github/workflows/deploy.yml (APP_NAME);
+# renaming it breaks CI and orphans the existing Helm release.
+
 appName: request-management-frontend
-deploymentName: request-management-frontend
 ingressName: request-management-frontend-ingress
-serviceName: request-management-frontend
+configmapName: request-management-frontend-config
+secretName: request-management-frontend-secret
 namespace: request-management-prod
 
 replicaCount: 3
 
 image:
-  repository: docker.io/library/request-management-frontend
+  # The pipeline overrides this with --set image.repository=
+  # swr.ap-southeast-2.myhuaweicloud.com/osd-internal/request-management-frontend
+  repository: swr.ap-southeast-2.myhuaweicloud.com/osd-internal/request-management-frontend
+  # Overridden per deploy with --set image.tag=<version>-<short sha>. The tag is
+  # immutable — a commit produces exactly one tag and it is never pushed over —
+  # which is what makes IfNotPresent safe: a node may trust its cache, and a pod
+  # can still restart while the registry is unreachable. Always would force a
+  # registry round-trip on every container start and turn an SWR outage into
+  # ImagePullBackOff on images the node already holds.
   tag: "1.0.0"
   pullPolicy: IfNotPresent
 
+imagePullSecretName: huawei-swr-secret
+
+# Dockerfile: EXPOSE 3000, ENV PORT=3000 HOSTNAME=0.0.0.0
 containerPort: 3000
+
+strategy:
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
 
 service:
   type: ClusterIP
   port: 80
   targetPort: 3000
 
+# This chart owns `/` on the host. The API charts (request-user-chart,
+# request-core-chart) own `/public/api/v1/<segment>` on the SAME host.
 ingress:
   enabled: true
   className: nginx
@@ -26,28 +48,64 @@ ingress:
   pathType: Prefix
   tls:
     enabled: true
-    secretName: request-management-frontend-tls
+    secretName: request-management-prod-tls
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
     nginx.ingress.kubernetes.io/proxy-body-size: "20m"
+    # Keycloak session cookies overflow the default proxy buffers and the login
+    # round-trip dies as a 502 halfway through. Not optional on an SSO app.
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
+    nginx.ingress.kubernetes.io/proxy-buffers-number: "8"
+    nginx.ingress.kubernetes.io/proxy-busy-buffers-size: "32k"
+    nginx.ingress.kubernetes.io/large-client-header-buffers: "4 32k"
+    # No `configuration-snippet`. ingress-nginx has defaulted
+    # `allow-snippet-annotations: false` since v1.9, and where that default
+    # stands the admission webhook rejects the whole Ingress — `helm upgrade
+    # --atomic` then rolls the release back over a response header.
 
-env:
+# USER_SERVICE_URL / CORE_SERVICE_URL are ORIGINS ONLY. src/lib/backend.ts adds
+# BACKEND_PREFIX = "/api/v1" to every outbound call (§11.1), so a prefix here
+# would produce /api/v1/api/v1. They use each API's service.port (8884 / 8885),
+# never its containerPort.
+configmap:
   NODE_ENV: "production"
   PORT: "3000"
   HOSTNAME: "0.0.0.0"
   APP_ORIGIN: "https://request-management.osd.co.th"
-  USER_SERVICE_URL: "http://user-service:3001"
-  CORE_SERVICE_URL: "http://core-service:3002"
+  USER_SERVICE_URL: "http://request-user-service.request-management-prod.svc.cluster.local:8884"
+  CORE_SERVICE_URL: "http://request-core-service.request-management-prod.svc.cluster.local:8885"
   SESSION_IDLE_TIMEOUT_SECONDS: "900"
   SESSION_REFRESH_INTERVAL_SECONDS: "300"
 
+# Committed file — real values come from --set-string secrets.X=… in the pipeline.
 secrets: {}
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 60
+  targetMemoryUtilizationPercentage: 70
+
+livenessProbe:
+  enabled: true
+  path: /
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+
+readinessProbe:
+  enabled: true
+  path: /api/health     # src/app/api/health/route.ts — this app's own route
+  initialDelaySeconds: 20
+  periodSeconds: 5
+  timeoutSeconds: 3
 
 resources:
   requests:
-    memory: "128Mi"
-    cpu: "50m"
+    memory: "192Mi"
+    cpu: "100m"
   limits:
-    memory: "256Mi"
-    cpu: "200m"
+    memory: "384Mi"
+    cpu: "500m"

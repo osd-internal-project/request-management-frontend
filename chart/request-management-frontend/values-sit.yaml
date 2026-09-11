@@ -1,20 +1,27 @@
 namespace: request-management-sit
 
-replicaCount: 1
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 2
+  targetCPUUtilizationPercentage: 60
+  targetMemoryUtilizationPercentage: 70
 
 ingress:
   host: request-management-sit.osd.co.th
   tls:
-    secretName: request-management-frontend-sit-tls
+    enabled: true
+    secretName: request-management-sit-tls
 
-env:
-  NODE_TLS_REJECT_UNAUTHORIZED: "0"
+# Helm merges maps key by key, so the WHOLE map is written in every env file —
+# a partial one silently keeps a value from values.yaml.
+configmap:
   NODE_ENV: "production"
   PORT: "3000"
   HOSTNAME: "0.0.0.0"
   APP_ORIGIN: "https://request-management-sit.osd.co.th"
-  USER_SERVICE_URL: "http://user-service.request-management-sit.svc.cluster.local:3001"
-  CORE_SERVICE_URL: "http://core-service.request-management-sit.svc.cluster.local:3002"
+  USER_SERVICE_URL: "http://request-user-service.request-management-sit.svc.cluster.local:8884"
+  CORE_SERVICE_URL: "http://request-core-service.request-management-sit.svc.cluster.local:8885"
   SESSION_IDLE_TIMEOUT_SECONDS: "900"
   SESSION_REFRESH_INTERVAL_SECONDS: "300"
 
@@ -24,6 +31,7 @@ hostAliases:
   - ip: "10.134.1.5"
     hostnames:
       - "request-management-sit.osd.co.th"
+      - "sso.osd.co.th"
 
 resources:
   requests:

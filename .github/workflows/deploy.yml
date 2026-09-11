@@ -28,22 +28,32 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     outputs:
-      image_version: ${{ steps.pkg.outputs.ver }}
+      image_version: ${{ steps.pkg.outputs.ver }}   # bare version, for humans
+      image_tag: ${{ steps.pkg.outputs.tag }}       # what every image ref uses
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      # The image tag carries the commit, so it can never be pushed over. That
+      # is what lets the chart use pullPolicy: IfNotPresent — a node may trust
+      # its cache, because a given tag is always the same bytes. A tag of the
+      # package.json version alone is reused whenever someone forgets to bump
+      # it, and the deploy then silently ships the previous build.
       - name: Read Package Info
         id: pkg
         run: |
-          echo "ver=$(jq -r .version package.json)" >> "$GITHUB_OUTPUT"
-          echo "📦 Version: $(jq -r .version package.json)"
+          VER=$(jq -r .version package.json)
+          SHA=$(git rev-parse --short=7 HEAD)
+          echo "ver=${VER}"        >> "$GITHUB_OUTPUT"
+          echo "tag=${VER}-${SHA}" >> "$GITHUB_OUTPUT"
+          echo "📦 Version: ${VER}"
+          echo "🏷️  Image tag: ${VER}-${SHA}"
 
       - name: Build Docker Image
         run: |
           docker build --no-cache --platform linux/amd64 \
-            -t ${{ env.APP_NAME }}:${{ steps.pkg.outputs.ver }} \
+            -t ${{ env.APP_NAME }}:${{ steps.pkg.outputs.tag }} \
             -f ./Dockerfile .
 
       - name: Login to Huawei Cloud SWR
@@ -54,15 +64,15 @@ jobs:
 
       - name: Tag and Push Docker Image
         run: |
-          docker tag ${{ env.APP_NAME }}:${{ steps.pkg.outputs.ver }} \
-            swr.ap-southeast-2.myhuaweicloud.com/osd-internal/${{ env.APP_NAME }}:${{ steps.pkg.outputs.ver }}
-          docker push swr.ap-southeast-2.myhuaweicloud.com/osd-internal/${{ env.APP_NAME }}:${{ steps.pkg.outputs.ver }}
+          docker tag ${{ env.APP_NAME }}:${{ steps.pkg.outputs.tag }} \
+            swr.ap-southeast-2.myhuaweicloud.com/osd-internal/${{ env.APP_NAME }}:${{ steps.pkg.outputs.tag }}
+          docker push swr.ap-southeast-2.myhuaweicloud.com/osd-internal/${{ env.APP_NAME }}:${{ steps.pkg.outputs.tag }}
 
       - name: Cleanup Docker Images
         if: always()
         run: |
-          docker rmi ${{ env.APP_NAME }}:${{ steps.pkg.outputs.ver }} || true
-          docker rmi swr.ap-southeast-2.myhuaweicloud.com/osd-internal/${{ env.APP_NAME }}:${{ steps.pkg.outputs.ver }} || true
+          docker rmi ${{ env.APP_NAME }}:${{ steps.pkg.outputs.tag }} || true
+          docker rmi swr.ap-southeast-2.myhuaweicloud.com/osd-internal/${{ env.APP_NAME }}:${{ steps.pkg.outputs.tag }} || true
           docker image prune -f
           docker builder prune -f
 
@@ -95,7 +105,7 @@ jobs:
 
       - name: Set Chart appVersion
         run: |
-          VER="${{ needs.build-and-push.outputs.image_version }}"
+          VER="${{ needs.build-and-push.outputs.image_tag }}"
           sed -i "s/^appVersion:.*/appVersion: \"${VER}\"/" chart/${{ env.APP_NAME }}/Chart.yaml
           echo "Set appVersion to ${VER}"
 
@@ -103,7 +113,7 @@ jobs:
         run: |
           set -e
           DEPLOY_ENV="${{ env.DEPLOY_ENV }}"
-          VER="${{ needs.build-and-push.outputs.image_version }}"
+          VER="${{ needs.build-and-push.outputs.image_tag }}"
 
           echo "🚀 Helm upgrade ${{ env.APP_NAME }} (env: ${DEPLOY_ENV})"
           echo "📦 Image: swr.ap-southeast-2.myhuaweicloud.com/osd-internal/${{ env.APP_NAME }}:${VER}"
@@ -152,7 +162,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          VER="${{ needs.build-and-push.outputs.image_version }}"
+          VER="${{ needs.build-and-push.outputs.image_tag }}"
           DEPLOY_ENV="${{ env.DEPLOY_ENV }}"
           TAG="${{ env.APP_NAME }}/${DEPLOY_ENV}/v${VER}"
 
