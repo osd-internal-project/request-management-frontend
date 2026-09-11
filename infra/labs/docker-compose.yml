@@ -18,7 +18,7 @@ services:
     # Real values live on the VM, outside the repo. See .env.labs.example —
     # note that USER_SERVICE_URL here is an ORIGIN, the opposite of the
     # same-named variable in the backend stack.
-    env_file: /opt/request-management/labs/frontend.env
+    env_file: /home/chareefm/docker-env/.frontend-env
     ports: ["3000:3000"]
     networks: [rm-labs]
     healthcheck:
