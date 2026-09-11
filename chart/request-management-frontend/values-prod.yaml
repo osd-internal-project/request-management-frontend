@@ -31,7 +31,7 @@ hostAliases:
   - ip: "10.134.1.5"
     hostnames:
       - "request-management.osd.co.th"
-      - "sso.osd.co.th"
+      - "auth-request-management.osd.co.th"
 
 resources:
   requests:
