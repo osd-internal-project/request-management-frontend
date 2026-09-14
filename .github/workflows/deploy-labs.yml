@@ -88,7 +88,7 @@ jobs:
     # and setting this label. Note that a label no runner carries makes this
     # job **queue silently** rather than fail — check "Waiting for a runner"
     # before assuming the deploy is merely slow.
-    runs-on: [self-hosted, labs]
+    runs-on: [self-hosted]
 
     steps:
       - name: Checkout Repository
