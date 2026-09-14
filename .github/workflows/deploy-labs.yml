@@ -76,13 +76,19 @@ jobs:
 
   deploy:
     needs: build-and-push
-    # The labs VM. Matched on the bare `self-hosted` label because this repo's
-    # runner (`worker-02`) carries only the automatic labels — a name is not a
-    # label. Add a distinguishing label here the moment this repo gains a second
-    # self-hosted runner, or a deploy will land on whichever one is free.
-    # The backend repo's docs/labs-server-setup.md covers registering it and
-    # confirming it is up; with none online this job queues without an error.
-    runs-on: [self-hosted]
+    # The labs VM, pinned by the `labs` label.
+    #
+    # This used to match the bare `self-hosted` label, on the reasoning that
+    # there was only one runner to match. A second one appeared, and because a
+    # runner's *name* is not a label, nothing distinguished them: deploys began
+    # landing on whichever machine was free, and the env file this stack needs
+    # exists on only one of them.
+    #
+    # The backend repo's docs/labs-server-setup.md covers registering a runner
+    # and setting this label. Note that a label no runner carries makes this
+    # job **queue silently** rather than fail — check "Waiting for a runner"
+    # before assuming the deploy is merely slow.
+    runs-on: [self-hosted, labs]
 
     steps:
       - name: Checkout Repository
