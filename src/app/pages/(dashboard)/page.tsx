@@ -9,6 +9,7 @@ import requests from "@/lib/api/requests";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import { can, getSession } from "@/lib/session";
+import { statusFilterArgs } from "@/lib/work-filters";
 
 /**
  * §16 หน้าที่ 2 — งานค้างของฉัน. The landing page after login.
@@ -74,7 +75,11 @@ export default async function MyWorkPage({
    * "nothing found" for matches sitting on the next one.
    */
   const filterArgs = {
-    status: filters.status,
+    /*
+      `งานค้าง` by default — the screen's own name, kept truthful. The box
+      shows which of the three it is on, so a short list is never a mystery.
+    */
+    ...statusFilterArgs(filters.status),
     type_code: filters.typeCode,
     q: filters.q,
     overdue: filters.overdue,

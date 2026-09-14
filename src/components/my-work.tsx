@@ -18,6 +18,7 @@ import Text from "antd/es/typography/Text";
 import { messages } from "@/lib/messages";
 import { SearchSelect } from "@/components/search-select";
 import { ROUTES } from "@/lib/routes";
+import { ALL_FILTER, OPEN_FILTER } from "@/lib/work-filters";
 import { RequestRowActions } from "@/components/request-row-actions";
 import type { Session } from "@/lib/session-shape";
 
@@ -325,15 +326,23 @@ export function MyWork({
           onSearch={(value) => apply("q", value.trim() || undefined)}
           style={{ width: 260 }}
         />
+        {/*
+          No `allowClear`: clearing would leave the box blank while the server
+          still applied the `งานค้าง` default, which is the invisible filter
+          this screen is not allowed to have. `ทั้งหมด` is the way out, and it
+          is an option like any other.
+        */}
         <SearchSelect
-          allowClear
-          value={filters.status}
+          value={filters.status ?? OPEN_FILTER}
           onChange={(value?: string) => apply("status", value)}
-          placeholder={`${messages.myWork.filterStatus}: ${messages.myWork.filterAll}`}
-          style={{ width: 170 }}
-          options={Object.entries(messages.myWork.status).map(
-            ([value, label]) => ({ value, label }),
-          )}
+          style={{ width: 210 }}
+          options={[
+            { value: OPEN_FILTER, label: messages.myWork.filterOpen },
+            { value: ALL_FILTER, label: messages.myWork.filterAnyStatus },
+            ...Object.entries(messages.myWork.status).map(
+              ([value, label]) => ({ value, label }),
+            ),
+          ]}
         />
         <SearchSelect
           allowClear

@@ -847,6 +847,17 @@ export const messages = {
     search: "ค้นหาเลขที่ / ลูกค้า / โอกาสการขาย",
     filterStatus: "สถานะ",
     filterType: "ประเภท",
+    /**
+     * What the status box opens on, and what it says while it is there.
+     *
+     * Named in full rather than left as a blank box: the screen hides the
+     * three statuses that mean the request is over, and a filter nobody can
+     * see is one that reads as missing data (4 ก.ย. 2569).
+     */
+    filterOpen: "งานค้าง · ไม่รวมที่จบแล้ว",
+    /** The way out of that default. `filterAll` stays the bare word — it is
+        also the "no filter" placeholder of the type box and of งานทั้งหมด. */
+    filterAnyStatus: "ทั้งหมด · รวมที่จบแล้ว",
     filterAll: "ทั้งหมด",
     onlyOverdue: "เฉพาะเกินกำหนด",
     columns: {
