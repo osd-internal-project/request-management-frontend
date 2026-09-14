@@ -33,6 +33,8 @@ export async function getRequests(options?: {
   type_code?: string;
   q?: string;
   overdue?: boolean;
+  /** เฉพาะงานที่ยังไม่จบ — ตัด ปิดเรื่อง/ยกเลิก/ไม่อนุมัติ ออก. */
+  open?: boolean;
   /** REQ-06 / C360 — คำขอที่อ้างเอนทิตีต้นทาง เช่น ref_type=customer. */
   ref_type?: string;
   ref_id?: string;
@@ -47,6 +49,7 @@ export async function getRequests(options?: {
   if (options?.type_code) params.set("type_code", options.type_code);
   if (options?.q) params.set("q", options.q);
   if (options?.overdue) params.set("overdue", "true");
+  if (options?.open) params.set("open", "true");
   params.set("page", String(options?.page ?? 1));
   params.set("page_size", String(options?.page_size ?? 50));
   return apiGet<Paginated<RequestRow>>(`/requests?${params.toString()}`);
