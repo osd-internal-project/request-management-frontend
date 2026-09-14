@@ -82,6 +82,7 @@ export const messages = {
     adminAudit: "Audit Log",
     biGroup: "แดชบอร์ดผู้บริหาร",
     adminBi: "ตั้งค่า Dashboard",
+    adminIntegrations: "API Key ช่องทางภายนอก",
     logout: "ออกจากระบบ",
     company: "บริษัท",
     switchFailed: "สลับบริษัทไม่สำเร็จ",
@@ -1135,6 +1136,8 @@ export const messages = {
           subProduct: "Sub Product",
           projectRevenue: "Project Revenue",
           owner: "ผู้รับผิดชอบ",
+          // Lead ที่ระบบภายนอกยิงเข้ามาจะยังไม่มีเจ้าของจนกว่าจะมีคนรับ
+          unassignedOwner: "กองกลาง — ยังไม่มีผู้รับผิดชอบ",
           customer: "ลูกค้าในทะเบียน",
           note: "บันทึก",
           createdAt: "รับเข้าเมื่อ",
@@ -1712,7 +1715,125 @@ export const messages = {
         "ยิ่งต่ำยิ่งเตือนบ่อย — ค่าตั้งต้น 0.85 · จูนได้ระหว่าง UAT",
       save: "บันทึกการตั้งค่า",
       saved: "บันทึกแล้ว",
+
+      /** แท็บบนหน้าตั้งค่า CRM. */
+      tabs: {
+        customers: "ลูกค้า",
+        leadStatuses: "สถานะ Lead",
+      },
+
+      /** ตั้งค่าว่าหน้า Lead มีสถานะอะไรบ้าง (D-09). */
+      leadStatuses: {
+        section: "สถานะของ Lead",
+        hint: "กำหนดว่าหน้า Lead มีสถานะอะไรบ้าง เรียงลำดับอย่างไร และขั้นไหนแปลงเป็นโอกาสการขายได้ — มีผลกับ pipeline บนหน้ารายละเอียด Lead ทันที ไม่ต้อง deploy",
+        add: "เพิ่มสถานะ",
+        addTitle: "เพิ่มสถานะ Lead",
+        editTitle: (name: string) => `แก้ไขสถานะ “${name}”`,
+        columns: {
+          order: "ลำดับ",
+          name: "ชื่อสถานะ",
+          code: "รหัส",
+          kind: "ชนิด",
+          active: "ใช้งาน",
+        },
+        kind: {
+          open: "ระหว่างทาง",
+          won: "ปลายทาง — แปลงเป็นโอกาสการขาย",
+          lost: "ปลายทาง — คัดออก",
+        },
+        systemTag: "สถานะระบบ",
+        defaultTag: "ตั้งต้น",
+        fields: {
+          code: "รหัส (a–z, 0–9, _ — ตั้งแล้วแก้ไม่ได้)",
+          codeHint: "รหัสคือสิ่งที่ Lead เก็บไว้ จึงเปลี่ยนทีหลังไม่ได้ — ชื่อที่แสดงแก้ได้ตลอด",
+          name: "ชื่อที่แสดง",
+          color: "สีป้าย",
+          isDefault: "เป็นสถานะตั้งต้นของ Lead ใหม่",
+        },
+        moveUp: "เลื่อนขึ้น",
+        moveDown: "เลื่อนลง",
+        delete: "ลบ",
+        deleteConfirm: "ลบสถานะนี้? (ลบได้เฉพาะสถานะที่ยังไม่มี Lead ใช้อยู่)",
+        systemLocked: "สถานะระบบ — ลบและปิดใช้งานไม่ได้",
+        empty: "ยังไม่มีสถานะ",
+      },
     },
+  },
+
+  /** AUTH-06 — หน้าจอออก API key ให้ช่องทางภายนอก (14 ก.ย. 2569). */
+  apiKeys: {
+    title: "API Key ช่องทางภายนอก",
+    subtitle:
+      "หนึ่งกุญแจต่อหนึ่งช่องทาง — เว็บฟอร์ม, LINE OA, งานอีเวนต์ แต่ละอันถือกุญแจของตัวเอง เพิกถอนแยกใบได้โดยช่องทางอื่นไม่กระทบ",
+    loadFailed: "โหลดรายการ API key ไม่สำเร็จ",
+    issue: "ออก Key ใหม่",
+    empty: "ยังไม่มี API key ในบริษัทนี้",
+
+    columns: {
+      name: "ชื่อ",
+      prefix: "ตัวขึ้นต้น",
+      source: "ช่องทาง",
+      scopes: "สิทธิ์",
+      status: "สถานะ",
+      lastUsed: "ใช้งานล่าสุด",
+      actions: "",
+    },
+
+    status: {
+      active: "ใช้งานอยู่",
+      expired: "หมดอายุ",
+      revoked: "เพิกถอนแล้ว",
+    },
+
+    form: {
+      title: "ออก API Key ให้ช่องทางใหม่",
+      name: "ชื่อ",
+      nameHelp: "ชื่อที่คนอ่านแล้วรู้ว่ากุญแจใบนี้อยู่ที่ไหน เช่น เว็บไซต์ osd.co.th (production)",
+      sourceCode: "รหัสช่องทาง",
+      sourceCodeHelp:
+        "ประทับลง Lead ทุกใบที่เข้ามาด้วยกุญแจนี้ — ตัวพิมพ์เล็ก ตัวเลข ขีด เช่น website, line-oa",
+      sourceCodeInvalid: "ใช้ได้เฉพาะตัวพิมพ์เล็ก ตัวเลข และขีด",
+      scopes: "สิทธิ์ที่กุญแจนี้ถือ",
+      scopesHelp:
+        "ติ๊กเท่าที่ช่องทางนั้นต้องใช้จริง — กุญแจที่หลุดออกไปทำได้แค่เท่าที่ติ๊กไว้",
+      expires: "อายุ (วัน)",
+      expiresHelp: "เว้นว่าง = ไม่หมดอายุ ปิดการใช้งานด้วยการเพิกถอนเท่านั้น",
+      submit: "ออก Key",
+      cancel: "ยกเลิก",
+    },
+
+    scopeLabels: {
+      "integration.crm.lead.create": "รับ Lead เข้าระบบ (เว็บฟอร์ม / LINE OA)",
+      "integration.crm.lead.read": "อ่านข้อเท็จจริงของ Lead (workflow engine)",
+      "integration.crm.lead.stage": "บันทึกขั้นของ Lead (workflow engine)",
+      "integration.request.create": "เปิดคำขอแทนผู้ใช้ (chatbot)",
+      "integration.approval.create": "เปิดเคสอนุมัติ (chatbot)",
+    } as Record<string, string>,
+
+    issued: {
+      title: "คัดลอก Key นี้ตอนนี้",
+      warning:
+        "ค่านี้แสดงครั้งเดียวและจะไม่แสดงอีก — ระบบเก็บไว้แค่ค่าที่เข้ารหัสแล้ว ถ้าทำหายต้องออกใบใหม่แล้วเพิกถอนใบนี้",
+      copy: "คัดลอก",
+      copied: "คัดลอกแล้ว",
+      copyFailed: "คัดลอกไม่สำเร็จ — เลือกข้อความแล้วคัดลอกเอง",
+      handOver:
+        "ส่งให้ผู้ดูแลช่องทางผ่านช่องทางที่ปลอดภัย แล้วให้เขานำไปตั้งค่าเป็น header:",
+      done: "เก็บเรียบร้อยแล้ว ปิดหน้าต่าง",
+      endpointHint:
+        "ช่องทางนั้นยิง Lead เข้ามาที่ endpoint นี้ โดยไม่ต้องส่ง header อื่นอีก:",
+    },
+
+    revoke: {
+      action: "เพิกถอน",
+      confirm: "เพิกถอนกุญแจใบนี้?",
+      confirmBody:
+        "ช่องทางที่ใช้กุญแจนี้จะยิงเข้ามาไม่ได้ทันที และย้อนกลับไม่ได้ — ต้องออกใบใหม่ให้แทน",
+      done: "เพิกถอนแล้ว",
+    },
+
+    issuedToast: "ออก API key แล้ว",
+    never: "—",
   },
 } as const;
 

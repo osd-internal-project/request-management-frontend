@@ -762,13 +762,36 @@ export interface CustomerSummary {
 /* CRM — Lead + โอกาสการขาย (Opportunity)                                              */
 /* -------------------------------------------------------------------------- */
 
-export type LeadStatus =
-  | "new"
-  | "cannot_contact"
-  | "contacted"
-  | "qualified"
-  | "disqualified"
-  | "converted";
+/**
+ * รหัสสถานะ Lead — เป็นสตริงเปิด ไม่ใช่ union ตายตัว: รายการสถานะตั้งค่าได้จาก
+ * "ตั้งค่า CRM → สถานะ Lead" ต่อบริษัท. ชื่อ/สี/ลำดับ อ่านจาก
+ * {@link LeadStatusSetting} ที่หน้าจอโหลดมาคู่กับข้อมูล — ไม่ใช่จากตารางแปลใน
+ * `messages.ts` (ซึ่งเหลือไว้เป็นค่าสำรองของรหัสชุดตั้งต้นเท่านั้น).
+ */
+export type LeadStatus = string;
+
+/** ชนิดของสถานะ — สิ่งที่หน้าจอตัดสินใจด้วย ไม่ใช่ตัวรหัส. */
+export type LeadStatusKind = "open" | "won" | "lost";
+
+/**
+ * หนึ่งขั้นใน pipeline ของ Lead ตามที่ผู้ดูแลตั้งไว้ — เป็น *รายการขั้น* ล้วน ๆ.
+ * กฎว่าเลื่อนจากขั้นไหนไปขั้นไหนได้เมื่อไร อยู่บน service `workflowable`
+ * (PO 10 ก.ย. 2569: "Workflow owns Process, Core owns Data") ไม่ใช่ที่นี่.
+ */
+export interface LeadStatusSetting {
+  id: string;
+  companyId: string;
+  code: string;
+  nameTh: string;
+  kind: LeadStatusKind;
+  color: string;
+  /** สถานะตั้งต้นของ Lead ที่เพิ่งรับเข้า — มีได้หนึ่งเดียวต่อบริษัท. */
+  isDefault: boolean;
+  /** สถานะระบบ: ลบไม่ได้ ปิดไม่ได้. */
+  isSystem: boolean;
+  active: boolean;
+  sortOrder: number;
+}
 export type LeadActivityType = "call" | "email" | "meeting" | "task" | "note";
 export type OpportunityStage =
   | "qualifying"
@@ -805,7 +828,8 @@ export interface LeadRow {
   customerId: string | null;
   customer: { id: string; customerCode: string; nameTh: string } | null;
   convertedOpportunity: { id: string; opportunityCode: string } | null;
-  ownerUserId: string;
+  /** null = กองกลาง — ยังไม่มีใครรับไปดูแล (Lead จากระบบภายนอก). */
+  ownerUserId: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -843,7 +867,8 @@ export interface LeadDetail extends LeadRow {
     title: string;
     stage: OpportunityStage;
   } | null;
-  owner: { id: string; displayName: string };
+  /** null = กองกลาง — Lead ที่รับมาจากระบบภายนอกและยังไม่มีใครรับไปดูแล. */
+  owner: { id: string; displayName: string } | null;
   activities: LeadActivity[];
 }
 

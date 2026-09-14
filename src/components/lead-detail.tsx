@@ -42,6 +42,7 @@ import {
   DisqualifyLeadModal,
   LeadFormModal,
   isLeadOpen,
+  leadStatusLabel,
 } from "@/components/lead-actions";
 import { formatAmount } from "@/components/opportunity-list";
 import { appApi } from "@/lib/api/client";
@@ -53,6 +54,7 @@ import type {
   LeadActivityType,
   LeadDetail,
   LeadStatus,
+  LeadStatusSetting,
 } from "@/lib/api/types";
 
 const m = messages.sales.leads;
@@ -60,16 +62,25 @@ const md = m.detail;
 const ma = md.activities;
 
 /**
- * The pipeline as the page draws it. `converted` is the goal at the end;
- * `disqualified` is not a step — it is the exit, shown as a banner.
+ * pipeline ที่หน้านี้วาด = ขั้นระหว่างทางตามลำดับที่ผู้ดูแลตั้งไว้ ("ตั้งค่า CRM →
+ * สถานะ Lead") แล้วต่อท้ายด้วยปลายทาง `won` เป็นเป้าหมายสุดท้าย. ปลายทาง `lost`
+ * (คัดออก) ไม่ใช่ขั้น — เป็นทางออก แสดงเป็น banner.
+ *
+ * ขั้นที่ถูกปิดใช้งานไม่แสดง เว้นแต่ Lead ใบนี้ค้างอยู่บนขั้นนั้นพอดี — ไม่งั้น
+ * pipeline จะไม่มีขั้นที่ตรงกับสถานะปัจจุบันเลย และ `Steps` จะชี้ไปที่ขั้นแรก
+ * ราวกับว่างานถอยหลังไปเอง.
  */
-const PIPELINE: LeadStatus[] = [
-  "new",
-  "cannot_contact",
-  "contacted",
-  "qualified",
-  "converted",
-];
+function pipelineOf(
+  statuses: LeadStatusSetting[],
+  current: LeadStatus,
+): LeadStatusSetting[] {
+  const open = statuses.filter(
+    (status) =>
+      status.kind === "open" && (status.active || status.code === current),
+  );
+  const won = statuses.find((status) => status.kind === "won");
+  return won ? [...open, won] : open;
+}
 
 /** ปุ่มลัดด้านขวา — สี่อย่างที่คนขายทำบ่อย; "บันทึก" อยู่ที่การ์ดผู้ติดต่อ. */
 const QUICK_TYPES = ["call", "email", "meeting", "task"] as const;
@@ -103,10 +114,13 @@ function initials(name: string): string {
 export function LeadDetailView({
   lead,
   customers,
+  statuses,
   canManage,
 }: {
   lead: LeadDetail;
   customers: CustomerRow[];
+  /** ทั้งชุดตามที่ตั้งไว้ รวมที่ปิดใช้งาน. */
+  statuses: LeadStatusSetting[];
   canManage: boolean;
 }) {
   const router = useRouter();
@@ -118,7 +132,9 @@ export function LeadDetailView({
   const [converting, setConverting] = useState(false);
   const [logging, setLogging] = useState<LeadActivityType | null>(null);
 
-  const open = isLeadOpen(lead.status);
+  const pipeline = pipelineOf(statuses, lead.status);
+  const currentStatus = statuses.find((row) => row.code === lead.status);
+  const open = isLeadOpen(lead.status, statuses);
   const editable = canManage && open;
 
   const pending = lead.activities
@@ -162,19 +178,23 @@ export function LeadDetailView({
   }
 
   function onStep(index: number) {
-    const target = PIPELINE[index];
-    if (target === "converted") setConverting(true);
-    else void setStatus(target);
+    const target = pipeline[index];
+    if (!target) return;
+    // ปลายทางมีข้อมูลกำกับของมันเอง — กดขั้นสุดท้ายคือเปิด modal แปลง ไม่ใช่
+    // สั่งเปลี่ยนสถานะตรง ๆ (backend ปฏิเสธอยู่แล้ว).
+    if (target.kind !== "open") setConverting(true);
+    else void setStatus(target.code);
   }
 
-  const currentStep = PIPELINE.indexOf(lead.status);
-  const disqualified = lead.status === "disqualified";
+  const currentStep = pipeline.findIndex((step) => step.code === lead.status);
+  const disqualified = currentStatus?.kind === "lost";
+  const converted = currentStatus?.kind === "won";
 
   return (
     <div className="space-y-4">
       {error && <Alert type="error" showIcon title={error} />}
 
-      {lead.status === "converted" && lead.convertedOpportunity && (
+      {converted && lead.convertedOpportunity && (
         <Alert
           type="success"
           showIcon
@@ -188,7 +208,7 @@ export function LeadDetailView({
           }
         />
       )}
-      {lead.status === "disqualified" && (
+      {disqualified && (
         <Alert
           type="warning"
           showIcon
@@ -208,8 +228,8 @@ export function LeadDetailView({
             {lead.name}
           </Title>
           <Space size={6} wrap>
-            <Tag color={m.statusColor[lead.status]}>
-              {m.status[lead.status] ?? lead.status}
+            <Tag color={leadStatusLabel(lead.status, statuses).color}>
+              {leadStatusLabel(lead.status, statuses).label}
             </Tag>
             {lead.sourceCode && <Tag>{lead.sourceCode}</Tag>}
             <Text type="secondary" className="text-xs">
@@ -236,25 +256,30 @@ export function LeadDetailView({
       <Card size="small">
         <Steps
           size="small"
-          current={disqualified ? PIPELINE.length : currentStep}
-          status={lead.status === "converted" ? "finish" : "process"}
+          current={disqualified ? pipeline.length : currentStep}
+          status={converted ? "finish" : "process"}
           onChange={editable && !busy ? onStep : undefined}
           items={[
-            ...PIPELINE.map((status) => ({
-              title:
-                status === "converted" ? md.convertStep : m.status[status],
+            ...pipeline.map((status) => ({
+              title: status.kind === "won" ? md.convertStep : status.nameTh,
               disabled: !editable,
               // คัดออก = ออกจาก pipeline ไม่ใช่ผ่านทุกขั้น — ทุกขั้นค้างเป็น wait
               ...(disqualified ? { status: "wait" as const } : {}),
             })),
             ...(disqualified
-              ? [{ title: m.status.disqualified, status: "error" as const }]
+              ? [
+                  {
+                    title: leadStatusLabel(lead.status, statuses).label,
+                    status: "error" as const,
+                  },
+                ]
               : []),
           ]}
         />
         <div className="mt-2 flex items-center justify-between">
           <Text className="text-xs">
-            {md.statusLabel}: <b>{m.status[lead.status] ?? lead.status}</b>
+            {md.statusLabel}:{" "}
+            <b>{leadStatusLabel(lead.status, statuses).label}</b>
           </Text>
           <Text type="secondary" className="text-xs">
             {editable ? md.pipelineHint : open ? "" : md.pipelineClosed}
@@ -384,7 +409,7 @@ export function LeadDetailView({
                               {dash(lead.sourceCode)}
                             </Descriptions.Item>
                             <Descriptions.Item label={md.fields.owner}>
-                              {lead.owner.displayName}
+                              {lead.owner ? lead.owner.displayName : md.fields.unassignedOwner}
                             </Descriptions.Item>
                             <Descriptions.Item label={md.fields.customer}>
                               {lead.customer ? (
@@ -466,10 +491,14 @@ export function LeadDetailView({
                           : `${formatAmount(lead.projectRevenue)} THB`}
                       </Descriptions.Item>
                       <Descriptions.Item label={md.fields.owner}>
-                        <Space size={6}>
-                          <Avatar size="small">{initials(lead.owner.displayName)}</Avatar>
-                          {lead.owner.displayName}
-                        </Space>
+                        {lead.owner ? (
+                          <Space size={6}>
+                            <Avatar size="small">{initials(lead.owner.displayName)}</Avatar>
+                            {lead.owner.displayName}
+                          </Space>
+                        ) : (
+                          md.fields.unassignedOwner
+                        )}
                       </Descriptions.Item>
                     </Descriptions>
                   </Card>

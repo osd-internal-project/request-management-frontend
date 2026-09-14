@@ -10,11 +10,12 @@ import {
   DisqualifyLeadModal,
   LeadFormModal,
   isLeadOpen,
+  leadStatusLabel,
 } from "@/components/lead-actions";
 import { SearchSelect } from "@/components/search-select";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
-import type { CustomerRow, LeadRow } from "@/lib/api/types";
+import type { CustomerRow, LeadRow, LeadStatusSetting } from "@/lib/api/types";
 
 const m = messages.sales.leads;
 
@@ -30,6 +31,7 @@ export function LeadList({
   pageSize,
   filters,
   customers,
+  statuses,
   canManage,
 }: {
   rows: LeadRow[];
@@ -38,6 +40,8 @@ export function LeadList({
   pageSize: number;
   filters: { search?: string; status?: string; mineOnly: boolean };
   customers: CustomerRow[];
+  /** ทั้งชุดตามที่ตั้งไว้ รวมที่ปิดใช้งาน — Lead เก่ายังค้างอยู่บนขั้นที่เพิ่งปิดได้. */
+  statuses: LeadStatusSetting[];
   canManage: boolean;
 }) {
   const router = useRouter();
@@ -73,10 +77,12 @@ export function LeadList({
           onChange={(value) =>
             applyFilters({ status: (value as string) || undefined })
           }
-          options={Object.entries(m.status).map(([value, label]) => ({
-            value,
-            label,
-          }))}
+          options={statuses
+            .filter((status) => status.active || status.code === filters.status)
+            .map((status) => ({
+              value: status.code,
+              label: status.nameTh,
+            }))}
         />
         <Checkbox
           checked={filters.mineOnly}
@@ -158,8 +164,8 @@ export function LeadList({
             width: 170,
             render: (status: LeadRow["status"], row) => (
               <Space size={4} orientation="vertical">
-                <Tag color={m.statusColor[status]}>
-                  {m.status[status] ?? status}
+                <Tag color={leadStatusLabel(status, statuses).color}>
+                  {leadStatusLabel(status, statuses).label}
                 </Tag>
                 {row.convertedOpportunity && (
                   <Link href={ROUTES.opportunityDetail(row.convertedOpportunity.id)}>
@@ -178,7 +184,7 @@ export function LeadList({
                   key: "actions",
                   width: 240,
                   render: (_: unknown, row: LeadRow) =>
-                    isLeadOpen(row.status) ? (
+                    isLeadOpen(row.status, statuses) ? (
                       <Space>
                         <Button
                           size="small"

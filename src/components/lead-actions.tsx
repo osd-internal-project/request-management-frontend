@@ -17,17 +17,42 @@ import Text from "antd/es/typography/Text";
 import { SearchSelect } from "@/components/search-select";
 import { appApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
-import type { CustomerRow, LeadRow, LeadStatus } from "@/lib/api/types";
+import type {
+  CustomerRow,
+  LeadRow,
+  LeadStatus,
+  LeadStatusSetting,
+} from "@/lib/api/types";
 
 const m = messages.sales.leads;
 
 /**
- * Still workable — anything but the two closed states. The list, the detail
- * page and the pipeline all ask this one question; the backend's `requireOpen`
- * is the same rule.
+ * Still workable — ทุกขั้นที่ไม่ใช่ปลายทาง. The list, the detail page and the
+ * pipeline all ask this one question; the backend's `requireOpen` is the same
+ * rule, and both อ่านจาก `kind` ของสถานะ ไม่ใช่รหัสที่เขียนตายไว้ — ผู้ดูแลเปลี่ยน
+ * ชื่อหรือเพิ่มขั้นได้โดยด่านนี้ไม่หลุดตาม.
+ *
+ * รหัสที่ไม่มีในรายการ (ตั้งค่าโหลดไม่สำเร็จ) ถือว่ายังเปิด — หน้าจอที่ล็อกปุ่มไว้
+ * เฉย ๆ อธิบายตัวเองไม่ได้ ส่วน backend ยังปฏิเสธให้อยู่ดีถ้าเป็นสถานะปิดจริง.
  */
-export function isLeadOpen(status: LeadStatus): boolean {
-  return status !== "converted" && status !== "disqualified";
+export function isLeadOpen(
+  status: LeadStatus,
+  statuses: LeadStatusSetting[],
+): boolean {
+  const found = statuses.find((row) => row.code === status);
+  return found ? found.kind === "open" : true;
+}
+
+/** ป้ายของสถานะตามที่ผู้ดูแลตั้งไว้ — ไม่พบก็แสดงรหัสดิบ ดีกว่าช่องว่าง. */
+export function leadStatusLabel(
+  status: LeadStatus,
+  statuses: LeadStatusSetting[],
+): { label: string; color: string } {
+  const found = statuses.find((row) => row.code === status);
+  return {
+    label: found?.nameTh ?? messages.sales.leads.status[status] ?? status,
+    color: found?.color ?? messages.sales.leads.statusColor[status] ?? "default",
+  };
 }
 
 /** snake_case exactly as `CreateLeadDto` — one shape for create and edit. */

@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
 import { LeadList } from "@/components/lead-list";
-import { getLeads } from "@/lib/api/sales";
+import { getLeadStatuses, getLeads } from "@/lib/api/sales";
 import { getCustomers } from "@/lib/api/customers";
 import { messages } from "@/lib/messages";
 import { HOME_PATH } from "@/lib/routes";
@@ -25,7 +25,7 @@ export default async function LeadsPage({
   const query = await searchParams;
   const page = Number(query.page) || 1;
 
-  const [listResult, customersResult] = await Promise.all([
+  const [listResult, statusesResult, customersResult] = await Promise.all([
     getLeads({
       search: query.search,
       status: query.status,
@@ -33,6 +33,9 @@ export default async function LeadsPage({
       page,
       page_size: 50,
     }),
+    // รายการสถานะตามที่ตั้งไว้ที่ "ตั้งค่า CRM → สถานะ Lead" — ป้ายและตัวกรอง
+    // อ่านจากที่นี่ ไม่ใช่จากรายการที่เขียนตายไว้ในหน้าจอ.
+    getLeadStatuses(),
     // ตัวเลือกลูกค้าสำหรับ modal แปลงเป็นดีล — ทะเบียนที่ผู้ใช้เห็นอยู่แล้ว
     can(session, "crm.customer.read")
       ? getCustomers({ page: 1, page_size: 100 })
@@ -61,6 +64,7 @@ export default async function LeadsPage({
           mineOnly: query.view === "mine",
         }}
         customers={customersResult?.ok ? customersResult.data.data : []}
+        statuses={statusesResult.ok ? statusesResult.data : []}
         canManage={can(session, "crm.sales.manage")}
       />
     </div>

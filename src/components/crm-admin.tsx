@@ -14,14 +14,17 @@ import {
   Space,
   Switch,
   Table,
+  Tabs,
   Tag,
 } from "antd";
 import Text from "antd/es/typography/Text";
+import { LeadStatusAdmin } from "@/components/lead-status-admin";
 import { adminApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
 import type {
   CrmConfig,
   KycProductRule,
+  LeadStatusSetting,
   SegmentDimension,
   SegmentValue,
 } from "@/lib/api/types";
@@ -37,11 +40,13 @@ export function CrmAdmin({
   config,
   docPrefix,
   kycProducts,
+  leadStatuses,
 }: {
   dimensions: SegmentDimension[];
   config: CrmConfig;
   docPrefix: string;
   kycProducts: KycProductRule[];
+  leadStatuses: LeadStatusSetting[];
 }) {
   const router = useRouter();
   const { message } = App.useApp();
@@ -68,9 +73,30 @@ export function CrmAdmin({
     <div className="space-y-4">
       {error && <Alert type="error" showIcon title={error} />}
 
-      <SegmentSection dimensions={dimensions} onCall={call} />
-      <KycProductSection rows={kycProducts} onCall={call} />
-      <ConfigSection config={config} docPrefix={docPrefix} onCall={call} />
+      <Tabs
+        items={[
+          {
+            key: "customers",
+            label: m.tabs.customers,
+            children: (
+              <div className="space-y-4">
+                <SegmentSection dimensions={dimensions} onCall={call} />
+                <KycProductSection rows={kycProducts} onCall={call} />
+                <ConfigSection
+                  config={config}
+                  docPrefix={docPrefix}
+                  onCall={call}
+                />
+              </div>
+            ),
+          },
+          {
+            key: "lead-statuses",
+            label: m.tabs.leadStatuses,
+            children: <LeadStatusAdmin rows={leadStatuses} onCall={call} />,
+          },
+        ]}
+      />
     </div>
   );
 }

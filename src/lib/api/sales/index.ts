@@ -5,6 +5,7 @@
 import { apiGet, type ApiResult } from "../core";
 import type {
   LeadDetail,
+  LeadStatusSetting,
   OpportunityDetail,
   OpportunityLostReason,
   OpportunityRow,
@@ -30,6 +31,16 @@ export async function getLeads(options?: {
 
 export async function getLead(id: string): Promise<ApiResult<LeadDetail>> {
   return apiGet(`leads/${id}`);
+}
+
+/**
+ * สถานะที่หน้า Lead ใช้วาด pipeline และตัวกรอง — เฉพาะที่เปิดใช้งาน เรียงตาม
+ * ลำดับที่ผู้ดูแลตั้งไว้ ("ตั้งค่า CRM → สถานะ Lead").
+ */
+export async function getLeadStatuses(): Promise<
+  ApiResult<LeadStatusSetting[]>
+> {
+  return apiGet(`leads/statuses`);
 }
 
 export async function getOpportunities(options?: {
@@ -63,6 +74,7 @@ export async function getLostReasons(): Promise<ApiResult<OpportunityLostReason[
 const salesApi = {
   getLeads,
   getLead,
+  getLeadStatuses,
   getOpportunities,
   getOpportunity,
   getLostReasons,

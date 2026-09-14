@@ -8,7 +8,7 @@ import customers from "@/lib/api/customers";
 import { messages } from "@/lib/messages";
 import { HOME_PATH } from "@/lib/routes";
 import { can, getSession } from "@/lib/session";
-import type { CrmConfig } from "@/lib/api/types";
+import type { CrmConfig, LeadStatusSetting } from "@/lib/api/types";
 
 /**
  * ตั้งค่า CRM (admin.crm.manage) — CM-07 segment dimensions/values, CM-02
@@ -19,17 +19,21 @@ export default async function CrmAdminPage() {
   const session = await getSession();
   if (!can(session, "admin.crm.manage")) redirect(HOME_PATH);
 
-  const [dimensionsResult, configResult, kycProductsResult] = await Promise.all([
-    customers.getSegmentDimensions(),
-    apiGet<CrmConfig>("/admin/crm/config"),
-    customers.getKycProducts(),
-  ]);
+  const [dimensionsResult, configResult, kycProductsResult, leadStatusesResult] =
+    await Promise.all([
+      customers.getSegmentDimensions(),
+      apiGet<CrmConfig>("/admin/crm/config"),
+      customers.getKycProducts(),
+      apiGet<LeadStatusSetting[]>("/admin/crm/lead-statuses"),
+    ]);
 
   const failed = !dimensionsResult.ok
     ? dimensionsResult
     : !configResult.ok
       ? configResult
-      : null;
+      : !leadStatusesResult.ok
+        ? leadStatusesResult
+        : null;
 
   return (
     <div className="space-y-4">
@@ -54,6 +58,7 @@ export default async function CrmAdminPage() {
       <CrmAdmin
         dimensions={dimensionsResult.ok ? dimensionsResult.data : []}
         kycProducts={kycProductsResult.ok ? kycProductsResult.data : []}
+        leadStatuses={leadStatusesResult.ok ? leadStatusesResult.data : []}
         config={
           configResult.ok
             ? configResult.data

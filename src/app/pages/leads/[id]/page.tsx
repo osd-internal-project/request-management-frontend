@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { LeadDetailView } from "@/components/lead-detail";
 import { getCustomers } from "@/lib/api/customers";
-import { getLead } from "@/lib/api/sales";
+import { getLead, getLeadStatuses } from "@/lib/api/sales";
 import { HOME_PATH } from "@/lib/routes";
 import { can, getSession } from "@/lib/session";
 
@@ -20,8 +20,10 @@ export default async function LeadDetailPage({
 
   const { id } = await params;
 
-  const [leadResult, customersResult] = await Promise.all([
+  const [leadResult, statusesResult, customersResult] = await Promise.all([
     getLead(id),
+    // pipeline วาดจากรายการสถานะที่ตั้งไว้ ("ตั้งค่า CRM → สถานะ Lead")
+    getLeadStatuses(),
     can(session, "crm.customer.read")
       ? getCustomers({ page: 1, page_size: 100 })
       : Promise.resolve(null),
@@ -34,6 +36,7 @@ export default async function LeadDetailPage({
     <LeadDetailView
       lead={leadResult.data}
       customers={customersResult?.ok ? customersResult.data.data : []}
+      statuses={statusesResult.ok ? statusesResult.data : []}
       canManage={can(session, "crm.sales.manage")}
     />
   );
