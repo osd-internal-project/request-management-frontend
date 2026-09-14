@@ -18,7 +18,7 @@ services:
     # Real values live on the VM, outside the repo. See .env.labs.example —
     # note that USER_SERVICE_URL here is an ORIGIN, the opposite of the
     # same-named variable in the backend stack.
-    env_file: /home/chareefm/docker-env/.frontend-env
+    env_file: /etc/request-management/.frontend-env
     # Host 3500 → container 3000. This is the port a browser uses, so it is the
     # one that has to appear in APP_ORIGIN and in the Keycloak redirect URIs.
     ports: ["3500:3000"]
