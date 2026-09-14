@@ -106,4 +106,6 @@ export const ROUTES = {
   adminUsers: `${HOME_PATH}/admin/users`,
   /** SUP-04 — Audit log */
   adminAudit: `${HOME_PATH}/admin/audit`,
+  /** AUTH-06 — API key ของช่องทางภายนอก (เว็บฟอร์ม / LINE OA / พาร์ตเนอร์). */
+  adminIntegrations: `${HOME_PATH}/admin/integrations`,
 } as const;

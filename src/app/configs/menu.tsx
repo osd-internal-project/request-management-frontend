@@ -109,6 +109,12 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     group: messages.nav.adminGroup,
   },
   {
+    label: messages.nav.adminIntegrations,
+    href: ROUTES.adminIntegrations,
+    permissions: ["admin.integration.manage"],
+    group: messages.nav.adminGroup,
+  },
+  {
     label: messages.nav.adminCrm,
     href: ROUTES.adminCrm,
     permissions: ["admin.crm.manage"],

@@ -67,6 +67,7 @@ export const CORE_SERVICE_PREFIXES = [
     nothing explaining why.
   */
   "/external",
+  "/admin/api-keys",
   "/admin/approval-matrix",
   "/admin/bi",
   "/admin/crm",
