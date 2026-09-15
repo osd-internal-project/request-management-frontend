@@ -76,18 +76,18 @@ jobs:
 
   deploy:
     needs: build-and-push
-    # The labs VM, pinned by the `labs` label.
+    # The labs VM, matched by the bare `self-hosted` label.
     #
-    # This used to match the bare `self-hosted` label, on the reasoning that
-    # there was only one runner to match. A second one appeared, and because a
-    # runner's *name* is not a label, nothing distinguished them: deploys began
-    # landing on whichever machine was free, and the env file this stack needs
-    # exists on only one of them.
+    # This repo has exactly one self-hosted runner, so `self-hosted` alone is
+    # unambiguous today. A runner's *name* is not a label, so there is nothing
+    # more specific to match until someone adds a custom one in its settings.
     #
-    # The backend repo's docs/labs-server-setup.md covers registering a runner
-    # and setting this label. Note that a label no runner carries makes this
-    # job **queue silently** rather than fail — check "Waiting for a runner"
-    # before assuming the deploy is merely slow.
+    # If this repo ever gains a second self-hosted runner, deploys will start
+    # landing on whichever is free, and the env file this stack needs exists on
+    # one machine only (/etc/request-management/.frontend.env). At that point
+    # label the labs VM and add the label here — in that order, because a label
+    # no runner carries makes this job **queue silently for 24 hours** rather
+    # than fail. The backend repo's docs/labs-server-setup.md covers both.
     runs-on: [self-hosted]
 
     steps:
@@ -150,6 +150,19 @@ jobs:
         env:
           IMAGE_TAG: ${{ needs.build-and-push.outputs.image_tag }}
         run: |
+          set -euo pipefail
+          # Both repos deploy to this one VM and their images share base layers.
+          # A GitHub `concurrency` group is per-repository, so it cannot see the
+          # other repo's deploy — the mutex has to live on the machine. Without
+          # it, one job's `docker image prune` collects a layer the other has
+          # just committed but not yet referenced, and the pull dies on
+          # `rename .../ingest/... no such file or directory`.
+          #
+          # The lock is held on fd 9 for the life of this step's shell, so the
+          # script below needs no re-quoting. -w 600 fails loudly rather than
+          # queueing behind a stuck deploy until GitHub cancels the run.
+          exec 9>/var/tmp/rm-labs-deploy.lock
+          flock -w 600 9
           docker compose -f infra/labs/docker-compose.yml \
             up -d --pull always --remove-orphans --wait --wait-timeout 180
 
@@ -176,6 +189,18 @@ jobs:
         run: |
           set -euo pipefail
           for REPO in \
+          # Both repos deploy to this one VM and their images share base layers.
+          # A GitHub `concurrency` group is per-repository, so it cannot see the
+          # other repo's deploy — the mutex has to live on the machine. Without
+          # it, one job's `docker image prune` collects a layer the other has
+          # just committed but not yet referenced, and the pull dies on
+          # `rename .../ingest/... no such file or directory`.
+          #
+          # The lock is held on fd 9 for the life of this step's shell, so the
+          # script below needs no re-quoting. -w 600 fails loudly rather than
+          # queueing behind a stuck deploy until GitHub cancels the run.
+          exec 9>/var/tmp/rm-labs-deploy.lock
+          flock -w 600 9
             "${{ env.REGISTRY }}/${{ env.SWR_ORG }}/${{ env.APP_NAME }}"; do
             echo "=== ${REPO}"
             # CreatedAt is fixed-width and single-timezone on one host, so sorting

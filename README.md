@@ -147,7 +147,7 @@ The organisation defaults to `osd-internal`; set the `HUAWEI_SWR_ORG` repository
 Images are tagged `<package.json version>-<short sha>`, which is never pushed over.
 
 The deploy half runs on a self-hosted runner on the labs VM. That machine has to be prepared
-first — runner, Docker, the shared `rm-net` network, `~/docker-env/.frontend.env`
+first — runner, Docker, the shared `rm-net` network, `/etc/request-management/.frontend.env`
 (see `.env.labs.example`), and the Keycloak redirect URIs. The full procedure lives in the
 backend repo at `docs/labs-server-setup.md`. **With no self-hosted runner online for this repo,
 the deploy job sits in `Queued` indefinitely without erroring.**
