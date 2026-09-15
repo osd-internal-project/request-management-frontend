@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
-import { LeadList } from "@/components/lead-list";
+import { LeadList, type LeadLayout } from "@/components/lead-list";
 import { getLeads } from "@/lib/api/sales";
 import { getCustomers } from "@/lib/api/customers";
 import { messages } from "@/lib/messages";
@@ -16,6 +16,7 @@ export default async function LeadsPage({
     search?: string;
     status?: string;
     view?: string;
+    layout?: string;
     page?: string;
   }>;
 }) {
@@ -24,6 +25,9 @@ export default async function LeadsPage({
 
   const query = await searchParams;
   const page = Number(query.page) || 1;
+  const layout: LeadLayout = query.layout === "board" ? "board" : "table";
+  // กระดานต้องเห็นทุกขั้นพร้อมกัน จึงดึงเต็มเพดานของ API (`MAX_PAGE_SIZE` = 100)
+  const pageSize = layout === "board" ? 100 : 50;
 
   const [listResult, customersResult] = await Promise.all([
     getLeads({
@@ -31,7 +35,7 @@ export default async function LeadsPage({
       status: query.status,
       view: query.view === "mine" ? "mine" : undefined,
       page,
-      page_size: 50,
+      page_size: pageSize,
     }),
     // ตัวเลือกลูกค้าสำหรับ modal แปลงเป็นดีล — ทะเบียนที่ผู้ใช้เห็นอยู่แล้ว
     can(session, "crm.customer.read")
@@ -54,12 +58,13 @@ export default async function LeadsPage({
         rows={listResult.ok ? listResult.data.data : []}
         total={listResult.ok ? listResult.data.total : 0}
         page={page}
-        pageSize={50}
+        pageSize={pageSize}
         filters={{
           search: query.search,
           status: query.status,
           mineOnly: query.view === "mine",
         }}
+        layout={layout}
         customers={customersResult?.ok ? customersResult.data.data : []}
         canManage={can(session, "crm.sales.manage")}
       />
