@@ -1792,6 +1792,8 @@ export const messages = {
           `ค้าง ${count} ใบ · ข้อมูล ${asOf}`,
       },
       tabOpportunities: "โอกาสการขาย",
+      tabQuotations: "ใบเสนอราคา",
+      tabSaleOrders: "ใบสั่งขาย",
       tabRequests: "คำขอ",
       noRequests: "ยังไม่มีคำขอที่อ้างถึงลูกค้ารายนี้",
       requestColumns: {

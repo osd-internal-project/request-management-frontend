@@ -22,7 +22,10 @@ import {
 } from "antd";
 import Text from "antd/es/typography/Text";
 import Title from "antd/es/typography/Title";
+import dayjs from "dayjs";
 import { CUSTOMER_STATUS_COLOR } from "@/components/customer-list";
+import { formatAmount } from "@/components/opportunity-list";
+import { QuotationStatusTags } from "@/components/quotation-list";
 import { SearchSelect } from "@/components/search-select";
 import { appApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
@@ -34,7 +37,9 @@ import type {
   CustomerFieldChange,
   CustomerSummary,
   CustomerTimelineEvent,
+  QuotationRow,
   RequestRow,
+  SaleOrderRow,
   SegmentOption,
 } from "@/lib/api/types";
 
@@ -72,6 +77,8 @@ export function CustomerDetailView({
   consents,
   relatedRequests,
   customerOpportunities,
+  customerQuotations,
+  customerSaleOrders,
 }: {
   customer: CustomerDetail;
   history: CustomerFieldChange[];
@@ -86,6 +93,10 @@ export function CustomerDetailView({
   relatedRequests: RequestRow[] | null;
   /** null = viewer has no crm.sales.read. */
   customerOpportunities: OpportunityRow[] | null;
+  /** null = viewer has no crm.sales.read. */
+  customerQuotations: QuotationRow[] | null;
+  /** null = viewer has no crm.sales.read. */
+  customerSaleOrders: SaleOrderRow[] | null;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -388,6 +399,24 @@ export function CustomerDetailView({
                 },
               ]
             : []),
+          ...(customerQuotations !== null
+            ? [
+                {
+                  key: "quotations",
+                  label: `${m.detail.tabQuotations} · ${customerQuotations.length}`,
+                  children: <CustomerQuotationsTab rows={customerQuotations} />,
+                },
+              ]
+            : []),
+          ...(customerSaleOrders !== null
+            ? [
+                {
+                  key: "saleOrders",
+                  label: `${m.detail.tabSaleOrders} · ${customerSaleOrders.length}`,
+                  children: <CustomerSaleOrdersTab rows={customerSaleOrders} />,
+                },
+              ]
+            : []),
           ...(relatedRequests !== null
             ? [
                 {
@@ -410,7 +439,11 @@ export function CustomerDetailView({
           /* C360-01 — โครงหน้าครบตั้งแต่แรก: แท็บที่ยังไม่มา เปิดแล้วบอกว่า
              มากับโมดูลไหน ไม่ fetch อะไร (C360-04) */
           ...Object.entries(m.detail.futureTabs)
-            .filter(([key]) => !(key === "opportunities" && customerOpportunities !== null))
+            .filter(
+              ([key]) =>
+                !(key === "opportunities" && customerOpportunities !== null) &&
+                !(key === "quotations" && customerQuotations !== null),
+            )
             .map(([key, tab]) => ({
             key: `future-${key}`,
             label: tab.label,
@@ -1045,6 +1078,140 @@ function CustomerOpportunitiesTab({ rows }: { rows: OpportunityRow[] }) {
             amount === null || amount === undefined
               ? "—"
               : Number(amount).toLocaleString("th-TH"),
+        },
+      ]}
+    />
+  );
+}
+
+/** C360-01 — ใบเสนอราคาของลูกค้ารายนี้ (เฉพาะฉบับปัจจุบัน ไม่นับฉบับที่ถูกแทน). */
+function CustomerQuotationsTab({ rows }: { rows: QuotationRow[] }) {
+  const mq = messages.sales.quotations;
+  if (!rows.length) {
+    return <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={mq.empty} />;
+  }
+
+  return (
+    <Table<QuotationRow>
+      size="small"
+      rowKey="id"
+      pagination={false}
+      dataSource={rows}
+      columns={[
+        {
+          title: mq.columns.no,
+          dataIndex: "quotationNo",
+          width: 190,
+          render: (no: string, row) => (
+            <Link href={ROUTES.quotationDetail(row.id)}>
+              {no} <Tag className="ml-1">{mq.version(row.version)}</Tag>
+            </Link>
+          ),
+        },
+        { title: mq.columns.title, dataIndex: "title" },
+        {
+          title: mq.columns.opportunity,
+          dataIndex: "opportunity",
+          width: 150,
+          render: (opportunity: QuotationRow["opportunity"]) =>
+            opportunity ? (
+              <Link href={ROUTES.opportunityDetail(opportunity.id)}>
+                {opportunity.opportunityCode}
+              </Link>
+            ) : (
+              "—"
+            ),
+        },
+        {
+          title: mq.columns.status,
+          dataIndex: "status",
+          width: 170,
+          render: (_: string, row) => <QuotationStatusTags row={row} />,
+        },
+        {
+          title: mq.columns.netTotal,
+          dataIndex: "netTotal",
+          width: 140,
+          align: "right" as const,
+          render: (amount: QuotationRow["netTotal"], row) =>
+            `${formatAmount(amount)} ${row.currency}`,
+        },
+        {
+          title: mq.columns.validUntil,
+          dataIndex: "validUntil",
+          width: 110,
+          render: (at: string | null) => (at ? dayjs(at).format("D MMM YYYY") : "—"),
+        },
+      ]}
+    />
+  );
+}
+
+/** C360-01 — ใบสั่งขายของลูกค้ารายนี้. ยกเลิกได้ที่หน้าโอกาสการขาย. */
+function CustomerSaleOrdersTab({ rows }: { rows: SaleOrderRow[] }) {
+  const md = messages.sales.opportunities.detail;
+  const mq = messages.sales.quotations;
+  if (!rows.length) {
+    return <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={md.noSaleOrders} />;
+  }
+
+  return (
+    <Table<SaleOrderRow>
+      size="small"
+      rowKey="id"
+      pagination={false}
+      dataSource={rows}
+      columns={[
+        { title: md.saleOrderColumns.code, dataIndex: "saleOrderCode", width: 160 },
+        {
+          title: mq.columns.opportunity,
+          dataIndex: "opportunity",
+          width: 150,
+          render: (opportunity: SaleOrderRow["opportunity"]) =>
+            opportunity ? (
+              <Link href={ROUTES.opportunityDetail(opportunity.id)}>
+                {opportunity.opportunityCode}
+              </Link>
+            ) : (
+              "—"
+            ),
+        },
+        {
+          title: md.quotationsTitle,
+          dataIndex: "quotation",
+          width: 190,
+          render: (quotation: SaleOrderRow["quotation"]) =>
+            quotation ? (
+              <Link href={ROUTES.quotationDetail(quotation.id)}>
+                {quotation.quotationNo} <Tag className="ml-1">{mq.version(quotation.version)}</Tag>
+              </Link>
+            ) : (
+              "—"
+            ),
+        },
+        {
+          title: md.saleOrderColumns.status,
+          dataIndex: "status",
+          width: 110,
+          render: (status: string) => (
+            <Tag color={status === "open" ? "green" : "red"}>
+              {md.saleOrderStatus[status] ?? status}
+            </Tag>
+          ),
+        },
+        {
+          title: md.saleOrderColumns.amount,
+          dataIndex: "amount",
+          width: 130,
+          align: "right" as const,
+          render: (amount: SaleOrderRow["amount"], row) =>
+            `${formatAmount(amount)} ${row.currency}`,
+        },
+        {
+          title: md.saleOrderColumns.orderedAt,
+          dataIndex: "orderedAt",
+          width: 120,
+          render: (at: string) => dayjs(at).format("D MMM YYYY"),
         },
       ]}
     />
