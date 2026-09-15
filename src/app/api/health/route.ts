@@ -1,18 +1,19 @@
 import { NextResponse } from "next/server";
 
 /**
- * Health endpoint for the labs compose healthcheck.
+ * Liveness probe for the `rm-fe` container.
  *
- * It answers for this process only: it deliberately does not call user-service
- * or core-service. A backend outage must not make Docker restart a frontend
- * that is serving fine — the pages that need those services report their own
- * failures.
+ * Its HEALTHCHECK greps this body for `"status":"ok"`, so the shape is a
+ * contract with the compose file, not a detail — changing it marks the
+ * container unhealthy with nothing in the log to say why.
  *
- * It exists because every other route either redirects to login or renders a
- * page, and a healthcheck that follows a redirect proves nothing.
+ * Deliberately reports only that this Next.js server is serving. The backend
+ * has its own probe on `rm-core`, and folding that in here would take the
+ * frontend down for a database fault it can do nothing about.
+ *
+ * Route Handlers are uncached by default in this version, so no segment config
+ * is needed to keep the answer live.
  */
-export const dynamic = "force-dynamic";
-
 export function GET() {
-  return NextResponse.json({ status: "ok", uptime: process.uptime() });
+  return NextResponse.json({ status: "ok" });
 }
