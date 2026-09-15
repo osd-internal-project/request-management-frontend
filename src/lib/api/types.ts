@@ -887,9 +887,114 @@ export interface SaleOrderRow {
   opportunity: { id: string; opportunityCode: string; title: string } | null;
   customerId: string;
   customer: { id: string; customerCode: string; nameTh: string } | null;
+  /** CD-77: ใบเสนอราคาที่ลูกค้ายอมรับซึ่งใบสั่งขายนี้เปิดตาม. */
+  quotationId: string | null;
+  quotation: { id: string; quotationNo: string; version: number } | null;
   ownerUserId: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export type QuotationStatus =
+  | "draft"
+  | "pending_approval"
+  | "approved"
+  | "sent"
+  | "accepted"
+  | "declined"
+  | "superseded"
+  | "cancelled";
+
+/** Decimal columns arrive as strings. */
+type Money = string | number;
+
+/**
+ * ใบเสนอราคา (CD-76) — หนึ่งแถวต่อเวอร์ชัน. `costTotal`/`marginAmount`/`marginPct`
+ * **ไม่มากับ response** สำหรับผู้ที่ไม่มีสิทธิ์เห็นต้นทุน (SCOPE-04 ลบทิ้งที่ API) —
+ * หน้าจอต้องถือว่า undefined = ถูกปกปิด ไม่ใช่ศูนย์.
+ */
+export interface QuotationRow {
+  id: string;
+  quotationNo: string;
+  version: number;
+  title: string;
+  status: QuotationStatus;
+  currency: string;
+  validUntil: string | null;
+  /** คำนวณที่ server — ใบที่ยังไม่ปิดและเลยวันหมดอายุ (เวลาไทย). */
+  expired: boolean;
+  netTotal: Money;
+  vatAmount: Money;
+  grandTotal: Money;
+  costTotal?: Money;
+  marginAmount?: Money;
+  marginPct?: Money | null;
+  approvalRequired: boolean;
+  approvalRequestId: string | null;
+  opportunityId: string;
+  opportunity: { id: string; opportunityCode: string; title: string } | null;
+  customerId: string | null;
+  partyName: string;
+  ownerUserId: string;
+  submittedAt: string | null;
+  sentAt: string | null;
+  respondedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface QuotationLine {
+  id: string;
+  lineNo: number;
+  productCode: string | null;
+  description: string;
+  quantity: Money;
+  unit: string | null;
+  unitPrice: Money;
+  /** ถูกปกปิดสำหรับผู้ไม่มีสิทธิ์เห็นต้นทุน. */
+  unitCost?: Money;
+  discountPct: Money;
+  lineTotal: Money;
+  lineCost?: Money;
+}
+
+export interface QuotationDetail extends QuotationRow {
+  companyId: string;
+  partyTaxId: string | null;
+  contactName: string | null;
+  paymentTerms: string | null;
+  note: string | null;
+  subtotal: Money;
+  discountTotal: Money;
+  vatPct: Money;
+  minMarginPct: Money | null;
+  approvedAt: string | null;
+  responseNote: string | null;
+  cancelledAt: string | null;
+  cancelReason: string | null;
+  lines: QuotationLine[];
+  opportunity: {
+    id: string;
+    opportunityCode: string;
+    title: string;
+    stage: OpportunityStage;
+    customerId: string | null;
+  };
+  customer: { id: string; customerCode: string; nameTh: string } | null;
+  saleOrders: { id: string; saleOrderCode: string; status: SaleOrderStatus }[];
+  versions: {
+    id: string;
+    version: number;
+    status: QuotationStatus;
+    netTotal: Money;
+    createdAt: string;
+  }[];
+  approvalRequest: {
+    id: string;
+    requestNo: string | null;
+    status: string;
+    typeCode: string;
+  } | null;
 }
 
 export interface OpportunityDetail extends OpportunityRow {
@@ -1022,6 +1127,11 @@ export interface CrmConfig {
   codePrefix: string;
   codePadding: number;
   dedupThreshold: number;
+  /** CD-76 — margin ขั้นต่ำ (%) ก่อนออกใบเสนอราคา. */
+  minMarginPct: number;
+  quotationValidityDays: number;
+  vatPct: number;
+  quotationApprovalTypeCode: string;
 }
 
 /** CM-07 — one assignable value with its dimension, for pickers and filters. */

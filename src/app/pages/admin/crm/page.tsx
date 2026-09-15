@@ -57,7 +57,15 @@ export default async function CrmAdminPage() {
         config={
           configResult.ok
             ? configResult.data
-            : { codePrefix: "CUS", codePadding: 6, dedupThreshold: 0.85 }
+            : {
+                codePrefix: "CUS",
+                codePadding: 6,
+                dedupThreshold: 0.85,
+                minMarginPct: 15,
+                quotationValidityDays: 30,
+                vatPct: 7,
+                quotationApprovalTypeCode: "DSC",
+              }
         }
         docPrefix={
           session?.companies.find((c) => c.id === session.active_company_id)

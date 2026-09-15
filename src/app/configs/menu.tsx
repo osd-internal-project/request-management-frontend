@@ -65,6 +65,13 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     permissions: ["crm.sales.read"],
     group: messages.nav.crmGroup,
   },
+  /** CD-76 — ใบเสนอราคาทุกเวอร์ชัน; สร้างจากหน้ารายละเอียดโอกาสการขาย. */
+  {
+    label: messages.nav.quotations,
+    href: ROUTES.quotations,
+    permissions: ["crm.sales.read"],
+    group: messages.nav.crmGroup,
+  },
 
   {
     // ตารางอำนาจอนุมัติ (A1) has no entry of its own: it is two tabs of the
