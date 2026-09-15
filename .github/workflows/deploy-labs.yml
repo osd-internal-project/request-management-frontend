@@ -98,19 +98,15 @@ jobs:
 
   deploy:
     needs: build-and-push
-    # The labs VM, matched by the bare `self-hosted` label.
+    # The labs VM, matched by its `labs-vm` custom label.
     #
-    # This repo has exactly one self-hosted runner, so `self-hosted` alone is
-    # unambiguous today. A runner's *name* is not a label, so there is nothing
-    # more specific to match until someone adds a custom one in its settings.
-    #
-    # If this repo ever gains a second self-hosted runner, deploys will start
-    # landing on whichever is free, and the env file this stack needs exists on
-    # one machine only (/etc/request-management/.frontend.env). At that point
-    # label the labs VM and add the label here — in that order, because a label
-    # no runner carries makes this job **queue silently for 24 hours** rather
-    # than fail. The backend repo's docs/labs-server-setup.md covers both.
-    runs-on: [self-hosted]
+    # This repo now has two self-hosted runners, so the bare `self-hosted`
+    # label matches both — a deploy could land on whichever is idle, and the
+    # env file this stack needs exists on one machine only
+    # (/etc/request-management/.frontend.env). `labs-vm` is applied to that
+    # runner in its settings; the backend repo's docs/labs-server-setup.md
+    # covers provisioning the machine itself.
+    runs-on: [self-hosted, labs-vm]
 
     steps:
       - name: Checkout Repository
