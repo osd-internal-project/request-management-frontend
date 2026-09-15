@@ -14,13 +14,17 @@ import { can, getSession } from "@/lib/session";
  */
 export default async function OpportunityDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  /** `?action=sale-order` — กระดานการ์ดส่งมาเมื่อลากไปคอลัมน์ "ชนะ". */
+  searchParams: Promise<{ action?: string }>;
 }) {
   const session = await getSession();
   if (!can(session, "crm.sales.read")) redirect(HOME_PATH);
 
   const { id } = await params;
+  const { action } = await searchParams;
   const canReadRequests = can(session, "request.read");
   const canManage = can(session, "crm.sales.manage");
 
@@ -60,6 +64,7 @@ export default async function OpportunityDetailPage({
       }
       customers={customersResult?.ok ? customersResult.data.data : []}
       canManage={canManage}
+      openSaleOrderOnLoad={action === "sale-order"}
     />
   );
 }

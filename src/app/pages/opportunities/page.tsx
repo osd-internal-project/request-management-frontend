@@ -1,8 +1,11 @@
 import { redirect } from "next/navigation";
 import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
-import { OpportunityList } from "@/components/opportunity-list";
-import { getOpportunities } from "@/lib/api/sales";
+import {
+  OpportunityList,
+  type OpportunityLayout,
+} from "@/components/opportunity-list";
+import { getLostReasons, getOpportunities } from "@/lib/api/sales";
 import { getCustomers } from "@/lib/api/customers";
 import { messages } from "@/lib/messages";
 import { HOME_PATH } from "@/lib/routes";
@@ -16,6 +19,7 @@ export default async function OpportunitiesPage({
     search?: string;
     stage?: string;
     view?: string;
+    layout?: string;
     page?: string;
   }>;
 }) {
@@ -24,18 +28,24 @@ export default async function OpportunitiesPage({
 
   const query = await searchParams;
   const page = Number(query.page) || 1;
+  const layout: OpportunityLayout = query.layout === "board" ? "board" : "table";
+  // กระดานต้องเห็นทุกขั้นพร้อมกัน จึงดึงเต็มเพดานของ API (`MAX_PAGE_SIZE` = 100)
+  const pageSize = layout === "board" ? 100 : 50;
+  const canManage = can(session, "crm.sales.manage");
 
-  const [listResult, customersResult] = await Promise.all([
+  const [listResult, customersResult, reasonsResult] = await Promise.all([
     getOpportunities({
       search: query.search,
       stage: query.stage,
       view: query.view === "mine" ? "mine" : undefined,
       page,
-      page_size: 50,
+      page_size: pageSize,
     }),
     can(session, "crm.customer.read")
       ? getCustomers({ page: 1, page_size: 100 })
       : Promise.resolve(null),
+    // เหตุผลปิดแพ้ใช้แค่ตอนลากการ์ดไป "แพ้" — ตารางไม่ต้องดึง
+    layout === "board" && canManage ? getLostReasons() : Promise.resolve(null),
   ]);
 
   return (
@@ -53,14 +63,16 @@ export default async function OpportunitiesPage({
         rows={listResult.ok ? listResult.data.data : []}
         total={listResult.ok ? listResult.data.total : 0}
         page={page}
-        pageSize={50}
+        pageSize={pageSize}
         filters={{
           search: query.search,
           stage: query.stage,
           mineOnly: query.view === "mine",
         }}
+        layout={layout}
         customers={customersResult?.ok ? customersResult.data.data : []}
-        canManage={can(session, "crm.sales.manage")}
+        lostReasons={reasonsResult?.ok ? reasonsResult.data : []}
+        canManage={canManage}
       />
     </div>
   );

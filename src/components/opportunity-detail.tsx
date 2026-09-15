@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -23,6 +23,7 @@ import Text from "antd/es/typography/Text";
 import Title from "antd/es/typography/Title";
 import dayjs from "dayjs";
 import { SearchSelect } from "@/components/search-select";
+import { LoseOpportunityModal } from "@/components/opportunity-actions";
 import { formatAmount, OpportunityParty } from "@/components/opportunity-list";
 import { appApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
@@ -51,6 +52,7 @@ export function OpportunityDetailView({
   relatedRequests,
   customers,
   canManage,
+  openSaleOrderOnLoad = false,
 }: {
   opportunity: OpportunityDetail;
   lostReasons: OpportunityLostReason[];
@@ -59,18 +61,25 @@ export function OpportunityDetailView({
   /** ตัวเลือก "ใช้ลูกค้าเดิมแทน" ในกล่องเปิดใบสั่งขาย — ว่างเมื่อไม่มีสิทธิ์อ่านทะเบียน. */
   customers: CustomerRow[];
   canManage: boolean;
+  /** มาจากกระดานการ์ด (ลากไป "ชนะ") — เปิดกล่องเปิดใบสั่งขายให้ทันที. */
+  openSaleOrderOnLoad?: boolean;
 }) {
   const router = useRouter();
   const { message } = App.useApp();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [losing, setLosing] = useState(false);
-  const [loseReason, setLoseReason] = useState<string>();
-  const [loseText, setLoseText] = useState("");
+
+  const customer = opportunity.customer;
+  const closed = opportunity.stage === "won" || opportunity.stage === "lost";
+  const editable = canManage && !closed;
+  const autoOpen = openSaleOrderOnLoad && editable;
 
   // --- เปิดใบสั่งขาย -------------------------------------------------------
-  const [opening, setOpening] = useState(false);
-  const [soAmount, setSoAmount] = useState<number | null>(null);
+  const [opening, setOpening] = useState(autoOpen);
+  const [soAmount, setSoAmount] = useState<number | null>(
+    autoOpen && opportunity.amount !== null ? Number(opportunity.amount) : null,
+  );
   const [soNote, setSoNote] = useState("");
   const [useExisting, setUseExisting] = useState(false);
   const [existingCustomerId, setExistingCustomerId] = useState<string>();
@@ -85,25 +94,12 @@ export function OpportunityDetailView({
   const [cancelling, setCancelling] = useState<SaleOrderRow | null>(null);
   const [cancelReason, setCancelReason] = useState("");
 
-  const customer = opportunity.customer;
-  const closed = opportunity.stage === "won" || opportunity.stage === "lost";
-  const editable = canManage && !closed;
-
-  async function act(path: string, body?: unknown) {
-    setError(null);
-    setBusy(true);
-    const result = await appApi(`opportunities/${opportunity.id}${path}`, {
-      method: path ? "POST" : "PATCH",
-      body: body ? JSON.stringify(body) : undefined,
-    });
-    setBusy(false);
-    if (!result.ok) {
-      setError(result.message);
-      return false;
+  // เปิดกล่องไปแล้วจาก state ตั้งต้น — ลบ `?action` ออกจาก URL กันรีเฟรชแล้วเด้งซ้ำ
+  useEffect(() => {
+    if (openSaleOrderOnLoad) {
+      router.replace(ROUTES.opportunityDetail(opportunity.id), { scroll: false });
     }
-    router.refresh();
-    return true;
-  }
+  }, [openSaleOrderOnLoad, opportunity.id, router]);
 
   async function setStage(stage: string) {
     setError(null);
@@ -178,18 +174,6 @@ export function OpportunityDetailView({
     setCancelling(null);
     setCancelReason("");
     router.refresh();
-  }
-
-  async function lose() {
-    if (!loseReason) return;
-    const done = await act("/lose", {
-      reason_code: loseReason,
-      reason_text: loseText.trim() || undefined,
-    });
-    if (done) {
-      message.success(md.lostDone);
-      setLosing(false);
-    }
   }
 
   const reasonName =
@@ -630,35 +614,15 @@ export function OpportunityDetailView({
       </Modal>
 
       {/* ปิดแพ้ — เหตุผลมาตรฐานบังคับ (spec CRM) */}
-      <Modal
-        open={losing}
-        title={md.lostTitle}
-        okText={md.lose}
-        okButtonProps={{ danger: true, disabled: !loseReason }}
-        confirmLoading={busy}
-        onCancel={() => setLosing(false)}
-        onOk={() => void lose()}
-        destroyOnHidden
-      >
-        <Space direction="vertical" className="w-full">
-          <Select
-            className="w-full"
-            placeholder={md.lostReason}
-            value={loseReason}
-            onChange={(value) => setLoseReason(value)}
-            options={lostReasons.map((reason) => ({
-              value: reason.code,
-              label: reason.name,
-            }))}
-          />
-          <Input.TextArea
-            rows={2}
-            placeholder={md.lostReasonText}
-            value={loseText}
-            onChange={(e) => setLoseText(e.target.value)}
-          />
-        </Space>
-      </Modal>
+      <LoseOpportunityModal
+        opportunity={losing ? opportunity : null}
+        lostReasons={lostReasons}
+        onClose={() => setLosing(false)}
+        onDone={() => {
+          setLosing(false);
+          router.refresh();
+        }}
+      />
     </div>
   );
 }
