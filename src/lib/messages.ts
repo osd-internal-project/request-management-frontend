@@ -1113,6 +1113,20 @@ export const messages = {
         status: "สถานะ",
         createdAt: "รับเข้าเมื่อ",
       },
+      /** สลับระหว่างตารางกับกระดานการ์ดแยกตามสถานะ. */
+      view: {
+        table: "ตาราง",
+        board: "การ์ด",
+      },
+      board: {
+        count: (n: number) => `${n} ใบ`,
+        empty: "ไม่มี Lead ในขั้นนี้",
+        dragHint: "ลากการ์ดไปวางในคอลัมน์เพื่อเปลี่ยนสถานะ",
+        moved: "เปลี่ยนสถานะแล้ว",
+        pageNote: (shown: number, total: number) =>
+          `กระดานแสดง ${shown} ใบจากทั้งหมด ${total} ใบ — เปลี่ยนหน้าด้านล่างเพื่อดูที่เหลือ`,
+        open: "เปิดรายละเอียด",
+      },
       form: {
         name: "ชื่อ Lead (บริษัท/บุคคล)",
         nameRequired: "ต้องระบุชื่อ Lead",
