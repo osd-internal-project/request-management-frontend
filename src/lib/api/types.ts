@@ -34,11 +34,23 @@ export interface Paginated<T> {
 export interface KeycloakUser {
   id: string;
   username: string;
-  enabled: boolean;
-  firstName?: string;
-  lastName?: string;
-  email?: string;
+  displayName: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string | null;
+  /**
+   * This system's status, not the realm's `enabled` flag — the two are
+   * different facts and this screen now reports the former.
+   */
+  status: "ACTIVE" | "SUSPENDED";
   position: string | null;
+  /** HR's staff number, e.g. `EMP-094`. Format varies — never a key. */
+  employeeId: string | null;
+  /** Desk extension. Shared between people in several cases. */
+  extension: string | null;
+  /** ISO string; only the date part means anything. */
+  startWork: string | null;
+  phone: string | null;
   orgUnitName: string | null;
   /** Groups this person heads, in the company the viewer is looking at. */
   managedUnitNames: string[];
@@ -58,7 +70,19 @@ export interface DirectoryUser {
   id: string;
   displayName: string;
   username: string;
+  email: string | null;
+  /** The HR job title, free text. */
+  position: string | null;
+  /** HR's staff number, e.g. `EMP-094`. Format varies — never a key. */
+  employeeId: string | null;
+  /** Desk extension. Shared between people in several cases. */
+  extension: string | null;
+  /** Start date as an ISO string; only the date part means anything. */
+  startWork: string | null;
+  /** Contact number exactly as the previous system recorded it. */
+  phone: string | null;
   orgUnitId: string | null;
+  orgUnitName: string | null;
 }
 
 /** A node of the A3 org tree from `GET /admin/org-units`. */

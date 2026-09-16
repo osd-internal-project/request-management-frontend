@@ -448,24 +448,26 @@ export const messages = {
   users: {
     title: "ผู้ใช้",
     subtitle:
-      "รายชื่อผู้ใช้จาก Keycloak (อ่านอย่างเดียว) · ตำแหน่ง สังกัด และ role ดูแลในระบบนี้ แก้ที่หน้าผังทีมและสิทธิ์ · role กับหน่วยงานที่เป็นหัวหน้าเป็นของบริษัทที่เลือกอยู่",
-    searchPlaceholder: "ค้นหาชื่อผู้ใช้ ชื่อ หรืออีเมล",
+      "รายชื่อผู้ใช้จากฐานข้อมูลระบบนี้ (อ่านอย่างเดียว) · แสดงเฉพาะคนที่มีโปรไฟล์แล้ว บัญชีใน Keycloak ที่ยังไม่เคยเข้าระบบจะไม่อยู่ในรายการนี้ · role กับหน่วยงานที่เป็นหัวหน้าเป็นของบริษัทที่เลือกอยู่",
+    searchPlaceholder: "ค้นหาชื่อผู้ใช้ ชื่อ อีเมล รหัสพนักงาน หรือเบอร์ภายใน",
     search: "ค้นหา",
     empty: "ไม่พบผู้ใช้",
     columns: {
       username: "ชื่อผู้ใช้",
       name: "ชื่อ-นามสกุล",
+      employeeId: "รหัสพนักงาน",
       position: "ตำแหน่ง",
       team: "สังกัด",
       leads: "เป็นหัวหน้า",
       roles: "role",
       email: "อีเมล",
+      extension: "เบอร์ภายใน",
+      phone: "เบอร์ติดต่อ",
+      startWork: "วันเริ่มงาน",
       status: "สถานะ",
     },
     active: "ใช้งาน",
-    inactive: "ปิดใช้งาน",
-    /** A realm account that has never signed in has no local profile yet. */
-    noProfile: "ยังไม่เคยเข้าระบบ",
+    inactive: "ระงับการใช้งาน",
     page: (from: number, to: number, total: number) =>
       `${from}–${to} จาก ${total} คน`,
     prev: "ก่อนหน้า",

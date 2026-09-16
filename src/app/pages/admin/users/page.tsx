@@ -9,27 +9,24 @@ import { ROUTES } from "@/lib/routes";
 
 const PAGE_SIZE = 25;
 
-function displayName(user: KeycloakUser): string {
-  return [user.firstName, user.lastName].filter(Boolean).join(" ") || "—";
-}
-
 /**
- * A realm account with no local profile.
- *
- * Every enriched field is empty at once for these, so saying it once reads
- * better than four dashes in a row — and it says *why* they are empty rather
- * than leaving it to be guessed.
+ * Prefer the stored display name — it carries the Thai courtesy title that
+ * `firstName`/`lastName` do not, and it is what every other screen shows.
  */
-function hasProfile(user: KeycloakUser): boolean {
-  return Boolean(
-    user.position ??
-      user.orgUnitName ??
-      user.roles.length ??
-      user.managedUnitNames.length,
+function displayName(user: KeycloakUser): string {
+  return (
+    user.displayName ||
+    [user.firstName, user.lastName].filter(Boolean).join(" ") ||
+    "—"
   );
 }
 
-/** Read-only Keycloak user directory, guarded by `user.read` in the API. */
+/** Only the date part of `startWork` carries meaning; the time is always 00:00. */
+function startWork(value: string | null): string {
+  return value ? value.slice(0, 10) : "—";
+}
+
+/** Read-only user directory from this database, guarded by `user.read`. */
 export default async function AdminUsersPage({
   searchParams,
 }: {
@@ -84,16 +81,20 @@ export default async function AdminUsersPage({
           <Empty description={messages.users.empty} />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1100px] border-collapse text-left">
+            <table className="w-full min-w-[1500px] border-collapse text-left">
               <thead className="border-y border-gray-200 bg-gray-50 text-sm text-gray-600">
                 <tr>
                   <th className="px-4 py-3 font-medium">{messages.users.columns.username}</th>
                   <th className="px-4 py-3 font-medium">{messages.users.columns.name}</th>
+                  <th className="px-4 py-3 font-medium">{messages.users.columns.employeeId}</th>
                   <th className="px-4 py-3 font-medium">{messages.users.columns.position}</th>
                   <th className="px-4 py-3 font-medium">{messages.users.columns.team}</th>
                   <th className="px-4 py-3 font-medium">{messages.users.columns.leads}</th>
                   <th className="px-4 py-3 font-medium">{messages.users.columns.roles}</th>
                   <th className="px-4 py-3 font-medium">{messages.users.columns.email}</th>
+                  <th className="px-4 py-3 font-medium">{messages.users.columns.extension}</th>
+                  <th className="px-4 py-3 font-medium">{messages.users.columns.phone}</th>
+                  <th className="px-4 py-3 font-medium">{messages.users.columns.startWork}</th>
                   <th className="px-4 py-3 font-medium">{messages.users.columns.status}</th>
                 </tr>
               </thead>
@@ -102,52 +103,48 @@ export default async function AdminUsersPage({
                   <tr key={user.id} className="border-b border-gray-100">
                     <td className="px-4 py-3 font-medium">{user.username}</td>
                     <td className="px-4 py-3">{displayName(user)}</td>
-                    {/*
-                      An empty row here is a fact, not a gap: the account exists
-                      in the realm but has never signed in, so this system has
-                      no profile for it yet. Said once, across the four columns
-                      that would otherwise each show a dash.
-                    */}
-                    {hasProfile(user) ? (
-                      <>
-                        <td className="px-4 py-3">{user.position ?? "—"}</td>
-                        <td className="px-4 py-3">{user.orgUnitName ?? "—"}</td>
-                        <td className="px-4 py-3">
-                          {user.managedUnitNames.length ? (
-                            <span className="flex flex-wrap gap-1">
-                              {user.managedUnitNames.map((unit) => (
-                                <Tag key={unit} color="gold" className="m-0!">
-                                  {unit}
-                                </Tag>
-                              ))}
-                            </span>
-                          ) : (
-                            "—"
-                          )}
-                        </td>
-                        <td className="px-4 py-3">
-                          {user.roles.length ? (
-                            <span className="flex flex-wrap gap-1">
-                              {user.roles.map((role) => (
-                                <Tag key={role} className="m-0!">
-                                  {role}
-                                </Tag>
-                              ))}
-                            </span>
-                          ) : (
-                            "—"
-                          )}
-                        </td>
-                      </>
-                    ) : (
-                      <td className="px-4 py-3" colSpan={4}>
-                        <Text type="secondary">{messages.users.noProfile}</Text>
-                      </td>
-                    )}
-                    <td className="px-4 py-3">{user.email ?? "—"}</td>
+                    <td className="px-4 py-3">{user.employeeId ?? "—"}</td>
+                    <td className="px-4 py-3">{user.position ?? "—"}</td>
+                    <td className="px-4 py-3">{user.orgUnitName ?? "—"}</td>
                     <td className="px-4 py-3">
-                      <span className={user.enabled ? "text-green-700" : "text-gray-500"}>
-                        {user.enabled ? messages.users.active : messages.users.inactive}
+                      {user.managedUnitNames.length ? (
+                        <span className="flex flex-wrap gap-1">
+                          {user.managedUnitNames.map((unit) => (
+                            <Tag key={unit} color="gold" className="m-0!">
+                              {unit}
+                            </Tag>
+                          ))}
+                        </span>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      {user.roles.length ? (
+                        <span className="flex flex-wrap gap-1">
+                          {user.roles.map((role) => (
+                            <Tag key={role} className="m-0!">
+                              {role}
+                            </Tag>
+                          ))}
+                        </span>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                    <td className="px-4 py-3">{user.email ?? "—"}</td>
+                    <td className="px-4 py-3">{user.extension ?? "—"}</td>
+                    <td className="px-4 py-3">{user.phone ?? "—"}</td>
+                    <td className="px-4 py-3">{startWork(user.startWork)}</td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={
+                          user.status === "ACTIVE" ? "text-green-700" : "text-gray-500"
+                        }
+                      >
+                        {user.status === "ACTIVE"
+                          ? messages.users.active
+                          : messages.users.inactive}
                       </span>
                     </td>
                   </tr>
