@@ -20,6 +20,7 @@ import { SearchSelect } from "@/components/search-select";
 import { ROUTES } from "@/lib/routes";
 import { ALL_FILTER, OPEN_FILTER } from "@/lib/work-filters";
 import { RequestRowActions } from "@/components/request-row-actions";
+import { DueCell } from "@/components/due-badge";
 import type { Session } from "@/lib/session-shape";
 
 import type {
@@ -41,59 +42,6 @@ export const STATUS_COLOR: Record<string, string> = {
   completed: "green",
   cancelled: "default",
 };
-
-/** "3 ชม." / "2 วัน" — the granularity the mockup shows. */
-export function humanGap(ms: number): string {
-  const hours = Math.floor(ms / 3_600_000);
-  if (hours < 1) return `${Math.max(Math.floor(ms / 60_000), 1)} นาที`;
-  if (hours < 24) return `${hours} ชม.`;
-  return `${Math.floor(hours / 24)} วัน`;
-}
-
-/**
- * The `ครบกำหนด` cell (§16 หน้าที่ 2).
- *
- * Three states, because that is what the clock actually has: stopped while the
- * request sits with its requester, past due, or counting down. Showing a
- * deadline for a paused clock would be a lie — the time is not running.
- *
- * `now` is passed in rather than read here: reading the clock during render
- * makes the same row render differently on an incidental re-render, so the
- * page takes one reading and every row is measured against it.
- */
-export function DueCell({ row, now }: { row: RequestRow; now: number }) {
-  const state = row.slaClock?.state;
-
-  if (state === "paused") {
-    return <Tag>{messages.myWork.clockPaused}</Tag>;
-  }
-
-  /**
-   * A stopped clock has already been judged — read its verdict rather than
-   * recompute one.
-   *
-   * `met` means the work finished inside its SLA, and the clock does not run
-   * while a request sits returned with its requester (SUP-01). Comparing
-   * `dueAt` to the wall clock ignores that pause, so a request the system
-   * recorded as on time would keep counting up and eventually read
-   * `เกินกำหนด` — contradicting the row the decision was written to.
-   */
-  if (state === "met") {
-    return <Tag color="green">{messages.myWork.onTime}</Tag>;
-  }
-
-  if (state === "cancelled") return <Text type="secondary">—</Text>;
-
-  if (!row.dueAt) return <Text type="secondary">—</Text>;
-
-  const gap = new Date(row.dueAt).getTime() - now;
-
-  return gap < 0 ? (
-    <Tag color="red">{messages.myWork.overdueBy(humanGap(-gap))}</Tag>
-  ) : (
-    <Tag color="green">{messages.myWork.dueIn(humanGap(gap))}</Tag>
-  );
-}
 
 /**
  * Screen §16 หน้าที่ 2 — งานค้างของฉัน, the landing page after login.
@@ -175,6 +123,34 @@ export function requestColumns(now: number, session: Session | null = null) {
           {row.requester?.displayName ?? <Text type="secondary">—</Text>}
         </span>
       ),
+    },
+    /*
+      Who is holding it. `assignee` wins over `receiver` because handing work
+      on is what `assign` is for — after it, the receiver is who the ticket was
+      sent to and the assignee is who is actually working it. When they differ
+      both are printed: a reader chasing the request needs the person on it
+      today, and a reader auditing it needs to see the hand-off happened.
+    */
+    {
+      title: messages.myWork.columns.receiver,
+      key: "receiver",
+      render: (_: unknown, row: RequestRow) => {
+        const holder = row.assignee ?? row.receiver;
+        if (!holder) return <Text type="secondary">—</Text>;
+
+        const handedOn = row.assignee && row.receiver && row.assignee.id !== row.receiver.id;
+
+        return (
+          <span className="text-xs">
+            <div>{holder.displayName}</div>
+            {handedOn && (
+              <Text type="secondary" className="text-xs">
+                {messages.myWork.handedFrom(row.receiver!.displayName)}
+              </Text>
+            )}
+          </span>
+        );
+      },
     },
     {
       title: messages.myWork.columns.status,
