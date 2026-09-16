@@ -1,4 +1,4 @@
-import { Alert, Card, Collapse, Steps, Tag } from "antd";
+import { Alert, Card, Collapse, Descriptions, Steps, Tag } from "antd";
 import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
 import Paragraph from "antd/es/typography/Paragraph";
@@ -7,6 +7,7 @@ import type {
   FormSchema,
   FormSchemaProperty,
   RequestDetail,
+  RequestPerson,
 } from "@/lib/api/types";
 import { fieldOrder } from "@/lib/api/types";
 import { RequestActions } from "@/components/request-actions";
@@ -14,6 +15,7 @@ import { ReceiverForm } from "@/components/receiver-form";
 import { RequestComments } from "@/components/request-comments";
 import { RequestTimeline } from "@/components/request-timeline";
 import { RequestTreePanel } from "@/components/request-tree";
+import { DueBadge } from "@/components/due-badge";
 import { getSession } from "@/lib/session";
 import { messages } from "@/lib/messages";
 
@@ -179,6 +181,12 @@ export default async function RequestDetailPage({
           <Tag color={STATUS_COLOR[request.status]}>
             {messages.myWork.status[request.status] ?? request.status}
           </Tag>
+          {/*
+            §16 หน้าที่ 4 puts `เกินกำหนด 3 ชม.` in this header. The same
+            component the list column uses, so the row a reader clicked and the
+            page it opened cannot report different deadlines.
+          */}
+          <DueBadge row={request} />
           {approvalCase && (
             <Text type="secondary">
               {messages.myWork.step(
@@ -192,6 +200,13 @@ export default async function RequestDetailPage({
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,0.5fr)]">
         <div className="space-y-2">
+          {/*
+            Who is holding this, before what it says. "ใครรับเรื่องนี้" is the
+            question a reader arrives with, and until now the screen answered
+            it nowhere — the three people were fetched and used only to compare
+            against the viewer's own id.
+          */}
+         
           <div>
             <Card title={messages.requestDetail.infoTitle} size="small">
               <RequestFacts request={request} />
@@ -275,6 +290,11 @@ export default async function RequestDetailPage({
           </div>
         </div>
         <div className=" space-y-2">
+           <div>
+            <Card title={messages.requestDetail.peopleTitle} size="small">
+              <RequestPeople request={request} />
+            </Card>
+          </div>
           <div>
             <Card title={messages.requestDetail.chainTitle} size="small">
               {approvalCase ? (
@@ -291,6 +311,19 @@ export default async function RequestDetailPage({
                           {" · "}
                           {stepOutcome(step.status, step.decision)}
                           {step.decidedAt && ` · ${when(step.decidedAt)}`}
+                          {/*
+                            The decider's own words, beside their decision.
+                            Required on approve, reject and send_back — and
+                            until now readable only from the timeline in the
+                            other column, so "why was this rejected" meant
+                            hunting for it.
+                          */}
+                          {step.note && (
+                            <>
+                              <br />
+                              <Text type="secondary">{step.note}</Text>
+                            </>
+                          )}
                         </span>
                       ),
                     }))}
@@ -513,12 +546,33 @@ function RequestFacts({ request }: { request: RequestDetail }) {
       </div>
       <div>
         <p className="text-sm font-medium text-gray-500">
+          {messages.requestDetail.createdAt}
+        </p>
+        <p className="text-sm">
+          {request.createdAt ? when(request.createdAt) : "—"}
+        </p>
+      </div>
+      <div>
+        <p className="text-sm font-medium text-gray-500">
           {messages.requestDetail.reference}
         </p>
         <p className="text-sm">
           {request.refId ? `${request.refType ?? "ref"} ${request.refId}` : "—"}
         </p>
       </div>
+      {/*
+        Only on a cancelled request, because REQ-05 requires the reason and
+        nothing else on this page carried it — a cancelled request explained
+        itself only if the reason happened to land in a timeline entry.
+      */}
+      {request.status === "cancelled" && (
+        <div>
+          <p className="text-sm font-medium text-gray-500">
+            {messages.requestDetail.cancelReasonLabel}
+          </p>
+          <p className="text-sm">{request.cancelReason || "—"}</p>
+        </div>
+      )}
       {Object.entries(properties).map(([name, property]) => (
         <AnswerField
           key={name}
@@ -527,6 +581,56 @@ function RequestFacts({ request }: { request: RequestDetail }) {
           answers={formData}
         />
       ))}
+    </div>
+  );
+}
+
+/**
+ * The three people a request passes through, and how to reach them.
+ *
+ * A row is omitted rather than dashed when the person does not exist yet: a
+ * request nobody has been assigned has no assignee, which is a normal state and
+ * not a missing value. Dashes here would read as "we lost it".
+ *
+ * `orgUnit` is the person's current team, not the request's own
+ * `receiverOrgUnitId` — that column is a snapshot of where the work sat when it
+ * was raised, which answers a reporting question rather than "who do I call".
+ */
+function RequestPeople({ request }: { request: RequestDetail }) {
+  const people: { label: string; person: RequestPerson | null | undefined }[] = [
+    { label: messages.requestDetail.requester, person: request.requester },
+    { label: messages.requestDetail.receiverLabel, person: request.receiver },
+    { label: messages.requestDetail.assigneeLabel, person: request.assignee },
+  ];
+
+  const known = people.filter((entry) => entry.person);
+
+  if (!known.length) return <Text type="secondary">—</Text>;
+
+  return (
+    <Descriptions
+      size="small" labelStyle={{ width: "30%" }}
+      column={{ xs: 1, md: known.length > 1 ? 1 : 1 }}
+      items={known.map(({ label, person }) => ({
+        key: label,
+        label,
+        children: <PersonCell person={person as RequestPerson} />,
+      }))}
+    />
+  );
+}
+
+/** Name first, then the facts that let someone act on it. */
+function PersonCell({ person }: { person: RequestPerson }) {
+  const contact = [person.extension, person.email].filter(Boolean).join(" · ");
+  const role = [person.position, person.orgUnit?.name].filter(Boolean).join(" · ");
+
+  return (
+    <div className="text-xs">
+      <div>{person.displayName}</div>
+      {role && <Text type="secondary">{role}</Text>}
+      {role && contact && <br />}
+      {contact && <Text type="secondary">{contact}</Text>}
     </div>
   );
 }

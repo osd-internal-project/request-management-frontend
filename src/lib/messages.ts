@@ -605,6 +605,12 @@ export const messages = {
     cancel: "ยกเลิกคำขอ",
     cancelReason: "เหตุผลการยกเลิก",
     cancelled: "ยกเลิกคำขอแล้ว",
+    /** §16 หน้าที่ 4 — who the request passes through. */
+    peopleTitle: "ผู้เกี่ยวข้อง",
+    receiverLabel: "ผู้รับเรื่อง",
+    assigneeLabel: "ผู้ดำเนินการ",
+    createdAt: "สร้างเมื่อ",
+    cancelReasonLabel: "เหตุผลการยกเลิก",
     infoTitle: "ข้อมูลคำขอ",
     requester: "ผู้ยื่น",
     submittedAt: "ยื่นเมื่อ",
@@ -871,6 +877,7 @@ export const messages = {
       dueAt: "ครบกำหนด",
       actions: "การดำเนินการ",
       requester: "ผู้ขอ",
+      receiver: "ผู้รับเรื่อง",
     },
     /**
      * SCOPE-02 — the first tab shows what this viewer may see and nothing more.
@@ -888,6 +895,8 @@ export const messages = {
     onTime: "ทันกำหนด",
     /** REQ-02 issues the number at submit, so a draft has none yet. */
     noNumber: "ยังไม่ออกเลข",
+    /** Shown under the assignee when the ticket was handed on from someone else. */
+    handedFrom: (name: string) => `รับเรื่องเดิม: ${name}`,
     step: (current: number, total: number) => `ขั้น ${current}/${total}`,
     status: {
       draft: "ร่าง",

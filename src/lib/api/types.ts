@@ -358,6 +358,14 @@ export interface RequestDetailStep {
   status: string;
   decision: string | null;
   decidedAt: string | null;
+  /**
+   * The decider's own words, required on approve / reject / send_back.
+   *
+   * Shown beside the step rather than only in the timeline: the stepper is
+   * where a reader looks to find out what happened at a level, and a decision
+   * without its reason sends them hunting in the other column.
+   */
+  note: string | null;
   approver: { displayName: string } | null;
 }
 
@@ -394,8 +402,36 @@ export interface RequestTree {
   descendants: RequestTreeNode[];
 }
 
+/**
+ * A person the detail screen introduces, not merely names.
+ *
+ * `orgUnit` is their current team, which is not the same fact as the request's
+ * own `receiverOrgUnitId` — that one is a snapshot of where the work sat when
+ * it was raised and deliberately carries no name.
+ *
+ * These endpoints return raw Prisma rows with no response DTO on the server
+ * (there is no `ResponseDto` anywhere under `requests/`), so this interface is
+ * the only contract there is. Widening or narrowing a `select` in
+ * `request.repository.ts` changes the payload with nothing to catch it —
+ * change the two together.
+ */
+export interface RequestPerson {
+  id: string;
+  displayName: string;
+  position: string | null;
+  email: string | null;
+  extension: string | null;
+  phone: string | null;
+  orgUnit?: { name: string } | null;
+}
+
 /** The full request as หน้าที่ 4 needs it. */
-export interface RequestDetail extends Omit<RequestRow, "approvalCases"> {
+export interface RequestDetail
+  extends Omit<RequestRow, "approvalCases" | "requester" | "receiver" | "assignee"> {
+  /** Richer than the list's two columns — see {@link RequestPerson}. */
+  requester?: RequestPerson | null;
+  receiver?: RequestPerson | null;
+  assignee?: RequestPerson | null;
   approvalCases?: {
     /** Needed to decide on the case from the request screen. */
     id: string;
@@ -479,13 +515,30 @@ export interface RequestRow {
   typeCode: string;
   /** Who raised it — only the scope-wide list has a use for this. */
   requester?: { id: string; displayName: string };
+  /**
+   * Who the ticket was handed to, and who is carrying it now.
+   *
+   * Both have travelled with every list row since 9 ก.ย. 2569 and were simply
+   * not declared here, so the column that should have shown them read `—`
+   * while the answer sat unread in the response.
+   */
+  receiver?: { id: string; displayName: string } | null;
+  assignee?: { id: string; displayName: string } | null;
   refType: string | null;
   refId: string | null;
   status: string;
   dueAt: string | null;
   createdAt: string;
   requestType?: { name: string };
-  slaClock?: { state: string; dueAt: string } | null;
+  /**
+   * `breachedAt` travels so the badge and the `overdue=true` filter agree —
+   * the server narrows on the clock, not on `dueAt`.
+   */
+  slaClock?: {
+    state: string;
+    dueAt: string | null;
+    breachedAt?: string | null;
+  } | null;
   approvalCases?: {
     /** The decision endpoint addresses the case, not the request. */
     id?: string;
