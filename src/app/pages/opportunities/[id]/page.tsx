@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { OpportunityDetailView } from "@/components/opportunity-detail";
-import { getOpportunity, getLostReasons } from "@/lib/api/sales";
+import { getOpportunity, getLostReasons, getQuotations } from "@/lib/api/sales";
 import { getRequests } from "@/lib/api/requests";
 import { getCustomers } from "@/lib/api/customers";
 import { HOME_PATH } from "@/lib/routes";
@@ -14,13 +14,17 @@ import { can, getSession } from "@/lib/session";
  */
 export default async function OpportunityDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  /** `?action=sale-order` — กระดานการ์ดส่งมาเมื่อลากไปคอลัมน์ "ชนะ". */
+  searchParams: Promise<{ action?: string }>;
 }) {
   const session = await getSession();
   if (!can(session, "crm.sales.read")) redirect(HOME_PATH);
 
   const { id } = await params;
+  const { action } = await searchParams;
   const canReadRequests = can(session, "request.read");
   const canManage = can(session, "crm.sales.manage");
 
@@ -33,7 +37,8 @@ export default async function OpportunityDetailPage({
     !opportunityResult.data.customer &&
     can(session, "crm.customer.read");
 
-  const [reasonsResult, requestsResult, customersResult] = await Promise.all([
+  const [reasonsResult, requestsResult, customersResult, quotationsResult] =
+    await Promise.all([
     getLostReasons(),
     canReadRequests
       ? getRequests({
@@ -45,6 +50,8 @@ export default async function OpportunityDetailPage({
     needsCustomerPicker
       ? getCustomers({ page: 1, page_size: 100 })
       : Promise.resolve(null),
+    // CD-76 — same `crm.sales.read` this page is already gated on.
+    getQuotations({ opportunity_id: id, current: true, page_size: 50 }),
   ]);
 
   return (
@@ -59,7 +66,9 @@ export default async function OpportunityDetailPage({
             : null
       }
       customers={customersResult?.ok ? customersResult.data.data : []}
+      quotations={quotationsResult.ok ? quotationsResult.data.data : []}
       canManage={canManage}
+      openSaleOrderOnLoad={action === "sale-order"}
     />
   );
 }

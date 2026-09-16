@@ -10,6 +10,11 @@ import type {
   OpportunityRow,
   LeadRow,
   Paginated,
+  QuotationDetail,
+  QuotationRow,
+  QuotationStatus,
+  SaleOrderRow,
+  SaleOrderStatus,
 } from "../types";
 
 export async function getLeads(options?: {
@@ -60,11 +65,59 @@ export async function getLostReasons(): Promise<ApiResult<OpportunityLostReason[
   return apiGet(`opportunities/lost-reasons`);
 }
 
+/** ใบเสนอราคา (CD-76) — ต้นทุน/margin ถูกปกปิดที่ API สำหรับผู้ไม่มีสิทธิ์. */
+export async function getQuotations(options?: {
+  opportunity_id?: string;
+  customer_id?: string;
+  status?: QuotationStatus;
+  search?: string;
+  /** ซ่อนฉบับที่ถูกเวอร์ชันใหม่แทนแล้ว. */
+  current?: boolean;
+  view?: "mine";
+  page?: number;
+  page_size?: number;
+}): Promise<ApiResult<Paginated<QuotationRow>>> {
+  const params = new URLSearchParams();
+  if (options?.opportunity_id) params.set("opportunity_id", options.opportunity_id);
+  if (options?.customer_id) params.set("customer_id", options.customer_id);
+  if (options?.status) params.set("status", options.status);
+  if (options?.search) params.set("search", options.search);
+  if (options?.current) params.set("current", "true");
+  if (options?.view) params.set("view", options.view);
+  params.set("page", String(options?.page ?? 1));
+  params.set("page_size", String(options?.page_size ?? 50));
+  return apiGet(`quotations?${params.toString()}`);
+}
+
+export async function getQuotation(id: string): Promise<ApiResult<QuotationDetail>> {
+  return apiGet(`quotations/${id}`);
+}
+
+/** ใบสั่งขาย (CD-77 โครงระยะ 1). */
+export async function getSaleOrders(options?: {
+  opportunity_id?: string;
+  customer_id?: string;
+  status?: SaleOrderStatus;
+  page?: number;
+  page_size?: number;
+}): Promise<ApiResult<Paginated<SaleOrderRow>>> {
+  const params = new URLSearchParams();
+  if (options?.opportunity_id) params.set("opportunity_id", options.opportunity_id);
+  if (options?.customer_id) params.set("customer_id", options.customer_id);
+  if (options?.status) params.set("status", options.status);
+  params.set("page", String(options?.page ?? 1));
+  params.set("page_size", String(options?.page_size ?? 50));
+  return apiGet(`sale-orders?${params.toString()}`);
+}
+
 const salesApi = {
   getLeads,
   getLead,
   getOpportunities,
   getOpportunity,
   getLostReasons,
+  getQuotations,
+  getQuotation,
+  getSaleOrders,
 };
 export default salesApi;

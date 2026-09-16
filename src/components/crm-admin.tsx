@@ -294,6 +294,12 @@ function ConfigSection({
   const [prefix, setPrefix] = useState(config.codePrefix);
   const [padding, setPadding] = useState(config.codePadding);
   const [threshold, setThreshold] = useState(config.dedupThreshold);
+  const [minMargin, setMinMargin] = useState(config.minMarginPct);
+  const [validityDays, setValidityDays] = useState(config.quotationValidityDays);
+  const [vat, setVat] = useState(config.vatPct);
+  const [approvalType, setApprovalType] = useState(
+    config.quotationApprovalTypeCode,
+  );
   const [busy, setBusy] = useState(false);
 
   const example = `${prefix || "CUS"}-${docPrefix}-${"1".padStart(
@@ -307,6 +313,10 @@ function ConfigSection({
       code_prefix: prefix || undefined,
       code_padding: padding,
       dedup_threshold: threshold,
+      min_margin_pct: minMargin,
+      quotation_validity_days: validityDays,
+      vat_pct: vat,
+      quotation_approval_type_code: approvalType || undefined,
     });
     setBusy(false);
   }
@@ -353,6 +363,56 @@ function ConfigSection({
           {m.dedupThresholdHint}
         </Text>
       </div>
+
+      {/* CD-76 — เกณฑ์ margin และค่าตั้งต้นของใบเสนอราคา */}
+      <Text strong className="mt-5 block">
+        {m.sectionQuotation}
+      </Text>
+      <div className="mt-2 grid max-w-3xl grid-cols-1 gap-4 md:grid-cols-4">
+        <div>
+          <Text className="mb-1 block text-xs">{m.minMarginPct}</Text>
+          <InputNumber
+            min={0}
+            max={100}
+            step={0.5}
+            value={minMargin}
+            onChange={(value) => setMinMargin(value ?? 15)}
+            className="w-full"
+          />
+        </div>
+        <div>
+          <Text className="mb-1 block text-xs">{m.quotationValidityDays}</Text>
+          <InputNumber
+            min={1}
+            max={365}
+            value={validityDays}
+            onChange={(value) => setValidityDays(value ?? 30)}
+            className="w-full"
+          />
+        </div>
+        <div>
+          <Text className="mb-1 block text-xs">{m.vatPct}</Text>
+          <InputNumber
+            min={0}
+            max={30}
+            step={0.5}
+            value={vat}
+            onChange={(value) => setVat(value ?? 7)}
+            className="w-full"
+          />
+        </div>
+        <div>
+          <Text className="mb-1 block text-xs">{m.quotationApprovalTypeCode}</Text>
+          <Input
+            value={approvalType}
+            maxLength={20}
+            onChange={(e) => setApprovalType(e.target.value.toUpperCase())}
+          />
+        </div>
+      </div>
+      <Text type="secondary" className="mt-2 block text-xs">
+        {m.quotationHint}
+      </Text>
 
       <Button
         type="primary"

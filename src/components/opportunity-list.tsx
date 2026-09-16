@@ -12,6 +12,7 @@ import {
   Input,
   InputNumber,
   Modal,
+  Pagination,
   Segmented,
   Select,
   Space,
@@ -20,13 +21,22 @@ import {
 } from "antd";
 import Text from "antd/es/typography/Text";
 import dayjs from "dayjs";
+import { LoseOpportunityModal } from "@/components/opportunity-actions";
+import { OpportunityBoard } from "@/components/opportunity-board";
 import { SearchSelect } from "@/components/search-select";
 import { appApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
-import type { CustomerRow, OpportunityRow } from "@/lib/api/types";
+import type {
+  CustomerRow,
+  OpportunityLostReason,
+  OpportunityRow,
+} from "@/lib/api/types";
 
 const m = messages.sales.opportunities;
+
+/** ตาราง = ทะเบียนเต็ม, การ์ด = กระดานแยกตามขั้น. อยู่ใน URL จึง bookmark ได้. */
+export type OpportunityLayout = "table" | "board";
 
 export function formatAmount(amount: OpportunityRow["amount"]): string {
   if (amount === null || amount === undefined) return "—";
@@ -67,7 +77,9 @@ export function OpportunityList({
   page,
   pageSize,
   filters,
+  layout,
   customers,
+  lostReasons,
   canManage,
 }: {
   rows: OpportunityRow[];
@@ -75,12 +87,16 @@ export function OpportunityList({
   page: number;
   pageSize: number;
   filters: { search?: string; stage?: string; mineOnly: boolean };
+  layout: OpportunityLayout;
   customers: CustomerRow[];
+  /** ตัวเลือกเหตุผลปิดแพ้ — ใช้เมื่อลากการ์ดไปคอลัมน์ "แพ้". */
+  lostReasons: OpportunityLostReason[];
   canManage: boolean;
 }) {
   const router = useRouter();
   const { message } = App.useApp();
   const [error, setError] = useState<string | null>(null);
+  const [losing, setLosing] = useState<OpportunityRow | null>(null);
   const [creating, setCreating] = useState(false);
   const [busy, setBusy] = useState(false);
   // ค่าตั้งต้น = ผู้มุ่งหวัง: ทางปกติของ PO (ลูกค้าเกิดตอนเปิดใบสั่งขาย)
@@ -99,13 +115,22 @@ export function OpportunityList({
   const partyReady =
     partyMode === "existing" ? Boolean(customerId) : Boolean(prospectName.trim());
 
-  function applyFilters(next: Partial<typeof filters>) {
+  /** ทุกอย่างที่หน้านี้อ่านจาก URL — ตัวกรอง มุมมอง และหน้าที่เปิดอยู่. */
+  function navigate(
+    next: Partial<typeof filters> & { layout?: OpportunityLayout; page?: number },
+  ) {
+    const merged = { ...filters, layout, ...next };
     const params = new URLSearchParams();
-    const merged = { ...filters, ...next };
     if (merged.search) params.set("search", merged.search);
     if (merged.stage) params.set("stage", merged.stage);
     if (merged.mineOnly) params.set("view", "mine");
+    if (merged.layout === "board") params.set("layout", "board");
+    if (next.page && next.page > 1) params.set("page", String(next.page));
     router.push(`${ROUTES.opportunities}?${params.toString()}`);
+  }
+
+  function applyFilters(next: Partial<typeof filters>) {
+    navigate(next);
   }
 
   async function create() {
@@ -177,6 +202,14 @@ export function OpportunityList({
           {m.mineOnly}
         </Checkbox>
         <div className="grow" />
+        <Segmented<OpportunityLayout>
+          value={layout}
+          onChange={(value) => navigate({ layout: value, page: 1 })}
+          options={[
+            { value: "table", label: m.view.table },
+            { value: "board", label: m.view.board },
+          ]}
+        />
         {canManage && (
           <Button type="primary" onClick={() => setCreating(true)}>
             {m.newOpportunity}
@@ -184,6 +217,31 @@ export function OpportunityList({
         )}
       </div>
 
+      {layout === "board" ? (
+        <>
+          <OpportunityBoard
+            rows={rows}
+            total={total}
+            canManage={canManage}
+            // เปิดใบสั่งขายต้องสร้างทะเบียนลูกค้า — กล่องนั้นอยู่ที่หน้ารายละเอียด
+            onWin={(row) =>
+              router.push(`${ROUTES.opportunityDetail(row.id)}?action=sale-order`)
+            }
+            onLose={(row) => setLosing(row)}
+            onMoved={() => router.refresh()}
+          />
+          {total > pageSize && (
+            <Pagination
+              className="text-right"
+              current={page}
+              pageSize={pageSize}
+              total={total}
+              showSizeChanger={false}
+              onChange={(next) => navigate({ page: next })}
+            />
+          )}
+        </>
+      ) : (
       <Table<OpportunityRow>
         size="small"
         rowKey="id"
@@ -194,14 +252,7 @@ export function OpportunityList({
           pageSize,
           total,
           hideOnSinglePage: true,
-          onChange: (next) => {
-            const params = new URLSearchParams();
-            if (filters.search) params.set("search", filters.search);
-            if (filters.stage) params.set("stage", filters.stage);
-            if (filters.mineOnly) params.set("view", "mine");
-            params.set("page", String(next));
-            router.push(`${ROUTES.opportunities}?${params.toString()}`);
-          },
+          onChange: (next) => navigate({ page: next }),
         }}
         columns={[
           {
@@ -241,6 +292,17 @@ export function OpportunityList({
               at ? dayjs(at).format("D MMM YY") : "—",
           },
         ]}
+      />
+      )}
+
+      <LoseOpportunityModal
+        opportunity={losing}
+        lostReasons={lostReasons}
+        onClose={() => setLosing(null)}
+        onDone={() => {
+          setLosing(null);
+          router.refresh();
+        }}
       />
 
       <Modal

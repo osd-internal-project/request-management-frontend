@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -23,7 +23,9 @@ import Text from "antd/es/typography/Text";
 import Title from "antd/es/typography/Title";
 import dayjs from "dayjs";
 import { SearchSelect } from "@/components/search-select";
+import { LoseOpportunityModal } from "@/components/opportunity-actions";
 import { formatAmount, OpportunityParty } from "@/components/opportunity-list";
+import { formatMargin, QuotationStatusTags } from "@/components/quotation-list";
 import { appApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
@@ -31,12 +33,14 @@ import type {
   CustomerRow,
   OpportunityDetail,
   OpportunityLostReason,
+  QuotationRow,
   RequestRow,
   SaleOrderRow,
 } from "@/lib/api/types";
 
 const m = messages.sales.opportunities;
 const md = m.detail;
+const mq = messages.sales.quotations;
 
 type CustomerType = "corporate" | "individual" | "government";
 
@@ -50,7 +54,9 @@ export function OpportunityDetailView({
   lostReasons,
   relatedRequests,
   customers,
+  quotations,
   canManage,
+  openSaleOrderOnLoad = false,
 }: {
   opportunity: OpportunityDetail;
   lostReasons: OpportunityLostReason[];
@@ -58,19 +64,28 @@ export function OpportunityDetailView({
   relatedRequests: RequestRow[] | null;
   /** ตัวเลือก "ใช้ลูกค้าเดิมแทน" ในกล่องเปิดใบสั่งขาย — ว่างเมื่อไม่มีสิทธิ์อ่านทะเบียน. */
   customers: CustomerRow[];
+  /** CD-76 — ฉบับปัจจุบันของทุกเลข (ไม่รวมที่ถูกแทนแล้ว); margin ถูกปกปิดตามสิทธิ์. */
+  quotations: QuotationRow[];
   canManage: boolean;
+  /** มาจากกระดานการ์ด (ลากไป "ชนะ") — เปิดกล่องเปิดใบสั่งขายให้ทันที. */
+  openSaleOrderOnLoad?: boolean;
 }) {
   const router = useRouter();
   const { message } = App.useApp();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [losing, setLosing] = useState(false);
-  const [loseReason, setLoseReason] = useState<string>();
-  const [loseText, setLoseText] = useState("");
+
+  const customer = opportunity.customer;
+  const closed = opportunity.stage === "won" || opportunity.stage === "lost";
+  const editable = canManage && !closed;
+  const autoOpen = openSaleOrderOnLoad && editable;
 
   // --- เปิดใบสั่งขาย -------------------------------------------------------
-  const [opening, setOpening] = useState(false);
-  const [soAmount, setSoAmount] = useState<number | null>(null);
+  const [opening, setOpening] = useState(autoOpen);
+  const [soAmount, setSoAmount] = useState<number | null>(
+    autoOpen && opportunity.amount !== null ? Number(opportunity.amount) : null,
+  );
   const [soNote, setSoNote] = useState("");
   const [useExisting, setUseExisting] = useState(false);
   const [existingCustomerId, setExistingCustomerId] = useState<string>();
@@ -85,25 +100,40 @@ export function OpportunityDetailView({
   const [cancelling, setCancelling] = useState<SaleOrderRow | null>(null);
   const [cancelReason, setCancelReason] = useState("");
 
-  const customer = opportunity.customer;
-  const closed = opportunity.stage === "won" || opportunity.stage === "lost";
-  const editable = canManage && !closed;
+  // CD-77: ใบสั่งขายเปิดตามใบเสนอราคาที่ลูกค้ายอมรับ — ค่าตั้งต้นคือใบล่าสุดที่ยอมรับ
+  const acceptedQuotations = quotations.filter((q) => q.status === "accepted");
+  const [soQuotationId, setSoQuotationId] = useState<string | undefined>(
+    acceptedQuotations[0]?.id,
+  );
 
-  async function act(path: string, body?: unknown) {
+  async function createQuotation() {
     setError(null);
     setBusy(true);
-    const result = await appApi(`opportunities/${opportunity.id}${path}`, {
-      method: path ? "POST" : "PATCH",
-      body: body ? JSON.stringify(body) : undefined,
-    });
+    const result = await appApi<{ id: string; quotationNo: string }>(
+      `opportunities/${opportunity.id}/quotations`,
+      { method: "POST", body: JSON.stringify({}) },
+    );
     setBusy(false);
     if (!result.ok) {
       setError(result.message);
-      return false;
+      return;
     }
-    router.refresh();
-    return true;
+    message.success(mq.detail.created(result.data.quotationNo));
+    router.push(ROUTES.quotationDetail(result.data.id));
   }
+
+  function pickQuotation(id: string | undefined) {
+    setSoQuotationId(id);
+    const picked = acceptedQuotations.find((q) => q.id === id);
+    if (picked) setSoAmount(Number(picked.netTotal));
+  }
+
+  // เปิดกล่องไปแล้วจาก state ตั้งต้น — ลบ `?action` ออกจาก URL กันรีเฟรชแล้วเด้งซ้ำ
+  useEffect(() => {
+    if (openSaleOrderOnLoad) {
+      router.replace(ROUTES.opportunityDetail(opportunity.id), { scroll: false });
+    }
+  }, [openSaleOrderOnLoad, opportunity.id, router]);
 
   async function setStage(stage: string) {
     setError(null);
@@ -141,6 +171,7 @@ export function OpportunityDetailView({
         method: "POST",
         body: JSON.stringify({
           ...customerPart,
+          quotation_id: soQuotationId,
           amount: soAmount ?? undefined,
           note: soNote.trim() || undefined,
         }),
@@ -178,18 +209,6 @@ export function OpportunityDetailView({
     setCancelling(null);
     setCancelReason("");
     router.refresh();
-  }
-
-  async function lose() {
-    if (!loseReason) return;
-    const done = await act("/lose", {
-      reason_code: loseReason,
-      reason_text: loseText.trim() || undefined,
-    });
-    if (done) {
-      message.success(md.lostDone);
-      setLosing(false);
-    }
   }
 
   const reasonName =
@@ -282,8 +301,14 @@ export function OpportunityDetailView({
               type="primary"
               loading={busy}
               onClick={() => {
+                const accepted = acceptedQuotations[0];
+                setSoQuotationId(accepted?.id);
                 setSoAmount(
-                  opportunity.amount === null ? null : Number(opportunity.amount),
+                  accepted
+                    ? Number(accepted.netTotal)
+                    : opportunity.amount === null
+                      ? null
+                      : Number(opportunity.amount),
                 );
                 setSimilarBlocked(false);
                 setConfirmDuplicate(false);
@@ -366,6 +391,80 @@ export function OpportunityDetailView({
             },
           ]}
         />
+      </Card>
+
+      {/* CD-76 ใบเสนอราคา — สร้างร่างที่นี่ แก้/ยื่น/ส่งในหน้ารายละเอียดของใบ */}
+      <Card
+        size="small"
+        title={`${md.quotationsTitle} · ${quotations.length}`}
+        extra={
+          editable ? (
+            <Button
+              size="small"
+              type="primary"
+              loading={busy}
+              onClick={() => void createQuotation()}
+            >
+              {md.newQuotation}
+            </Button>
+          ) : undefined
+        }
+      >
+        {quotations.length ? (
+          <Table<QuotationRow>
+            size="small"
+            rowKey="id"
+            pagination={false}
+            dataSource={quotations}
+            scroll={{ x: 640 }}
+            columns={[
+              {
+                title: mq.columns.no,
+                dataIndex: "quotationNo",
+                width: 190,
+                render: (no: string, row) => (
+                  <Link href={ROUTES.quotationDetail(row.id)}>
+                    {no} <Tag className="ml-1">{mq.version(row.version)}</Tag>
+                  </Link>
+                ),
+              },
+              {
+                title: mq.columns.status,
+                dataIndex: "status",
+                width: 170,
+                render: (_: string, row) => <QuotationStatusTags row={row} />,
+              },
+              {
+                title: mq.columns.netTotal,
+                dataIndex: "netTotal",
+                align: "right" as const,
+                render: (amount: QuotationRow["netTotal"], row) =>
+                  `${formatAmount(amount)} ${row.currency}`,
+              },
+              ...(quotations.some((row) => row.marginPct !== undefined)
+                ? [
+                    {
+                      title: mq.columns.margin,
+                      dataIndex: "marginPct",
+                      width: 90,
+                      align: "right" as const,
+                      render: (marginPct: QuotationRow["marginPct"]) =>
+                        formatMargin(marginPct),
+                    },
+                  ]
+                : []),
+              {
+                title: mq.columns.validUntil,
+                dataIndex: "validUntil",
+                width: 110,
+                render: (at: string | null) =>
+                  at ? dayjs(at).format("D MMM YYYY") : "—",
+              },
+            ]}
+          />
+        ) : (
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={md.noQuotations} />
+        )}
       </Card>
 
       {/* ใบสั่งขาย — จุดที่ผู้มุ่งหวังกลายเป็นลูกค้า */}
@@ -594,6 +693,27 @@ export function OpportunityDetailView({
             </Card>
           )}
 
+          {acceptedQuotations.length > 0 && (
+            <div>
+              <Text className="mb-1 block text-xs">{md.saleOrderQuotation}</Text>
+              <Select<string>
+                allowClear
+                className="w-full"
+                placeholder={md.saleOrderQuotationNone}
+                value={soQuotationId}
+                onChange={(value) => pickQuotation(value)}
+                options={acceptedQuotations.map((q) => ({
+                  value: q.id,
+                  label: `${q.quotationNo} ${mq.version(q.version)} · ${formatAmount(
+                    q.netTotal,
+                  )} ${q.currency}`,
+                }))}
+              />
+              <Text type="secondary" className="text-xs">
+                {md.saleOrderQuotationHint}
+              </Text>
+            </div>
+          )}
           <InputNumber
             className="w-full"
             placeholder={md.saleOrderAmount}
@@ -630,35 +750,15 @@ export function OpportunityDetailView({
       </Modal>
 
       {/* ปิดแพ้ — เหตุผลมาตรฐานบังคับ (spec CRM) */}
-      <Modal
-        open={losing}
-        title={md.lostTitle}
-        okText={md.lose}
-        okButtonProps={{ danger: true, disabled: !loseReason }}
-        confirmLoading={busy}
-        onCancel={() => setLosing(false)}
-        onOk={() => void lose()}
-        destroyOnHidden
-      >
-        <Space direction="vertical" className="w-full">
-          <Select
-            className="w-full"
-            placeholder={md.lostReason}
-            value={loseReason}
-            onChange={(value) => setLoseReason(value)}
-            options={lostReasons.map((reason) => ({
-              value: reason.code,
-              label: reason.name,
-            }))}
-          />
-          <Input.TextArea
-            rows={2}
-            placeholder={md.lostReasonText}
-            value={loseText}
-            onChange={(e) => setLoseText(e.target.value)}
-          />
-        </Space>
-      </Modal>
+      <LoseOpportunityModal
+        opportunity={losing ? opportunity : null}
+        lostReasons={lostReasons}
+        onClose={() => setLosing(false)}
+        onDone={() => {
+          setLosing(false);
+          router.refresh();
+        }}
+      />
     </div>
   );
 }

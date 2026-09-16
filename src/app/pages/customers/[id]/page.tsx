@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { CustomerDetailView } from "@/components/customer-detail";
 import customers from "@/lib/api/customers";
 import { getRequests } from "@/lib/api/requests";
-import { getOpportunities } from "@/lib/api/sales";
+import { getOpportunities, getQuotations, getSaleOrders } from "@/lib/api/sales";
 import { HOME_PATH } from "@/lib/routes";
 import { can, getSession } from "@/lib/session";
 
@@ -25,7 +25,18 @@ export default async function CustomerDetailPage({
   const canReadRequests = can(session, "request.read");
   const canReadSales = can(session, "crm.sales.read");
 
-  const [detailResult, historyResult, timelineResult, optionsResult, summaryResult, consentsResult, requestsResult, opportunitiesResult] =
+  const [
+    detailResult,
+    historyResult,
+    timelineResult,
+    optionsResult,
+    summaryResult,
+    consentsResult,
+    requestsResult,
+    opportunitiesResult,
+    quotationsResult,
+    saleOrdersResult,
+  ] =
     await Promise.all([
       customers.getCustomer(id),
       customers.getCustomerHistory(id),
@@ -41,6 +52,13 @@ export default async function CustomerDetailPage({
       // C360-04: no crm.sales.read → no call, tab hidden.
       canReadSales
         ? getOpportunities({ customer_id: id, page_size: 50 })
+        : Promise.resolve(null),
+      // ฉบับที่ถูกเวอร์ชันใหม่แทนแล้วไม่นับ — ดูประวัติเวอร์ชันได้ในหน้าใบเสนอราคา
+      canReadSales
+        ? getQuotations({ customer_id: id, current: true, page_size: 50 })
+        : Promise.resolve(null),
+      canReadSales
+        ? getSaleOrders({ customer_id: id, page_size: 50 })
         : Promise.resolve(null),
     ]);
 
@@ -62,6 +80,12 @@ export default async function CustomerDetailPage({
       }
       customerOpportunities={
         opportunitiesResult?.ok ? opportunitiesResult.data.data : canReadSales ? [] : null
+      }
+      customerQuotations={
+        quotationsResult?.ok ? quotationsResult.data.data : canReadSales ? [] : null
+      }
+      customerSaleOrders={
+        saleOrdersResult?.ok ? saleOrdersResult.data.data : canReadSales ? [] : null
       }
     />
   );
