@@ -25,4 +25,5 @@ export { default as audit } from "./audit";
 export { default as admin } from "./admin";
 export { default as notifications } from "./notifications";
 export { default as bi } from "./bi";
+export { default as apiKeys } from "./api-keys";
 export { default as customers } from "./customers";

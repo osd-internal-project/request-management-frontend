@@ -30,6 +30,12 @@ export type ClientResult<T> =
        * would break the moment a Thai string is reworded.
        */
       code?: string;
+      /**
+       * The per-field reasons behind a `VALIDATION_FAILED`. Dropping them left
+       * a rejected form showing only "Bad Request Exception", with nothing
+       * anywhere saying which field the backend refused.
+       */
+      details?: { field: string; reason: string }[];
     };
 
 /** The BFF namespaces. `admin` is the admin API, `app` everything else. */
@@ -100,7 +106,11 @@ async function send<T>(
   if (response.status === 204) return { ok: true, data: undefined as T };
 
   const body = (await response.json().catch(() => null)) as
-    | (T & { code?: string; message?: string })
+    | (T & {
+        code?: string;
+        message?: string;
+        details?: { field: string; reason: string }[];
+      })
     | null;
 
   return response.ok
@@ -109,6 +119,7 @@ async function send<T>(
         ok: false,
         code: body?.code,
         message: body?.message ?? `HTTP ${response.status}`,
+        ...(body?.details?.length ? { details: body.details } : {}),
       };
 }
 

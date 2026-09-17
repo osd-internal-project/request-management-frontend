@@ -660,8 +660,10 @@ export interface SlaConfigRow {
 /** §5.4 — one entry of the code-declared permission catalog. */
 export interface PermissionRow {
   code: string;
-  /** `request` · `approval` · `report` · `user` · `audit` · `admin` · `integration` */
+  /** `request` · `approval` · `crm` · `report` · `user` · `audit` · `admin` · `integration` */
   module: string;
+  /** `human` = สิทธิ์ของคนใน role · `service` = scope ของบัญชีบริการ (AUTH-06) */
+  type: string;
 }
 
 export interface RolePermissionRow {

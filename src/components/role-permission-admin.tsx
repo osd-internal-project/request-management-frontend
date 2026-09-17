@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Alert, App, Button, Card, Checkbox, Empty, Input, Modal, Space, Spin, Tag, Tooltip } from "antd";
 import Text from "antd/es/typography/Text";
 import Paragraph from "antd/es/typography/Paragraph";
@@ -41,20 +41,72 @@ const FORBIDDEN_WITH_ADMIN = ["approval.decide", "request.sensitive.read"];
  */
 const VISIBILITY_LEVELS: readonly OrgUnitNode["kind"][] = ORG_UNIT_LEVELS;
 
-/** The three columns §16 A4 draws, by permission module. */
+/**
+ * §16 A4's columns, by permission module.
+ *
+ * The order and the labels are decided here; **what is shown is not.** Every
+ * permission `GET /admin/permissions` answers reaches a column, because the
+ * previous version iterated over this list instead of over the catalog and
+ * silently dropped all nine `crm.*` — nobody could grant them, and the whole
+ * CRM menu stayed invisible.
+ */
 const GROUPS = [
   { key: "request", modules: ["request"], label: messages.roleAdmin.groups.request },
   {
     key: "approvalReport",
-    modules: ["approval", "report", "user"],
+    modules: ["approval", "report", "user", "notification"],
     label: messages.roleAdmin.groups.approvalReport,
   },
+  { key: "crm", modules: ["crm"], label: messages.roleAdmin.groups.crm },
   {
     key: "adminAudit",
     modules: ["admin", "audit"],
     label: messages.roleAdmin.groups.adminAudit,
   },
+  {
+    key: "integration",
+    modules: ["integration"],
+    label: messages.roleAdmin.groups.integration,
+  },
 ] as const;
+
+/** Where a module nobody has placed yet lands, rather than off the screen. */
+const OTHER_GROUP = {
+  key: "other",
+  label: messages.roleAdmin.groups.other,
+} as const;
+
+interface PermissionColumn {
+  readonly key: string;
+  readonly label: string;
+  readonly rows: readonly PermissionRow[];
+}
+
+/**
+ * The catalog split into columns — known modules in {@link GROUPS} order, and
+ * anything else in one trailing column.
+ */
+function columnsFor(
+  permissions: readonly PermissionRow[],
+): readonly PermissionColumn[] {
+  const placed = new Set<string>(GROUPS.flatMap((group) => [...group.modules]));
+
+  const known = GROUPS.map((group) => ({
+    key: group.key,
+    label: group.label,
+    rows: permissions.filter((permission) =>
+      (group.modules as readonly string[]).includes(permission.module),
+    ),
+  }));
+
+  const rest = permissions.filter(
+    (permission) => !placed.has(permission.module),
+  );
+
+  return [...known, { ...OTHER_GROUP, rows: rest }].filter(
+    (column) => column.rows.length > 0,
+  );
+}
 
 function thaiFor(code: string): string {
   return messages.roleAdmin.permission[code] ?? "";
@@ -128,6 +180,7 @@ export function RolePermissionAdmin({
 
   const selected = roles.find((role) => role.id === selectedId) ?? null;
   const holdsAdmin = checked.some((code) => code.startsWith("admin."));
+  const columns = useMemo(() => columnsFor(permissions), [permissions]);
 
   function mappedRole(roleId: string): string | null {
     return (
@@ -399,20 +452,23 @@ export function RolePermissionAdmin({
               )}
             </div>
 
-            {GROUPS.map((group) => {
-              const rows = permissions.filter((permission) =>
-                (group.modules as readonly string[]).includes(
-                  permission.module,
-                ),
-              );
-
-              if (!rows.length) return null;
+            {columns.map((group) => {
+              const { rows } = group;
 
               return (
                 <div key={group.key}>
                   <Text strong className="text-xs tracking-wide">
                     {group.label}
                   </Text>
+
+                  {rows.every((row) => row.type === "service") && (
+                    <Paragraph
+                      type="secondary"
+                      className="mt-1! mb-0! text-xs"
+                    >
+                      {messages.roleAdmin.serviceScopeHint}
+                    </Paragraph>
+                  )}
 
                   <div className="mt-2 grid gap-2 sm:grid-cols-2">
                     {rows.map((permission) => {
