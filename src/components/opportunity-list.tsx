@@ -35,6 +35,16 @@ import type {
 
 const m = messages.sales.opportunities;
 
+/**
+ * Mirror of `CreateOpportunityDto.product_codes` — the backend rejects anything
+ * else with a 400 the tag input gives no hint about, so the tags are filtered
+ * here as they are typed.
+ */
+const PRODUCT_CODE_PATTERN = /^[A-Za-z0-9_.-]+$/;
+
+/** Enough to catch a half-typed address before `@IsEmail()` answers 400. */
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 /** ตาราง = ทะเบียนเต็ม, การ์ด = กระดานแยกตามขั้น. อยู่ใน URL จึง bookmark ได้. */
 export type OpportunityLayout = "table" | "board";
 
@@ -115,6 +125,28 @@ export function OpportunityList({
   const partyReady =
     partyMode === "existing" ? Boolean(customerId) : Boolean(prospectName.trim());
 
+  const emailInvalid =
+    partyMode === "prospect" &&
+    prospectEmail.trim().length > 0 &&
+    !EMAIL_PATTERN.test(prospectEmail.trim());
+
+  /** รับเฉพาะรหัสที่ DTO รับ แล้วบอกทันทีว่าตัวไหนถูกตัดออก. */
+  function acceptProductCodes(values: string[]) {
+    const trimmed = values.map((value) => value.trim()).filter(Boolean);
+    const accepted = trimmed.filter((value) =>
+      PRODUCT_CODE_PATTERN.test(value),
+    );
+    const rejected = trimmed.filter(
+      (value) => !PRODUCT_CODE_PATTERN.test(value),
+    );
+
+    if (rejected.length) {
+      message.warning(m.form.productsRejected(rejected.join(", ")));
+    }
+
+    setProductCodes([...new Set(accepted)]);
+  }
+
   /** ทุกอย่างที่หน้านี้อ่านจาก URL — ตัวกรอง มุมมอง และหน้าที่เปิดอยู่. */
   function navigate(
     next: Partial<typeof filters> & { layout?: OpportunityLayout; page?: number },
@@ -134,7 +166,7 @@ export function OpportunityList({
   }
 
   async function create() {
-    if (!partyReady || !title.trim()) return;
+    if (!partyReady || !title.trim() || emailInvalid) return;
     setBusy(true);
     setError(null);
 
@@ -162,7 +194,16 @@ export function OpportunityList({
 
     setBusy(false);
     if (!result.ok) {
-      setError(result.message);
+      setError(
+        result.details?.length
+          ? messages.common.withDetails(
+              result.message,
+              result.details
+                .map((detail) => `${detail.field}=${detail.reason}`)
+                .join("; "),
+            )
+          : result.message,
+      );
       return;
     }
     message.success(m.form.created(result.data.opportunityCode));
@@ -310,7 +351,7 @@ export function OpportunityList({
         title={m.newOpportunity}
         okText={m.form.save}
         confirmLoading={busy}
-        okButtonProps={{ disabled: !partyReady || !title.trim() }}
+        okButtonProps={{ disabled: !partyReady || !title.trim() || emailInvalid }}
         onCancel={() => setCreating(false)}
         onOk={() => void create()}
         destroyOnHidden
@@ -368,9 +409,15 @@ export function OpportunityList({
                 <Input
                   placeholder={m.form.prospectEmail}
                   value={prospectEmail}
+                  status={emailInvalid ? "error" : undefined}
                   onChange={(e) => setProspectEmail(e.target.value)}
                 />
               </Space.Compact>
+              {emailInvalid && (
+                <Text type="danger" className="text-xs">
+                  {m.form.prospectEmailInvalid}
+                </Text>
+              )}
               <Text type="secondary" className="text-xs">
                 {m.form.prospectHint}
               </Text>
@@ -404,7 +451,7 @@ export function OpportunityList({
               className="w-full"
               placeholder={m.form.products}
               value={productCodes}
-              onChange={(values) => setProductCodes(values as string[])}
+              onChange={(values) => acceptProductCodes(values as string[])}
               open={false}
               suffixIcon={null}
               tokenSeparators={[",", " "]}

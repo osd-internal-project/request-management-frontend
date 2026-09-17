@@ -75,6 +75,7 @@ export const messages = {
     quotations: "ใบเสนอราคา",
     adminGroup: "ผู้ดูแลระบบ",
     adminCrm: "ตั้งค่า CRM",
+    adminApiKeys: "กุญแจ API",
     adminRequestTypes: "ประเภทคำขอ",
     adminSla: "เวลาทำการและวันหยุด",
     adminOrg: "ผังทีมและสิทธิ์",
@@ -322,12 +323,19 @@ export const messages = {
         ? `สมาชิก role จัดการที่ Keycloak (map: ${keycloakRole}) — หน้านี้กำหนดเฉพาะว่า role ทำอะไรได้ · แก้แล้วมีผลทันทีกับ API call ถัดไป`
         : "สมาชิก role จัดการที่ Keycloak — หน้านี้กำหนดเฉพาะว่า role ทำอะไรได้ · แก้แล้วมีผลทันทีกับ API call ถัดไป",
 
-    /** §16 A4 groups the catalog into three columns of checkboxes. */
+    /** §16 A4 groups the catalog into columns of checkboxes, by module. */
     groups: {
       request: "REQUEST",
-      approvalReport: "APPROVAL · REPORT",
+      approvalReport: "APPROVAL · REPORT · NOTIFICATION",
+      crm: "CRM",
       adminAudit: "ADMIN · AUDIT",
+      integration: "INTEGRATION",
+      other: "อื่น ๆ",
     },
+
+    /** AUTH-06 — คำอธิบาย ไม่ใช่การปิดกั้น: ติ๊กได้ตามปกติ. */
+    serviceScopeHint:
+      "สิทธิ์ของบัญชีบริการ — ปกติออกให้กุญแจ API ที่หน้า “กุญแจ API” ไม่ใช่ให้คน",
 
     /** Thai next to each permission code, as the mockup prints them. */
     permission: {
@@ -347,6 +355,37 @@ export const messages = {
       "user.read": "ค้นผู้ใช้",
       "audit.read": "อ่าน audit log",
       "notification.read": "รับแจ้งเตือน",
+
+      "crm.customer.read": "ดูลูกค้า",
+      "crm.customer.read.all": "ดูลูกค้าทั้งบริษัท",
+      "crm.customer.manage": "สร้าง/แก้ทะเบียนลูกค้า",
+      "crm.customer.sensitive.read": "เห็นเลขผู้เสียภาษี",
+      "crm.customer.dedup.override": "ยืนยันสร้างทั้งที่ชื่อซ้ำ",
+      "crm.customer.financial.read": "เห็นยอดค้างชำระ/AR",
+      "crm.sales.read": "ดู Lead และโอกาสการขาย",
+      "crm.sales.read.all": "ดูงานขายทั้งบริษัท",
+      "crm.sales.manage": "สร้าง/แก้/ปิดดีล",
+
+      "admin.role.manage": "จัดการ role และสิทธิ์",
+      "admin.org.manage": "จัดการผังองค์กร",
+      "admin.request-type.manage": "จัดการประเภทคำขอ",
+      "admin.approval-matrix.manage": "จัดการตารางอำนาจอนุมัติ",
+      "admin.sla.manage": "จัดการ SLA และวันหยุด",
+      "admin.bi.manage": "ตั้งค่าแดชบอร์ด",
+      "admin.identity.manage": "จัดการผู้ใช้ใน Keycloak",
+      "admin.crm.manage": "ตั้งค่า CRM",
+      "admin.integration.manage": "ออก/เพิกถอนกุญแจ API",
+
+      "integration.request.create": "ยื่นคำขอแทนระบบภายนอก",
+      "integration.approval.create": "สร้างเคสอนุมัติจากระบบภายนอก",
+      "integration.crm.lead.read": "อ่าน Lead (workflow engine)",
+      "integration.crm.lead.stage": "เลื่อนขั้น Lead (workflow engine)",
+      "integration.crm.lead.create": "รับ Lead จากช่องทางภายนอก",
+      "integration.crm.customer.read": "อ่านลูกค้าผ่าน API ภายนอก",
+      "integration.crm.customer.manage": "เขียนลูกค้าผ่าน API ภายนอก",
+      "integration.crm.sales.read": "อ่านงานขายผ่าน API ภายนอก",
+      "integration.crm.sales.manage": "เขียนงานขายผ่าน API ภายนอก",
+      "integration.crm.admin.manage": "แก้ตั้งค่า CRM ผ่าน API ภายนอก",
     } as Record<string, string>,
 
     /** §5.4 guardrail 1 — the reason the admin boxes are not tickable here. */
@@ -1086,10 +1125,68 @@ export const messages = {
     deactivated: "ปิดใช้งานแดชบอร์ดแล้ว",
   },
 
+  /** หน้ากุญแจ API ของช่องทางภายนอก (`admin.integration.manage`). */
+  apiKeys: {
+    title: "กุญแจ API",
+    subtitle:
+      "หนึ่งช่องทางหนึ่งกุญแจ — เพิกถอนใบเดียวได้โดยไม่กระทบช่องทางอื่น",
+    issue: "ออกกุญแจใหม่",
+    empty: "ยังไม่มีกุญแจของบริษัทนี้",
+    loadFailed: "โหลดรายการกุญแจไม่สำเร็จ",
+    forbidden: "ต้องมีสิทธิ์ออก/เพิกถอนกุญแจ API จึงจะเปิดหน้านี้ได้",
+
+    columnName: "ชื่อ",
+    columnPrefix: "ตัวขึ้นต้น",
+    columnSource: "รหัสช่องทาง",
+    columnScopes: "สิทธิ์",
+    columnStatus: "สถานะ",
+    columnExpires: "หมดอายุ",
+    columnLastUsed: "ใช้ล่าสุด",
+    columnActions: "",
+    never: "—",
+
+    status: {
+      active: "ใช้งานได้",
+      expired: "หมดอายุ",
+      revoked: "เพิกถอนแล้ว",
+    } as Record<string, string>,
+    statusColor: {
+      active: "green",
+      expired: "orange",
+      revoked: "red",
+    } as Record<string, string>,
+
+    revoke: "เพิกถอน",
+    revokeConfirm: "เพิกถอนกุญแจใบนี้?",
+    revokeConfirmBody:
+      "มีผลกับคำขอถัดไปทันที และย้อนกลับไม่ได้ — ช่องทางที่ถือใบนี้จะเรียก API ไม่ได้อีก",
+    revoked: "เพิกถอนแล้ว",
+
+    formName: "ชื่อที่อ่านแล้วรู้ว่าอยู่ที่ไหน",
+    formNameHint: "เช่น เว็บไซต์ osd.co.th (production)",
+    formSource: "รหัสช่องทาง",
+    formSourceHint:
+      "ประทับลง Lead ทุกใบที่เข้ามาด้วยกุญแจนี้ · ตัวพิมพ์เล็ก ตัวเลข ขีด เช่น line-oa",
+    formSourceInvalid: "ใช้ได้เฉพาะตัวพิมพ์เล็ก ตัวเลข และขีด",
+    formScopes: "สิทธิ์ที่กุญแจใบนี้ถือ",
+    formScopesHint: "ไม่มีค่าตั้งต้น — ติ๊กเท่าที่ช่องทางนั้นต้องใช้จริง",
+    formExpires: "อายุ (วัน)",
+    formExpiresHint: "ไม่ระบุ = ไม่หมดอายุ เพิกถอนเอาเท่านั้น",
+    save: "ออกกุญแจ",
+
+    issuedTitle: "คัดลอกกุญแจเดี๋ยวนี้",
+    issuedBody:
+      "ค่าเต็มแสดงครั้งเดียว ระบบเก็บไว้แค่ค่าแฮช อ่านกลับไม่ได้อีก — ทำหายคือออกใบใหม่แล้วเพิกถอนใบเก่า",
+    issuedDone: "คัดลอกแล้ว ปิดหน้าต่าง",
+  },
+
   common: {
     loadError: "โหลดข้อมูลไม่สำเร็จ",
     retry: "ลองใหม่",
     loading: "กำลังโหลด…",
+    /** `<message> · <field>=<reason>` — ต่อรายละเอียดรายฟิลด์ท้าย error จาก backend. */
+    withDetails: (message: string, details: string) =>
+      `${message} · ${details}`,
   },
 
   /** CRM ระยะ 1 — Customer Master (CM-01…08, spec artifact 856c08fd). */
@@ -1382,7 +1479,11 @@ export const messages = {
         probability: "ความน่าจะเป็น (%)",
         expectedClose: "วันคาดว่าจะปิด",
         products: "product ที่เกี่ยวข้อง (รหัสตรงกับ Odoo)",
-        productsHint: "พิมพ์รหัสแล้ว Enter เพิ่มได้หลายตัว",
+        productsHint:
+          "พิมพ์รหัสแล้ว Enter เพิ่มได้หลายตัว · ใช้ A-Z a-z 0-9 _ . - เท่านั้น",
+        productsRejected: (codes: string) =>
+          `ไม่รับรหัสนี้: ${codes} — รหัส product ใช้ได้เฉพาะ A-Z a-z 0-9 _ . -`,
+        prospectEmailInvalid: "รูปแบบอีเมลไม่ถูกต้อง",
         save: "บันทึก",
         created: (code: string) => `เปิดโอกาสการขาย ${code} แล้ว`,
         saved: "บันทึกแล้ว",

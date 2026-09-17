@@ -117,6 +117,12 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     permissions: ["admin.crm.manage"],
     group: messages.nav.adminGroup,
   },
+  {
+    label: messages.nav.adminApiKeys,
+    href: ROUTES.adminApiKeys,
+    permissions: ["admin.integration.manage"],
+    group: messages.nav.adminGroup,
+  },
 ];
 
 /** One BI dashboard as the menu needs it — `key` and `title` from `GET /bi/menu`. */
