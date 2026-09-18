@@ -224,7 +224,7 @@ export const messages = {
       "request.return": "ตีกลับ",
       "request.cancel.any": "ยกเลิก",
       "approval.decide": "อนุมัติ",
-    } as Record<string, string>,
+    },
     permissionsPlaceholder: "อ่านอย่างเดียว",
     columnRemove: "",
     remove: "ลบ",
@@ -333,9 +333,12 @@ export const messages = {
       other: "อื่น ๆ",
     },
 
-    /** AUTH-06 — คำอธิบาย ไม่ใช่การปิดกั้น: ติ๊กได้ตามปกติ. */
+    /**
+     * AUTH-06 — ตอนนี้เป็นการปิดกั้นจริง ไม่ใช่คำอธิบายแล้ว: หน้านี้ไม่แสดงสิทธิ์ของ
+     * บัญชีบริการอีก และ backend ก็ปฏิเสธ role ที่ถือมัน.
+     */
     serviceScopeHint:
-      "สิทธิ์ของบัญชีบริการ — ปกติออกให้กุญแจ API ที่หน้า “กุญแจ API” ไม่ใช่ให้คน",
+      "สิทธิ์ของบัญชีบริการ (integration.*) ไม่อยู่ในหน้านี้ — ออกให้กุญแจที่หน้า “กุญแจ API”",
 
     /** Thai next to each permission code, as the mockup prints them. */
     permission: {
@@ -939,7 +942,7 @@ export const messages = {
     step: (current: number, total: number) => `ขั้น ${current}/${total}`,
     status: {
       draft: "ร่าง",
-      submitted: "ยื่นแล้ว",
+      submitted: "รอรับ",
       pending_approval: "รออนุมัติ",
       returned: "ตีกลับ",
       approved: "อนุมัติแล้ว",
@@ -1170,6 +1173,13 @@ export const messages = {
     formSourceInvalid: "ใช้ได้เฉพาะตัวพิมพ์เล็ก ตัวเลข และขีด",
     formScopes: "สิทธิ์ที่กุญแจใบนี้ถือ",
     formScopesHint: "ไม่มีค่าตั้งต้น — ติ๊กเท่าที่ช่องทางนั้นต้องใช้จริง",
+    /** หัวข้อย่อยของ `integration.<area>.*` — จัดกลุ่มตามโมดูลที่กุญแจไปแตะ. */
+    scopeAreas: {
+      request: "คำขอ",
+      approval: "อนุมัติ",
+      crm: "CRM",
+      other: "อื่น ๆ",
+    } as Record<string, string>,
     formExpires: "อายุ (วัน)",
     formExpiresHint: "ไม่ระบุ = ไม่หมดอายุ เพิกถอนเอาเท่านั้น",
     save: "ออกกุญแจ",
@@ -2050,6 +2060,16 @@ export const messages = {
     },
   },
 } as const;
+
+/**
+ * คำอธิบายไทยของรหัสสิทธิ์ — ว่างถ้ายังไม่มีคำแปล.
+ *
+ * อยู่ตรงนี้เพราะทั้งหน้า Role และหน้ากุญแจ API ต้องใช้ สำเนาที่สองคือสำเนาที่จะลืมอัปเดต
+ */
+export function thaiForPermission(code: string): string {
+  const labels: Record<string, string> = messages.roleAdmin.permission;
+  return labels[code] ?? "";
+}
 
 /** Maps a callback `?error=` code to Thai copy, with a safe fallback. */
 export function loginErrorMessage(code: string | null | undefined): string | null {

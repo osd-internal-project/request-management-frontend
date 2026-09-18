@@ -26,9 +26,45 @@ import {
   type ApiKeyRow,
   type IssuedApiKey,
 } from "@/lib/api/api-keys";
-import { messages } from "@/lib/messages";
+import { messages, thaiForPermission } from "@/lib/messages";
 
 const m = messages.apiKeys;
+
+/**
+ * `integration.<area>.…` — โมดูลที่กุญแจไปแตะ ใช้เป็นหัวข้อย่อยของรายการติ๊ก.
+ *
+ * รายการดิบ 10 บรรทัดที่ไม่มีหัวข้อทำให้คนติ๊กเกินเพราะอ่านไม่ออกว่าตัวไหนคู่กับตัวไหน
+ * ซึ่งขัดกับกฎหนึ่งกุญแจต่อหนึ่งช่องทางที่ทั้งหน้านี้ตั้งอยู่บนมัน
+ */
+const SCOPE_AREAS = [
+  { key: "request", label: m.scopeAreas.request },
+  { key: "approval", label: m.scopeAreas.approval },
+  { key: "crm", label: m.scopeAreas.crm },
+] as const;
+
+interface ScopeArea {
+  readonly key: string;
+  readonly label: string;
+  readonly codes: readonly string[];
+}
+
+/** จัดสิทธิ์ตาม area ตามลำดับ {@link SCOPE_AREAS} ที่เหลือไปกองท้ายไม่ใช่หายไป. */
+function scopeAreas(codes: readonly string[]): readonly ScopeArea[] {
+  const areaOf = (code: string) => code.split(".")[1] ?? "";
+  const placed = new Set<string>(SCOPE_AREAS.map((area) => area.key));
+
+  const known = SCOPE_AREAS.map((area) => ({
+    key: area.key,
+    label: area.label,
+    codes: codes.filter((code) => areaOf(code) === area.key),
+  }));
+
+  const rest = codes.filter((code) => !placed.has(areaOf(code)));
+
+  return [...known, { key: "other", label: m.scopeAreas.other, codes: rest }].filter(
+    (area) => area.codes.length > 0,
+  );
+}
 
 /** Mirror of `IssueApiKeyDto.source_code` — the backend answers 400 otherwise. */
 const SOURCE_CODE_PATTERN = /^[a-z0-9][a-z0-9-]{0,63}$/;
@@ -269,11 +305,28 @@ export function ApiKeyAdmin() {
               {m.formScopes}
             </Text>
             <Checkbox.Group
-              className="mt-2 grid gap-2"
+              className="mt-2 block"
               value={chosenScopes}
               onChange={(values) => setChosenScopes(values as string[])}
-              options={scopes.map((code) => ({ value: code, label: code }))}
-            />
+            >
+              {scopeAreas(scopes).map((area) => (
+                <div key={area.key} className="mb-3">
+                  <Text strong className="text-xs tracking-wide">
+                    {area.label}
+                  </Text>
+                  <div className="mt-1 grid gap-1">
+                    {area.codes.map((code) => (
+                      <Checkbox key={code} value={code}>
+                        <code className="text-xs">{code}</code>
+                        <Text type="secondary" className="ml-2 text-xs">
+                          {thaiForPermission(code)}
+                        </Text>
+                      </Checkbox>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </Checkbox.Group>
             <Text type="secondary" className="text-xs">
               {m.formScopesHint}
             </Text>
