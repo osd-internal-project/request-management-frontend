@@ -1,6 +1,11 @@
 import { notFound, redirect } from "next/navigation";
 import { OpportunityDetailView } from "@/components/opportunity-detail";
-import { getOpportunity, getLostReasons, getQuotations } from "@/lib/api/sales";
+import {
+  getOpportunity,
+  getOpportunityActivities,
+  getLostReasons,
+  getQuotations,
+} from "@/lib/api/sales";
 import { getRequests } from "@/lib/api/requests";
 import { getCustomers } from "@/lib/api/customers";
 import { HOME_PATH } from "@/lib/routes";
@@ -37,8 +42,13 @@ export default async function OpportunityDetailPage({
     !opportunityResult.data.customer &&
     can(session, "crm.customer.read");
 
-  const [reasonsResult, requestsResult, customersResult, quotationsResult] =
-    await Promise.all([
+  const [
+    reasonsResult,
+    requestsResult,
+    customersResult,
+    quotationsResult,
+    activitiesResult,
+  ] = await Promise.all([
     getLostReasons(),
     canReadRequests
       ? getRequests({
@@ -52,6 +62,8 @@ export default async function OpportunityDetailPage({
       : Promise.resolve(null),
     // CD-76 — same `crm.sales.read` this page is already gated on.
     getQuotations({ opportunity_id: id, current: true, page_size: 50 }),
+    // CD-65 — same `crm.sales.read`.
+    getOpportunityActivities(id),
   ]);
 
   return (
@@ -67,6 +79,7 @@ export default async function OpportunityDetailPage({
       }
       customers={customersResult?.ok ? customersResult.data.data : []}
       quotations={quotationsResult.ok ? quotationsResult.data.data : []}
+      activities={activitiesResult.ok ? activitiesResult.data : []}
       canManage={canManage}
       openSaleOrderOnLoad={action === "sale-order"}
     />

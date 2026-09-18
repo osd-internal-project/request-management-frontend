@@ -9,15 +9,8 @@ import {
   Avatar,
   Button,
   Card,
-  Checkbox,
   Collapse,
-  DatePicker,
   Descriptions,
-  Empty,
-  Form,
-  Input,
-  Modal,
-  Select,
   Space,
   Steps,
   Tabs,
@@ -28,15 +21,12 @@ import Text from "antd/es/typography/Text";
 import Title from "antd/es/typography/Title";
 import {
   BankOutlined,
-  CheckSquareOutlined,
   EditOutlined,
   FileTextOutlined,
   MailOutlined,
   PhoneOutlined,
   PlusOutlined,
-  VideoCameraOutlined,
 } from "@ant-design/icons";
-import dayjs, { type Dayjs } from "dayjs";
 import {
   ConvertLeadModal,
   DisqualifyLeadModal,
@@ -44,15 +34,22 @@ import {
   isLeadOpen,
 } from "@/components/lead-actions";
 import { formatAmount } from "@/components/opportunity-list";
+import {
+  ACTIVITY_ICON,
+  ActivityList,
+  ActivityModal,
+  formatWhen,
+  splitActivities,
+} from "@/components/activity-list";
 import { appApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import type {
   CustomerRow,
-  LeadActivity,
   LeadActivityType,
   LeadDetail,
   LeadStatus,
+  SalesActivity,
 } from "@/lib/api/types";
 
 const m = messages.sales.leads;
@@ -74,17 +71,7 @@ const PIPELINE: LeadStatus[] = [
 /** ปุ่มลัดด้านขวา — สี่อย่างที่คนขายทำบ่อย; "บันทึก" อยู่ที่การ์ดผู้ติดต่อ. */
 const QUICK_TYPES = ["call", "email", "meeting", "task"] as const;
 
-const ACTIVITY_ICON: Record<LeadActivityType, React.ReactNode> = {
-  call: <PhoneOutlined />,
-  email: <MailOutlined />,
-  meeting: <VideoCameraOutlined />,
-  task: <CheckSquareOutlined />,
-  note: <FileTextOutlined />,
-};
 
-function formatWhen(iso: string): string {
-  return dayjs(iso).format("D MMM YY HH:mm");
-}
 
 function dash(value: string | number | null | undefined): string {
   if (value === null || value === undefined || value === "") return "—";
@@ -121,14 +108,7 @@ export function LeadDetailView({
   const open = isLeadOpen(lead.status);
   const editable = canManage && open;
 
-  const pending = lead.activities
-    .filter((activity) => !activity.completedAt)
-    .sort((a, b) => {
-      if (!a.dueAt) return b.dueAt ? 1 : 0;
-      if (!b.dueAt) return -1;
-      return a.dueAt.localeCompare(b.dueAt);
-    });
-  const done = lead.activities.filter((activity) => activity.completedAt);
+  const { pending, done } = splitActivities(lead.activities);
 
   async function setStatus(status: LeadStatus) {
     if (status === lead.status) return;
@@ -147,7 +127,7 @@ export function LeadDetailView({
     router.refresh();
   }
 
-  async function toggleActivity(activity: LeadActivity, completed: boolean) {
+  async function toggleActivity(activity: SalesActivity, completed: boolean) {
     setError(null);
     const result = await appApi(
       `leads/${lead.id}/activities/${activity.id}`,
@@ -631,7 +611,7 @@ export function LeadDetailView({
       />
       <ActivityModal
         key={logging ? `log-${logging}` : "log-closed"}
-        leadId={lead.id}
+        endpoint={`leads/${lead.id}/activities`}
         type={logging}
         onClose={() => setLogging(null)}
         onSaved={() => {
@@ -640,176 +620,5 @@ export function LeadDetailView({
         }}
       />
     </div>
-  );
-}
-
-function ActivityList({
-  activities,
-  editable,
-  onToggle,
-  emptyText,
-  compact,
-}: {
-  activities: LeadActivity[];
-  editable: boolean;
-  onToggle: (activity: LeadActivity, completed: boolean) => Promise<void>;
-  emptyText: string;
-  compact?: boolean;
-}) {
-  if (!activities.length) {
-    return <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={emptyText} />;
-  }
-
-  const now = dayjs();
-
-  return (
-    <div className="divide-y divide-gray-100">
-      {activities.map((activity) => {
-        const isDone = Boolean(activity.completedAt);
-        const overdue =
-          !isDone && activity.dueAt !== null && dayjs(activity.dueAt).isBefore(now);
-
-        return (
-          <div key={activity.id} className="flex items-start gap-2 py-2">
-            {editable ? (
-              <Checkbox
-                checked={isDone}
-                onChange={(e) => void onToggle(activity, e.target.checked)}
-              />
-            ) : (
-              <span className="text-gray-400">{ACTIVITY_ICON[activity.type]}</span>
-            )}
-            <div className="min-w-0 grow text-xs">
-              <div className={isDone ? "text-gray-400 line-through" : "font-medium"}>
-                <Tag className="mr-1!">{ma.type[activity.type]}</Tag>
-                {activity.subject}
-              </div>
-              {!compact && activity.detail && (
-                <div className="mt-0.5 whitespace-pre-wrap text-gray-600">
-                  {activity.detail}
-                </div>
-              )}
-              <div className="mt-0.5 text-gray-500">
-                {activity.dueAt && (
-                  <span className={overdue ? "text-red-500" : undefined}>
-                    {ma.due(formatWhen(activity.dueAt))}
-                    {overdue ? ` · ${ma.overdue}` : ""}
-                    {" · "}
-                  </span>
-                )}
-                {isDone && activity.completedAt && (
-                  <span>
-                    {ma.doneAt(formatWhen(activity.completedAt))}
-                    {" · "}
-                  </span>
-                )}
-                {ma.by(activity.createdByName, formatWhen(activity.createdAt))}
-              </div>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-interface ActivityFormValues {
-  type: LeadActivityType;
-  subject: string;
-  detail?: string;
-  due_at?: Dayjs | null;
-}
-
-/** ลงกิจกรรม — เว้นกำหนด = ทำไปแล้ว, ใส่กำหนด = ต้องตามต่อ. */
-function ActivityModal({
-  leadId,
-  type,
-  onClose,
-  onSaved,
-}: {
-  leadId: string;
-  /** null = closed. */
-  type: LeadActivityType | null;
-  onClose: () => void;
-  onSaved: () => void;
-}) {
-  const { message } = App.useApp();
-  const [form] = Form.useForm<ActivityFormValues>();
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function submit() {
-    let values: ActivityFormValues;
-    try {
-      values = await form.validateFields();
-    } catch {
-      return;
-    }
-
-    setBusy(true);
-    setError(null);
-    const result = await appApi(`leads/${leadId}/activities`, {
-      method: "POST",
-      body: JSON.stringify({
-        type: values.type,
-        subject: values.subject.trim(),
-        detail: values.detail?.trim() || undefined,
-        due_at: values.due_at ? values.due_at.toISOString() : undefined,
-      }),
-    });
-    setBusy(false);
-    if (!result.ok) {
-      setError(result.message);
-      return;
-    }
-    message.success(ma.form.saved);
-    onSaved();
-  }
-
-  return (
-    <Modal
-      open={type !== null}
-      title={ma.form.title}
-      okText={ma.form.save}
-      confirmLoading={busy}
-      onCancel={onClose}
-      onOk={() => void submit()}
-      mask={{ closable: false }}
-      destroyOnHidden
-    >
-      {error && <Alert type="error" showIcon title={error} className="mb-3" />}
-      <Form<ActivityFormValues>
-        form={form}
-        layout="vertical"
-        initialValues={{ type: type ?? "note" }}
-      >
-        <Form.Item name="type" label={ma.form.type}>
-          <Select
-            options={Object.entries(ma.type).map(([value, label]) => ({
-              value,
-              label,
-            }))}
-          />
-        </Form.Item>
-        <Form.Item
-          name="subject"
-          label={ma.form.subject}
-          rules={[{ required: true, whitespace: true, message: ma.form.subjectRequired }]}
-        >
-          <Input maxLength={255} />
-        </Form.Item>
-        <Form.Item name="detail" label={ma.form.detail}>
-          <Input.TextArea rows={3} maxLength={4000} />
-        </Form.Item>
-        <Form.Item name="due_at" label={ma.form.dueAt}>
-          <DatePicker
-            className="w-full"
-            showTime
-            needConfirm={false}
-            format="D MMM YYYY HH:mm"
-          />
-        </Form.Item>
-      </Form>
-    </Modal>
   );
 }

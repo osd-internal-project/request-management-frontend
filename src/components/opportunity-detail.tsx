@@ -24,6 +24,7 @@ import Title from "antd/es/typography/Title";
 import dayjs from "dayjs";
 import { SearchSelect } from "@/components/search-select";
 import { LoseOpportunityModal } from "@/components/opportunity-actions";
+import { OpportunityActivitiesCard } from "@/components/opportunity-activities";
 import { formatAmount, OpportunityParty } from "@/components/opportunity-list";
 import { formatMargin, QuotationStatusTags } from "@/components/quotation-list";
 import { appApi } from "@/lib/api/client";
@@ -31,6 +32,7 @@ import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import type {
   CustomerRow,
+  OpportunityActivity,
   OpportunityDetail,
   OpportunityLostReason,
   QuotationRow,
@@ -55,6 +57,7 @@ export function OpportunityDetailView({
   relatedRequests,
   customers,
   quotations,
+  activities,
   canManage,
   openSaleOrderOnLoad = false,
 }: {
@@ -66,6 +69,8 @@ export function OpportunityDetailView({
   customers: CustomerRow[];
   /** CD-76 — ฉบับปัจจุบันของทุกเลข (ไม่รวมที่ถูกแทนแล้ว); margin ถูกปกปิดตามสิทธิ์. */
   quotations: QuotationRow[];
+  /** CD-65 กิจกรรมและนัดติดตาม — ใหม่สุดก่อน. */
+  activities: OpportunityActivity[];
   canManage: boolean;
   /** มาจากกระดานการ์ด (ลากไป "ชนะ") — เปิดกล่องเปิดใบสั่งขายให้ทันที. */
   openSaleOrderOnLoad?: boolean;
@@ -392,6 +397,12 @@ export function OpportunityDetailView({
           ]}
         />
       </Card>
+
+      <OpportunityActivitiesCard
+        opportunity={opportunity}
+        activities={activities}
+        canManage={canManage}
+      />
 
       {/* CD-76 ใบเสนอราคา — สร้างร่างที่นี่ แก้/ยื่น/ส่งในหน้ารายละเอียดของใบ */}
       <Card

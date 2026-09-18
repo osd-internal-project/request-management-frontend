@@ -893,9 +893,8 @@ export interface LeadRow {
  * กิจกรรมบน Lead — ไม่มี `dueAt` = บันทึกสิ่งที่ทำไปแล้ว (ปิดตั้งแต่สร้าง),
  * มี `dueAt` = นัด/งานที่ต้องตามต่อ จน `completedAt` ถูกติ๊ก.
  */
-export interface LeadActivity {
+export interface SalesActivity {
   id: string;
-  leadId: string;
   type: LeadActivityType;
   subject: string;
   detail: string | null;
@@ -906,6 +905,15 @@ export interface LeadActivity {
   createdAt: string;
   createdBy: string;
   createdByName: string;
+}
+
+export interface LeadActivity extends SalesActivity {
+  leadId: string;
+}
+
+/** CD-65 — `GET /opportunities/:id/activities`, รูปเดียวกับกิจกรรมของ Lead. */
+export interface OpportunityActivity extends SalesActivity {
+  opportunityId: string;
 }
 
 /** `GET /leads/:id` — หน้ารายละเอียด Lead. */
@@ -945,6 +953,12 @@ export interface OpportunityRow {
   prospectName: string | null;
   prospectTaxId: string | null;
   ownerUserId: string;
+  /** CD-65 — กิจกรรมที่ทำเสร็จล่าสุด (null = ยังไม่เคยมี). */
+  lastActivityAt: string | null;
+  /** นัดติดตามที่ใกล้ที่สุดที่ยังไม่เสร็จ. */
+  nextFollowUpAt: string | null;
+  /** ไม่ว่าง = ระบบแจ้งหัวหน้าแล้วว่าดีลเงียบเกินเกณฑ์ และยังไม่มีกิจกรรมใหม่. */
+  staleAlertedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -1211,6 +1225,8 @@ export interface CrmConfig {
   quotationValidityDays: number;
   vatPct: number;
   quotationApprovalTypeCode: string;
+  /** CD-65 — ดีลเปิดที่ไม่มีกิจกรรมเกินกี่วันจึงแจ้งหัวหน้า; 0 = ปิด. */
+  staleOpportunityDays: number;
 }
 
 /** CM-07 — one assignable value with its dimension, for pickers and filters. */

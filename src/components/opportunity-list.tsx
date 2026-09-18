@@ -96,7 +96,13 @@ export function OpportunityList({
   total: number;
   page: number;
   pageSize: number;
-  filters: { search?: string; stage?: string; mineOnly: boolean };
+  filters: {
+    search?: string;
+    stage?: string;
+    mineOnly: boolean;
+    /** CD-65 */
+    followUp?: "overdue" | "stale";
+  };
   layout: OpportunityLayout;
   customers: CustomerRow[];
   /** ตัวเลือกเหตุผลปิดแพ้ — ใช้เมื่อลากการ์ดไปคอลัมน์ "แพ้". */
@@ -156,6 +162,7 @@ export function OpportunityList({
     if (merged.search) params.set("search", merged.search);
     if (merged.stage) params.set("stage", merged.stage);
     if (merged.mineOnly) params.set("view", "mine");
+    if (merged.followUp) params.set("follow_up", merged.followUp);
     if (merged.layout === "board") params.set("layout", "board");
     if (next.page && next.page > 1) params.set("page", String(next.page));
     router.push(`${ROUTES.opportunities}?${params.toString()}`);
@@ -235,6 +242,21 @@ export function OpportunityList({
             value,
             label,
           }))}
+        />
+        <SearchSelect
+          className="min-w-44"
+          allowClear
+          placeholder={m.followUp.all}
+          value={filters.followUp}
+          onChange={(value) =>
+            applyFilters({
+              followUp: (value as "overdue" | "stale" | undefined) || undefined,
+            })
+          }
+          options={[
+            { value: "overdue", label: m.followUp.overdue },
+            { value: "stale", label: m.followUp.stale },
+          ]}
         />
         <Checkbox
           checked={filters.mineOnly}
@@ -331,6 +353,21 @@ export function OpportunityList({
             width: 120,
             render: (at: string | null) =>
               at ? dayjs(at).format("D MMM YY") : "—",
+          },
+          {
+            title: m.columns.nextFollowUp,
+            key: "followUp",
+            width: 170,
+            render: (_: unknown, row) => (
+              <Space size={4} wrap>
+                <span>
+                  {row.nextFollowUpAt
+                    ? dayjs(row.nextFollowUpAt).format("D MMM YY HH:mm")
+                    : "—"}
+                </span>
+                <FollowUpTags row={row} />
+              </Space>
+            ),
           },
         ]}
       />
@@ -463,5 +500,30 @@ export function OpportunityList({
         </Space>
       </Modal>
     </div>
+  );
+}
+
+/**
+ * CD-65 — ป้ายการติดตามบนรายการและกระดาน: "เลยกำหนด" = นัดที่ค้างเลยเวลาแล้ว,
+ * "เงียบ" = ระบบแจ้งหัวหน้าไปแล้วและยังไม่มีกิจกรรมใหม่. ปิดแล้วไม่แสดง.
+ */
+export function FollowUpTags({ row }: { row: OpportunityRow }) {
+  if (row.stage === "won" || row.stage === "lost") return null;
+  const overdue =
+    row.nextFollowUpAt !== null && dayjs(row.nextFollowUpAt).isBefore(dayjs());
+
+  return (
+    <>
+      {overdue && (
+        <Tag color="red" className="mr-0!">
+          {m.followUp.overdueTag}
+        </Tag>
+      )}
+      {row.staleAlertedAt && (
+        <Tag color="orange" className="mr-0!">
+          {m.followUp.staleTag}
+        </Tag>
+      )}
+    </>
   );
 }

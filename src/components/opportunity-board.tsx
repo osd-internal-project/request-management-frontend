@@ -10,7 +10,11 @@ import {
   OPEN_OPPORTUNITY_STAGES,
   isOpportunityOpen,
 } from "@/components/opportunity-actions";
-import { formatAmount, OpportunityParty } from "@/components/opportunity-list";
+import {
+  FollowUpTags,
+  formatAmount,
+  OpportunityParty,
+} from "@/components/opportunity-list";
 import { appApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
@@ -223,6 +227,19 @@ function OpportunityCard({
             </Text>
           )}
         </div>
+
+        {/* CD-65 — นัดติดตามเลยกำหนด / ดีลเงียบ */}
+        {(opportunity.nextFollowUpAt || opportunity.staleAlertedAt) && (
+          <div className="flex flex-wrap items-center gap-1 text-xs">
+            {opportunity.nextFollowUpAt && (
+              <Text type="secondary" className="text-xs">
+                {m.columns.nextFollowUp}{" "}
+                {dayjs(opportunity.nextFollowUpAt).format("D MMM HH:mm")}
+              </Text>
+            )}
+            <FollowUpTags row={opportunity} />
+          </div>
+        )}
 
         {canManage && isOpportunityOpen(opportunity.stage) && (
           <Space size={4} className="mt-1">

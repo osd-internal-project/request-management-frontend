@@ -5,6 +5,7 @@
 import { apiGet, type ApiResult } from "../core";
 import type {
   LeadDetail,
+  OpportunityActivity,
   OpportunityDetail,
   OpportunityLostReason,
   OpportunityRow,
@@ -43,6 +44,8 @@ export async function getOpportunities(options?: {
   open?: boolean;
   customer_id?: string;
   view?: "mine";
+  /** CD-65 — `overdue` = นัดติดตามเลยกำหนด, `stale` = ถูกแจ้งว่าเงียบ. */
+  follow_up?: "overdue" | "stale";
   page?: number;
   page_size?: number;
 }): Promise<ApiResult<Paginated<OpportunityRow>>> {
@@ -52,6 +55,7 @@ export async function getOpportunities(options?: {
   if (options?.open) params.set("open", "true");
   if (options?.customer_id) params.set("customer_id", options.customer_id);
   if (options?.view) params.set("view", options.view);
+  if (options?.follow_up) params.set("follow_up", options.follow_up);
   params.set("page", String(options?.page ?? 1));
   params.set("page_size", String(options?.page_size ?? 50));
   return apiGet(`opportunities?${params.toString()}`);
@@ -59,6 +63,13 @@ export async function getOpportunities(options?: {
 
 export async function getOpportunity(id: string): Promise<ApiResult<OpportunityDetail>> {
   return apiGet(`opportunities/${id}`);
+}
+
+/** CD-65 กิจกรรมและนัดติดตาม — ใหม่สุดก่อน. */
+export async function getOpportunityActivities(
+  id: string,
+): Promise<ApiResult<OpportunityActivity[]>> {
+  return apiGet(`opportunities/${id}/activities`);
 }
 
 export async function getLostReasons(): Promise<ApiResult<OpportunityLostReason[]>> {
