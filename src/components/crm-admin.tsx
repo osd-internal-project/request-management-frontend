@@ -17,6 +17,7 @@ import {
   Tag,
 } from "antd";
 import Text from "antd/es/typography/Text";
+import { LetterheadSettings } from "@/components/letterhead-settings";
 import { adminApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
 import type {
@@ -71,6 +72,7 @@ export function CrmAdmin({
       <SegmentSection dimensions={dimensions} onCall={call} />
       <KycProductSection rows={kycProducts} onCall={call} />
       <ConfigSection config={config} docPrefix={docPrefix} onCall={call} />
+      <LetterheadSettings config={config} onCall={call} />
     </div>
   );
 }

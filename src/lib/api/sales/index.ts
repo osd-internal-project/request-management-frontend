@@ -12,6 +12,7 @@ import type {
   LeadRow,
   Paginated,
   QuotationDetail,
+  QuotationPrintView,
   QuotationRow,
   QuotationStatus,
   SaleOrderRow,
@@ -102,6 +103,13 @@ export async function getQuotations(options?: {
 
 export async function getQuotation(id: string): Promise<ApiResult<QuotationDetail>> {
   return apiGet(`quotations/${id}`);
+}
+
+/** ฉบับส่งลูกค้า — หัวกระดาษ + ผู้ซื้อ + รายการ, ไม่มีต้นทุน/margin. */
+export async function getQuotationPrint(
+  id: string,
+): Promise<ApiResult<QuotationPrintView>> {
+  return apiGet(`quotations/${id}/print`);
 }
 
 /** ใบสั่งขาย (CD-77 โครงระยะ 1). */

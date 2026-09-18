@@ -20,6 +20,7 @@ import {
 } from "antd";
 import Text from "antd/es/typography/Text";
 import Title from "antd/es/typography/Title";
+import { PrinterOutlined } from "@ant-design/icons";
 import dayjs, { type Dayjs } from "dayjs";
 import { formatAmount } from "@/components/opportunity-list";
 import { formatMargin, QuotationStatusTags } from "@/components/quotation-list";
@@ -367,8 +368,20 @@ export function QuotationDetailView({
           <QuotationStatusTags row={quotation} />
         </div>
 
-        {canManage && (
-          <Space wrap>
+        <Space wrap>
+          {/* ฉบับพิมพ์ — ทุกคนที่อ่านได้; พิมพ์ของที่บันทึกแล้วเท่านั้น */}
+          {dirty ? (
+            // A disabled button inside a Link still follows the link.
+            <Button icon={<PrinterOutlined />} disabled>
+              {md.print}
+            </Button>
+          ) : (
+            <Link href={ROUTES.quotationPrint(quotation.id)} target="_blank">
+              <Button icon={<PrinterOutlined />}>{md.print}</Button>
+            </Link>
+          )}
+          {canManage && (
+          <>
             {isDraft && (
               <>
                 <Button loading={busy} disabled={!dirty} onClick={() => void save()}>
@@ -408,8 +421,9 @@ export function QuotationDetailView({
                 {md.cancel}
               </Button>
             )}
-          </Space>
-        )}
+          </>
+          )}
+        </Space>
       </div>
 
       <Card size="small">

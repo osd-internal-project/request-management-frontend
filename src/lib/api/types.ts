@@ -999,7 +999,7 @@ export type QuotationStatus =
   | "cancelled";
 
 /** Decimal columns arrive as strings. */
-type Money = string | number;
+export type Money = string | number;
 
 /**
  * ใบเสนอราคา (CD-76) — หนึ่งแถวต่อเวอร์ชัน. `costTotal`/`marginAmount`/`marginPct`
@@ -1227,6 +1227,18 @@ export interface CrmConfig {
   quotationApprovalTypeCode: string;
   /** CD-65 — ดีลเปิดที่ไม่มีกิจกรรมเกินกี่วันจึงแจ้งหัวหน้า; 0 = ปิด. */
   staleOpportunityDays: number;
+  /** หัวกระดาษใบเสนอราคา — null = ไม่ได้ตั้ง. */
+  letterheadNameTh: string | null;
+  letterheadNameEn: string | null;
+  letterheadTaxId: string | null;
+  letterheadBranch: string | null;
+  letterheadAddress: string | null;
+  letterheadPhone: string | null;
+  letterheadEmail: string | null;
+  letterheadWebsite: string | null;
+  /** data URL (png/jpeg/webp). */
+  letterheadLogo: string | null;
+  quotationTerms: string | null;
 }
 
 /** CM-07 — one assignable value with its dimension, for pickers and filters. */
@@ -1257,4 +1269,63 @@ export interface NotificationPreferences {
   email: boolean;
   /** false until SMTP exists (open question B) — the screen says so. */
   email_delivery_available: boolean;
+}
+
+/** `GET /quotations/:id/print` — the customer's copy; never carries cost or margin. */
+export interface QuotationPrintView {
+  quotation: {
+    id: string;
+    quotationNo: string;
+    version: number;
+    status: QuotationStatus;
+    title: string;
+    currency: string;
+    validUntil: string | null;
+    paymentTerms: string | null;
+    note: string | null;
+    partyName: string;
+    partyTaxId: string | null;
+    contactName: string | null;
+    subtotal: Money;
+    discountTotal: Money;
+    netTotal: Money;
+    vatPct: Money;
+    vatAmount: Money;
+    grandTotal: Money;
+    createdAt: string;
+    sentAt: string | null;
+    lines: {
+      lineNo: number;
+      productCode: string | null;
+      description: string;
+      quantity: Money;
+      unit: string | null;
+      unitPrice: Money;
+      discountPct: Money;
+      lineTotal: Money;
+    }[];
+  };
+  billTo: {
+    name: string;
+    customerCode: string | null;
+    taxId: string | null;
+    branch: string | null;
+    address: string | null;
+    contactName: string | null;
+  };
+  seller: { name: string; email: string | null } | null;
+  letterhead: {
+    nameTh: string;
+    nameEn: string | null;
+    taxId: string | null;
+    branch: string | null;
+    address: string | null;
+    phone: string | null;
+    email: string | null;
+    website: string | null;
+    logo: string | null;
+    terms: string | null;
+  };
+  /** false = draft / awaiting approval — the page watermarks it. */
+  isFinal: boolean;
 }
