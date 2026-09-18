@@ -1,11 +1,11 @@
 "use client";
 
-import { BellOutlined } from "@ant-design/icons";
 import { Avatar, Dropdown, Layout, Menu } from "antd";
 import { usePathname, useRouter } from "next/navigation";
 import { useMemo } from "react";
 import type { MenuEntry } from "@/app/configs/menu";
 import { CompanySwitcher } from "@/components/company-switcher";
+import { NotificationBell } from "@/components/notification-bell";
 import { messages } from "@/lib/messages";
 
 const { Header, Content, Footer, Sider } = Layout;
@@ -32,10 +32,13 @@ export interface ShellUser {
 export function AppShell({
   user,
   menus,
+  canReadNotifications,
   children,
 }: {
   user: ShellUser;
   menus: MenuEntry[];
+  /** SUP-03 — no bell (and no polling) for someone who cannot read the inbox. */
+  canReadNotifications: boolean;
   children: React.ReactNode;
 }) {
   const router = useRouter();
@@ -106,7 +109,7 @@ export function AppShell({
               activeCompanyId={user.activeCompanyId}
             />
             <div className="flex items-center gap-3">
-              <BellOutlined className="text-lg text-gray-600" />
+              {canReadNotifications && <NotificationBell />}
               <span className="text-sm text-gray-700">{user.displayName}</span>
               <Dropdown
                 menu={{ items: avatarDropdownItems }}

@@ -893,9 +893,8 @@ export interface LeadRow {
  * กิจกรรมบน Lead — ไม่มี `dueAt` = บันทึกสิ่งที่ทำไปแล้ว (ปิดตั้งแต่สร้าง),
  * มี `dueAt` = นัด/งานที่ต้องตามต่อ จน `completedAt` ถูกติ๊ก.
  */
-export interface LeadActivity {
+export interface SalesActivity {
   id: string;
-  leadId: string;
   type: LeadActivityType;
   subject: string;
   detail: string | null;
@@ -906,6 +905,15 @@ export interface LeadActivity {
   createdAt: string;
   createdBy: string;
   createdByName: string;
+}
+
+export interface LeadActivity extends SalesActivity {
+  leadId: string;
+}
+
+/** CD-65 — `GET /opportunities/:id/activities`, รูปเดียวกับกิจกรรมของ Lead. */
+export interface OpportunityActivity extends SalesActivity {
+  opportunityId: string;
 }
 
 /** `GET /leads/:id` — หน้ารายละเอียด Lead. */
@@ -945,6 +953,12 @@ export interface OpportunityRow {
   prospectName: string | null;
   prospectTaxId: string | null;
   ownerUserId: string;
+  /** CD-65 — กิจกรรมที่ทำเสร็จล่าสุด (null = ยังไม่เคยมี). */
+  lastActivityAt: string | null;
+  /** นัดติดตามที่ใกล้ที่สุดที่ยังไม่เสร็จ. */
+  nextFollowUpAt: string | null;
+  /** ไม่ว่าง = ระบบแจ้งหัวหน้าแล้วว่าดีลเงียบเกินเกณฑ์ และยังไม่มีกิจกรรมใหม่. */
+  staleAlertedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -985,7 +999,7 @@ export type QuotationStatus =
   | "cancelled";
 
 /** Decimal columns arrive as strings. */
-type Money = string | number;
+export type Money = string | number;
 
 /**
  * ใบเสนอราคา (CD-76) — หนึ่งแถวต่อเวอร์ชัน. `costTotal`/`marginAmount`/`marginPct`
@@ -1211,6 +1225,20 @@ export interface CrmConfig {
   quotationValidityDays: number;
   vatPct: number;
   quotationApprovalTypeCode: string;
+  /** CD-65 — ดีลเปิดที่ไม่มีกิจกรรมเกินกี่วันจึงแจ้งหัวหน้า; 0 = ปิด. */
+  staleOpportunityDays: number;
+  /** หัวกระดาษใบเสนอราคา — null = ไม่ได้ตั้ง. */
+  letterheadNameTh: string | null;
+  letterheadNameEn: string | null;
+  letterheadTaxId: string | null;
+  letterheadBranch: string | null;
+  letterheadAddress: string | null;
+  letterheadPhone: string | null;
+  letterheadEmail: string | null;
+  letterheadWebsite: string | null;
+  /** data URL (png/jpeg/webp). */
+  letterheadLogo: string | null;
+  quotationTerms: string | null;
 }
 
 /** CM-07 — one assignable value with its dimension, for pickers and filters. */
@@ -1220,4 +1248,84 @@ export interface SegmentOption {
   nameTh: string;
   sortOrder: number;
   dimension: { id: string; code: string; nameTh: string; sortOrder: number };
+}
+
+/** SUP-03 — one in-app notification (`GET /notifications`). */
+export interface AppNotification {
+  id: string;
+  eventType: string;
+  title: string;
+  body: string;
+  /** `request` · `approval_case` · `opportunity` — what the row points at. */
+  resourceType: string | null;
+  resourceId: string | null;
+  readAt: string | null;
+  createdAt: string;
+}
+
+export interface NotificationPreferences {
+  in_app: true;
+  in_app_locked: true;
+  email: boolean;
+  /** false until SMTP exists (open question B) — the screen says so. */
+  email_delivery_available: boolean;
+}
+
+/** `GET /quotations/:id/print` — the customer's copy; never carries cost or margin. */
+export interface QuotationPrintView {
+  quotation: {
+    id: string;
+    quotationNo: string;
+    version: number;
+    status: QuotationStatus;
+    title: string;
+    currency: string;
+    validUntil: string | null;
+    paymentTerms: string | null;
+    note: string | null;
+    partyName: string;
+    partyTaxId: string | null;
+    contactName: string | null;
+    subtotal: Money;
+    discountTotal: Money;
+    netTotal: Money;
+    vatPct: Money;
+    vatAmount: Money;
+    grandTotal: Money;
+    createdAt: string;
+    sentAt: string | null;
+    lines: {
+      lineNo: number;
+      productCode: string | null;
+      description: string;
+      quantity: Money;
+      unit: string | null;
+      unitPrice: Money;
+      discountPct: Money;
+      lineTotal: Money;
+    }[];
+  };
+  billTo: {
+    name: string;
+    customerCode: string | null;
+    taxId: string | null;
+    branch: string | null;
+    address: string | null;
+    contactName: string | null;
+  };
+  seller: { name: string; email: string | null } | null;
+  letterhead: {
+    nameTh: string;
+    nameEn: string | null;
+    taxId: string | null;
+    branch: string | null;
+    address: string | null;
+    phone: string | null;
+    email: string | null;
+    website: string | null;
+    logo: string | null;
+    terms: string | null;
+  };
+  /** false = draft / awaiting approval — the page watermarks it. */
+  isFinal: boolean;
 }
