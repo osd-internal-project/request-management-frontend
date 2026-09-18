@@ -21,7 +21,7 @@ import type {
   RoleHolder,
   RoleRow,
 } from "@/lib/api/types";
-import { messages } from "@/lib/messages";
+import { messages, thaiForPermission } from "@/lib/messages";
 import { ORG_UNIT_LEVELS } from "@/lib/org-levels";
 import { SearchSelect } from "./search-select";
 
@@ -63,11 +63,6 @@ const GROUPS = [
     modules: ["admin", "audit"],
     label: messages.roleAdmin.groups.adminAudit,
   },
-  {
-    key: "integration",
-    modules: ["integration"],
-    label: messages.roleAdmin.groups.integration,
-  },
 ] as const;
 
 /** Where a module nobody has placed yet lands, rather than off the screen. */
@@ -89,27 +84,30 @@ interface PermissionColumn {
 function columnsFor(
   permissions: readonly PermissionRow[],
 ): readonly PermissionColumn[] {
+  // AUTH-06 — สิทธิ์ของบัญชีบริการออกให้กุญแจที่หน้า "กุญแจ API" ไม่ใช่ให้คน และ
+  // backend ปฏิเสธ role ที่ถือมันแล้ว (`assertHumanPermissions`) การแสดงช่องที่ติ๊ก
+  // แล้วบันทึกไม่ได้คือการเชิญให้คนลองแล้วเจอ 422
+  //
+  // กรองด้วย `type` ไม่ใช่ชื่อ module: module เป็นที่เก็บ `type` เป็นคำตอบ
+  const human = permissions.filter((permission) => permission.type !== "service");
+
   const placed = new Set<string>(GROUPS.flatMap((group) => [...group.modules]));
 
   const known = GROUPS.map((group) => ({
     key: group.key,
     label: group.label,
-    rows: permissions.filter((permission) =>
+    rows: human.filter((permission) =>
       (group.modules as readonly string[]).includes(permission.module),
     ),
   }));
 
-  const rest = permissions.filter(
-    (permission) => !placed.has(permission.module),
-  );
+  // ยังต้องมี: module ของ *คน* ตัวใหม่ที่ยังไม่มีใครจัดกลุ่มต้องไม่หายไปจากหน้าจอ
+  // เหมือนตอนที่ `crm.*` ทั้งเก้าตัวหายไปโดยไม่มีใครเห็น
+  const rest = human.filter((permission) => !placed.has(permission.module));
 
   return [...known, { ...OTHER_GROUP, rows: rest }].filter(
     (column) => column.rows.length > 0,
   );
-}
-
-function thaiFor(code: string): string {
-  return messages.roleAdmin.permission[code] ?? "";
 }
 
 /** `23 ส.ค.` — the date form §16 A4 uses in its change list. */
@@ -452,6 +450,10 @@ export function RolePermissionAdmin({
               )}
             </div>
 
+            <Paragraph type="secondary" className="mb-0! text-xs">
+              {messages.roleAdmin.serviceScopeHint}
+            </Paragraph>
+
             {columns.map((group) => {
               const { rows } = group;
 
@@ -461,32 +463,36 @@ export function RolePermissionAdmin({
                     {group.label}
                   </Text>
 
-                  {rows.every((row) => row.type === "service") && (
-                    <Paragraph
-                      type="secondary"
-                      className="mt-1! mb-0! text-xs"
-                    >
-                      {messages.roleAdmin.serviceScopeHint}
-                    </Paragraph>
-                  )}
-
                   <div className="mt-2 grid gap-2 sm:grid-cols-2">
                     {rows.map((permission) => {
-                      const locked =
+                      // ล็อกเฉพาะช่องที่ยังไม่ติ๊ก — กันการ *เพิ่ม* สิทธิ์ต้องห้าม
+                      // ช่องที่ติ๊กอยู่แล้วต้องเอาออกได้เสมอ ไม่อย่างนั้น role ที่ถือ
+                      // ทั้งสองอย่างมาก่อน (เช่น `uat_superadmin`) จะแก้ให้ถูกไม่ได้เลย
+                      // เพราะช่องกดไม่ได้ แต่ทุกการบันทึกยังส่งค่านั้นไปโดน 422
+                      const forbidden =
                         holdsAdmin &&
                         FORBIDDEN_WITH_ADMIN.includes(permission.code);
+                      const locked =
+                        forbidden && !checked.includes(permission.code);
+                      // ติ๊กค้างอยู่ทั้งที่ต้องห้าม — backend จะปฏิเสธทุกการบันทึกจนกว่า
+                      // จะเอาออก บอกไว้ตรงนี้ ไม่ใช่ให้ไปเจอเอาตอนกดบันทึกแล้วไม่ผ่าน
+                      const conflicting = forbidden && !locked;
 
                       return (
                         <Tooltip
                           key={permission.code}
                           title={
-                            locked ? messages.roleAdmin.adminLockedHint : null
+                            forbidden
+                              ? messages.roleAdmin.adminLockedHint
+                              : null
                           }
                         >
                           <label
-                            className={`flex items-start gap-2 rounded border border-black/5 p-2 ${
-                              locked ? "opacity-50" : ""
-                            }`}
+                            className={`flex items-start gap-2 rounded border p-2 ${
+                              conflicting
+                                ? "border-red-400"
+                                : "border-black/5"
+                            } ${locked ? "opacity-50" : ""}`}
                           >
                             <Checkbox
                               checked={checked.includes(permission.code)}
@@ -500,7 +506,7 @@ export function RolePermissionAdmin({
                                 {permission.code}
                               </code>
                               <Text type="secondary" className="text-xs">
-                                {thaiFor(permission.code)}
+                                {thaiForPermission(permission.code)}
                               </Text>
                             </span>
                           </label>

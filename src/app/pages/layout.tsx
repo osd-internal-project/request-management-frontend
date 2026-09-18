@@ -58,6 +58,7 @@ export default async function DashboardLayout({
         })),
       }}
       menus={accessMenuItems(session, biDashboards)}
+      canReadNotifications={session.permissions.includes("notification.read")}
     >
       {/* AUTH-02. The two durations are server env, so they reach the browser
           as props rather than as NEXT_PUBLIC_ variables. */}

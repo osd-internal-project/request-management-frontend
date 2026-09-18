@@ -83,9 +83,13 @@ export const ROUTES = {
   leadDetail: (id: string) => `${HOME_PATH}/leads/${id}`,
   opportunities: `${HOME_PATH}/opportunities`,
   opportunityDetail: (id: string) => `${HOME_PATH}/opportunities/${id}`,
+  /** SUP-03 กล่องแจ้งเตือน */
+  notifications: `${HOME_PATH}/notifications`,
   /** CD-76 ใบเสนอราคา — ทะเบียน และหน้ารายละเอียดต่อเวอร์ชัน (แก้ร่างในหน้าเดียวกัน). */
   quotations: `${HOME_PATH}/quotations`,
   quotationDetail: (id: string) => `${HOME_PATH}/quotations/${id}`,
+  /** ฉบับพิมพ์ A4 — นอก app shell, พิมพ์ / บันทึก PDF จากเบราว์เซอร์. */
+  quotationPrint: (id: string) => `/print/quotations/${id}`,
   /** หน้ารายละเอียดลูกค้า — จะโตเป็นมุมมอง 360° (C360). */
   customerDetail: (id: string) => `${HOME_PATH}/customers/${id}`,
   customerEdit: (id: string) => `${HOME_PATH}/customers/${id}/edit`,

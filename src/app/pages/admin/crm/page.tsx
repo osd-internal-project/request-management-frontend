@@ -65,6 +65,17 @@ export default async function CrmAdminPage() {
                 quotationValidityDays: 30,
                 vatPct: 7,
                 quotationApprovalTypeCode: "DSC",
+                staleOpportunityDays: 14,
+                letterheadNameTh: null,
+                letterheadNameEn: null,
+                letterheadTaxId: null,
+                letterheadBranch: null,
+                letterheadAddress: null,
+                letterheadPhone: null,
+                letterheadEmail: null,
+                letterheadWebsite: null,
+                letterheadLogo: null,
+                quotationTerms: null,
               }
         }
         docPrefix={

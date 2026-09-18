@@ -25,7 +25,7 @@ src/lib/api/
 ├── admin/                       # Admin features (matrix, types, SLA)
 │   └── index.ts                 # getApprovalMatrix(), getAdminRequestTypes(), etc.
 └── notifications/               # Notifications entity
-    └── index.ts                 # getNotifications(), getNotification()
+    └── index.ts                 # getNotifications(), getUnreadCount(), getNotificationPreferences()
 ```
 
 ## Usage
@@ -159,7 +159,7 @@ import notifications from "@/lib/api/notifications";
 await notifications.getNotifications();
 
 // Single notification
-await notifications.getNotification(notificationId);
+await notifications.getUnreadCount();
 ```
 
 ## Shared Types

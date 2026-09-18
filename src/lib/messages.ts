@@ -224,7 +224,7 @@ export const messages = {
       "request.return": "ตีกลับ",
       "request.cancel.any": "ยกเลิก",
       "approval.decide": "อนุมัติ",
-    } as Record<string, string>,
+    },
     permissionsPlaceholder: "อ่านอย่างเดียว",
     columnRemove: "",
     remove: "ลบ",
@@ -333,9 +333,12 @@ export const messages = {
       other: "อื่น ๆ",
     },
 
-    /** AUTH-06 — คำอธิบาย ไม่ใช่การปิดกั้น: ติ๊กได้ตามปกติ. */
+    /**
+     * AUTH-06 — ตอนนี้เป็นการปิดกั้นจริง ไม่ใช่คำอธิบายแล้ว: หน้านี้ไม่แสดงสิทธิ์ของ
+     * บัญชีบริการอีก และ backend ก็ปฏิเสธ role ที่ถือมัน.
+     */
     serviceScopeHint:
-      "สิทธิ์ของบัญชีบริการ — ปกติออกให้กุญแจ API ที่หน้า “กุญแจ API” ไม่ใช่ให้คน",
+      "สิทธิ์ของบัญชีบริการ (integration.*) ไม่อยู่ในหน้านี้ — ออกให้กุญแจที่หน้า “กุญแจ API”",
 
     /** Thai next to each permission code, as the mockup prints them. */
     permission: {
@@ -939,7 +942,7 @@ export const messages = {
     step: (current: number, total: number) => `ขั้น ${current}/${total}`,
     status: {
       draft: "ร่าง",
-      submitted: "ยื่นแล้ว",
+      submitted: "รอรับ",
       pending_approval: "รออนุมัติ",
       returned: "ตีกลับ",
       approved: "อนุมัติแล้ว",
@@ -1170,6 +1173,13 @@ export const messages = {
     formSourceInvalid: "ใช้ได้เฉพาะตัวพิมพ์เล็ก ตัวเลข และขีด",
     formScopes: "สิทธิ์ที่กุญแจใบนี้ถือ",
     formScopesHint: "ไม่มีค่าตั้งต้น — ติ๊กเท่าที่ช่องทางนั้นต้องใช้จริง",
+    /** หัวข้อย่อยของ `integration.<area>.*` — จัดกลุ่มตามโมดูลที่กุญแจไปแตะ. */
+    scopeAreas: {
+      request: "คำขอ",
+      approval: "อนุมัติ",
+      crm: "CRM",
+      other: "อื่น ๆ",
+    } as Record<string, string>,
     formExpires: "อายุ (วัน)",
     formExpiresHint: "ไม่ระบุ = ไม่หมดอายุ เพิกถอนเอาเท่านั้น",
     save: "ออกกุญแจ",
@@ -1180,6 +1190,81 @@ export const messages = {
     issuedDone: "คัดลอกแล้ว ปิดหน้าต่าง",
   },
 
+  /** ใบเสนอราคาฉบับพิมพ์ (A4) */
+  quotationPrint: {
+    docTitle: "ใบเสนอราคา",
+    docTitleEn: "QUOTATION",
+    print: "พิมพ์ / บันทึก PDF",
+    back: "กลับไปหน้าใบเสนอราคา",
+    printHint: "ในหน้าต่างพิมพ์ เลือก \"บันทึกเป็น PDF\" เพื่อได้ไฟล์ — ตั้งกระดาษ A4 และปิด \"ส่วนหัวและท้ายกระดาษ\"",
+    draftWatermark: "ร่าง",
+    draftBanner: "ใบนี้ยังไม่ผ่านการอนุมัติ — ฉบับพิมพ์มีลายน้ำ \"ร่าง\" และไม่ควรส่งลูกค้า",
+    taxId: "เลขประจำตัวผู้เสียภาษี",
+    tel: "โทร",
+    email: "อีเมล",
+    no: "เลขที่",
+    version: "ฉบับที่",
+    date: "วันที่",
+    validUntil: "ยืนราคาถึง",
+    customer: "ลูกค้า",
+    customerCode: "รหัสลูกค้า",
+    address: "ที่อยู่",
+    attention: "เรียน",
+    subject: "เรื่อง",
+    salesperson: "ผู้เสนอราคา",
+    paymentTerms: "เงื่อนไขการชำระเงิน",
+    col: {
+      no: "ลำดับ",
+      description: "รายการ",
+      qty: "จำนวน",
+      unit: "หน่วย",
+      unitPrice: "ราคา/หน่วย",
+      discount: "ส่วนลด",
+      amount: "จำนวนเงิน",
+    },
+    subtotal: "รวมเป็นเงิน",
+    discount: "หักส่วนลด",
+    net: "ยอดหลังหักส่วนลด",
+    vat: (pct: string) => `ภาษีมูลค่าเพิ่ม ${pct}%`,
+    grandTotal: "ยอดรวมทั้งสิ้น",
+    note: "หมายเหตุ",
+    terms: "เงื่อนไข",
+    signQuoter: "ผู้เสนอราคา",
+    signApprover: "ผู้อนุมัติ",
+    signCustomer: "ลูกค้ายืนยันการสั่งซื้อ",
+    signDate: "วันที่ ______/______/______",
+    loadFailed: "โหลดใบเสนอราคาไม่สำเร็จ",
+  },
+  /** SUP-03 กล่องแจ้งเตือน */
+  notifications: {
+    title: "การแจ้งเตือน",
+    bellLabel: "การแจ้งเตือน",
+    latest: "การแจ้งเตือนล่าสุด",
+    viewAll: "ดูทั้งหมด",
+    markAllRead: "อ่านทั้งหมดแล้ว",
+    markRead: "ทำเครื่องหมายว่าอ่านแล้ว",
+    allMarked: "ทำเครื่องหมายอ่านแล้วทั้งหมด",
+    empty: "ยังไม่มีการแจ้งเตือน",
+    emptyUnread: "ไม่มีการแจ้งเตือนที่ยังไม่อ่าน",
+    loadFailed: "โหลดการแจ้งเตือนไม่สำเร็จ",
+    filter: { all: "ทั้งหมด", unread: "ยังไม่อ่าน" },
+    unreadCount: (n: number) => `ยังไม่อ่าน ${n} รายการ`,
+    scopeNote: "แสดงการแจ้งเตือนของบริษัทที่เลือกอยู่ — สลับบริษัทเพื่อดูของบริษัทอื่น",
+    open: "เปิดรายการ",
+    resource: {
+      request: "คำขอ",
+      approval_case: "งานอนุมัติ",
+      opportunity: "โอกาสการขาย",
+    } as Record<string, string>,
+    preferences: {
+      title: "ช่องทางการแจ้งเตือน",
+      inApp: "ในระบบ (เปิดเสมอ)",
+      email: "อีเมล",
+      emailUnavailable:
+        "ยังส่งอีเมลจริงไม่ได้จนกว่าจะตั้งค่าเซิร์ฟเวอร์อีเมล — ระบบบันทึกความต้องการของคุณไว้ก่อน",
+      saved: "บันทึกการตั้งค่าแล้ว",
+    },
+  },
   common: {
     loadError: "โหลดข้อมูลไม่สำเร็จ",
     retry: "ลองใหม่",
@@ -1458,6 +1543,15 @@ export const messages = {
         stage: "ขั้น",
         amount: "มูลค่า",
         expectedClose: "คาดปิด",
+        nextFollowUp: "ติดตามครั้งถัดไป",
+      },
+      /** CD-65 */
+      followUp: {
+        all: "การติดตาม: ทั้งหมด",
+        overdue: "นัดติดตามเลยกำหนด",
+        stale: "ดีลเงียบเกินเกณฑ์",
+        staleTag: "เงียบ",
+        overdueTag: "เลยกำหนด",
       },
       /** PO 10 ก.ย. 2569: การเปิดโอกาสการขายยังไม่ถือเป็นลูกค้า */
       prospectTag: "ยังไม่เป็นลูกค้า",
@@ -1554,6 +1648,19 @@ export const messages = {
         noRequests: "ยังไม่มีคำขอที่อ้างโอกาสการขายนี้",
         edit: "แก้ไข",
         quotationsTitle: "ใบเสนอราคา",
+        /** CD-65 กิจกรรมและการติดตาม */
+        activitiesTitle: "กิจกรรมและการติดตาม",
+        pendingTitle: "นัดติดตามที่ค้างอยู่",
+        doneTitle: (n: number) => `ทำแล้ว · ${n}`,
+        noPending: "ไม่มีนัดติดตามค้าง — ใส่กำหนดตอนลงกิจกรรมเพื่อนัดครั้งถัดไป",
+        noActivities: "ยังไม่มีกิจกรรม",
+        lastActivity: "กิจกรรมล่าสุด",
+        nextFollowUp: "ติดตามครั้งถัดไป",
+        neverActive: "ยังไม่เคยมีกิจกรรม",
+        staleBanner: (when: string) =>
+          `โอกาสการขายนี้ไม่มีกิจกรรมเกินเกณฑ์ที่ตั้งไว้ — ระบบแจ้งเจ้าของและหัวหน้าแล้วเมื่อ ${when}`,
+        staleHint: "ลงกิจกรรมที่ทำแล้วเพื่อล้างสถานะนี้",
+        closedActivitiesHint: "โอกาสการขายนี้ปิดแล้ว — ลงกิจกรรมเพิ่มไม่ได้",
         newQuotation: "สร้างใบเสนอราคา",
         noQuotations: "ยังไม่มีใบเสนอราคา",
         saleOrderQuotation: "เปิดตามใบเสนอราคาที่ลูกค้ายอมรับ",
@@ -1652,6 +1759,7 @@ export const messages = {
         submitHint:
           "ระบบจะเทียบ margin กับเกณฑ์ของบริษัท — ผ่านเกณฑ์อนุมัติทันที ต่ำกว่าเกณฑ์ต้องขออนุมัติก่อนส่งลูกค้า",
         submitDirtyFirst: "บันทึกร่างก่อนยื่น",
+        print: "พิมพ์ / PDF",
         approvedNow: "ผ่านการตรวจ margin — อนุมัติแล้ว พร้อมส่งลูกค้า",
         reasonTitle: "margin ต่ำกว่าเกณฑ์ — ต้องขออนุมัติ",
         reasonHint:
@@ -2045,11 +2153,47 @@ export const messages = {
       quotationApprovalTypeCode: "ประเภทคำขอที่ใช้ขออนุมัติ margin ต่ำ",
       quotationHint:
         "ใบเสนอราคาที่ margin ต่ำกว่าเกณฑ์ต้องผ่านคำขออนุมัติก่อนส่งลูกค้า — เกณฑ์ที่ใช้ถูกเก็บลงใบตอนยื่น แก้ค่าที่นี่ไม่ตัดสินใบเดิมใหม่ · ประเภทคำขอต้องเปิดให้บริษัทนี้ใช้",
+      letterhead: {
+        title: "หัวกระดาษใบเสนอราคา",
+        hint: "ข้อมูลตามทะเบียนของบริษัทผู้ขายที่พิมพ์บนใบเสนอราคา — ช่องที่เว้นว่างจะไม่แสดงบนเอกสาร (ชื่อบริษัทว่าง = ใช้ชื่อบริษัทในระบบ)",
+        logo: "โลโก้",
+        noLogo: "ยังไม่มีโลโก้",
+        chooseLogo: "เลือกไฟล์โลโก้",
+        removeLogo: "ลบโลโก้",
+        logoHint: "png, jpeg หรือ webp ไม่เกิน 360KB — แนะนำพื้นหลังโปร่งใส สูงประมาณ 200px",
+        logoType: "โลโก้ต้องเป็นไฟล์ png, jpeg หรือ webp",
+        logoTooLarge: "ไฟล์โลโก้ใหญ่เกิน 360KB — ย่อขนาดก่อนอัปโหลด",
+        nameTh: "ชื่อบริษัท (ไทย) ตามทะเบียน",
+        nameEn: "ชื่อบริษัท (อังกฤษ)",
+        taxId: "เลขประจำตัวผู้เสียภาษี",
+        branch: "สำนักงานใหญ่ / สาขา",
+        address: "ที่อยู่",
+        phone: "โทรศัพท์",
+        email: "อีเมล",
+        website: "เว็บไซต์",
+        terms: "เงื่อนไขมาตรฐานท้ายใบเสนอราคา",
+        termsPlaceholder: "เช่น 1. ราคานี้รวมค่าติดตั้งแล้ว\n2. รับประกันอุปกรณ์ 1 ปี",
+        save: "บันทึกหัวกระดาษ",
+      },
+      sectionFollowUp: "การติดตามโอกาสการขาย",
+      staleOpportunityDays: "แจ้งหัวหน้าเมื่อดีลไม่มีกิจกรรมเกิน (วัน)",
+      staleHint:
+        "นับจากกิจกรรมที่ทำเสร็จล่าสุด (ยังไม่เคยมี = นับจากวันเปิด) · ระบบตรวจทุกชั่วโมงและแจ้งเจ้าของดีลกับหัวหน้าครั้งเดียวจนกว่าจะมีกิจกรรมใหม่ · 0 = ปิดการแจ้ง",
       save: "บันทึกการตั้งค่า",
       saved: "บันทึกแล้ว",
     },
   },
 } as const;
+
+/**
+ * คำอธิบายไทยของรหัสสิทธิ์ — ว่างถ้ายังไม่มีคำแปล.
+ *
+ * อยู่ตรงนี้เพราะทั้งหน้า Role และหน้ากุญแจ API ต้องใช้ สำเนาที่สองคือสำเนาที่จะลืมอัปเดต
+ */
+export function thaiForPermission(code: string): string {
+  const labels: Record<string, string> = messages.roleAdmin.permission;
+  return labels[code] ?? "";
+}
 
 /** Maps a callback `?error=` code to Thai copy, with a safe fallback. */
 export function loginErrorMessage(code: string | null | undefined): string | null {
