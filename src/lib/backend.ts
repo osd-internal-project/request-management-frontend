@@ -46,6 +46,11 @@ export function backendUrl(path: string): string {
  *
  * Written out per route rather than shortened to `/admin/sla`: a prefix that
  * happens to match two paths is a prefix that will match a third by accident.
+ *
+ * Only these two services are reachable from here. external-service is a
+ * separate deployable that outside systems call directly with an `rfk_` key,
+ * never through this BFF — its `/request`, `/crm`, `/approval` and `/mcp`
+ * prefixes do not belong in this list.
  */
 export const CORE_SERVICE_PREFIXES = [
   "/approvals",
@@ -59,15 +64,6 @@ export const CORE_SERVICE_PREFIXES = [
   "/requests",
   "/request-types",
   "/reports",
-  "/integrations",
-  /*
-    The chatbot API. No screen calls it — an outside system does, with a
-    service-account token this frontend never holds. Listed anyway because
-    this array is what says which service owns a prefix, and an unlisted one
-    silently resolves to user-service, where a future mistake would 404 with
-    nothing explaining why.
-  */
-  "/external",
   "/admin/api-keys",
   "/admin/approval-matrix",
   "/admin/bi",
