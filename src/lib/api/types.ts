@@ -1237,3 +1237,24 @@ export interface SegmentOption {
   sortOrder: number;
   dimension: { id: string; code: string; nameTh: string; sortOrder: number };
 }
+
+/** SUP-03 — one in-app notification (`GET /notifications`). */
+export interface AppNotification {
+  id: string;
+  eventType: string;
+  title: string;
+  body: string;
+  /** `request` · `approval_case` · `opportunity` — what the row points at. */
+  resourceType: string | null;
+  resourceId: string | null;
+  readAt: string | null;
+  createdAt: string;
+}
+
+export interface NotificationPreferences {
+  in_app: true;
+  in_app_locked: true;
+  email: boolean;
+  /** false until SMTP exists (open question B) — the screen says so. */
+  email_delivery_available: boolean;
+}

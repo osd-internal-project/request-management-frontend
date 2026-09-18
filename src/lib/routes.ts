@@ -83,6 +83,8 @@ export const ROUTES = {
   leadDetail: (id: string) => `${HOME_PATH}/leads/${id}`,
   opportunities: `${HOME_PATH}/opportunities`,
   opportunityDetail: (id: string) => `${HOME_PATH}/opportunities/${id}`,
+  /** SUP-03 กล่องแจ้งเตือน */
+  notifications: `${HOME_PATH}/notifications`,
   /** CD-76 ใบเสนอราคา — ทะเบียน และหน้ารายละเอียดต่อเวอร์ชัน (แก้ร่างในหน้าเดียวกัน). */
   quotations: `${HOME_PATH}/quotations`,
   quotationDetail: (id: string) => `${HOME_PATH}/quotations/${id}`,
