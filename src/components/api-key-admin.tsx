@@ -23,6 +23,7 @@ import {
   listApiKeys,
   listApiKeyScopes,
   revokeApiKey,
+  updateApiKeyScopes,
   type ApiKeyRow,
   type IssuedApiKey,
 } from "@/lib/api/api-keys";
@@ -78,6 +79,44 @@ function shortDate(iso: string | null): string {
   });
 }
 
+
+/** ตัวเลือกสิทธิ์ — ใช้ทั้งตอนออกใบใหม่และตอนแก้ใบเดิม ให้เห็นรายการชุดเดียวกัน. */
+function ScopePicker({
+  all,
+  value,
+  onChange,
+}: {
+  readonly all: readonly string[];
+  readonly value: string[];
+  readonly onChange: (next: string[]) => void;
+}) {
+  return (
+    <Checkbox.Group
+      className="mt-2 block"
+      value={value}
+      onChange={(values) => onChange(values as string[])}
+    >
+      {scopeAreas(all).map((area) => (
+        <div key={area.key} className="mb-3">
+          <Text strong className="text-xs tracking-wide">
+            {area.label}
+          </Text>
+          <div className="mt-1 grid gap-1">
+            {area.codes.map((code) => (
+              <Checkbox key={code} value={code}>
+                <code className="text-xs">{code}</code>
+                <Text type="secondary" className="ml-2 text-xs">
+                  {thaiForPermission(code)}
+                </Text>
+              </Checkbox>
+            ))}
+          </div>
+        </div>
+      ))}
+    </Checkbox.Group>
+  );
+}
+
 /**
  * ออกและเพิกถอนกุญแจ API ของช่องทางภายนอก (`admin.integration.manage`).
  *
@@ -93,6 +132,8 @@ export function ApiKeyAdmin() {
   const [issuing, setIssuing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [issued, setIssued] = useState<IssuedApiKey | null>(null);
+  const [editing, setEditing] = useState<ApiKeyRow | null>(null);
+  const [editScopes, setEditScopes] = useState<string[]>([]);
 
   const [name, setName] = useState("");
   const [sourceCode, setSourceCode] = useState("");
@@ -160,6 +201,28 @@ export function ApiKeyAdmin() {
 
     setIssuing(false);
     setIssued(result.data);
+    await refresh();
+  }
+
+  function startEdit(row: ApiKeyRow) {
+    setEditing(row);
+    setEditScopes([...row.scopes]);
+  }
+
+  async function saveScopes() {
+    if (!editing) return;
+
+    setBusy(true);
+    const result = await updateApiKeyScopes(editing.id, editScopes);
+    setBusy(false);
+
+    if (!result.ok) {
+      message.error(result.message);
+      return;
+    }
+
+    setEditing(null);
+    message.success(m.scopesUpdated);
     await refresh();
   }
 
@@ -247,18 +310,23 @@ export function ApiKeyAdmin() {
             {
               title: m.columnActions,
               key: "actions",
-              width: 110,
+              width: 190,
               render: (_, row) =>
                 row.status === "active" && (
-                  <Popconfirm
-                    title={m.revokeConfirm}
-                    description={m.revokeConfirmBody}
-                    onConfirm={() => revoke(row)}
-                  >
-                    <Button size="small" danger>
-                      {m.revoke}
+                  <span className="flex gap-2">
+                    <Button size="small" onClick={() => startEdit(row)}>
+                      {m.editScopes}
                     </Button>
-                  </Popconfirm>
+                    <Popconfirm
+                      title={m.revokeConfirm}
+                      description={m.revokeConfirmBody}
+                      onConfirm={() => revoke(row)}
+                    >
+                      <Button size="small" danger>
+                        {m.revoke}
+                      </Button>
+                    </Popconfirm>
+                  </span>
                 ),
             },
           ]}
@@ -304,29 +372,11 @@ export function ApiKeyAdmin() {
             <Text strong className="text-xs">
               {m.formScopes}
             </Text>
-            <Checkbox.Group
-              className="mt-2 block"
+            <ScopePicker
+              all={scopes}
               value={chosenScopes}
-              onChange={(values) => setChosenScopes(values as string[])}
-            >
-              {scopeAreas(scopes).map((area) => (
-                <div key={area.key} className="mb-3">
-                  <Text strong className="text-xs tracking-wide">
-                    {area.label}
-                  </Text>
-                  <div className="mt-1 grid gap-1">
-                    {area.codes.map((code) => (
-                      <Checkbox key={code} value={code}>
-                        <code className="text-xs">{code}</code>
-                        <Text type="secondary" className="ml-2 text-xs">
-                          {thaiForPermission(code)}
-                        </Text>
-                      </Checkbox>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </Checkbox.Group>
+              onChange={setChosenScopes}
+            />
             <Text type="secondary" className="text-xs">
               {m.formScopesHint}
             </Text>
@@ -346,6 +396,25 @@ export function ApiKeyAdmin() {
             </Text>
           </div>
         </Space>
+      </Modal>
+
+      <Modal
+        open={editing !== null}
+        title={m.editScopesTitle}
+        okText={m.scopesSave}
+        confirmLoading={busy}
+        okButtonProps={{ disabled: editScopes.length === 0 }}
+        onOk={saveScopes}
+        onCancel={() => setEditing(null)}
+        destroyOnHidden
+      >
+        <Paragraph type="secondary" className="text-xs">
+          <code>{editing?.prefix}</code> · {editing?.name}
+        </Paragraph>
+        <Paragraph type="secondary" className="text-xs">
+          {m.editScopesHint}
+        </Paragraph>
+        <ScopePicker all={scopes} value={editScopes} onChange={setEditScopes} />
       </Modal>
 
       <Modal

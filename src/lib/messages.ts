@@ -76,6 +76,7 @@ export const messages = {
     adminGroup: "ผู้ดูแลระบบ",
     adminCrm: "ตั้งค่า CRM",
     adminApiKeys: "กุญแจ API",
+    adminRunNumbers: "เลขรันเอกสาร",
     adminRequestTypes: "ประเภทคำขอ",
     adminSla: "เวลาทำการและวันหยุด",
     adminOrg: "ผังทีมและสิทธิ์",
@@ -1159,6 +1160,13 @@ export const messages = {
       revoked: "red",
     } as Record<string, string>,
 
+    editScopes: "แก้สิทธิ์",
+    editScopesTitle: "แก้สิทธิ์ของกุญแจ",
+    editScopesHint:
+      "แทนที่ทั้งชุด ไม่ใช่เพิ่มเข้าไป · มีผลกับคำขอถัดไปทันที ช่องทางไม่ต้องเปลี่ยนกุญแจ",
+    scopesUpdated: "แก้สิทธิ์แล้ว",
+    scopesSave: "บันทึกสิทธิ์",
+
     revoke: "เพิกถอน",
     revokeConfirm: "เพิกถอนกุญแจใบนี้?",
     revokeConfirmBody:
@@ -1265,6 +1273,57 @@ export const messages = {
       saved: "บันทึกการตั้งค่าแล้ว",
     },
   },
+  runNumbers: {
+    title: "เลขรันเอกสาร",
+    subtitle:
+      "รูปแบบเลขที่ของแต่ละชนิดเอกสาร แก้แล้วมีผลกับเอกสารที่ออกหลังจากนี้",
+    add: "เพิ่มรูปแบบ",
+    edit: "แก้ไข",
+    remove: "ลบ",
+    confirmRemove: "ลบรูปแบบนี้?",
+    saved: "บันทึกแล้ว",
+    removed: "ลบแล้ว",
+
+    columnDocType: "ชนิดเอกสาร",
+    columnScope: "ขอบเขต",
+    columnPattern: "รูปแบบ",
+    columnPadding: "ความยาวลำดับ",
+    columnReset: "รอบรีเซ็ต",
+    columnStart: "เลขเริ่มต้น",
+    columnActive: "สถานะ",
+
+    formDocType: "ชนิดเอกสาร",
+    formScope: "ขอบเขต",
+    formScopeHelp: "รหัสประเภทคำขอ เว้นว่าง = ใช้กับทุกประเภท",
+    formPattern: "รูปแบบ",
+    formPatternHelp: "คลิกตัวแปรด้านล่างเพื่อแทรก",
+    formPadding: "ความยาวลำดับ (หลัก)",
+    formStart: "เลขเริ่มต้น",
+    formReset: "รอบรีเซ็ตลำดับ",
+    formActive: "เปิดใช้งาน",
+
+    tokens: "ตัวแปรที่ใช้ได้",
+    preview: (example: string) => `ตัวอย่างเลขถัดไป: ${example}`,
+    previewFailed: "รูปแบบนี้ยังใช้ไม่ได้",
+    scopeAll: "ทุกประเภท",
+    active: "ใช้งาน",
+    inactive: "ปิดไว้",
+
+    docTypes: {
+      REQUEST: "คำขอ",
+      CUSTOMER: "ลูกค้า",
+      OPPORTUNITY: "โอกาสการขาย",
+      SALE_ORDER: "ใบสั่งขาย",
+      QUOTATION: "ใบเสนอราคา",
+    },
+    resets: {
+      none: "ไม่รีเซ็ต",
+      yearly: "รายปี",
+      monthly: "รายเดือน",
+      daily: "รายวัน",
+    },
+  },
+
   common: {
     loadError: "โหลดข้อมูลไม่สำเร็จ",
     retry: "ลองใหม่",

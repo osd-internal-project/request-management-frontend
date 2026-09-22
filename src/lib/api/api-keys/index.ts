@@ -59,6 +59,17 @@ export async function issueApiKey(
   });
 }
 
+/** แทนที่สิทธิ์ทั้งชุดของกุญแจที่ออกไปแล้ว — มีผลกับคำขอถัดไปทันที. */
+export async function updateApiKeyScopes(
+  id: string,
+  scopes: string[],
+): Promise<ClientResult<ApiKeyRow>> {
+  return adminApi<ApiKeyRow>(`api-keys/${id}/scopes`, {
+    method: "PATCH",
+    body: JSON.stringify({ scopes }),
+  });
+}
+
 export async function revokeApiKey(
   id: string,
 ): Promise<ClientResult<ApiKeyRow>> {
@@ -70,6 +81,7 @@ const apiKeys = {
   listApiKeyScopes,
   listApiKeys,
   issueApiKey,
+  updateApiKeyScopes,
   revokeApiKey,
 };
 
