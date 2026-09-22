@@ -2,8 +2,8 @@ import { Alert, Button } from "antd";
 import Link from "next/link";
 import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
-import { MyWork, type WorkTab } from "@/components/my-work";
-import { PendingAssignment } from "@/components/pending-assignment";
+import { MyWork, type WorkTab } from "@/components/requests/my-work";
+import { PendingAssignment } from "@/components/requests/pending-assignment";
 import requests from "@/lib/api/requests";
 
 import { messages } from "@/lib/messages";

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { appOrigin, isSecureOrigin } from "@/lib/app-origin";
+import { appOrigin, isSecureOrigin } from "@/lib/auth/app-origin";
 import {
   clearSessionCookies,
   setSessionCookies,
   type TokenResponse,
-} from "@/lib/auth-cookies";
+} from "@/lib/auth/auth-cookies";
 import {
   BACKEND_PREFIX,
   REFRESH_COOKIE,

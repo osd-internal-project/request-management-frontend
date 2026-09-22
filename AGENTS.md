@@ -20,8 +20,18 @@ The block above is not decoration. Five screens were written without opening
 `node_modules/next/dist/docs/`, and the cost was real: antd `Table` columns carry
 `render` functions, a function cannot cross the server→client boundary, and the
 page 500s at serialisation with the data already fetched. Read the App Router
-guide before touching a screen. `src/components/bottleneck-table.tsx` is the
-worked example of the fix — a `"use client"` component the server page renders.
+guide before touching a screen. `src/components/reports/bottleneck-table.tsx` is
+the worked example of the fix — a `"use client"` component the server page
+renders.
+
+## Where a component goes
+
+`src/components/` is grouped by who uses it, not by what the file is called:
+`layout/`, `requests/`, `crm/{customers,leads,opportunities,quotations}/`,
+`admin/` (with `admin/org/` for the six parts of `/pages/admin/org`),
+`notifications/`, `reports/`. `ui/` is only for components used across groups —
+`search-select.tsx` earns its place there with 22 importers; a "generic-sounding"
+name does not.
 
 ## Working to the plan
 

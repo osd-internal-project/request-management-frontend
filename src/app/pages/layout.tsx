@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { accessMenuItems, type BiMenuDashboard } from "../configs/menu";
-import { AppShell } from "@/components/app-shell";
-import { SessionKeeper } from "@/components/session-keeper";
+import { AppShell } from "@/components/layout/app-shell";
+import { SessionKeeper } from "@/components/layout/session-keeper";
 import { apiGet } from "@/lib/api/core";
 import {
   SESSION_IDLE_TIMEOUT_SECONDS,

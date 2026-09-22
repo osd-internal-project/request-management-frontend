@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
-import { NotificationsView } from "@/components/notifications-view";
+import { NotificationsView } from "@/components/notifications/notifications-view";
 import {
   getNotificationPreferences,
   getNotifications,

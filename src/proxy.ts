@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { appOrigin } from "@/lib/app-origin";
+import { appOrigin } from "@/lib/auth/app-origin";
 import { AUTH_COOKIE, REFRESH_COOKIE } from "@/lib/backend";
 import {
   AUTH_LOGIN_PATH,

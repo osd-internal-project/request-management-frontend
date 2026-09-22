@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { Alert } from "antd";
 import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
-import { QuotationList } from "@/components/quotation-list";
+import { QuotationList } from "@/components/crm/quotations/quotation-list";
 import { getQuotations } from "@/lib/api/sales";
 import { messages } from "@/lib/messages";
 import { HOME_PATH } from "@/lib/routes";

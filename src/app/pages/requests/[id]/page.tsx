@@ -10,12 +10,12 @@ import type {
   RequestPerson,
 } from "@/lib/api/types";
 import { fieldOrder } from "@/lib/api/types";
-import { RequestActions } from "@/components/request-actions";
-import { ReceiverForm } from "@/components/receiver-form";
-import { RequestComments } from "@/components/request-comments";
-import { RequestTimeline } from "@/components/request-timeline";
-import { RequestTreePanel } from "@/components/request-tree";
-import { DueBadge } from "@/components/due-badge";
+import { RequestActions } from "@/components/requests/request-actions";
+import { ReceiverForm } from "@/components/requests/receiver-form";
+import { RequestComments } from "@/components/requests/request-comments";
+import { RequestTimeline } from "@/components/requests/request-timeline";
+import { RequestTreePanel } from "@/components/requests/request-tree";
+import { DueBadge } from "@/components/requests/due-badge";
 import { getSession } from "@/lib/session";
 import { messages } from "@/lib/messages";
 

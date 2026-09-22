@@ -1,7 +1,7 @@
 import { Alert } from "antd";
 import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
-import { LedWork } from "@/components/led-work";
+import { LedWork } from "@/components/requests/led-work";
 import requests from "@/lib/api/requests";
 import { messages } from "@/lib/messages";
 import { getSession } from "@/lib/session";

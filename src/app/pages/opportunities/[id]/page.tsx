@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { OpportunityDetailView } from "@/components/opportunity-detail";
+import { OpportunityDetailView } from "@/components/crm/opportunities/opportunity-detail";
 import {
   getOpportunity,
   getOpportunityActivities,

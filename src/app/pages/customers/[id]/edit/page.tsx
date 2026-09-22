@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import Title from "antd/es/typography/Title";
-import { CustomerForm } from "@/components/customer-form";
+import { CustomerForm } from "@/components/crm/customers/customer-form";
 import customers from "@/lib/api/customers";
 import { messages } from "@/lib/messages";
 import { HOME_PATH } from "@/lib/routes";

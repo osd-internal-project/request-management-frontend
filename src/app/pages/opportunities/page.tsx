@@ -4,7 +4,7 @@ import Text from "antd/es/typography/Text";
 import {
   OpportunityList,
   type OpportunityLayout,
-} from "@/components/opportunity-list";
+} from "@/components/crm/opportunities/opportunity-list";
 import { getLostReasons, getOpportunities } from "@/lib/api/sales";
 import { getCustomers } from "@/lib/api/customers";
 import { messages } from "@/lib/messages";

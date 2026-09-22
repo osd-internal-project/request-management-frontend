@@ -1,19 +1,19 @@
 import { Alert } from "antd";
 import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
-import { KeycloakMappingAdmin } from "@/components/keycloak-mapping-admin";
-import { OrgAdmin } from "@/components/org-admin";
-import { OrgPermissionTabs } from "@/components/org-permission-tabs";
-import { GroupScopeAdmin } from "@/components/group-scope-admin";
-import { ScopeRulesAdmin } from "@/components/scope-rules-admin";
-import { RolePermissionAdmin } from "@/components/role-permission-admin";
+import { KeycloakMappingAdmin } from "@/components/admin/org/keycloak-mapping-admin";
+import { OrgAdmin } from "@/components/admin/org/org-admin";
+import { OrgPermissionTabs } from "@/components/admin/org/org-permission-tabs";
+import { GroupScopeAdmin } from "@/components/admin/org/group-scope-admin";
+import { ScopeRulesAdmin } from "@/components/admin/org/scope-rules-admin";
+import { RolePermissionAdmin } from "@/components/admin/org/role-permission-admin";
 import audit from "@/lib/api/audit";
 import orgUnits from "@/lib/api/org-units";
 import roleApi from "@/lib/api/roles";
 import users from "@/lib/api/users";
 
 import { messages } from "@/lib/messages";
-import { toOrgTab } from "@/lib/org-tabs";
+import { toOrgTab } from "@/lib/org/org-tabs";
 import { can, getSession } from "@/lib/session";
 
 /**

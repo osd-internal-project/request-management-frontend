@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { LeadDetailView } from "@/components/lead-detail";
+import { LeadDetailView } from "@/components/crm/leads/lead-detail";
 import { getCustomers } from "@/lib/api/customers";
 import { getLead } from "@/lib/api/sales";
 import { HOME_PATH } from "@/lib/routes";

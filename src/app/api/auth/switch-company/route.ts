@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { isSecureOrigin } from "@/lib/app-origin";
+import { isSecureOrigin } from "@/lib/auth/app-origin";
 import {
   AUTH_COOKIE,
   authCookieOptions,

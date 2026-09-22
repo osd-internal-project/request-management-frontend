@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { Alert } from "antd";
 import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
-import { CrmAdmin } from "@/components/crm-admin";
+import { CrmAdmin } from "@/components/admin/crm-admin";
 import { apiGet } from "@/lib/api/core";
 import customers from "@/lib/api/customers";
 import { messages } from "@/lib/messages";

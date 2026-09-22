@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
-import { ApiKeyAdmin } from "@/components/api-key-admin";
+import { ApiKeyAdmin } from "@/components/admin/api-key-admin";
 import { messages } from "@/lib/messages";
 import { HOME_PATH } from "@/lib/routes";
 import { can, getSession } from "@/lib/session";

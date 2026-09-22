@@ -3,7 +3,7 @@ import { Alert, Button } from "antd";
 import Link from "next/link";
 import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
-import { CustomerList } from "@/components/customer-list";
+import { CustomerList } from "@/components/crm/customers/customer-list";
 import customers from "@/lib/api/customers";
 import { messages } from "@/lib/messages";
 import { HOME_PATH, ROUTES } from "@/lib/routes";

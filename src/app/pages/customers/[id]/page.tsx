@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { CustomerDetailView } from "@/components/customer-detail";
+import { CustomerDetailView } from "@/components/crm/customers/customer-detail";
 import customers from "@/lib/api/customers";
 import { getRequests } from "@/lib/api/requests";
 import { getOpportunities, getQuotations, getSaleOrders } from "@/lib/api/sales";

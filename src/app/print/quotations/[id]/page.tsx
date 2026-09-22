@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-import { QuotationPrint } from "@/components/quotation-print";
+import { QuotationPrint } from "@/components/crm/quotations/quotation-print";
 import { getQuotationPrint } from "@/lib/api/sales";
 import { HOME_PATH, SESSION_EXPIRED_PATH } from "@/lib/routes";
 import { can, getSession } from "@/lib/session";

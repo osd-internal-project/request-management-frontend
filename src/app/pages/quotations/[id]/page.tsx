@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { QuotationDetailView } from "@/components/quotation-detail";
+import { QuotationDetailView } from "@/components/crm/quotations/quotation-detail";
 import { getQuotation } from "@/lib/api/sales";
 import { HOME_PATH } from "@/lib/routes";
 import { can, getSession } from "@/lib/session";

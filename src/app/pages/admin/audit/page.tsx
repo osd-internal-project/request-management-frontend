@@ -2,8 +2,8 @@ import { Alert, Card, Empty, Space } from "antd";
 import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
 import Paragraph from "antd/es/typography/Paragraph";
-import { AuditFilters } from "@/components/audit-filters";
-import { AuditTable } from "@/components/audit-table";
+import { AuditFilters } from "@/components/admin/audit-filters";
+import { AuditTable } from "@/components/admin/audit-table";
 import audit from "@/lib/api/audit";
 import { messages } from "@/lib/messages";
 

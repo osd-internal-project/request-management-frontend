@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { appOrigin, isSecureOrigin } from "@/lib/app-origin";
+import { appOrigin, isSecureOrigin } from "@/lib/auth/app-origin";
 import {
   authCookieOptions,
   BACKEND_PREFIX,
@@ -13,7 +13,7 @@ import {
   reconnectRedirect,
   RETRY_PARAM,
   UNREACHABLE,
-} from "@/lib/auth-redirects";
+} from "@/lib/auth/auth-redirects";
 
 interface AuthorizationResponse {
   authorize_url: string;

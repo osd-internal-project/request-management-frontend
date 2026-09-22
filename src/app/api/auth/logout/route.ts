@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { appOrigin } from "@/lib/app-origin";
-import { clearSessionCookies } from "@/lib/auth-cookies";
+import { appOrigin } from "@/lib/auth/app-origin";
+import { clearSessionCookies } from "@/lib/auth/auth-cookies";
 import {
   BACKEND_PREFIX,
   REFRESH_COOKIE,

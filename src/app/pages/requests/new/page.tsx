@@ -2,7 +2,7 @@ import { Alert, Breadcrumb } from "antd";
 import Link from "next/link";
 import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
-import { RequestForm } from "@/components/request-form";
+import { RequestForm } from "@/components/requests/request-form";
 import { getRequestTypes } from "@/lib/api/requests";
 import { getAllDirectoryUsers } from "@/lib/api/users";
 import { getOrgUnitShapes } from "@/lib/api/org-units";

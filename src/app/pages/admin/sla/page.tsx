@@ -1,7 +1,7 @@
 import { Alert } from "antd";
 import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
-import { WorkingHoursAdmin } from "@/components/working-hours-admin";
+import { WorkingHoursAdmin } from "@/components/admin/working-hours-admin";
 import slaApi from "@/lib/api/sla";
 import { messages } from "@/lib/messages";
 import { getSession } from "@/lib/session";

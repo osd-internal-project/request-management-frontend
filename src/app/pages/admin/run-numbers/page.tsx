@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { Alert } from "antd";
 import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
-import { RunNumberAdmin } from "@/components/run-number-admin";
+import { RunNumberAdmin } from "@/components/admin/run-number-admin";
 import { apiGet } from "@/lib/api/core";
 import { messages } from "@/lib/messages";
 import { HOME_PATH } from "@/lib/routes";

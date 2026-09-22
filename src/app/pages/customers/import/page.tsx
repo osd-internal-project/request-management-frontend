@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
-import { CustomerImport } from "@/components/customer-import";
+import { CustomerImport } from "@/components/crm/customers/customer-import";
 import { messages } from "@/lib/messages";
 import { HOME_PATH } from "@/lib/routes";
 import { can, getSession } from "@/lib/session";

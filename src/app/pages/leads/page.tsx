@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
-import { LeadList, type LeadLayout } from "@/components/lead-list";
+import { LeadList, type LeadLayout } from "@/components/crm/leads/lead-list";
 import { getLeads } from "@/lib/api/sales";
 import { getCustomers } from "@/lib/api/customers";
 import { messages } from "@/lib/messages";

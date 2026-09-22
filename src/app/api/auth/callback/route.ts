@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { appOrigin, isSecureOrigin } from "@/lib/app-origin";
-import { setSessionCookies, type TokenResponse } from "@/lib/auth-cookies";
+import { appOrigin, isSecureOrigin } from "@/lib/auth/app-origin";
+import { setSessionCookies, type TokenResponse } from "@/lib/auth/auth-cookies";
 import {
   BACKEND_PREFIX,
   PKCE_STATE_COOKIE,
   PKCE_VERIFIER_COOKIE,
   USER_SERVICE_URL,
 } from "@/lib/backend";
-import { loginFailureRedirect, UNREACHABLE } from "@/lib/auth-redirects";
+import { loginFailureRedirect, UNREACHABLE } from "@/lib/auth/auth-redirects";
 import { HOME_PATH } from "@/lib/routes";
 
 interface LoginAttempt {
