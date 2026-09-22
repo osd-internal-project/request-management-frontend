@@ -9,6 +9,10 @@ export const USER_SERVICE_URL =
 export const CORE_SERVICE_URL =
   process.env.CORE_SERVICE_URL ?? "http://localhost:3002";
 
+/** Base URL of run-number-service — the document-number format screen. */
+export const RUN_NUMBER_SERVICE_URL =
+  process.env.RUN_NUMBER_SERVICE_URL ?? "http://localhost:3004";
+
 /**
  * The backend's own prefix, from §11.1: `Base URL: /api/v1`.
  *
@@ -73,13 +77,23 @@ export const CORE_SERVICE_PREFIXES = [
   "/admin/holiday-calendars",
 ];
 
+/**
+ * Path prefixes run-number-service owns — checked before the core list.
+ * `internal/run-numbers` is service-to-service and never reaches this BFF.
+ */
+export const RUN_NUMBER_SERVICE_PREFIXES = ["/admin/run-numbers"];
+
 /** Which backend serves this path. One place to look when a route 404s. */
 export function serviceUrlFor(path: string): string {
   const normalised = path.startsWith("/") ? path : `/${path}`;
 
-  return CORE_SERVICE_PREFIXES.some((prefix) =>
-    normalised.startsWith(prefix),
-  )
+  if (
+    RUN_NUMBER_SERVICE_PREFIXES.some((prefix) => normalised.startsWith(prefix))
+  ) {
+    return RUN_NUMBER_SERVICE_URL;
+  }
+
+  return CORE_SERVICE_PREFIXES.some((prefix) => normalised.startsWith(prefix))
     ? CORE_SERVICE_URL
     : USER_SERVICE_URL;
 }
