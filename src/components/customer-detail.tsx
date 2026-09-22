@@ -73,6 +73,7 @@ export function CustomerDetailView({
   timeline,
   segmentOptions,
   canManage,
+  canReadFinancials,
   summary,
   consents,
   relatedRequests,
@@ -85,6 +86,8 @@ export function CustomerDetailView({
   timeline: CustomerTimelineEvent[];
   segmentOptions: SegmentOption[];
   canManage: boolean;
+  /** C360-04 — ยอดค้างชำระอยู่ใต้สิทธิ์แยก `crm.customer.financial.read`. */
+  canReadFinancials: boolean;
   /** C360-01 header-card numbers; null when the fetch failed. */
   summary: CustomerSummary | null;
   /** CM-05 — live consent per contact from the central PDPA service. */
@@ -318,25 +321,28 @@ export function CustomerDetailView({
             </div>
           </Card>
           {/* C360-02 — ยอดค้างชำระจาก cache ของรอบ sync (CM-06); ยังไม่เคย
-              sync = บอกตรง ๆ ว่ารอ Odoo ไม่โชว์ขีดลอย ๆ */}
-          <Card size="small">
-            <Text type="secondary" className="block text-xs">
-              {m.detail.cards.outstanding}
-            </Text>
-            <div className="text-xl font-semibold">
-              {summary.financials
-                ? summary.financials.outstanding.toLocaleString("th-TH")
-                : "—"}
-            </div>
-            <Text type="secondary" className="text-xs">
-              {summary.financials
-                ? m.detail.cards.outstandingDetail(
-                    String(summary.financials.invoiceCount),
-                    formatWhen(summary.financials.asOf),
-                  )
-                : m.detail.cards.outstandingPending}
-            </Text>
-          </Card>
+              sync = บอกตรง ๆ ว่ารอ Odoo ไม่โชว์ขีดลอย ๆ · C360-04 ผู้ไม่มีสิทธิ์
+              ไม่เห็นการ์ดนี้เลย และ summary ก็ไม่ส่งตัวเลขมาให้ตั้งแต่แรก */}
+          {canReadFinancials && (
+            <Card size="small">
+              <Text type="secondary" className="block text-xs">
+                {m.detail.cards.outstanding}
+              </Text>
+              <div className="text-xl font-semibold">
+                {summary.financials
+                  ? summary.financials.outstanding.toLocaleString("th-TH")
+                  : "—"}
+              </div>
+              <Text type="secondary" className="text-xs">
+                {summary.financials
+                  ? m.detail.cards.outstandingDetail(
+                      String(summary.financials.invoiceCount),
+                      formatWhen(summary.financials.asOf),
+                    )
+                  : m.detail.cards.outstandingPending}
+              </Text>
+            </Card>
+          )}
         </div>
       )}
 
@@ -442,7 +448,9 @@ export function CustomerDetailView({
             .filter(
               ([key]) =>
                 !(key === "opportunities" && customerOpportunities !== null) &&
-                !(key === "quotations" && customerQuotations !== null),
+                !(key === "quotations" && customerQuotations !== null) &&
+                // C360-04 — แท็บการเงินอยู่ใต้สิทธิ์เดียวกับการ์ดยอดค้างชำระ
+                !(key === "financials" && !canReadFinancials),
             )
             .map(([key, tab]) => ({
             key: `future-${key}`,
