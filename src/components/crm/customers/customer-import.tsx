@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { Alert, Button, Card, Space, Table, Tag, Upload } from "antd";
 import Text from "antd/es/typography/Text";
@@ -12,8 +12,11 @@ import type { ImportResult, ImportRowResult } from "@/lib/api/types";
 const m = messages.customers.importer;
 const H = m.headers;
 
-/** Rows go to the backend in slices this size — well under the JSON body cap. */
-const CHUNK = 200;
+/**
+ * Rows go to the backend in slices this size. 100 rows with Thai addresses
+ * stay far under the backend's 2 MB JSON limit (and its 500-row DTO cap).
+ */
+const CHUNK = 100;
 
 interface ParsedRow {
   row_no: number;
@@ -104,7 +107,9 @@ export function CustomerImport() {
   const [dryRun, setDryRun] = useState<ImportResult | null>(null);
   const [committed, setCommitted] = useState<ImportResult | null>(null);
 
-  const importId = useMemo(() => crypto.randomUUID(), []);
+  // One id per file, not per page visit — a second file uploaded on the same
+  // page is a separate import on the audit trail.
+  const importId = useRef<string>("");
 
   async function downloadTemplate() {
     const ExcelJS = (await import("exceljs")).default;
@@ -142,6 +147,7 @@ export function CustomerImport() {
   }
 
   async function parseFile(file: File): Promise<void> {
+    importId.current = crypto.randomUUID();
     setParsing(true);
     setError(null);
     setDryRun(null);
@@ -201,34 +207,44 @@ export function CustomerImport() {
     }
   }
 
+  /**
+   * Every chunk's rows, and the failure that stopped it if one did. Chunks
+   * already committed are real customers — dropping their report on a later
+   * failure is what made "just run it again" look safe when it is not.
+   */
   async function send(
     mode: "dry_run" | "commit",
     data: ParsedRow[],
-  ): Promise<ImportResult | null> {
+  ): Promise<{ result: ImportResult | null; failure: string | null }> {
     const all: ImportRowResult[] = [];
+    let failure: string | null = null;
     for (let i = 0; i < data.length; i += CHUNK) {
-      const result = await appApi<ImportResult>("customers/import", {
+      const response = await appApi<ImportResult>("customers/import", {
         method: "POST",
         body: JSON.stringify({
           mode,
-          import_id: importId,
+          import_id: importId.current,
           rows: data.slice(i, i + CHUNK),
         }),
       });
-      if (!result.ok) {
-        setError(result.message);
-        return null;
+      if (!response.ok) {
+        failure = response.message;
+        break;
       }
-      all.push(...result.data.results);
+      all.push(...response.data.results);
     }
+    if (!all.length) return { result: null, failure };
     return {
-      importId,
-      mode,
-      results: all,
-      summary: {
-        create: all.filter((r) => r.action === "create").length,
-        skip: all.filter((r) => r.action === "skip_duplicate").length,
-        error: all.filter((r) => r.action === "error").length,
+      failure,
+      result: {
+        importId: importId.current,
+        mode,
+        results: all,
+        summary: {
+          create: all.filter((r) => r.action === "create").length,
+          skip: all.filter((r) => r.action === "skip_duplicate").length,
+          error: all.filter((r) => r.action === "error").length,
+        },
       },
     };
   }
@@ -236,18 +252,26 @@ export function CustomerImport() {
   async function check(data: ParsedRow[]) {
     setChecking(true);
     setError(null);
-    const result = await send("dry_run", data);
+    const { result, failure } = await send("dry_run", data);
     setChecking(false);
-    if (result) setDryRun(result);
+    if (failure) setError(failure);
+    else if (result) setDryRun(result);
   }
 
   async function commit() {
     if (!rows) return;
     setCommitting(true);
     setError(null);
-    const result = await send("commit", rows);
+    const { result, failure } = await send("commit", rows);
     setCommitting(false);
     if (result) setCommitted(result);
+    if (failure) {
+      setError(
+        result
+          ? m.partialCommit(String(result.results.length), String(rows.length), failure)
+          : failure,
+      );
+    }
   }
 
   const report = committed ?? dryRun;
@@ -291,7 +315,7 @@ export function CustomerImport() {
       {error && <Alert type="error" showIcon title={error} />}
       {checking && <Alert type="info" showIcon title={m.checking} />}
 
-      {committed && (
+      {committed && !error && (
         <Alert
           type="success"
           showIcon
@@ -380,10 +404,34 @@ export function CustomerImport() {
                     }
                     const parts: string[] = [];
                     if (row.customerCode) parts.push(row.customerCode);
+                    if (row.duplicateOfRow !== undefined) {
+                      parts.push(m.duplicateOfRow(String(row.duplicateOfRow)));
+                    }
                     if (row.headOfficeCode) {
                       parts.push(m.headOfficeNote(row.headOfficeCode));
                     }
-                    return parts.join(" · ") || "—";
+                    if (row.headOfficeRow !== undefined) {
+                      parts.push(m.headOfficeRowNote(String(row.headOfficeRow)));
+                    }
+                    const warnings: string[] = [];
+                    if (row.possibleDuplicateOf) {
+                      warnings.push(m.possibleDuplicate(row.possibleDuplicateOf));
+                    }
+                    if (row.possibleDuplicateOfRow !== undefined) {
+                      warnings.push(
+                        m.possibleDuplicateRow(String(row.possibleDuplicateOfRow)),
+                      );
+                    }
+                    return (
+                      <>
+                        {parts.join(" · ") || (warnings.length ? "" : "—")}
+                        {warnings.map((warning) => (
+                          <Text key={warning} type="warning" className="block text-xs">
+                            {warning}
+                          </Text>
+                        ))}
+                      </>
+                    );
                   },
                 },
               ]}

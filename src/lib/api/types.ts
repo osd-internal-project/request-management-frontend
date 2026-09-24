@@ -1253,6 +1253,13 @@ export interface ImportRowResult {
   reasons: string[];
   customerCode?: string;
   headOfficeCode?: string;
+  /** Head office is an earlier row of the same file (dry run). */
+  headOfficeRow?: number;
+  /** Skipped: an earlier row of this file has the same ภาษี+สาขา. */
+  duplicateOfRow?: number;
+  /** No tax id, name matches — warning only; the row is still created. */
+  possibleDuplicateOf?: string;
+  possibleDuplicateOfRow?: number;
 }
 
 export interface ImportResult {

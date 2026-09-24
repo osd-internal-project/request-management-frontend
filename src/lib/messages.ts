@@ -2310,6 +2310,15 @@ export const messages = {
         error: "ติดปัญหา",
       } as Record<string, string>,
       headOfficeNote: (code: string) => `ผูกเป็นสาขาของ ${code}`,
+      headOfficeRowNote: (row: string) => `ผูกเป็นสาขาของรายในแถว ${row} ของไฟล์นี้`,
+      duplicateOfRow: (row: string) => `เลขภาษี+สาขาซ้ำกับแถว ${row} ของไฟล์นี้`,
+      possibleDuplicate: (code: string) =>
+        `ไม่มีเลขภาษี แต่ชื่อตรงกับลูกค้า ${code} ที่มีอยู่แล้ว — ตรวจก่อนยืนยัน จะถูกสร้างเป็นรายใหม่`,
+      possibleDuplicateRow: (row: string) =>
+        `ไม่มีเลขภาษี แต่ชื่อตรงกับแถว ${row} ของไฟล์นี้ — ตรวจก่อนยืนยัน`,
+      partialCommit: (done: string, total: string, cause: string) =>
+        `นำเข้าหยุดกลางทาง: ${done} จาก ${total} แถวถูกนำเข้าแล้ว (ดูผลด้านล่าง) — ${cause}. ` +
+        `ถ้านำเข้าไฟล์เดิมซ้ำ แถวที่มีเลขภาษีจะถูกข้าม แต่แถวที่ไม่มีเลขภาษีจะถูกสร้างซ้ำ ให้ลบแถวที่นำเข้าแล้วออกก่อน`,
       reasonLabels: {
         "name_th: required": "ไม่มีชื่อลูกค้า",
         "type: invalid": "ประเภทลูกค้าไม่ถูกต้อง",
@@ -2318,6 +2327,8 @@ export const messages = {
         "branch_code: format": "รหัสสาขาต้องเป็นตัวเลข 5 หลัก",
         "postal_code: format": "รหัสไปรษณีย์ต้องเป็นตัวเลข 5 หลัก",
         "contact_email: format": "อีเมลไม่ถูกต้อง",
+        duplicate_race: "มีลูกค้าเลขภาษี+สาขานี้ถูกสร้างพร้อมกันจากที่อื่น — นำเข้าซ้ำเพื่อให้ข้ามแถวนี้",
+        internal: "ระบบขัดข้องระหว่างนำเข้าแถวนี้ — ลองนำเข้าใหม่ (แถวที่เข้าแล้วจะถูกข้าม)",
       } as Record<string, string>,
       headers: {
         type: "ประเภท",
