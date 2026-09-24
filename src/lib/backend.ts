@@ -69,6 +69,7 @@ export const CORE_SERVICE_PREFIXES = [
   "/request-types",
   "/reports",
   "/admin/api-keys",
+  "/admin/erp-sync",
   "/admin/approval-matrix",
   "/admin/bi",
   "/admin/crm",

@@ -123,6 +123,13 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     permissions: ["admin.integration.manage"],
     group: messages.nav.adminGroup,
   },
+  /** CM-06 / CD-88 — งานส่ง SAP ที่ไม่สำเร็จ ดูข้อผิดพลาดแล้วกดส่งใหม่. */
+  {
+    label: messages.nav.adminErpSync,
+    href: ROUTES.adminErpSync,
+    permissions: ["admin.integration.manage"],
+    group: messages.nav.adminGroup,
+  },
   {
     label: messages.nav.adminRunNumbers,
     href: ROUTES.adminRunNumbers,

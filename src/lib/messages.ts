@@ -76,6 +76,7 @@ export const messages = {
     adminGroup: "ผู้ดูแลระบบ",
     adminCrm: "ตั้งค่า CRM",
     adminApiKeys: "กุญแจ API",
+    adminErpSync: "คิวส่ง SAP",
     adminRunNumbers: "เลขรันเอกสาร",
     adminRequestTypes: "ประเภทคำขอ",
     adminSla: "เวลาทำการและวันหยุด",
@@ -1136,6 +1137,53 @@ export const messages = {
   },
 
   /** หน้ากุญแจ API ของช่องทางภายนอก (`admin.integration.manage`). */
+  erpSync: {
+    title: "คิวส่ง SAP",
+    subtitle:
+      "ข้อมูลบันทึกใน Connect the Dot ก่อนแล้วค่อยส่งเข้า SAP — งานที่ส่งไม่สำเร็จครบรอบจะหยุดลองเอง แก้ต้นเหตุแล้วกดส่งใหม่ที่นี่",
+    filters: {
+      failed: (n: number) => `ส่งไม่สำเร็จ · ${n}`,
+      pending: (n: number) => `รอส่ง · ${n}`,
+      all: "ทั้งหมด",
+    },
+    refresh: "โหลดใหม่",
+    columns: {
+      kind: "งาน",
+      resource: "รหัส",
+      name: "ลูกค้า",
+      status: "สถานะ",
+      attempts: "ลองแล้ว",
+      lastError: "ข้อผิดพลาดล่าสุด",
+      when: "อัปเดตล่าสุด",
+    },
+    kinds: {
+      customer_upsert: "ส่งลูกค้า",
+      receivables_refresh: "อ่านยอดค้างชำระ",
+      sale_order_create: "ส่งใบสั่งขาย",
+      sale_order_cancel: "ยกเลิกใบสั่งขาย",
+    } as Record<string, string>,
+    status: {
+      failed: "ส่งไม่สำเร็จ",
+      pending: "รอส่ง",
+    } as Record<string, string>,
+    nextTry: (when: string) => `ลองเองอีกครั้ง ${when}`,
+    attempts: (n: number) => `${n} ครั้ง`,
+    noError: "—",
+    more: "เพิ่มเติม",
+    retry: "ส่งใหม่",
+    retryConfirm: "เริ่มนับรอบใหม่และส่งเข้า SAP ทันที?",
+    retrySucceeded: (code: string) => `ส่ง ${code} เข้า SAP สำเร็จ`,
+    retryStillFailing: (code: string, error: string) =>
+      `ส่ง ${code} ยังไม่สำเร็จ — ${error}`,
+    retryInProgress: (code: string) =>
+      `กำลังส่ง ${code} เข้า SAP — กดโหลดใหม่เพื่อดูผล`,
+    cancel: "ยกเลิก",
+    empty: {
+      failed: "ไม่มีงานที่ส่งไม่สำเร็จ",
+      pending: "ไม่มีงานที่รอส่ง",
+      all: "คิวว่าง — ทุกอย่างถึง SAP แล้ว",
+    } as Record<string, string>,
+  },
   apiKeys: {
     title: "กุญแจ API",
     subtitle:
