@@ -1637,7 +1637,7 @@ export const messages = {
         amount: "มูลค่า (THB)",
         probability: "ความน่าจะเป็น (%)",
         expectedClose: "วันคาดว่าจะปิด",
-        products: "product ที่เกี่ยวข้อง (รหัสตรงกับ Odoo)",
+        products: "product ที่เกี่ยวข้อง (รหัสตรงกับ SAP)",
         productsHint:
           "พิมพ์รหัสแล้ว Enter เพิ่มได้หลายตัว · ใช้ A-Z a-z 0-9 _ . - เท่านั้น",
         productsRejected: (codes: string) =>
@@ -2072,7 +2072,7 @@ export const messages = {
         locations: "ที่อยู่/ไซต์",
         branchCustomers: "สาขาในเครือ",
         outstanding: "ยอดค้างชำระ",
-        outstandingPending: "มาพร้อมตัวเชื่อม Odoo",
+        outstandingPending: "มาพร้อมตัวเชื่อม SAP",
         outstandingDetail: (count: string, asOf: string) =>
           `ค้าง ${count} ใบ · ข้อมูล ${asOf}`,
       },
@@ -2099,7 +2099,7 @@ export const messages = {
         cases: { label: "เคส", phase: "มาพร้อมงานเคส/ข้อร้องเรียน (CRM ระยะถัดไป)" },
         financials: {
           label: "การเงิน",
-          phase: "มาพร้อมตัวเชื่อม Odoo (ชุดงาน D) — ยอดค้างชำระอ่านจาก Odoo ที่เดียว",
+          phase: "มาพร้อมตัวเชื่อม SAP (ชุดงาน D) — ยอดค้างชำระอ่านจาก SAP ที่เดียว",
         },
         assets: {
           label: "อุปกรณ์",
@@ -2184,7 +2184,7 @@ export const messages = {
       sectionKycProducts: "Product ที่ต้องยืนยันตัวตน (KYC)",
       kycProductsHint:
         "KYC ไม่บังคับทุกราย — โมดูลโอกาสการขายจะใช้ตารางนี้แจ้งเตือนเมื่อโอกาสการขายมี product ที่เข้าเงื่อนไข · รายการตั้งต้นรอยืนยันจาก PO/การเงิน กรอกได้เลยเมื่อได้รายการ",
-      kycProductCode: "รหัส product (ตรงกับ Odoo)",
+      kycProductCode: "รหัส product (ตรงกับ SAP)",
       kycProductName: "ชื่อ product",
       addKycProduct: "เพิ่ม product",
       kycColumns: {

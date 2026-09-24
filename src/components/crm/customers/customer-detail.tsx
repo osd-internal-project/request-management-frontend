@@ -321,7 +321,7 @@ export function CustomerDetailView({
             </div>
           </Card>
           {/* C360-02 — ยอดค้างชำระจาก cache ของรอบ sync (CM-06); ยังไม่เคย
-              sync = บอกตรง ๆ ว่ารอ Odoo ไม่โชว์ขีดลอย ๆ · C360-04 ผู้ไม่มีสิทธิ์
+              sync = บอกตรง ๆ ว่ารอ SAP ไม่โชว์ขีดลอย ๆ · C360-04 ผู้ไม่มีสิทธิ์
               ไม่เห็นการ์ดนี้เลย และ summary ก็ไม่ส่งตัวเลขมาให้ตั้งแต่แรก */}
           {canReadFinancials && (
             <Card size="small">

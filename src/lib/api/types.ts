@@ -829,7 +829,7 @@ export interface CustomerSummary {
   opportunities: { open: number; openAmount: number } | null;
   /** null = viewer has no request.read — hide the card (C360-04). */
   requests: { total: number; open: number | null } | null;
-  /** C360-02 — cached from Odoo by the hourly sync; null = never synced. */
+  /** C360-02 — cached from SAP by the hourly sync; null = never synced. */
   financials: {
     outstanding: number;
     invoiceCount: number;
