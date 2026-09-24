@@ -143,7 +143,14 @@ export function OpportunityDetailView({
   function pickQuotation(id: string | undefined) {
     setSoQuotationId(id);
     const picked = acceptedQuotations.find((q) => q.id === id);
-    if (picked) setSoAmount(Number(picked.netTotal));
+    // Cleared: back to the opportunity's value, not the quotation's leftover.
+    setSoAmount(
+      picked
+        ? Number(picked.netTotal)
+        : opportunity.amount === null
+          ? null
+          : Number(opportunity.amount),
+    );
   }
 
   // เปิดกล่องไปแล้วจาก state ตั้งต้น — ลบ `?action` ออกจาก URL กันรีเฟรชแล้วเด้งซ้ำ
@@ -190,8 +197,9 @@ export function OpportunityDetailView({
         body: JSON.stringify({
           ...customerPart,
           quotation_id: soQuotationId,
-          // With typed lines the value is their total — the server computes it.
-          amount: manualLines ? undefined : (soAmount ?? undefined),
+          // With a quotation or typed lines the value is their total — the
+          // server fills it in (PO 24 ก.ย. 2569: no second figure).
+          amount: soQuotationId || manualLines ? undefined : (soAmount ?? undefined),
           lines: manualLines ? soLines.map(toSaleOrderLinePayload) : undefined,
           note: soNote.trim() || undefined,
         }),
@@ -238,6 +246,7 @@ export function OpportunityDetailView({
 
   // Typed lines apply only without a quotation — the quotation's lines win.
   const manualLines = !soQuotationId && soLines.length > 0;
+  const pickedQuotation = acceptedQuotations.find((q) => q.id === soQuotationId);
   const linesReady = !manualLines || soLines.every(draftLineComplete);
 
   const openReady =
@@ -761,8 +770,14 @@ export function OpportunityDetailView({
             className="w-full"
             placeholder={md.saleOrderAmount}
             min={0}
-            disabled={manualLines}
-            value={manualLines ? draftLinesTotal(soLines) : soAmount}
+            disabled={Boolean(soQuotationId) || manualLines}
+            value={
+              pickedQuotation
+                ? Number(pickedQuotation.netTotal)
+                : manualLines
+                  ? draftLinesTotal(soLines)
+                  : soAmount
+            }
             onChange={(value) => setSoAmount(value)}
           />
           <Input.TextArea

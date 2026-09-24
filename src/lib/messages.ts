@@ -75,6 +75,7 @@ export const messages = {
     leads: "Lead",
     opportunities: "โอกาสการขาย",
     quotations: "ใบเสนอราคา",
+    saleOrders: "ใบสั่งขาย",
     adminGroup: "ผู้ดูแลระบบ",
     adminCrm: "ตั้งค่า CRM",
     adminApiKeys: "กุญแจ API",
@@ -1716,9 +1717,7 @@ export const messages = {
         expectedClose: "วันคาดว่าจะปิด",
         products: "product ที่เกี่ยวข้อง (รหัสตรงกับ SAP)",
         productsHint:
-          "พิมพ์รหัสแล้ว Enter เพิ่มได้หลายตัว · ใช้ A-Z a-z 0-9 _ . - เท่านั้น",
-        productsRejected: (codes: string) =>
-          `ไม่รับรหัสนี้: ${codes} — รหัส product ใช้ได้เฉพาะ A-Z a-z 0-9 _ . -`,
+          "ค้นรหัสหรือชื่อแล้วเลือกจากรายการสินค้าจาก SAP ได้หลายตัว — ใช้เตือน KYC ตามสินค้า",
         prospectEmailInvalid: "รูปแบบอีเมลไม่ถูกต้อง",
         save: "บันทึก",
         created: (code: string) => `เปิดโอกาสการขาย ${code} แล้ว`,
@@ -1833,11 +1832,30 @@ export const messages = {
         saleOrderQuotation: "เปิดตามใบเสนอราคาที่ลูกค้ายอมรับ",
         saleOrderQuotationNone: "ไม่อ้างใบเสนอราคา",
         saleOrderQuotationHint:
-          "เลือกใบเสนอราคาแล้วมูลค่าใบสั่งขายจะใช้ยอดสุทธิก่อน VAT ของใบนั้น (แก้ได้)",
+          "เลือกใบเสนอราคาแล้วมูลค่าใบสั่งขาย = ยอดสุทธิก่อน VAT ของใบนั้น (แก้ไม่ได้) — ราคาเปลี่ยนให้ออกใบเสนอราคาเวอร์ชันใหม่",
       },
     },
 
     /** CD-76 — ใบเสนอราคา: เวอร์ชัน, วันหมดอายุ, ตรวจ margin ก่อนออก. */
+    saleOrders: {
+      title: "ใบสั่งขาย (Sale Order)",
+      scopeNote:
+        "เห็นเฉพาะใบสั่งขายของคุณและของทีม ตามสิทธิ์ที่ได้รับ · เปิดใบใหม่จากหน้ารายละเอียดโอกาสการขาย",
+      searchPlaceholder: "ค้นหา เลขใบสั่งขาย / เลข SAP / ลูกค้า / โอกาสการขาย",
+      filterStatus: "สถานะใบ: ทั้งหมด",
+      filterErp: "สถานะ SAP: ทั้งหมด",
+      mineOnly: "เฉพาะของฉัน",
+      empty: "ยังไม่มีใบสั่งขาย",
+      columns: {
+        code: "เลขใบสั่งขาย",
+        customer: "ลูกค้า",
+        opportunity: "โอกาสการขาย",
+        quotation: "ใบเสนอราคา",
+        status: "สถานะ",
+        amount: "มูลค่า",
+        orderedAt: "วันที่เปิด",
+      },
+    },
     quotations: {
       title: "ใบเสนอราคา (Quotation)",
       scopeNote:

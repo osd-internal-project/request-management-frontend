@@ -87,6 +87,7 @@ export const ROUTES = {
   notifications: `${HOME_PATH}/notifications`,
   /** CD-76 ใบเสนอราคา — ทะเบียน และหน้ารายละเอียดต่อเวอร์ชัน (แก้ร่างในหน้าเดียวกัน). */
   quotations: `${HOME_PATH}/quotations`,
+  saleOrders: `${HOME_PATH}/sale-orders`,
   quotationDetail: (id: string) => `${HOME_PATH}/quotations/${id}`,
   /** ฉบับพิมพ์ A4 — นอก app shell, พิมพ์ / บันทึก PDF จากเบราว์เซอร์. */
   quotationPrint: (id: string) => `/print/quotations/${id}`,

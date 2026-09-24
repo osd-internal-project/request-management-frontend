@@ -14,7 +14,6 @@ import {
   Modal,
   Pagination,
   Segmented,
-  Select,
   Space,
   Table,
   Tag,
@@ -24,6 +23,7 @@ import dayjs from "dayjs";
 import { LoseOpportunityModal } from "@/components/crm/opportunities/opportunity-actions";
 import { OpportunityBoard } from "@/components/crm/opportunities/opportunity-board";
 import { SearchSelect } from "@/components/ui/search-select";
+import { ProductMultiPicker } from "@/components/crm/quotations/product-picker";
 import { appApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
@@ -34,13 +34,6 @@ import type {
 } from "@/lib/api/types";
 
 const m = messages.sales.opportunities;
-
-/**
- * Mirror of `CreateOpportunityDto.product_codes` — the backend rejects anything
- * else with a 400 the tag input gives no hint about, so the tags are filtered
- * here as they are typed.
- */
-const PRODUCT_CODE_PATTERN = /^[A-Za-z0-9_.-]+$/;
 
 /** Enough to catch a half-typed address before `@IsEmail()` answers 400. */
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -137,22 +130,6 @@ export function OpportunityList({
     !EMAIL_PATTERN.test(prospectEmail.trim());
 
   /** รับเฉพาะรหัสที่ DTO รับ แล้วบอกทันทีว่าตัวไหนถูกตัดออก. */
-  function acceptProductCodes(values: string[]) {
-    const trimmed = values.map((value) => value.trim()).filter(Boolean);
-    const accepted = trimmed.filter((value) =>
-      PRODUCT_CODE_PATTERN.test(value),
-    );
-    const rejected = trimmed.filter(
-      (value) => !PRODUCT_CODE_PATTERN.test(value),
-    );
-
-    if (rejected.length) {
-      message.warning(m.form.productsRejected(rejected.join(", ")));
-    }
-
-    setProductCodes([...new Set(accepted)]);
-  }
-
   /** ทุกอย่างที่หน้านี้อ่านจาก URL — ตัวกรอง มุมมอง และหน้าที่เปิดอยู่. */
   function navigate(
     next: Partial<typeof filters> & { layout?: OpportunityLayout; page?: number },
@@ -483,15 +460,10 @@ export function OpportunityList({
             />
           </Space.Compact>
           <div>
-            <Select
-              mode="tags"
-              className="w-full"
-              placeholder={m.form.products}
+            <ProductMultiPicker
               value={productCodes}
-              onChange={(values) => acceptProductCodes(values as string[])}
-              open={false}
-              suffixIcon={null}
-              tokenSeparators={[",", " "]}
+              onChange={setProductCodes}
+              placeholder={m.form.products}
             />
             <Text type="secondary" className="text-xs">
               {m.form.productsHint}
