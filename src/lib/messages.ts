@@ -1712,9 +1712,7 @@ export const messages = {
         expectedClose: "วันคาดว่าจะปิด",
         products: "product ที่เกี่ยวข้อง (รหัสตรงกับ SAP)",
         productsHint:
-          "พิมพ์รหัสแล้ว Enter เพิ่มได้หลายตัว · ใช้ A-Z a-z 0-9 _ . - เท่านั้น",
-        productsRejected: (codes: string) =>
-          `ไม่รับรหัสนี้: ${codes} — รหัส product ใช้ได้เฉพาะ A-Z a-z 0-9 _ . -`,
+          "ค้นรหัสหรือชื่อแล้วเลือกจากรายการสินค้าจาก SAP ได้หลายตัว — ใช้เตือน KYC ตามสินค้า",
         prospectEmailInvalid: "รูปแบบอีเมลไม่ถูกต้อง",
         save: "บันทึก",
         created: (code: string) => `เปิดโอกาสการขาย ${code} แล้ว`,

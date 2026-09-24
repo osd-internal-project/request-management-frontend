@@ -68,3 +68,59 @@ export function ProductPicker({
     />
   );
 }
+
+/**
+ * CD-27 — หลายรหัสจากรายการสินค้าจาก SAP (เช่น product ที่เกี่ยวข้องของโอกาส
+ * การขาย). แท็กของรหัสที่เลือกไว้แล้วแสดงอยู่เสมอ แม้ไม่อยู่ในผลค้นรอบนี้.
+ */
+export function ProductMultiPicker({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string[];
+  onChange: (codes: string[]) => void;
+  placeholder?: string;
+}) {
+  const [search, setSearch] = useState("");
+  const [found, setFound] = useState<ProductRow[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(true);
+      void searchProducts(search).then((result) => {
+        setLoading(false);
+        if (result.ok) setFound(result.data);
+      });
+    }, SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const options = found.map((product) => ({
+    value: product.code,
+    label: `${product.code} · ${product.name}`,
+  }));
+  for (const code of value) {
+    if (!options.some((option) => option.value === code)) {
+      options.unshift({ value: code, label: code });
+    }
+  }
+
+  return (
+    <SearchSelect<string[]>
+      mode="multiple"
+      className="w-full"
+      value={value}
+      placeholder={placeholder ?? m.productPlaceholder}
+      allowClear
+      filterOption={false}
+      onSearch={setSearch}
+      loading={loading}
+      options={options}
+      notFoundContent={m.productNotFound}
+      onChange={(codes) => onChange(codes ?? [])}
+    />
+  );
+}
+

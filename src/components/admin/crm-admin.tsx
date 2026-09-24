@@ -20,6 +20,7 @@ import Text from "antd/es/typography/Text";
 import { LetterheadSettings } from "@/components/admin/letterhead-settings";
 import { adminApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
+import { ProductPicker } from "@/components/crm/quotations/product-picker";
 import type {
   CrmConfig,
   KycProductRule,
@@ -482,11 +483,17 @@ function KycProductSection({
         </Text>
 
         <Space.Compact className="w-full max-w-xl">
-          <Input
-            placeholder={m.kycProductCode}
-            value={code}
-            onChange={(event) => setCode(event.target.value)}
-          />
+          <div className="min-w-56">
+            <ProductPicker
+              value={code}
+              onPick={(product) => {
+                setCode(product.code);
+                // The rule's label defaults to the SAP name — still editable.
+                if (!name.trim()) setName(product.name);
+              }}
+              onClear={() => setCode("")}
+            />
+          </div>
           <Input
             placeholder={m.kycProductName}
             value={name}
