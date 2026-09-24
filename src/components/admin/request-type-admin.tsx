@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Alert, App, Button, Card, Checkbox, Empty, Input, InputNumber, Modal, Segmented, Space, Tabs, Tag } from "antd";
+import { Alert, App, Button, Card, Checkbox, Empty, Input, InputNumber, Modal, Segmented, Select, Space, Tabs, Tag } from "antd";
 import Text from "antd/es/typography/Text";
 import Paragraph from "antd/es/typography/Paragraph";
 import {
@@ -10,9 +10,11 @@ import {
   updateRequestType,
 } from "@/lib/api/client-requests";
 import {
+  fieldKindOf,
   fieldOrder,
   isMultilineField,
   isSensitiveField,
+  type FieldKind,
 } from "@/lib/api/types";
 import Link from "next/link";
 import { buildUnitTree } from "@/lib/org/org-tree";
@@ -22,6 +24,7 @@ import type {
   ApprovalMatrixVersion,
   SlaCoverage,
   CodedLabel,
+  DirectoryUser,
   FormSchema,
   FormSchemaProperty,
   OrgUnitNode,
@@ -39,7 +42,7 @@ import { adminApi } from "@/lib/api/client";
 interface FieldRow {
   key: string;
   title: string;
-  type: string;
+  type: FieldKind;
   required: boolean;
   sensitive: boolean;
   multiline: boolean;
@@ -49,13 +52,28 @@ interface FieldRow {
    * not quietly strip the parts of its schema the editor has no control for.
    */
   extra: FormSchemaProperty;
-  /** `type === "array"` only: the table's columns, edited as rows themselves. */
+  /** `type === "table"` only: the table's columns, edited as rows themselves. */
   columns?: FieldRow[];
-  /** `type === "array"` only: how many rows a requester may add. */
+  /** `type === "table"` only: how many rows a requester may add. */
   maxItems?: number | null;
+  /** `select` only: the choices, stored as `enum`. */
+  options?: string[];
+  /** `boolean` only: `x-true-label` / `x-false-label`; empty means ใช่ / ไม่ใช่. */
+  trueLabel?: string;
+  falseLabel?: string;
+  /** `number` only: keeps an imported `type: "integer"` from becoming `number` on save. */
+  integer?: boolean;
 }
 
-const FIELD_TYPES = ["string", "number", "boolean", "array"];
+const FIELD_TYPES: readonly FieldKind[] = [
+  "text",
+  "number",
+  "boolean",
+  "date",
+  "datetime",
+  "select",
+  "table",
+];
 
 /**
  * The detail pane's tabs.
@@ -75,7 +93,7 @@ type TabKey = "detail" | "approval-requester" | "approval-receiver";
  * walks exactly one level into rows. Offering it here would let an admin save
  * a type nobody can fill in.
  */
-const COLUMN_TYPES = ["string", "number", "boolean"];
+const COLUMN_TYPES = FIELD_TYPES.filter((kind) => kind !== "table");
 
 /** The schema keys this editor owns; everything else survives a round trip. */
 const OWNED_PROPERTY_KEYS = [
@@ -86,6 +104,11 @@ const OWNED_PROPERTY_KEYS = [
   "x-sensitive",
   "x-multiline",
   "x-order",
+  // Written from `type` by `kindSchema`; left in `extra` they would survive a kind change.
+  "enum",
+  "format",
+  "x-true-label",
+  "x-false-label",
   // The table's own two keys. Without them here they fall into `extra` and
   // get written twice — once from `extra`, once from the editor — and the two
   // copies drift the moment somebody edits the columns.
@@ -96,7 +119,7 @@ const OWNED_PROPERTY_KEYS = [
 const EMPTY_FIELD: FieldRow = {
   key: "",
   title: "",
-  type: "string",
+  type: "text",
   required: false,
   sensitive: false,
   multiline: false,
@@ -131,7 +154,7 @@ function toRows(
       return {
         key,
         title: property.title ?? key,
-        type: property.type ?? "string",
+        ...kindFields(property),
         required: required.has(key),
         sensitive: isSensitiveField(property),
         multiline: isMultilineField(property),
@@ -162,13 +185,54 @@ function columnRows(items: FormSchema | undefined): FieldRow[] {
       return {
         key,
         title: property.title ?? key,
-        type: property.type ?? "string",
+        ...kindFields(property),
         required: required.has(key),
         sensitive: isSensitiveField(property),
         multiline: false,
         extra,
       };
     });
+}
+
+/** The kind-specific part of a row, read from a stored property. */
+function kindFields(property: FormSchemaProperty) {
+  const type = fieldKindOf(property);
+
+  return {
+    type,
+    ...(type === "select" ? { options: property.enum ?? [] } : {}),
+    ...(type === "boolean"
+      ? {
+          trueLabel: property["x-true-label"] ?? "",
+          falseLabel: property["x-false-label"] ?? "",
+        }
+      : {}),
+    ...(property.type === "integer" ? { integer: true } : {}),
+  };
+}
+
+/** The inverse of `kindFields`: only the keys this kind uses, so a kind change leaves nothing stale. */
+function kindSchema(row: FieldRow): FormSchemaProperty {
+  switch (row.type) {
+    case "number":
+      return { type: row.integer ? "integer" : "number" };
+    case "boolean":
+      return {
+        type: "boolean",
+        ...(row.trueLabel?.trim() ? { "x-true-label": row.trueLabel.trim() } : {}),
+        ...(row.falseLabel?.trim() ? { "x-false-label": row.falseLabel.trim() } : {}),
+      };
+    case "date":
+      return { type: "string", format: "date" };
+    case "datetime":
+      return { type: "string", format: "date-time" };
+    case "select":
+      return { type: "string", enum: row.options ?? [] };
+    case "table":
+      return { type: "array" };
+    case "text":
+      return { type: "string", ...(row.multiline ? { "x-multiline": true } : {}) };
+  }
 }
 
 /** The inverse — what the API stores. */
@@ -178,13 +242,12 @@ function toSchema(rows: FieldRow[]) {
   rows.forEach((row, index) => {
     properties[row.key] = {
       ...row.extra,
-      type: row.type,
+      ...kindSchema(row),
       title: row.title,
       // Position is data, not key order — see `toRows`.
       "x-order": index + 1,
       ...(row.sensitive ? { "x-sensitive": true } : {}),
-      ...(row.multiline ? { "x-multiline": true } : {}),
-      ...(row.type === "array"
+      ...(row.type === "table"
         ? {
             // `toSchema` calls itself for the columns: a table's `items` is a
             // schema, and writing a second builder for it is how the two would
@@ -211,7 +274,10 @@ function describeField(row: FieldRow): string {
 
   if (row.multiline) parts.push(messages.requestTypes.fieldMultiline);
   else {
-    const base = messages.requestTypes.fieldTypeLabels[row.type] ?? row.type;
+    const base =
+      row.type === "select"
+        ? messages.requestTypes.fieldSelectCount(row.options?.length ?? 0)
+        : messages.requestTypes.fieldTypeLabels[row.type];
     const { minimum, maximum } = row.extra;
 
     parts.push(
@@ -249,6 +315,7 @@ export function RequestTypeAdmin({
   companyId,
   matrixVersions: initialMatrix,
   userNames,
+  people,
   canManageMatrix,
 }: {
   readonly types: RequestType[];
@@ -261,6 +328,8 @@ export function RequestTypeAdmin({
   readonly matrixVersions: readonly ApprovalMatrixVersion[];
   /** `userId` → display name, for naming who published a ladder version. */
   readonly userNames: Readonly<Record<string, string>>;
+  /** For the ผู้รับเรื่องประจำ picker. */
+  readonly people: readonly DirectoryUser[];
   /** `admin.approval-matrix.manage`; false leaves the approval tabs read-only. */
   readonly canManageMatrix: boolean;
 }) {
@@ -294,6 +363,9 @@ export function RequestTypeAdmin({
   );
   const [receiver, setReceiver] = useState<string | null>(
     initial[0]?.receiverOrgUnitId ?? null,
+  );
+  const [fixedReceiver, setFixedReceiver] = useState<string | null>(
+    initial[0]?.receiverUserId ?? null,
   );
   const [docs, setDocs] = useState<CodedLabel[]>(
     initial[0]?.requiredDocs ?? [],
@@ -357,6 +429,7 @@ export function RequestTypeAdmin({
     setReceiverRows(toRows(type, "receiverFormSchema"));
     setEligibleUnits(type.eligibleUnits?.map((entry) => entry.orgUnitId) ?? []);
     setReceiver(type.receiverOrgUnitId ?? null);
+    setFixedReceiver(type.receiverUserId ?? null);
     setDocs(type.requiredDocs ?? []);
     setReasons(type.returnReasonCodes ?? []);
     setRefRequired(type.refRequired ?? false);
@@ -386,6 +459,8 @@ export function RequestTypeAdmin({
       // selector a lie: the field emptied on screen, the save left the old
       // team in place, and reopening the type put it back.
       receiver_org_unit_id: receiver,
+      // Sent even when cleared, like the team: null hands the choice back to the requester.
+      receiver_user_id: fixedReceiver,
       required_docs: docs,
       return_reason_codes: reasons,
       // `approval_policy` is deliberately not sent. The approval route moved
@@ -601,6 +676,26 @@ export function RequestTypeAdmin({
                             label: unit.name,
                           }))}
                         />
+                      </label>
+
+                      <label className="block">
+                        <Text strong>{messages.requestTypes.fixedReceiver}</Text>
+                        <SearchSelect
+                          className="mt-1 w-full"
+                          allowClear
+                          value={fixedReceiver ?? undefined}
+                          placeholder={messages.requestTypes.fixedReceiverPlaceholder}
+                          onChange={(next?: string) => setFixedReceiver(next ?? null)}
+                          options={people.map((person) => ({
+                            value: person.id,
+                            label: person.orgUnitName
+                              ? `${person.displayName} · ${person.orgUnitName}`
+                              : person.displayName,
+                          }))}
+                        />
+                        <Text type="secondary" className="block text-xs">
+                          {messages.requestTypes.fixedReceiverHint}
+                        </Text>
                       </label>
 
                       <label className="block">
@@ -948,7 +1043,11 @@ function FieldDialog({
       }
       onCancel={onClose}
       onOk={() => onSave(draft)}
-      okButtonProps={{ disabled: !draft.key.trim() }}
+      okButtonProps={{
+        disabled:
+          !draft.key.trim() ||
+          (draft.type === "select" && !draft.options?.length),
+      }}
       footer={(_, { OkBtn, CancelBtn }) => (
         <div className="flex items-center">
           {onRemove && (
@@ -988,18 +1087,62 @@ function FieldDialog({
           <SearchSelect
             className="mt-1 w-full"
             value={draft.type}
-            onChange={(next: string) => set({ type: next })}
+            onChange={(next: FieldKind) =>
+              // multiline belongs to text only; drop it so it cannot ride along unseen.
+              set({ type: next, multiline: next === "text" && draft.multiline })
+            }
             options={(columnsOnly ? COLUMN_TYPES : FIELD_TYPES).map(
               (value) => ({
                 value,
-                label:
-                  value === "array"
-                    ? messages.requestTypes.fieldTypeTable
-                    : value,
+                label: messages.requestTypes.fieldTypeLabels[value],
               }),
             )}
           />
         </label>
+
+        {draft.type === "select" && (
+          <label className="block">
+            <Text strong>{messages.requestTypes.fieldOptions}</Text>
+            <Select
+              className="mt-1 w-full"
+              mode="tags"
+              open={false}
+              tokenSeparators={[","]}
+              value={draft.options ?? []}
+              onChange={(next: string[]) =>
+                set({
+                  options: [
+                    ...new Set(next.map((option) => option.trim()).filter(Boolean)),
+                  ],
+                })
+              }
+              placeholder={messages.requestTypes.fieldOptionsHint}
+            />
+          </label>
+        )}
+
+        {draft.type === "boolean" && (
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="block">
+              <Text strong>{messages.requestTypes.fieldTrueLabel}</Text>
+              <Input
+                className="mt-1"
+                value={draft.trueLabel ?? ""}
+                placeholder="ใช่"
+                onChange={(event) => set({ trueLabel: event.target.value })}
+              />
+            </label>
+            <label className="block">
+              <Text strong>{messages.requestTypes.fieldFalseLabel}</Text>
+              <Input
+                className="mt-1"
+                value={draft.falseLabel ?? ""}
+                placeholder="ไม่ใช่"
+                onChange={(event) => set({ falseLabel: event.target.value })}
+              />
+            </label>
+          </div>
+        )}
 
         <Space wrap>
           <Checkbox
@@ -1016,7 +1159,7 @@ function FieldDialog({
           </Checkbox>
           {/* A table has no single value to make long, and a column is drawn
               in a grid cell — neither has anywhere to put a textarea. */}
-          {draft.type !== "array" && !columnsOnly && (
+          {draft.type === "text" && !columnsOnly && (
             <Checkbox
               checked={draft.multiline}
               onChange={(event) => set({ multiline: event.target.checked })}
@@ -1026,7 +1169,7 @@ function FieldDialog({
           )}
         </Space>
 
-        {draft.type === "array" && (
+        {draft.type === "table" && (
           <>
             <label className="block">
               <Text strong>{messages.requestTypes.tableMaxRows}</Text>
@@ -1082,7 +1225,7 @@ function TableColumns({
             <span>
               {row.title || row.key}{" "}
               <Text type="secondary" className="text-xs">
-                {row.key} · {row.type}
+                {row.key} · {messages.requestTypes.fieldTypeLabels[row.type]}
                 {row.required ? " · บังคับ" : ""}
               </Text>
             </span>

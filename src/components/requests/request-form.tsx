@@ -1,7 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Alert, App, Button, Card, Empty, Input, InputNumber, Tag } from "antd";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  Alert,
+  App,
+  Button,
+  Card,
+  DatePicker,
+  Empty,
+  Input,
+  InputNumber,
+  Radio,
+  Tag,
+} from "antd";
+import dayjs from "dayjs";
 import {
   AuditOutlined,
   CheckCircleFilled,
@@ -23,6 +35,8 @@ import {
   submitRequest,
 } from "@/lib/api/client-requests";
 import {
+  booleanLabelsOf,
+  fieldKindOf,
   fieldOrder,
   isMultilineField,
   isSensitiveField,
@@ -136,6 +150,8 @@ export function RequestForm({
     }
     return types.length === 1 ? types[0].code : undefined;
   });
+  // Seeds the receiver fields below; covers a `?type=` deep link as well as a single type.
+  const initialType = types.find((entry) => entry.code === typeCode);
   /**
    * A request is handed to a person, not dropped in a department's queue.
    *
@@ -143,7 +159,9 @@ export function RequestForm({
    * backend refuses a submit without one — a ticket nobody owns is the failure
    * this system exists to prevent.
    */
-  const [receiverId, setReceiverId] = useState<string | undefined>();
+  const [receiverId, setReceiverId] = useState<string | undefined>(
+    initialType?.receiverUserId ?? undefined,
+  );
   /**
    * ทีมผู้รับ. Seeded from the type and changeable — REQ-01 configures a
    * starting point, not a routing rule, and the departments' own logs show
@@ -155,7 +173,7 @@ export function RequestForm({
    */
   const [receiverOrgUnitId, setReceiverOrgUnitId] = useState<
     string | undefined
-  >(types.length === 1 ? (types[0].receiverOrgUnitId ?? undefined) : undefined);
+  >(initialType?.receiverOrgUnitId ?? undefined);
   const [values, setValues] = useState<Record<string, unknown>>({});
   const [refId, setRefId] = useState(initialRef?.id ?? "");
   const [draftId, setDraftId] = useState<string | null>(null);
@@ -186,6 +204,9 @@ export function RequestForm({
   const [savedAt, setSavedAt] = useState<string | null>(null);
 
   const type = types.find((candidate) => candidate.code === typeCode) ?? null;
+  /** The type's ผู้รับเรื่องประจำ — when set, the receiver field is locked to it. */
+  const fixedReceiver = type?.receiverUser ?? null;
+  const fixedReceiverName = fixedReceiver?.displayName ?? null;
   const schema = type?.formSchema;
   const required = schema?.required ?? [];
 
@@ -524,7 +545,7 @@ export function RequestForm({
                   // picked from the old team may not be in it.
                   const chosen = types.find((entry) => entry.code === next);
                   setReceiverOrgUnitId(chosen?.receiverOrgUnitId ?? undefined);
-                  setReceiverId(undefined);
+                  setReceiverId(chosen?.receiverUserId ?? undefined);
                 }}
                 placeholder={messages.requestForm.type}
                 options={types.map((entry) => ({
@@ -552,7 +573,7 @@ export function RequestForm({
                   setReceiverOrgUnitId(next);
                   // The person already chosen may not be in the new branch —
                   // and the review ladder climbs that person's chart.
-                  selectReceiver(undefined);
+                  if (!fixedReceiver) selectReceiver(undefined);
                 }}
                 placeholder={messages.requestForm.receiverTeamPlaceholder}
                 treeData={teamTree}
@@ -568,20 +589,27 @@ export function RequestForm({
               label={messages.requestForm.receiver}
               required
               hint={
-                receiverOrgUnitId && receiverCandidates.length === 0
-                  ? messages.requestForm.receiverTeamEmpty
-                  : undefined
+                fixedReceiver
+                  ? messages.requestForm.receiverFixedHint
+                  : receiverOrgUnitId && receiverCandidates.length === 0
+                    ? messages.requestForm.receiverTeamEmpty
+                    : undefined
               }
             >
               <SearchSelect
                 className="w-full"
                 value={receiverId}
                 onChange={selectReceiver}
+                disabled={Boolean(fixedReceiver)}
                 placeholder={messages.requestForm.receiverPlaceholder}
-                options={receiverCandidates.map((person) => ({
-                  value: person.id,
-                  label: `${person.displayName} · ${person.username}`,
-                }))}
+                options={
+                  fixedReceiver
+                    ? [{ value: fixedReceiver.id, label: fixedReceiver.displayName }]
+                    : receiverCandidates.map((person) => ({
+                        value: person.id,
+                        label: `${person.displayName} · ${person.username}`,
+                      }))
+                }
               />
             </Field>
 
@@ -755,7 +783,7 @@ export function RequestForm({
           afterWork={afterWork}
           typeChosen={Boolean(typeCode)}
           requesterName={requesterName}
-          receiverName={receiverName}
+          receiverName={fixedReceiverName ?? receiverName}
         />
 
         <Card title={messages.requestForm.slaTitle} size="small">
@@ -855,7 +883,10 @@ function TableField({
               <tr key={index} className="border-b border-black/5">
                 {columns.map(([column, spec]) => (
                   <td key={column} className="px-2 py-1">
-                    {spec.type === "number" ? (
+                    {kindInput(spec, row[column], (next) =>
+                      setCell(index, column, next),
+                    ) ??
+                    (spec.type === "number" ? (
                       <InputNumber
                         className="w-full"
                         value={row[column] as number | undefined}
@@ -871,7 +902,7 @@ function TableField({
                           setCell(index, column, event.target.value)
                         }
                       />
-                    )}
+                    ))}
                   </td>
                 ))}
                 <td className="px-2 py-1">
@@ -916,6 +947,70 @@ function TableField({
   );
 }
 
+/**
+ * The input for a choice, a yes/no, or a date — `null` for text and numbers, which callers draw themselves.
+ * Values sent match what `submit-rules.ts` accepts: boolean, `YYYY-MM-DD`, ISO 8601 with offset.
+ */
+function kindInput(
+  property: FormSchemaProperty,
+  value: unknown,
+  onChange: (value: unknown) => void,
+): ReactNode | null {
+  const kind = fieldKindOf(property);
+  const text = typeof value === "string" && value ? value : undefined;
+
+  switch (kind) {
+    case "select":
+      return (
+        <SearchSelect
+          className="w-full"
+          value={text}
+          onChange={onChange}
+          options={(property.enum ?? []).map((option) => ({
+            value: option,
+            label: option,
+          }))}
+        />
+      );
+    case "boolean": {
+      const labels = booleanLabelsOf(property);
+      // No default: an unanswered required yes/no must still read as missing.
+      return (
+        <Radio.Group
+          value={typeof value === "boolean" ? value : undefined}
+          onChange={(event) => onChange(event.target.value)}
+          options={[
+            { value: true, label: labels.yes },
+            { value: false, label: labels.no },
+          ]}
+        />
+      );
+    }
+    case "date":
+      return (
+        <DatePicker
+          className="w-full"
+          format="DD/MM/YYYY"
+          value={text ? dayjs(text) : null}
+          onChange={(next) => onChange(next ? next.format("YYYY-MM-DD") : undefined)}
+        />
+      );
+    case "datetime":
+      return (
+        <DatePicker
+          className="w-full"
+          showTime={{ format: "HH:mm" }}
+          format="DD/MM/YYYY HH:mm"
+          value={text ? dayjs(text) : null}
+          // `format()` with no pattern is ISO 8601 with the local offset.
+          onChange={(next) => onChange(next ? next.format() : undefined)}
+        />
+      );
+    default:
+      return null;
+  }
+}
+
 export function SchemaField({
   name,
   property,
@@ -931,6 +1026,7 @@ export function SchemaField({
 }) {
   const multiline = isMultilineField(property);
   const isTable = property.type === "array" && Boolean(property.items);
+  const special = isTable ? null : kindInput(property, value, onChange);
 
   return (
     <Field
@@ -949,16 +1045,8 @@ export function SchemaField({
     >
       {isTable ? (
         <TableField property={property} value={value} onChange={onChange} />
-      ) : property.enum ? (
-        <SearchSelect
-          className="w-full"
-          value={value as string | undefined}
-          onChange={onChange}
-          options={property.enum.map((option) => ({
-            value: option,
-            label: option,
-          }))}
-        />
+      ) : special ? (
+        special
       ) : property.type === "number" ? (
         <InputNumber
           // Full width of its column: a number is not narrower than a name, and

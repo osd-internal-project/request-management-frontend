@@ -208,9 +208,14 @@ export interface FormSchemaProperty {
   title?: string;
   description?: string;
   enum?: string[];
+  /** `date` (`YYYY-MM-DD`) or `date-time` (ISO 8601 with offset). */
+  format?: string;
   minimum?: number;
   maximum?: number;
   maxLength?: number;
+  /** Boolean only: what to call `true` / `false`. Read through `booleanLabelsOf`. */
+  "x-true-label"?: string;
+  "x-false-label"?: string;
   /** SCOPE-04 — rendered with the "เห็นเฉพาะสายอนุมัติ" badge. */
   "x-sensitive"?: boolean;
   /** A long answer; rendered as a textarea rather than a single line. */
@@ -248,6 +253,36 @@ export function isMultilineField(property: FormSchemaProperty): boolean {
   return property["x-multiline"] ?? property.multiline ?? false;
 }
 
+/** What a field is, for editing and rendering. Mirrors `typeOf` in core-service `form-schema.ts`. */
+export type FieldKind =
+  | "text"
+  | "number"
+  | "boolean"
+  | "date"
+  | "datetime"
+  | "select"
+  | "table";
+
+export function fieldKindOf(property: FormSchemaProperty): FieldKind {
+  if (property.enum?.length) return "select";
+  if (property.type === "array") return "table";
+  if (property.type === "number" || property.type === "integer") return "number";
+  if (property.type === "boolean") return "boolean";
+  if (property.format === "date") return "date";
+  if (property.format === "date-time") return "datetime";
+  return "text";
+}
+
+export function booleanLabelsOf(property: FormSchemaProperty): {
+  readonly yes: string;
+  readonly no: string;
+} {
+  return {
+    yes: property["x-true-label"]?.trim() || "ใช่",
+    no: property["x-false-label"]?.trim() || "ไม่ใช่",
+  };
+}
+
 /** Unordered fields sink below ordered ones instead of jumping to the top. */
 export function fieldOrder(property: FormSchemaProperty): number {
   return property["x-order"] ?? Number.MAX_SAFE_INTEGER;
@@ -277,6 +312,9 @@ export interface RequestType {
   receiverOrgUnitId?: string | null;
   /** Joined by `GET /request-types` so the submit screen can name the team. */
   receiverOrgUnit?: { id: string; name: string } | null;
+  /** ผู้รับเรื่องประจำ type. Set → every request goes to this person; null → requester picks. */
+  receiverUserId?: string | null;
+  receiverUser?: { id: string; displayName: string } | null;
   /**
    * How the chain is chosen at submit. Seed shape:
    * `{ mode: 'standard_chain', amount_field: 'deal_value' }` — `amount_field`

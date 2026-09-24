@@ -1,3 +1,5 @@
+import type { FieldKind } from "@/lib/api/types";
+
 /**
  * UI copy, Thai first (NFR-06).
  *
@@ -530,6 +532,7 @@ export const messages = {
     receiverTeamPlaceholder: "เลือกทีมผู้รับ",
     receiverTeamEmpty: "ทีมนี้ยังไม่มีสมาชิก — เลือกทีมอื่นหรือล้างช่องทีมผู้รับ",
     receiverPlaceholder: "เลือกผู้รับเรื่อง — คำขอจะไปอยู่ในคิวของคนนี้",
+    receiverFixedHint: "ประเภทคำขอนี้กำหนดผู้รับเรื่องไว้แล้ว",
     receiverRequired: "ต้องระบุผู้รับเรื่องก่อนยื่นคำขอ",
     title: "ยื่นคำขอ",
     /** §16 หน้าที่ 3 — the page heading and the left-menu entry agree. */
@@ -783,10 +786,19 @@ export const messages = {
     fieldMultiline: "ข้อความยาว",
     /** §16 describes a field by its shape (`ตัวเลข · ฟิลด์อ่อนไหว`), not by its JSON Schema type. */
     fieldTypeLabels: {
-      string: "ข้อความ",
+      text: "ข้อความ",
       number: "ตัวเลข",
       boolean: "ใช่/ไม่ใช่",
-    } as Record<string, string>,
+      date: "วันที่",
+      datetime: "วันที่และเวลา",
+      select: "ตัวเลือก",
+      table: "ตาราง",
+    } satisfies Record<FieldKind, string>,
+    fieldSelectCount: (count: number) => `ตัวเลือก ${count} ค่า`,
+    fieldOptions: "ตัวเลือก",
+    fieldOptionsHint: "พิมพ์แล้วกด Enter ทีละค่า",
+    fieldTrueLabel: "ข้อความเมื่อเป็นจริง",
+    fieldFalseLabel: "ข้อความเมื่อเป็นเท็จ",
     fieldRange: (min: number, max: number) => `${min}–${max}`,
     fieldEditTitle: "แก้ไขฟิลด์ฟอร์ม",
     fieldAddTitle: "เพิ่มฟิลด์ฟอร์ม",
@@ -809,6 +821,9 @@ export const messages = {
     entryLabel: "ชื่อที่แสดง",
     remove: "ลบ",
     noReceiver: "ยังไม่ได้กำหนดทีมผู้รับ",
+    fixedReceiver: "ผู้รับเรื่องประจำ",
+    fixedReceiverPlaceholder: "ผู้ยื่นเลือกเอง",
+    fixedReceiverHint: "ถ้ากำหนดไว้ ทุกคำขอของประเภทนี้จะส่งถึงคนนี้ ผู้ยื่นเปลี่ยนไม่ได้",
     /** SUP-01 — which hours the SLA clock actually counts. */
     coverage: {
       H24X7: "24x7 — นับตลอดเวลา",
@@ -817,8 +832,6 @@ export const messages = {
     } as Record<string, string>,
     workingHoursLink: "ตั้งเวลาทำการและวันหยุด",
     /* REQ-03 — `อ้างอิงโอกาสการขาย` is per type, not a rule of the submit screen. */
-    /* A `type: "array"` field — a grid the requester adds rows to. */
-    fieldTypeTable: "array (ตาราง)",
     tableColumns: "คอลัมน์ของตาราง",
     tableEditColumn: "แก้ไข",
     tableAddColumn: "+ เพิ่มคอลัมน์",

@@ -195,7 +195,7 @@ export function AppShell({
                     </Avatar>
                   </Dropdown>
                   <Button
-                    hidden={true}
+                    // hidden={true}
                     type="text"
                     icon={chatOpen ? <MessageTwoTone /> : <MessageOutlined />}
                     onClick={toggleChat}

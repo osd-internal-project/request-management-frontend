@@ -197,7 +197,7 @@ export function AppShell({
                   <Button
                     type="text"
                     // className="hidden"
-                    hidden={true}
+                    // hidden={true}
                     icon={chatOpen ? <MessageTwoTone /> : <MessageOutlined />}
                     onClick={toggleChat}
                     aria-label={messages.chat.toggle}

@@ -9,7 +9,7 @@ import type {
   RequestDetail,
   RequestPerson,
 } from "@/lib/api/types";
-import { fieldOrder } from "@/lib/api/types";
+import { booleanLabelsOf, fieldKindOf, fieldOrder } from "@/lib/api/types";
 import { RequestActions } from "@/components/requests/request-actions";
 import { ReceiverForm } from "@/components/requests/receiver-form";
 import { RequestComments } from "@/components/requests/request-comments";
@@ -30,6 +30,40 @@ function when(iso: string): string {
     hour: "2-digit",
     minute: "2-digit",
   })} น.`;
+}
+
+/** One non-table answer as text: labelled booleans, Thai dates. Server-rendered, so the zone is pinned. */
+function answerText(property: FormSchemaProperty, value: unknown): string {
+  if (value === undefined || value === null || value === "") return "—";
+
+  const kind = fieldKindOf(property);
+
+  if (kind === "boolean" && typeof value === "boolean") {
+    const labels = booleanLabelsOf(property);
+    return value ? labels.yes : labels.no;
+  }
+
+  if ((kind === "date" || kind === "datetime") && typeof value === "string") {
+    // A bare date is a calendar day, not an instant: read it at UTC midnight so no zone shifts it.
+    const at = new Date(kind === "date" ? `${value}T00:00:00Z` : value);
+    if (Number.isNaN(at.getTime())) return value;
+
+    const day = at.toLocaleDateString("th-TH", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      timeZone: kind === "date" ? "UTC" : "Asia/Bangkok",
+    });
+    if (kind === "date") return day;
+
+    return `${day} ${at.toLocaleTimeString("th-TH", {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "Asia/Bangkok",
+    })} น.`;
+  }
+
+  return String(value);
 }
 
 function fileSize(bytes: number): string {
@@ -484,7 +518,7 @@ function FormAnswer({
   );
 
   if (property.type !== "array" || !columns.length || !Array.isArray(value)) {
-    return <>{String(value ?? "—")}</>;
+    return <>{answerText(property, value)}</>;
   }
 
   const rows = value.filter(
@@ -509,12 +543,12 @@ function FormAnswer({
         <tbody>
           {rows.map((row, index) => (
             <tr key={index} className="border-b border-black/5">
-              {columns.map(([column]) => (
+              {columns.map(([column, spec]) => (
                 <td key={column} className="px-2 py-1">
                   {/* A column the reader may not see was deleted by the
                       masking interceptor, so it is absent, not blank. */}
                   {column in row ? (
-                    String(row[column] ?? "—")
+                    answerText(spec, row[column])
                   ) : (
                     <Text type="secondary">
                       {messages.requestDetail.masked}

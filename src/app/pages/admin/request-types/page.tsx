@@ -37,13 +37,14 @@ export default async function AdminRequestTypesPage() {
     getAdminRequestTypes(),
     orgUnitsApi.getOrgUnits(),
     canManageMatrix ? admin.getApprovalMatrix() : null,
-    // The directory names who published a version; `createdBy` is stored as an
-    // id and core-service owns no identity tables.
-    canManageMatrix ? getAllDirectoryUsers() : null,
+    // Feeds the ผู้รับเรื่องประจำ picker and names who published a ladder
+    // version (`createdBy` is stored as an id).
+    getAllDirectoryUsers(),
   ]);
 
+  const people = users.ok ? users.data : [];
   const userNames = Object.fromEntries(
-    (users?.ok ? users.data : []).map((user) => [user.id, user.displayName]),
+    people.map((user) => [user.id, user.displayName]),
   );
 
   if (!result.ok) {
@@ -80,6 +81,7 @@ export default async function AdminRequestTypesPage() {
         companyId={session?.active_company_id ?? ""}
         matrixVersions={matrix?.ok ? matrix.data : []}
         userNames={userNames}
+        people={people}
         canManageMatrix={canManageMatrix}
       />
     </div>
