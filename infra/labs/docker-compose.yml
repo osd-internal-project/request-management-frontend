@@ -1,0 +1,44 @@
+# The labs frontend, pulled from SWR.
+#
+# Started by .github/workflows/deploy-labs.yml on the VM's self-hosted runner:
+#
+#   IMAGE_TAG=0.2.0-abc1234 docker compose -f infra/labs/docker-compose.yml \
+#     up -d --pull always --wait
+#
+# A separate compose project from the API stack, so either side can be deployed
+# without restarting the other. They meet on the external `rm-net` network.
+
+name: request-management-labs-frontend
+
+services:
+  frontend:
+    image: ${REGISTRY}/${SWR_ORG}/request-management-frontend:${IMAGE_TAG}
+    container_name: rm-fe
+    restart: unless-stopped
+    # Real values live on the VM, outside the repo. See .env.labs.example —
+    # note that USER_SERVICE_URL here is an ORIGIN, the opposite of the
+    # same-named variable in the backend stack.
+    env_file: /etc/request-management/.frontend.env
+    # Host 3500 → container 3000. This is the port a browser uses, so it is the
+    # one that has to appear in APP_ORIGIN and in the Keycloak redirect URIs.
+    ports: ["3500:3000"]
+    networks: [rm-net]
+    healthcheck:
+      # src/app/api/health/route.ts. Every other route either redirects to
+      # login or renders a page, and a check that follows a redirect proves
+      # nothing about this process.
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/health | grep -q '\"status\":\"ok\"'"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+networks:
+  rm-net:
+    # External so that no compose project owns it; the API stack joins the same
+    # network. The deploy workflow's `Ensure Shared Network` step creates it
+    # when it is missing, because `external` also means compose will not.
+    external: true

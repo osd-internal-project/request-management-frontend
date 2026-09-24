@@ -1,11 +1,19 @@
+# The Dockerfile does `COPY . .`, so everything not listed here is uploaded to
+# the daemon and lands in a layer.
 node_modules
 .next
 .git
 .github
 *.tsbuildinfo
 yarn-error.log
+coverage
+
+# Local secrets must never reach an image layer. src/lib/backend.ts reads the
+# real values from the environment at runtime.
 .env
 .env.local
+.env.*
+
 README.md
 AGENTS.md
 CLAUDE.md

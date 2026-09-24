@@ -125,3 +125,29 @@ Two of these cost real debugging time:
 - Thai copy lives in `src/lib/messages.ts` rather than inline, so a second
   locale is another object with the same shape. No i18n library is pulled in
   for that.
+
+## Deploying to labs
+
+`.github/workflows/deploy-labs.yml` builds the image, pushes it to
+`swr.ap-southeast-2.myhuaweicloud.com`, and restarts the labs stack — on every push to
+`deploys/labs`. It needs two **repository** secrets (Settings → Secrets and variables →
+Actions), set on this repo rather than at the organisation level:
+
+| Secret | Value |
+|---|---|
+| `HUAWEI_REGISTRY_USERNAME` | `ap-southeast-2@<ACCESS_KEY>` |
+| `HUAWEI_REGISTRY_PASSWORD` | the login key SWR issues, not the raw Secret Access Key |
+
+Both come from *SWR console → My Images → Client Upload → Generate Login Command*. A login key
+is derived per region, so a key issued for another region answers 401 here.
+
+The organisation defaults to `osd-internal`; set the `HUAWEI_SWR_ORG` repository *variable*
+(a different tab from secrets) to override it without editing the workflow.
+
+Images are tagged `<package.json version>-<short sha>`, which is never pushed over.
+
+The deploy half runs on a self-hosted runner on the labs VM. That machine has to be prepared
+first — runner, Docker, the shared `rm-net` network, `/etc/request-management/.frontend.env`
+(see `.env.labs.example`), and the Keycloak redirect URIs. The full procedure lives in the
+backend repo at `docs/labs-server-setup.md`. **With no self-hosted runner online for this repo,
+the deploy job sits in `Queued` indefinitely without erroring.**
