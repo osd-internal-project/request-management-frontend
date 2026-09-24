@@ -72,6 +72,13 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     permissions: ["crm.sales.read"],
     group: messages.nav.crmGroup,
   },
+  /** CD-88 — ใบสั่งขายทุกใบในขอบเขตที่เห็น พร้อมสถานะส่ง SAP; เปิดใบจากหน้าโอกาสการขาย. */
+  {
+    label: messages.nav.saleOrders,
+    href: ROUTES.saleOrders,
+    permissions: ["crm.sales.read"],
+    group: messages.nav.crmGroup,
+  },
 
   {
     // ตารางอำนาจอนุมัติ (A1) has no entry of its own: it is two tabs of the

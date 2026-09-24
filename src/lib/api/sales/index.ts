@@ -15,6 +15,7 @@ import type {
   QuotationPrintView,
   QuotationRow,
   QuotationStatus,
+  ErpSyncStatus,
   SaleOrderRow,
   SaleOrderStatus,
 } from "../types";
@@ -117,6 +118,11 @@ export async function getSaleOrders(options?: {
   opportunity_id?: string;
   customer_id?: string;
   status?: SaleOrderStatus;
+  /** CD-88 — กรองตามสถานะส่ง SAP. */
+  erp_status?: ErpSyncStatus;
+  /** เลขใบสั่งขาย / เลขใบของ SAP / รหัสหรือชื่อลูกค้า / รหัสโอกาสการขาย. */
+  search?: string;
+  view?: "mine";
   page?: number;
   page_size?: number;
 }): Promise<ApiResult<Paginated<SaleOrderRow>>> {
@@ -124,6 +130,9 @@ export async function getSaleOrders(options?: {
   if (options?.opportunity_id) params.set("opportunity_id", options.opportunity_id);
   if (options?.customer_id) params.set("customer_id", options.customer_id);
   if (options?.status) params.set("status", options.status);
+  if (options?.erp_status) params.set("erp_status", options.erp_status);
+  if (options?.search) params.set("search", options.search);
+  if (options?.view) params.set("view", options.view);
   params.set("page", String(options?.page ?? 1));
   params.set("page_size", String(options?.page_size ?? 50));
   return apiGet(`sale-orders?${params.toString()}`);

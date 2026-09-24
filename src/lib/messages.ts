@@ -75,6 +75,7 @@ export const messages = {
     leads: "Lead",
     opportunities: "โอกาสการขาย",
     quotations: "ใบเสนอราคา",
+    saleOrders: "ใบสั่งขาย",
     adminGroup: "ผู้ดูแลระบบ",
     adminCrm: "ตั้งค่า CRM",
     adminApiKeys: "กุญแจ API",
@@ -1833,6 +1834,25 @@ export const messages = {
     },
 
     /** CD-76 — ใบเสนอราคา: เวอร์ชัน, วันหมดอายุ, ตรวจ margin ก่อนออก. */
+    saleOrders: {
+      title: "ใบสั่งขาย (Sale Order)",
+      scopeNote:
+        "เห็นเฉพาะใบสั่งขายของคุณและของทีม ตามสิทธิ์ที่ได้รับ · เปิดใบใหม่จากหน้ารายละเอียดโอกาสการขาย",
+      searchPlaceholder: "ค้นหา เลขใบสั่งขาย / เลข SAP / ลูกค้า / โอกาสการขาย",
+      filterStatus: "สถานะใบ: ทั้งหมด",
+      filterErp: "สถานะ SAP: ทั้งหมด",
+      mineOnly: "เฉพาะของฉัน",
+      empty: "ยังไม่มีใบสั่งขาย",
+      columns: {
+        code: "เลขใบสั่งขาย",
+        customer: "ลูกค้า",
+        opportunity: "โอกาสการขาย",
+        quotation: "ใบเสนอราคา",
+        status: "สถานะ",
+        amount: "มูลค่า",
+        orderedAt: "วันที่เปิด",
+      },
+    },
     quotations: {
       title: "ใบเสนอราคา (Quotation)",
       scopeNote:
