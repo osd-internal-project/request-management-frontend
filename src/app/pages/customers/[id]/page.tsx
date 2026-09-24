@@ -25,7 +25,7 @@ export default async function CustomerDetailPage({
   const canReadRequests = can(session, "request.read");
   const canReadSales = can(session, "crm.sales.read");
   /* C360-02/C360-04 — ยอดค้างชำระเป็นสิทธิ์แยกจาก crm.customer.read (PO ยืนยัน
-     8 ก.ย.): ไม่มีสิทธิ์ = การ์ดหายไปทั้งใบ ไม่ใช่โชว์ "—" ให้เข้าใจผิดว่ารอ Odoo. */
+     8 ก.ย.): ไม่มีสิทธิ์ = การ์ดหายไปทั้งใบ ไม่ใช่โชว์ "—" ให้เข้าใจผิดว่ารอ SAP. */
   const canReadFinancials = can(session, "crm.customer.financial.read");
 
   const [

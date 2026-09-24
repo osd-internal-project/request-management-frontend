@@ -113,6 +113,7 @@ export const ROUTES = {
   adminAudit: `${HOME_PATH}/admin/audit`,
   /** กุญแจ API ของช่องทางภายนอก — สิทธิ์ `integration.*` ออกที่นี่. */
   adminApiKeys: `${HOME_PATH}/admin/api-keys`,
+  adminErpSync: `${HOME_PATH}/admin/erp-sync`,
   /** REQ-02 — รูปแบบเลขรันของทุกชนิดเอกสาร. */
   adminRunNumbers: `${HOME_PATH}/admin/run-numbers`,
 } as const;

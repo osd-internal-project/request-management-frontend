@@ -78,6 +78,7 @@ export const messages = {
     adminGroup: "ผู้ดูแลระบบ",
     adminCrm: "ตั้งค่า CRM",
     adminApiKeys: "กุญแจ API",
+    adminErpSync: "คิวส่ง SAP",
     adminRunNumbers: "เลขรันเอกสาร",
     adminRequestTypes: "ประเภทคำขอ",
     adminSla: "เวลาทำการและวันหยุด",
@@ -1149,6 +1150,64 @@ export const messages = {
   },
 
   /** หน้ากุญแจ API ของช่องทางภายนอก (`admin.integration.manage`). */
+  erpSync: {
+    catalog: {
+      title: "รายการสินค้าจาก SAP",
+      hint: "ใช้เลือกรหัสสินค้าบนบรรทัดใบเสนอราคา — ดึงจาก SAP เองทุกชั่วโมง",
+      counts: (active: number, total: number) =>
+        `ขายอยู่ ${active} รายการ (ทั้งหมด ${total})`,
+      lastSynced: (when: string) => `ดึงล่าสุด ${when}`,
+      never: "ยังไม่เคยดึงจาก SAP — ตอนนี้ยังไม่ตรวจรหัสสินค้าบนใบเสนอราคา",
+      syncNow: "ดึงจาก SAP ตอนนี้",
+      synced: (r: { total: number; created: number; updated: number; deactivated: number }) =>
+        `ดึงแล้ว ${r.total} รายการ — ใหม่ ${r.created} · แก้ ${r.updated} · เลิกขาย ${r.deactivated}`,
+    },
+    title: "คิวส่ง SAP",
+    subtitle:
+      "ข้อมูลบันทึกใน Connect the Dot ก่อนแล้วค่อยส่งเข้า SAP — งานที่ส่งไม่สำเร็จครบรอบจะหยุดลองเอง แก้ต้นเหตุแล้วกดส่งใหม่ที่นี่",
+    filters: {
+      failed: (n: number) => `ส่งไม่สำเร็จ · ${n}`,
+      pending: (n: number) => `รอส่ง · ${n}`,
+      all: "ทั้งหมด",
+    },
+    refresh: "โหลดใหม่",
+    columns: {
+      kind: "งาน",
+      resource: "รหัส",
+      name: "ลูกค้า",
+      status: "สถานะ",
+      attempts: "ลองแล้ว",
+      lastError: "ข้อผิดพลาดล่าสุด",
+      when: "อัปเดตล่าสุด",
+    },
+    kinds: {
+      customer_upsert: "ส่งลูกค้า",
+      receivables_refresh: "อ่านยอดค้างชำระ",
+      sale_order_create: "ส่งใบสั่งขาย",
+      sale_order_cancel: "ยกเลิกใบสั่งขาย",
+    } as Record<string, string>,
+    status: {
+      failed: "ส่งไม่สำเร็จ",
+      pending: "รอส่ง",
+    } as Record<string, string>,
+    nextTry: (when: string) => `ลองเองอีกครั้ง ${when}`,
+    attempts: (n: number) => `${n} ครั้ง`,
+    noError: "—",
+    more: "เพิ่มเติม",
+    retry: "ส่งใหม่",
+    retryConfirm: "เริ่มนับรอบใหม่และส่งเข้า SAP ทันที?",
+    retrySucceeded: (code: string) => `ส่ง ${code} เข้า SAP สำเร็จ`,
+    retryStillFailing: (code: string, error: string) =>
+      `ส่ง ${code} ยังไม่สำเร็จ — ${error}`,
+    retryInProgress: (code: string) =>
+      `กำลังส่ง ${code} เข้า SAP — กดโหลดใหม่เพื่อดูผล`,
+    cancel: "ยกเลิก",
+    empty: {
+      failed: "ไม่มีงานที่ส่งไม่สำเร็จ",
+      pending: "ไม่มีงานที่รอส่ง",
+      all: "คิวว่าง — ทุกอย่างถึง SAP แล้ว",
+    } as Record<string, string>,
+  },
   apiKeys: {
     title: "กุญแจ API",
     subtitle:
@@ -1650,7 +1709,7 @@ export const messages = {
         amount: "มูลค่า (THB)",
         probability: "ความน่าจะเป็น (%)",
         expectedClose: "วันคาดว่าจะปิด",
-        products: "product ที่เกี่ยวข้อง (รหัสตรงกับ Odoo)",
+        products: "product ที่เกี่ยวข้อง (รหัสตรงกับ SAP)",
         productsHint:
           "พิมพ์รหัสแล้ว Enter เพิ่มได้หลายตัว · ใช้ A-Z a-z 0-9 _ . - เท่านั้น",
         productsRejected: (codes: string) =>
@@ -1705,6 +1764,31 @@ export const messages = {
           open: "เปิดอยู่",
           cancelled: "ยกเลิก",
         } as Record<string, string>,
+        // CD-88 — ใบสั่งขายเข้า SAP
+        saleOrderErp: "SAP",
+        saleOrderErpStatus: {
+          not_ready: "ยังส่งไม่ได้",
+          pending: "รอส่ง",
+          synced: "ส่งแล้ว",
+          failed: "ส่งไม่สำเร็จ",
+          skipped: "ไม่ต้องส่ง",
+        } as Record<string, string>,
+        saleOrderErpHint: {
+          not_ready: "ยังไม่มีรายการสินค้า — เปิดใบสั่งขายจากใบเสนอราคาที่ลูกค้ายอมรับเพื่อส่งเข้า SAP",
+          pending: "บันทึกใน Connect the Dot แล้ว — ระบบจะส่งเข้า SAP ให้อัตโนมัติ",
+          skipped: "ยกเลิกก่อนถึง SAP — ไม่มีอะไรต้องส่ง",
+        } as Record<string, string>,
+        saleOrderErpCancelled: "ยกเลิกใน SAP แล้ว",
+        saleOrderErpLastError: (error: string) => `ข้อผิดพลาดล่าสุด: ${error}`,
+        saleOrderLinesTitle: "รายการสินค้า",
+        saleOrderAddLine: "เพิ่มรายการ",
+        saleOrderRemoveLine: "ลบรายการ",
+        saleOrderLinesEmpty: "ยังไม่มีรายการ",
+        saleOrderLinesHint:
+          "มูลค่าใบสั่งขาย = ยอดรวมรายการ (ก่อน VAT) — ใบที่มีรายการส่งเข้า SAP ให้อัตโนมัติ",
+        saleOrderNoLinesHint:
+          "ไม่ใส่รายการก็เปิดใบได้ แต่ส่งเข้า SAP ไม่ได้จนกว่าจะมีรายการสินค้า",
+        saleOrderNoLines: "ใบสั่งขายนี้ไม่มีรายการสินค้า (เปิดตรงจากโอกาสการขาย)",
         cancelSaleOrder: "ยกเลิกใบสั่งขาย",
         cancelReason: "เหตุผลที่ยกเลิก",
         cancelled: "ยกเลิกใบสั่งขายแล้ว",
@@ -1805,6 +1889,8 @@ export const messages = {
         addLine: "เพิ่มรายการ",
         removeLine: "ลบ",
         noLines: "ยังไม่มีรายการ — เพิ่มอย่างน้อยหนึ่งรายการก่อนยื่น",
+        productPlaceholder: "ค้นรหัส/ชื่อสินค้า (ว่าง = บริการ)",
+        productNotFound: "ไม่พบในรายการสินค้าจาก SAP",
         line: {
           productCode: "รหัสสินค้า",
           description: "รายละเอียด",
@@ -2085,7 +2171,7 @@ export const messages = {
         locations: "ที่อยู่/ไซต์",
         branchCustomers: "สาขาในเครือ",
         outstanding: "ยอดค้างชำระ",
-        outstandingPending: "มาพร้อมตัวเชื่อม Odoo",
+        outstandingPending: "มาพร้อมตัวเชื่อม SAP",
         outstandingDetail: (count: string, asOf: string) =>
           `ค้าง ${count} ใบ · ข้อมูล ${asOf}`,
       },
@@ -2112,7 +2198,7 @@ export const messages = {
         cases: { label: "เคส", phase: "มาพร้อมงานเคส/ข้อร้องเรียน (CRM ระยะถัดไป)" },
         financials: {
           label: "การเงิน",
-          phase: "มาพร้อมตัวเชื่อม Odoo (ชุดงาน D) — ยอดค้างชำระอ่านจาก Odoo ที่เดียว",
+          phase: "มาพร้อมตัวเชื่อม SAP (ชุดงาน D) — ยอดค้างชำระอ่านจาก SAP ที่เดียว",
         },
         assets: {
           label: "อุปกรณ์",
@@ -2197,7 +2283,7 @@ export const messages = {
       sectionKycProducts: "Product ที่ต้องยืนยันตัวตน (KYC)",
       kycProductsHint:
         "KYC ไม่บังคับทุกราย — โมดูลโอกาสการขายจะใช้ตารางนี้แจ้งเตือนเมื่อโอกาสการขายมี product ที่เข้าเงื่อนไข · รายการตั้งต้นรอยืนยันจาก PO/การเงิน กรอกได้เลยเมื่อได้รายการ",
-      kycProductCode: "รหัส product (ตรงกับ Odoo)",
+      kycProductCode: "รหัส product (ตรงกับ SAP)",
       kycProductName: "ชื่อ product",
       addKycProduct: "เพิ่ม product",
       kycColumns: {
