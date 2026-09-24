@@ -965,6 +965,22 @@ export interface OpportunityRow {
 
 export type SaleOrderStatus = "open" | "cancelled";
 
+/** CD-88 — การส่งใบสั่งขายเข้า SAP (แยกจากสถานะของใบเอง). */
+export type ErpSyncStatus = "not_ready" | "pending" | "synced" | "failed" | "skipped";
+
+/** CD-88 — รายการสินค้าของใบสั่งขาย: snapshot จากใบเสนอราคาตอนเปิดใบ. */
+export interface SaleOrderLine {
+  id: string;
+  lineNo: number;
+  productCode: string | null;
+  description: string;
+  quantity: string | number;
+  unit: string | null;
+  unitPrice: string | number;
+  discountPct: string | number;
+  lineTotal: string | number;
+}
+
 /** ใบสั่งขาย (CD-77 โครงระยะ 1) — จุดที่ผู้มุ่งหวังกลายเป็นลูกค้า. */
 export interface SaleOrderRow {
   id: string;
@@ -983,6 +999,12 @@ export interface SaleOrderRow {
   /** CD-77: ใบเสนอราคาที่ลูกค้ายอมรับซึ่งใบสั่งขายนี้เปิดตาม. */
   quotationId: string | null;
   quotation: { id: string; quotationNo: string; version: number } | null;
+  lines: SaleOrderLine[];
+  erpStatus: ErpSyncStatus;
+  /** เลขใบสั่งขายที่ SAP ตอบกลับ. */
+  erpOrderNo: string | null;
+  erpSyncedAt: string | null;
+  erpLastError: string | null;
   ownerUserId: string;
   createdAt: string;
   updatedAt: string;

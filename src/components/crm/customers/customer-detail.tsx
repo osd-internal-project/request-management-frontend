@@ -27,6 +27,10 @@ import { CUSTOMER_STATUS_COLOR } from "@/components/crm/customers/customer-list"
 import { formatAmount } from "@/components/crm/opportunities/opportunity-list";
 import { QuotationStatusTags } from "@/components/crm/quotations/quotation-list";
 import { SearchSelect } from "@/components/ui/search-select";
+import {
+  saleOrderErpColumn,
+  saleOrderExpandable,
+} from "@/components/crm/sale-orders/sale-order-parts";
 import { appApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
@@ -1169,6 +1173,7 @@ function CustomerSaleOrdersTab({ rows }: { rows: SaleOrderRow[] }) {
       rowKey="id"
       pagination={false}
       dataSource={rows}
+      expandable={saleOrderExpandable}
       columns={[
         { title: md.saleOrderColumns.code, dataIndex: "saleOrderCode", width: 160 },
         {
@@ -1207,6 +1212,7 @@ function CustomerSaleOrdersTab({ rows }: { rows: SaleOrderRow[] }) {
             </Tag>
           ),
         },
+        saleOrderErpColumn,
         {
           title: md.saleOrderColumns.amount,
           dataIndex: "amount",

@@ -27,6 +27,10 @@ import { LoseOpportunityModal } from "@/components/crm/opportunities/opportunity
 import { OpportunityActivitiesCard } from "@/components/crm/opportunities/opportunity-activities";
 import { formatAmount, OpportunityParty } from "@/components/crm/opportunities/opportunity-list";
 import { formatMargin, QuotationStatusTags } from "@/components/crm/quotations/quotation-list";
+import {
+  saleOrderErpColumn,
+  saleOrderExpandable,
+} from "@/components/crm/sale-orders/sale-order-parts";
 import { appApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
@@ -486,6 +490,7 @@ export function OpportunityDetailView({
             rowKey="id"
             pagination={false}
             dataSource={opportunity.saleOrders}
+            expandable={saleOrderExpandable}
             columns={[
               { title: md.saleOrderColumns.code, dataIndex: "saleOrderCode", width: 160 },
               {
@@ -498,6 +503,7 @@ export function OpportunityDetailView({
                   </Tag>
                 ),
               },
+              saleOrderErpColumn,
               {
                 title: md.saleOrderColumns.amount,
                 dataIndex: "amount",
