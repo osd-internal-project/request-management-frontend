@@ -19,6 +19,7 @@ import {
   CheckCircleFilled,
   ClockCircleOutlined,
   LockOutlined,
+  PaperClipOutlined,
   SafetyCertificateOutlined,
   SolutionOutlined,
   UserOutlined,
@@ -27,18 +28,20 @@ import Text from "antd/es/typography/Text";
 import Paragraph from "antd/es/typography/Paragraph";
 import { useRouter } from "next/navigation";
 import {
-  addAttachment,
+  attachmentFileUrl,
   createDraft,
   previewChain,
   removeAttachment,
   saveDraft,
   submitRequest,
+  uploadAttachment,
 } from "@/lib/api/client-requests";
 import {
   booleanLabelsOf,
   fieldKindOf,
   fieldOrder,
   isMultilineField,
+  isRequiredDoc,
   isSensitiveField,
 } from "@/lib/api/types";
 import type { ClientResult } from "@/lib/api/client";
@@ -101,6 +104,46 @@ function fileSize(bytes: number): string {
   return bytes >= 1_048_576
     ? `${(bytes / 1_048_576).toFixed(1)} MB`
     : `${Math.max(Math.round(bytes / 1024), 1)} KB`;
+}
+
+/** A per-document file picker; `busy` while its own upload is in flight. */
+function FilePickButton({
+  busy,
+  disabled,
+  className,
+  onPick,
+}: {
+  readonly busy: boolean;
+  readonly disabled: boolean;
+  readonly className?: string;
+  readonly onPick: (file: File) => void;
+}) {
+  const input = useRef<HTMLInputElement>(null);
+
+  return (
+    <>
+      <input
+        ref={input}
+        type="file"
+        className="hidden"
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          if (file) onPick(file);
+          event.target.value = "";
+        }}
+      />
+      <Button
+        size="small"
+        icon={<PaperClipOutlined />}
+        loading={busy}
+        disabled={disabled && !busy}
+        className={className}
+        onClick={() => input.current?.click()}
+      >
+        {busy ? messages.requestForm.uploading : messages.requestForm.attachFile}
+      </Button>
+    </>
+  );
 }
 
 /**
@@ -182,6 +225,8 @@ export function RequestForm({
   const refTypeOf = (id: string) =>
     initialRef && id === initialRef.id ? initialRef.type : "opportunity";
   const [attachments, setAttachments] = useState<RequestAttachment[]>([]);
+  // The doc code being uploaded; "" for an extra file, null when idle.
+  const [uploadingCode, setUploadingCode] = useState<string | null>(null);
   /**
    * One stage's answer: the route, or why there is none.
    *
@@ -438,13 +483,9 @@ export function RequestForm({
     const id = await ensureDraft();
     if (!id) return;
 
-    // Metadata only — the bytes are deliberately never read or uploaded.
-    const added = await addAttachment(id, {
-      doc_code: docCode,
-      file_name: file.name,
-      mime_type: file.type || "application/octet-stream",
-      size_bytes: file.size,
-    });
+    setUploadingCode(docCode ?? "");
+    const added = await uploadAttachment(id, file, docCode);
+    setUploadingCode(null);
 
     if (added.ok) setAttachments((current) => [...current, added.data]);
     else setError(added.message);
@@ -505,10 +546,6 @@ export function RequestForm({
 
     setBusy(false);
   }
-
-  const attachedCodes = new Set(
-    attachments.map((entry) => entry.docCode).filter(Boolean),
-  );
 
   // Explicit, because `jsonb` returns the properties sorted by key length —
   // see `fieldOrder`. Sorting a copy keeps the schema object untouched.
@@ -675,12 +712,20 @@ export function RequestForm({
                       <CheckCircleFilled className="text-green-600" />
                     ) : null}
                     <Text strong>{doc.name}</Text>
+                    <Tag color={isRequiredDoc(doc) ? "red" : "default"}>
+                      {isRequiredDoc(doc)
+                        ? messages.requestForm.docRequired
+                        : messages.requestForm.docOptional}
+                    </Tag>
 
                     {attached ? (
                       <>
-                        <Text type="secondary" className="text-xs">
+                        <a
+                          href={attachmentFileUrl(attached.requestId, attached.id)}
+                          className="text-xs"
+                        >
                           {attached.fileName} · {fileSize(attached.sizeBytes)}
-                        </Text>
+                        </a>
                         <Button
                           size="small"
                           type="link"
@@ -692,9 +737,19 @@ export function RequestForm({
                         </Button>
                       </>
                     ) : (
-                      <Tag color="orange" className="ms-auto">
-                        {messages.requestForm.missingDoc}
-                      </Tag>
+                      <>
+                        {isRequiredDoc(doc) && (
+                          <Tag color="orange">
+                            {messages.requestForm.missingDoc}
+                          </Tag>
+                        )}
+                        <FilePickButton
+                          className="ms-auto"
+                          busy={uploadingCode === doc.code}
+                          disabled={uploadingCode !== null}
+                          onPick={(file) => void onAttach(file, doc.code)}
+                        />
+                      </>
                     )}
                   </li>
                 );
@@ -711,12 +766,12 @@ export function RequestForm({
                       key={entry.id}
                       className="flex items-center justify-between py-2 text-sm"
                     >
-                      <span>
+                      <a href={attachmentFileUrl(entry.requestId, entry.id)}>
                         {entry.fileName}{" "}
                         <Text type="secondary">
                           · {fileSize(entry.sizeBytes)}
                         </Text>
-                      </span>
+                      </a>
                       <Button
                         size="small"
                         type="link"
@@ -730,27 +785,29 @@ export function RequestForm({
               </ul>
             )}
 
-            <label className="block cursor-pointer rounded-lg border border-dashed border-black/15 px-4 py-5 text-center text-sm transition-colors hover:border-blue-400 hover:bg-blue-50/40">
+            <label
+              className={`block rounded-lg border border-dashed border-black/15 px-4 py-5 text-center text-sm transition-colors ${
+                uploadingCode === null
+                  ? "cursor-pointer hover:border-blue-400 hover:bg-blue-50/40"
+                  : "cursor-wait opacity-60"
+              }`}
+            >
               <input
                 type="file"
                 className="hidden"
+                disabled={uploadingCode !== null}
                 onChange={(event) => {
                   const file = event.target.files?.[0];
-                  // Fills the first outstanding requirement, so the common case
-                  // needs no separate "which document is this?" step.
-                  const nextMissing = (type.requiredDocs ?? []).find(
-                    (doc) => !attachedCodes.has(doc.code),
-                  );
-                  if (file) void onAttach(file, nextMissing?.code);
+                  if (file) void onAttach(file);
                   event.target.value = "";
                 }}
               />
-              <Text type="secondary">{messages.requestForm.dropzone}</Text>
+              <Text type="secondary">
+                {uploadingCode === ""
+                  ? messages.requestForm.uploading
+                  : messages.requestForm.dropzone}
+              </Text>
             </label>
-
-            <Paragraph type="secondary" className="mt-3! mb-0! text-xs">
-              {messages.requestForm.noStorageNote}
-            </Paragraph>
           </Card>
         )}
 

@@ -137,19 +137,25 @@ export function decideCase(
   });
 }
 
-export function addAttachment(
+/** REQ-03 — uploads the file itself; the backend stores it in object storage. */
+export function uploadAttachment(
   id: string,
-  input: {
-    doc_code?: string;
-    file_name: string;
-    mime_type: string;
-    size_bytes: number;
-  },
+  file: File,
+  docCode?: string,
 ): Promise<ClientResult<RequestAttachment>> {
+  const form = new FormData();
+  form.append("file", file);
+  if (docCode) form.append("doc_code", docCode);
+
   return appApi<RequestAttachment>(`requests/${id}/attachments`, {
     method: "POST",
-    body: JSON.stringify(input),
+    body: form,
   });
+}
+
+/** Where the browser downloads a stored attachment, through the BFF. */
+export function attachmentFileUrl(id: string, attachmentId: string): string {
+  return `/api/app/requests/${id}/attachments/${attachmentId}/file`;
 }
 
 export function removeAttachment(
@@ -250,7 +256,7 @@ export function createRequestType(input: {
   form_schema: Record<string, unknown>;
   receiver_form_schema?: Record<string, unknown>;
   eligible_org_unit_ids?: string[];
-  required_docs?: { code: string; name: string }[];
+  required_docs?: { code: string; name: string; required?: boolean }[];
   return_reason_codes?: { code: string; name: string }[];
   sla_hours?: number;
   sla_coverage?: string;

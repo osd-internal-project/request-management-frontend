@@ -35,8 +35,16 @@ async function forward(
   const suffix = `/${path.join("/")}`;
   const url = `${backendUrl(suffix)}${search}`;
 
+  // Multipart (attachment upload) passes through as bytes with its boundary intact.
+  const incomingType = request.headers.get("content-type") ?? "";
+  const isMultipart = incomingType.startsWith("multipart/form-data");
   const body =
-    method === "GET" || method === "DELETE" ? undefined : await request.text();
+    method === "GET" || method === "DELETE"
+      ? undefined
+      : isMultipart
+        ? await request.arrayBuffer()
+        : await request.text();
+  const contentType = isMultipart ? incomingType : "application/json";
 
   let response: Response;
   try {
@@ -48,7 +56,7 @@ async function forward(
         // header: a page script could otherwise name any company it liked.
         // `CompanyGuard` still rejects one the user is not a member of.
         ...companyHeader(request.cookies.get(COMPANY_COOKIE)?.value),
-        ...(body ? { "Content-Type": "application/json" } : {}),
+        ...(body ? { "Content-Type": contentType } : {}),
       },
       body,
       cache: "no-store",
@@ -65,11 +73,33 @@ async function forward(
     return new NextResponse(null, { status: 204 });
   }
 
+  // A file download streams through with its own type and filename.
+  const responseType = response.headers.get("content-type") ?? "";
+  if (response.ok && !responseType.includes("application/json")) {
+    return new NextResponse(response.body, {
+      status: response.status,
+      headers: pickHeaders(response.headers, [
+        "content-type",
+        "content-length",
+        "content-disposition",
+      ]),
+    });
+  }
+
   const text = await response.text();
   return new NextResponse(text || null, {
     status: response.status,
     headers: { "Content-Type": "application/json" },
   });
+}
+
+function pickHeaders(source: Headers, names: readonly string[]): Headers {
+  const picked = new Headers();
+  for (const name of names) {
+    const value = source.get(name);
+    if (value) picked.set(name, value);
+  }
+  return picked;
 }
 
 export async function GET(

@@ -72,9 +72,13 @@ async function send<T>(
   let response: Response;
 
   try {
+    // FormData must set its own multipart boundary, so no JSON header for it.
+    const isForm = init?.body instanceof FormData;
     response = await fetch(`/api/${namespace}/${path}`, {
       ...init,
-      headers: { "Content-Type": "application/json", ...init?.headers },
+      headers: isForm
+        ? init?.headers
+        : { "Content-Type": "application/json", ...init?.headers },
     });
   } catch {
     // Offline, DNS, connection reset — the caller still gets a result to

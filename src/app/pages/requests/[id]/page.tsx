@@ -9,7 +9,13 @@ import type {
   RequestDetail,
   RequestPerson,
 } from "@/lib/api/types";
-import { booleanLabelsOf, fieldKindOf, fieldOrder } from "@/lib/api/types";
+import {
+  booleanLabelsOf,
+  fieldKindOf,
+  fieldOrder,
+  hasStoredFile,
+} from "@/lib/api/types";
+import { attachmentFileUrl } from "@/lib/api/client-requests";
 import { RequestActions } from "@/components/requests/request-actions";
 import { ReceiverForm } from "@/components/requests/receiver-form";
 import { RequestComments } from "@/components/requests/request-comments";
@@ -274,19 +280,22 @@ export default async function RequestDetailPage({
               <ul className="divide-y divide-black/5">
                 {attachments.map((entry) => (
                   <li key={entry.id} className="py-2 text-sm">
-                    {entry.fileName}{" "}
+                    {hasStoredFile(entry) ? (
+                      <a href={attachmentFileUrl(request.id, entry.id)}>
+                        {entry.fileName}
+                      </a>
+                    ) : (
+                      entry.fileName
+                    )}{" "}
                     <Text type="secondary">· {fileSize(entry.sizeBytes)}</Text>
+                    {!hasStoredFile(entry) && (
+                      <Text type="secondary" className="block text-xs">
+                        {messages.requestDetail.noFile}
+                      </Text>
+                    )}
                   </li>
                 ))}
               </ul>
-
-              {/*
-              Stated rather than offered as a button that could only ever fail:
-              nothing was stored, so there is nothing to download (question G).
-            */}
-              <Paragraph type="secondary" className="mt-2! mb-0! text-xs">
-                {messages.requestDetail.noDownload}
-              </Paragraph>
             </Card>
           </div>
           {/*

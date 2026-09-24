@@ -299,6 +299,21 @@ export interface CodedLabel {
   name: string;
 }
 
+/** One entry of `requiredDocs`; `required` absent means required. */
+export interface RequiredDoc extends CodedLabel {
+  required?: boolean;
+}
+
+/** True when the attachment has stored bytes behind it. */
+export function hasStoredFile(attachment: RequestAttachment): boolean {
+  return !attachment.storageKey.startsWith("pending://");
+}
+
+/** Older rows have no flag and stay required, matching the backend. */
+export function isRequiredDoc(doc: RequiredDoc): boolean {
+  return doc.required !== false;
+}
+
 export interface RequestType {
   id?: string;
   code: string;
@@ -329,7 +344,7 @@ export interface RequestType {
    * accepting and finishing is the whole of the receiver's part.
    */
   receiverFormSchema?: FormSchema | null;
-  requiredDocs?: CodedLabel[];
+  requiredDocs?: RequiredDoc[];
   returnReasonCodes?: CodedLabel[];
   slaHours?: number | null;
   /** How much of the clock counts — see `SlaCoverage` on the backend. */
@@ -501,7 +516,7 @@ export interface RequestDetail
    * the rules it was raised under, not by whatever an admin saved since.
    */
   typeSnapshot?: {
-    requiredDocs?: CodedLabel[];
+    requiredDocs?: RequiredDoc[];
     returnReasonCodes?: CodedLabel[];
     /** REQ-01: what finishing this request requires, fixed at submit. */
     receiverFormSchema?: FormSchema | null;
@@ -511,10 +526,13 @@ export interface RequestDetail
   comments?: RequestComment[];
 }
 
-/** REQ-03 — recorded metadata; there is no file behind it yet. */
+/** REQ-03 — a stored document; download via `attachmentFileUrl`. */
 export interface RequestAttachment {
   id: string;
+  requestId: string;
   docCode: string | null;
+  /** `pending://…` marks a row saved before file storage; it has no file. */
+  storageKey: string;
   fileName: string;
   mimeType: string;
   sizeBytes: number;

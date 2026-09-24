@@ -19,7 +19,7 @@ import {
 import Link from "next/link";
 import { buildUnitTree } from "@/lib/org/org-tree";
 import { ROUTES } from "@/lib/routes";
-import { SLA_COVERAGES } from "@/lib/api/types";
+import { isRequiredDoc, SLA_COVERAGES } from "@/lib/api/types";
 import type {
   ApprovalMatrixVersion,
   SlaCoverage,
@@ -29,6 +29,7 @@ import type {
   FormSchemaProperty,
   OrgUnitNode,
   RequestType,
+  RequiredDoc,
 } from "@/lib/api/types";
 import { messages } from "@/lib/messages";
 import { SearchSelect, SearchTreeSelect } from "@/components/ui/search-select";
@@ -367,7 +368,7 @@ export function RequestTypeAdmin({
   const [fixedReceiver, setFixedReceiver] = useState<string | null>(
     initial[0]?.receiverUserId ?? null,
   );
-  const [docs, setDocs] = useState<CodedLabel[]>(
+  const [docs, setDocs] = useState<RequiredDoc[]>(
     initial[0]?.requiredDocs ?? [],
   );
   const [reasons, setReasons] = useState<CodedLabel[]>(
@@ -1279,8 +1280,8 @@ function RequiredDocs({
   entries,
   onChange,
 }: {
-  readonly entries: CodedLabel[];
-  readonly onChange: (next: CodedLabel[]) => void;
+  readonly entries: RequiredDoc[];
+  readonly onChange: (next: RequiredDoc[]) => void;
 }) {
   const [editing, setEditing] = useState<number | null>(null);
 
@@ -1301,6 +1302,11 @@ function RequiredDocs({
             >
               {entry.name || entry.code}
             </button>
+            <Tag color={isRequiredDoc(entry) ? "red" : "default"}>
+              {isRequiredDoc(entry)
+                ? messages.requestTypes.docRequired
+                : messages.requestTypes.docOptional}
+            </Tag>
             <span className="flex-1" />
             <Button
               size="small"
@@ -1322,6 +1328,7 @@ function RequiredDocs({
         key={editing ?? "closed"}
         open={editing !== null}
         entry={editing !== null && editing >= 0 ? entries[editing] : null}
+        withRequired
         onClose={() => setEditing(null)}
         onSave={(entry) => {
           onChange(
@@ -1410,16 +1417,22 @@ function ReturnReasons({
 function CodedLabelDialog({
   open,
   entry,
+  withRequired = false,
   onClose,
   onSave,
 }: {
   open: boolean;
-  entry: CodedLabel | null;
+  entry: RequiredDoc | null;
+  /** Documents only: offers the บังคับ/ไม่บังคับ switch. */
+  withRequired?: boolean;
   onClose: () => void;
-  onSave: (entry: CodedLabel) => void;
+  onSave: (entry: RequiredDoc) => void;
 }) {
-  const [draft, setDraft] = useState<CodedLabel>(
-    entry ?? { code: "", name: "" },
+  const [draft, setDraft] = useState<RequiredDoc>(
+    entry ??
+      (withRequired
+        ? { code: "", name: "", required: true }
+        : { code: "", name: "" }),
   );
 
   return (
@@ -1460,6 +1473,20 @@ function CodedLabelDialog({
             }
           />
         </label>
+
+        {withRequired && (
+          <Checkbox
+            checked={isRequiredDoc(draft)}
+            onChange={(event) =>
+              setDraft((current) => ({
+                ...current,
+                required: event.target.checked,
+              }))
+            }
+          >
+            {messages.requestTypes.docRequiredToggle}
+          </Checkbox>
+        )}
       </Space>
     </Modal>
   );
