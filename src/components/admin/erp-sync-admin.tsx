@@ -7,8 +7,11 @@ import Paragraph from "antd/es/typography/Paragraph";
 import Text from "antd/es/typography/Text";
 import dayjs from "dayjs";
 import {
+  getCatalogStatus,
   listErpJobs,
   retryErpJob,
+  syncCatalog,
+  type CatalogStatus,
   type ErpJobFilter,
   type ErpJobList,
   type ErpJobRow,
@@ -203,6 +206,66 @@ export function ErpSyncAdmin() {
           },
         ]}
       />
+    </Card>
+  );
+}
+
+/**
+ * CD-27 — รายการสินค้าจาก SAP: มีกี่รายการ ดึงล่าสุดเมื่อไร และปุ่มดึงตอนนี้
+ * (เช่น หลังเพิ่มสินค้าใหม่ใน SAP แล้วไม่อยากรอรอบรายชั่วโมง).
+ */
+export function ProductCatalogCard() {
+  const { message } = App.useApp();
+  const mc = m.catalog;
+  const [status, setStatus] = useState<CatalogStatus | null>(null);
+  const [syncing, setSyncing] = useState(false);
+
+  const load = useCallback(
+    () =>
+      getCatalogStatus().then((result) => {
+        if (result.ok) setStatus(result.data);
+      }),
+    [],
+  );
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  async function syncNow() {
+    setSyncing(true);
+    const result = await syncCatalog();
+    setSyncing(false);
+    if (!result.ok) {
+      message.error(result.message);
+      return;
+    }
+    message.success(mc.synced(result.data));
+    void load();
+  }
+
+  return (
+    <Card size="small" title={mc.title}>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          {status && status.lastSyncedAt ? (
+            <>
+              <Text>{mc.counts(status.active, status.total)}</Text>
+              <Text type="secondary" className="ml-2 text-xs">
+                {mc.lastSynced(when(status.lastSyncedAt))}
+              </Text>
+            </>
+          ) : (
+            <Text type="warning">{mc.never}</Text>
+          )}
+          <Text type="secondary" className="block text-xs">
+            {mc.hint}
+          </Text>
+        </div>
+        <Button onClick={() => void syncNow()} loading={syncing}>
+          {mc.syncNow}
+        </Button>
+      </div>
     </Card>
   );
 }

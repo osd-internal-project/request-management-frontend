@@ -53,7 +53,31 @@ export async function retryErpJob(id: string): Promise<ClientResult<ErpJobRow>> 
   });
 }
 
+/** CD-27 — รายการสินค้าจาก SAP ของบริษัทที่ทำงานอยู่. */
+export interface CatalogStatus {
+  total: number;
+  active: number;
+  /** null = ยังไม่เคยดึงจาก SAP. */
+  lastSyncedAt: string | null;
+}
+
+export interface CatalogSyncResult {
+  total: number;
+  created: number;
+  updated: number;
+  deactivated: number;
+}
+
+export async function getCatalogStatus(): Promise<ClientResult<CatalogStatus>> {
+  return adminApi<CatalogStatus>("erp-sync/products/status");
+}
+
+/** ดึงจาก SAP ตอนนี้ — รอผล (ขึ้นกับขนาดรายการใน SAP). */
+export async function syncCatalog(): Promise<ClientResult<CatalogSyncResult>> {
+  return adminApi<CatalogSyncResult>("erp-sync/products/sync", { method: "POST" });
+}
+
 /** Grouped for `import erpSync from …` at call sites. */
-const erpSync = { listErpJobs, retryErpJob };
+const erpSync = { listErpJobs, retryErpJob, getCatalogStatus, syncCatalog };
 
 export default erpSync;

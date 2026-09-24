@@ -1138,6 +1138,17 @@ export const messages = {
 
   /** หน้ากุญแจ API ของช่องทางภายนอก (`admin.integration.manage`). */
   erpSync: {
+    catalog: {
+      title: "รายการสินค้าจาก SAP",
+      hint: "ใช้เลือกรหัสสินค้าบนบรรทัดใบเสนอราคา — ดึงจาก SAP เองทุกชั่วโมง",
+      counts: (active: number, total: number) =>
+        `ขายอยู่ ${active} รายการ (ทั้งหมด ${total})`,
+      lastSynced: (when: string) => `ดึงล่าสุด ${when}`,
+      never: "ยังไม่เคยดึงจาก SAP — ตอนนี้ยังไม่ตรวจรหัสสินค้าบนใบเสนอราคา",
+      syncNow: "ดึงจาก SAP ตอนนี้",
+      synced: (r: { total: number; created: number; updated: number; deactivated: number }) =>
+        `ดึงแล้ว ${r.total} รายการ — ใหม่ ${r.created} · แก้ ${r.updated} · เลิกขาย ${r.deactivated}`,
+    },
     title: "คิวส่ง SAP",
     subtitle:
       "ข้อมูลบันทึกใน Connect the Dot ก่อนแล้วค่อยส่งเข้า SAP — งานที่ส่งไม่สำเร็จครบรอบจะหยุดลองเอง แก้ต้นเหตุแล้วกดส่งใหม่ที่นี่",
@@ -1858,6 +1869,8 @@ export const messages = {
         addLine: "เพิ่มรายการ",
         removeLine: "ลบ",
         noLines: "ยังไม่มีรายการ — เพิ่มอย่างน้อยหนึ่งรายการก่อนยื่น",
+        productPlaceholder: "ค้นรหัส/ชื่อสินค้า (ว่าง = บริการ)",
+        productNotFound: "ไม่พบในรายการสินค้าจาก SAP",
         line: {
           productCode: "รหัสสินค้า",
           description: "รายละเอียด",

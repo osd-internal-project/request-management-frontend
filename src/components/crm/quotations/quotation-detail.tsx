@@ -24,6 +24,7 @@ import { PrinterOutlined } from "@ant-design/icons";
 import dayjs, { type Dayjs } from "dayjs";
 import { formatAmount } from "@/components/crm/opportunities/opportunity-list";
 import { formatMargin, QuotationStatusTags } from "@/components/crm/quotations/quotation-list";
+import { ProductPicker } from "@/components/crm/quotations/product-picker";
 import { appApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
@@ -552,20 +553,27 @@ export function QuotationDetailView({
           size="small"
           rowKey="key"
           pagination={false}
-          scroll={{ x: 980 }}
+          scroll={{ x: 1050 }}
           locale={{ emptyText: md.noLines }}
           dataSource={canEditHeader ? lines : toDraftLines(quotation)}
           columns={[
             {
               title: md.line.productCode,
               dataIndex: "productCode",
-              width: 130,
+              width: 200,
               render: (value: string, row) =>
                 canEditLines ? (
-                  <Input
+                  <ProductPicker
                     value={value}
-                    maxLength={64}
-                    onChange={(e) => patchLine(row.key, { productCode: e.target.value })}
+                    onPick={(product) =>
+                      patchLine(row.key, {
+                        productCode: product.code,
+                        // Fill only what the user has not written yet.
+                        description: row.description || product.name,
+                        unit: row.unit || (product.unit ?? ""),
+                      })
+                    }
+                    onClear={() => patchLine(row.key, { productCode: "" })}
                   />
                 ) : (
                   value || "—"

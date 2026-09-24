@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
-import { ErpSyncAdmin } from "@/components/admin/erp-sync-admin";
+import { ErpSyncAdmin, ProductCatalogCard } from "@/components/admin/erp-sync-admin";
 import { messages } from "@/lib/messages";
 import { HOME_PATH } from "@/lib/routes";
 import { can, getSession } from "@/lib/session";
@@ -28,6 +28,8 @@ export default async function AdminErpSyncPage() {
       </div>
 
       <ErpSyncAdmin />
+
+      <ProductCatalogCard />
     </div>
   );
 }
