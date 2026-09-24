@@ -1,7 +1,7 @@
 import { Alert } from "antd";
 import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
-import { RequestTypeAdmin } from "@/components/admin/request-type-admin";
+import { RequestTypeAdmin } from "@/components/admin/request-types/request-type-admin";
 import admin, { getAdminRequestTypes } from "@/lib/api/admin";
 import orgUnitsApi from "@/lib/api/org-units";
 import { getAllDirectoryUsers } from "@/lib/api/users";

@@ -37,7 +37,7 @@ export default async function NewRequestPage({
    * paint like every other part of the form.
    */
   const [typesResult, users, units] = await Promise.all([
-    getRequestTypes(),
+    getRequestTypes(parent),
     getAllDirectoryUsers(),
     // The chart, so ทีมผู้รับ can be a tree and the receiver list can follow a
     // whole branch rather than one exact unit.

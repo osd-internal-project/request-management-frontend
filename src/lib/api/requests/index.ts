@@ -120,11 +120,15 @@ export async function getRequest(
   return apiGet<RequestDetail>(`/requests/${requestId}`);
 }
 
-/** Get all available request types */
-export async function getRequestTypes(): Promise<
-  ApiResult<RequestType[]>
-> {
-  return apiGet<RequestType[]>("/request-types");
+/** Types the viewer may raise; with a parent, its sub-request checklist is added regardless of group. */
+export async function getRequestTypes(
+  parentRequestId?: string,
+): Promise<ApiResult<RequestType[]>> {
+  return apiGet<RequestType[]>(
+    parentRequestId
+      ? `/request-types?parent=${encodeURIComponent(parentRequestId)}`
+      : "/request-types",
+  );
 }
 
 /** Grouped for `import requestsApi from …` at call sites. */

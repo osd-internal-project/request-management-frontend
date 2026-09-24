@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Alert, App, Button, Card } from "antd";
+import { Alert, App, Button, Card, Tooltip } from "antd";
 import Paragraph from "antd/es/typography/Paragraph";
 import { completeRequest } from "@/lib/api/client-requests";
 import { SchemaField } from "@/components/requests/request-form";
@@ -30,11 +30,14 @@ export function ReceiverForm({
   requestId,
   schema,
   initial,
+  blocked = false,
 }: {
   readonly requestId: string;
   readonly schema: FormSchema;
   /** Whatever was already saved — a completion can be attempted twice. */
   readonly initial: Record<string, unknown>;
+  /** A required sub request is still missing; the server would refuse. */
+  readonly blocked?: boolean;
 }) {
   // antd's `message` from context, so it inherits the app theme.
   const { message } = App.useApp();
@@ -94,9 +97,20 @@ export function ReceiverForm({
           ))}
         </div>
 
-        <Button type="primary" loading={busy} onClick={() => void submit()}>
-          {messages.requestDetail.complete}
-        </Button>
+        <Tooltip
+          title={
+            blocked ? messages.requestDetail.completeBlockedBySubRequests : null
+          }
+        >
+          <Button
+            type="primary"
+            loading={busy}
+            disabled={blocked}
+            onClick={() => void submit()}
+          >
+            {messages.requestDetail.complete}
+          </Button>
+        </Tooltip>
       </div>
     </Card>
   );

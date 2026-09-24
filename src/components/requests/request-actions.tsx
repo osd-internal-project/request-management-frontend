@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Alert, App, Button, Modal, Space } from "antd";
+import { Alert, App, Button, Modal, Space, Tooltip } from "antd";
 import {
   assignRequest,
   cancelRequest,
@@ -58,6 +58,8 @@ export function RequestActions({
      * server will accept.
      */
     returnReasons?: readonly CodedLabel[];
+    /** Required checklist sub requests not yet raised; blocks "ทำเสร็จแล้ว". */
+    missingSubRequests?: number;
   };
   readonly viewerId: string;
 }) {
@@ -118,16 +120,25 @@ export function RequestActions({
       ...(request.hasReceiverForm
         ? []
         : [
-            <Button
+            <Tooltip
               key="complete"
-              type="primary"
-              loading={busy === "complete"}
-              onClick={() =>
-                void run("complete", () => completeRequest(request.id))
+              title={
+                request.missingSubRequests
+                  ? messages.requestDetail.completeBlockedBySubRequests
+                  : null
               }
             >
-              {messages.requestDetail.complete}
-            </Button>,
+              <Button
+                type="primary"
+                loading={busy === "complete"}
+                disabled={Boolean(request.missingSubRequests)}
+                onClick={() =>
+                  void run("complete", () => completeRequest(request.id))
+                }
+              >
+                {messages.requestDetail.complete}
+              </Button>
+            </Tooltip>,
           ]),
     );
   }

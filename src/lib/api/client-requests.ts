@@ -257,6 +257,8 @@ export function createRequestType(input: {
   receiver_form_schema?: Record<string, unknown>;
   eligible_org_unit_ids?: string[];
   required_docs?: { code: string; name: string; required?: boolean }[];
+  /** Defaults to the session company; the admin screen passes the company tab on screen. */
+  company_ids?: string[];
   return_reason_codes?: { code: string; name: string }[];
   sla_hours?: number;
   sla_coverage?: string;

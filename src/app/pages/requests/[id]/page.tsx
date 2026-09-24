@@ -14,6 +14,7 @@ import {
   fieldKindOf,
   fieldOrder,
   hasStoredFile,
+  missingRequiredSubRequests,
 } from "@/lib/api/types";
 import { attachmentFileUrl } from "@/lib/api/client-requests";
 import { RequestActions } from "@/components/requests/request-actions";
@@ -21,6 +22,7 @@ import { ReceiverForm } from "@/components/requests/receiver-form";
 import { RequestComments } from "@/components/requests/request-comments";
 import { RequestTimeline } from "@/components/requests/request-timeline";
 import { RequestTreePanel } from "@/components/requests/request-tree";
+import { SubRequestChecklist } from "@/components/requests/sub-request-checklist";
 import { DueBadge } from "@/components/requests/due-badge";
 import { getSession } from "@/lib/session";
 import { messages } from "@/lib/messages";
@@ -182,6 +184,16 @@ export default async function RequestDetailPage({
     (request.assigneeUserId === viewerId ||
       request.receiverUserId === viewerId);
 
+  // Snapshot only: the checklist is fixed at submit, and a draft has none yet.
+  const checklist = request.typeSnapshot?.subRequestTypes ?? [];
+  const directChildren = tree.descendants.filter(
+    (node) => node.parentRequestId === request.id,
+  );
+  const missingSubRequests = missingRequiredSubRequests(
+    checklist,
+    directChildren,
+  ).length;
+
   const involved =
     request.requesterId === viewerId ||
     request.receiverUserId === viewerId ||
@@ -208,9 +220,19 @@ export default async function RequestDetailPage({
           // how a request gets completed with the form still blank.
           hasReceiverForm: Boolean(receiverSchema),
           returnReasons,
+          missingSubRequests,
         }}
         viewerId={viewerId}
       />
+
+      {checklist.length > 0 && (
+        <SubRequestChecklist
+          requestId={request.id}
+          items={checklist}
+          childRequests={directChildren}
+          canCreate={showReceiverForm}
+        />
+      )}
 
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <Title level={4} className="mb-0!">
@@ -309,6 +331,7 @@ export default async function RequestDetailPage({
                 requestId={request.id}
                 schema={receiverSchema}
                 initial={request.receiverFormData ?? {}}
+                blocked={missingSubRequests > 0}
               />
             )}
           </div>

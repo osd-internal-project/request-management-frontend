@@ -356,7 +356,36 @@ export interface RequestType {
   eligibleUnits?: { orgUnitId: string }[];
   /** REQ-03 — whether ยื่นคำขอ demands an `อ้างอิงโอกาสการขาย` for this type. */
   refRequired?: boolean;
+  /** Child types the receiver raises under a request of this type. */
+  subRequestTypes?: SubRequestTypeRule[];
   active?: boolean;
+}
+
+/** One checklist entry; a required one blocks `complete` until raised. */
+export interface SubRequestTypeRule {
+  code: string;
+  required: boolean;
+}
+
+/** A checklist entry as the submit snapshot keeps it. */
+export interface NamedSubRequestType extends SubRequestTypeRule {
+  name: string;
+}
+
+/** Required codes with no child other than a cancelled one — mirrors the server. */
+export function missingRequiredSubRequests(
+  items: readonly SubRequestTypeRule[],
+  children: readonly { typeCode: string; status: string }[],
+): string[] {
+  return items
+    .filter((item) => item.required)
+    .filter(
+      (item) =>
+        !children.some(
+          (child) => child.typeCode === item.code && child.status !== "cancelled",
+        ),
+    )
+    .map((item) => item.code);
 }
 
 /**
@@ -520,6 +549,8 @@ export interface RequestDetail
     returnReasonCodes?: CodedLabel[];
     /** REQ-01: what finishing this request requires, fixed at submit. */
     receiverFormSchema?: FormSchema | null;
+    /** The sub-request checklist as it stood at submit, names attached. */
+    subRequestTypes?: NamedSubRequestType[];
   } | null;
   attachments?: RequestAttachment[];
   events?: RequestEventRow[];
