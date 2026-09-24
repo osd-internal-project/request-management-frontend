@@ -28,6 +28,13 @@ import { OpportunityActivitiesCard } from "@/components/crm/opportunities/opport
 import { formatAmount, OpportunityParty } from "@/components/crm/opportunities/opportunity-list";
 import { formatMargin, QuotationStatusTags } from "@/components/crm/quotations/quotation-list";
 import {
+  draftLineComplete,
+  draftLinesTotal,
+  SaleOrderLinesEditor,
+  toSaleOrderLinePayload,
+  type SaleOrderDraftLine,
+} from "@/components/crm/sale-orders/sale-order-lines-editor";
+import {
   saleOrderErpColumn,
   saleOrderExpandable,
 } from "@/components/crm/sale-orders/sale-order-parts";
@@ -96,6 +103,8 @@ export function OpportunityDetailView({
     autoOpen && opportunity.amount !== null ? Number(opportunity.amount) : null,
   );
   const [soNote, setSoNote] = useState("");
+  // CD-88 (PO 24 ก.ย.) — รายการที่กรอกเองเมื่อไม่ได้เปิดตามใบเสนอราคา
+  const [soLines, setSoLines] = useState<SaleOrderDraftLine[]>([]);
   const [useExisting, setUseExisting] = useState(false);
   const [existingCustomerId, setExistingCustomerId] = useState<string>();
   const [custType, setCustType] = useState<CustomerType>("corporate");
@@ -181,7 +190,9 @@ export function OpportunityDetailView({
         body: JSON.stringify({
           ...customerPart,
           quotation_id: soQuotationId,
-          amount: soAmount ?? undefined,
+          // With typed lines the value is their total — the server computes it.
+          amount: manualLines ? undefined : (soAmount ?? undefined),
+          lines: manualLines ? soLines.map(toSaleOrderLinePayload) : undefined,
           note: soNote.trim() || undefined,
         }),
       },
@@ -225,11 +236,17 @@ export function OpportunityDetailView({
     opportunity.lostReasonCode ??
     "";
 
-  const openReady = customer
-    ? true
-    : useExisting
-      ? Boolean(existingCustomerId)
-      : Boolean(custNameTh.trim()) && (!confirmDuplicate || overrideReason.trim());
+  // Typed lines apply only without a quotation — the quotation's lines win.
+  const manualLines = !soQuotationId && soLines.length > 0;
+  const linesReady = !manualLines || soLines.every(draftLineComplete);
+
+  const openReady =
+    linesReady &&
+    (customer
+      ? true
+      : useExisting
+        ? Boolean(existingCustomerId)
+        : Boolean(custNameTh.trim()) && (!confirmDuplicate || overrideReason.trim()));
 
   return (
     <div className="space-y-4">
@@ -611,6 +628,7 @@ export function OpportunityDetailView({
         onCancel={() => setOpening(false)}
         onOk={() => void openSaleOrder()}
         destroyOnHidden
+        width={soQuotationId ? undefined : 900}
       >
         <Space direction="vertical" className="w-full">
           <Text type="secondary" className="text-xs">
@@ -731,11 +749,20 @@ export function OpportunityDetailView({
               </Text>
             </div>
           )}
+          {!soQuotationId && (
+            <>
+              <SaleOrderLinesEditor lines={soLines} onChange={setSoLines} />
+              <Text type="secondary" className="text-xs">
+                {soLines.length ? md.saleOrderLinesHint : md.saleOrderNoLinesHint}
+              </Text>
+            </>
+          )}
           <InputNumber
             className="w-full"
             placeholder={md.saleOrderAmount}
             min={0}
-            value={soAmount}
+            disabled={manualLines}
+            value={manualLines ? draftLinesTotal(soLines) : soAmount}
             onChange={(value) => setSoAmount(value)}
           />
           <Input.TextArea

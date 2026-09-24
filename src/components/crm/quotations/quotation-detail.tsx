@@ -553,6 +553,8 @@ export function QuotationDetailView({
           size="small"
           rowKey="key"
           pagination={false}
+          // Fixed: a long picked product name must not squeeze the description.
+          tableLayout="fixed"
           scroll={{ x: 1050 }}
           locale={{ emptyText: md.noLines }}
           dataSource={canEditHeader ? lines : toDraftLines(quotation)}

@@ -1768,6 +1768,13 @@ export const messages = {
         saleOrderErpCancelled: "ยกเลิกใน SAP แล้ว",
         saleOrderErpLastError: (error: string) => `ข้อผิดพลาดล่าสุด: ${error}`,
         saleOrderLinesTitle: "รายการสินค้า",
+        saleOrderAddLine: "เพิ่มรายการ",
+        saleOrderRemoveLine: "ลบรายการ",
+        saleOrderLinesEmpty: "ยังไม่มีรายการ",
+        saleOrderLinesHint:
+          "มูลค่าใบสั่งขาย = ยอดรวมรายการ (ก่อน VAT) — ใบที่มีรายการส่งเข้า SAP ให้อัตโนมัติ",
+        saleOrderNoLinesHint:
+          "ไม่ใส่รายการก็เปิดใบได้ แต่ส่งเข้า SAP ไม่ได้จนกว่าจะมีรายการสินค้า",
         saleOrderNoLines: "ใบสั่งขายนี้ไม่มีรายการสินค้า (เปิดตรงจากโอกาสการขาย)",
         cancelSaleOrder: "ยกเลิกใบสั่งขาย",
         cancelReason: "เหตุผลที่ยกเลิก",
