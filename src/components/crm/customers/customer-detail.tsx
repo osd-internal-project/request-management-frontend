@@ -1420,12 +1420,26 @@ function HistoryTab({ history }: { history: CustomerFieldChange[] }) {
         {
           title: m.detail.historyColumns.before,
           dataIndex: "before",
-          render: (value: unknown) => renderValue(value),
+          // CM-08 — the backend drops the values of a masked field (the tax ID
+          // without crm.customer.sensitive.read) rather than nulling them.
+          render: (value: unknown, row: CustomerFieldChange) =>
+            "before" in row ? (
+              renderValue(value)
+            ) : (
+              <Text type="secondary">{m.detail.historyMasked}</Text>
+            ),
         },
         {
           title: m.detail.historyColumns.after,
           dataIndex: "after",
-          render: (value: unknown) => renderValue(value),
+          // CM-08 — the backend drops the values of a masked field (the tax ID
+          // without crm.customer.sensitive.read) rather than nulling them.
+          render: (value: unknown, row: CustomerFieldChange) =>
+            "after" in row ? (
+              renderValue(value)
+            ) : (
+              <Text type="secondary">{m.detail.historyMasked}</Text>
+            ),
         },
         {
           title: m.detail.historyColumns.changedBy,

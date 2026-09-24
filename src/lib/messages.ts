@@ -2183,6 +2183,7 @@ export const messages = {
       code: "รหัสลูกค้า",
       taxId: "เลขผู้เสียภาษี",
       taxIdMasked: "เลขผู้เสียภาษีถูกปกปิดตามสิทธิ์ของคุณ",
+      historyMasked: "ปกปิด",
       branch: "สาขา",
       headOfficeTag: "สำนักงานใหญ่",
       headOfficeOf: (code: string) => `สาขาของ ${code}`,
