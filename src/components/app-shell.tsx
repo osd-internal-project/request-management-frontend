@@ -14,9 +14,9 @@ import { MessageOutlined, MessageTwoTone } from "@ant-design/icons";
 import { usePathname, useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import type { MenuEntry } from "@/app/configs/menu";
-import { ChatPanel } from "@/components/chat-panel";
-import { CompanySwitcher } from "@/components/company-switcher";
-import { NotificationBell } from "@/components/notification-bell";
+import { ChatPanel } from "@/components/layout/chat-panel";
+import { CompanySwitcher } from "@/components/layout/company-switcher";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { messages } from "@/lib/messages";
 
 const { Header, Content, Footer, Sider } = Layout;
