@@ -92,6 +92,7 @@ export const messages = {
     adminOrg: "ผังทีมและสิทธิ์",
     adminUsers: "ผู้ใช้",
     adminAudit: "Audit Log",
+    adminNotificationLog: "บันทึกการแจ้งเตือน",
     biGroup: "แดชบอร์ดผู้บริหาร",
     adminBi: "ตั้งค่า Dashboard",
     logout: "ออกจากระบบ",
@@ -1435,6 +1436,47 @@ export const messages = {
     historyChainChanged: (level: string) => `ปรับสายอนุมัติ ${level}`,
     historyNoChange: "ไม่เปลี่ยนสายอนุมัติ",
   },
+  /** CD-55 — ส่งถึงใคร เมื่อไร ช่องทางใด อ่านแล้วหรือยัง. */
+  notificationLog: {
+    title: "บันทึกการแจ้งเตือน",
+    subtitle:
+      "ทุกการแจ้งเตือนที่ระบบส่ง — ส่งถึงใคร เมื่อไร ช่องทางใด และเปิดอ่านแล้วหรือยัง ใช้อ้างอิงเมื่อมีข้อโต้แย้งว่าไม่เคยได้รับแจ้ง",
+    searchPlaceholder: "ผู้รับ (ชื่อ / username / อีเมล) หรือหัวข้อ",
+    anyEvent: "ทุกเหตุการณ์",
+    anyRead: "สถานะการอ่านทั้งหมด",
+    clear: "ล้างตัวกรอง",
+    resultCount: (total: number) =>
+      `พบ ${total.toLocaleString("th-TH")} รายการ`,
+    empty: "ไม่พบการแจ้งเตือนตามเงื่อนไข",
+    unread: "ยังไม่อ่าน",
+    readOpened: "เปิดอ่านแล้ว",
+    readMarkAll: "กด “อ่านทั้งหมด”",
+    readUnknown: "อ่านแล้ว (ไม่ทราบวิธี)",
+    resource: "อ้างถึง",
+    sameResource: "ดูทุกการแจ้งเตือนของรายการนี้",
+    resourceFilter: (type: string, id: string) =>
+      `เฉพาะการแจ้งเตือนของ ${type} ${id}`,
+    channel: "ช่องทาง",
+    target: "ส่งถึง",
+    deliveryStatus: "ผลการส่ง",
+    sentAt: "เวลา",
+    channels: { in_app: "ในระบบ", email: "อีเมล" } as Record<string, string>,
+    statuses: {
+      sent: "ส่งแล้ว",
+      queued: "รอส่ง",
+      failed: "ส่งไม่สำเร็จ",
+    } as Record<string, string>,
+    columns: {
+      createdAt: "เวลาที่แจ้ง",
+      recipient: "ผู้รับ",
+      message: "ข้อความ",
+      channels: "ช่องทาง",
+      read: "การอ่าน",
+    },
+    readNote:
+      "เวลาอ่านคือครั้งแรกที่อ่าน (ไม่เปลี่ยนเมื่อเปิดซ้ำ) · “เปิดอ่านแล้ว” = ผู้รับกดเปิดข้อความนั้น · “กด อ่านทั้งหมด” = ล้างกระดิ่งทีเดียว ไม่ได้ยืนยันว่าเห็นข้อความ · “ไม่ทราบวิธี” = อ่านก่อนระบบเริ่มบันทึกวิธีอ่าน (28 ก.ย. 2569) · หน้านี้อ่านอย่างเดียว",
+  },
+
   audit: {
     title: "Audit Log",
     subtitle: "บันทึกอย่างเดียว แก้ไขหรือลบไม่ได้ (SUP-04)",

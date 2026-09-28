@@ -124,6 +124,8 @@ export const ROUTES = {
   adminUsers: `${HOME_PATH}/admin/users`,
   /** SUP-04 — Audit log */
   adminAudit: `${HOME_PATH}/admin/audit`,
+  /** CD-55 — บันทึกการแจ้งเตือน */
+  adminNotificationLog: `${HOME_PATH}/admin/notification-log`,
   /** กุญแจ API ของช่องทางภายนอก — สิทธิ์ `integration.*` ออกที่นี่. */
   adminApiKeys: `${HOME_PATH}/admin/api-keys`,
   adminErpSync: `${HOME_PATH}/admin/erp-sync`,

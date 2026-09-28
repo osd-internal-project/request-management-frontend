@@ -154,6 +154,13 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     permissions: ["audit.read"],
     group: messages.nav.adminGroup,
   },
+  /** CD-55 — ส่งถึงใคร เมื่อไร ช่องทางใด อ่านแล้วหรือยัง. */
+  {
+    label: messages.nav.adminNotificationLog,
+    href: ROUTES.adminNotificationLog,
+    permissions: ["audit.read"],
+    group: messages.nav.adminGroup,
+  },
   {
     label: messages.nav.adminBi,
     href: ROUTES.adminBi,
