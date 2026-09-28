@@ -72,6 +72,8 @@ export const ROUTES = {
   allWork: `${HOME_PATH}/approvals`,
   /** REQ-09 — รายงานคอขวด */
   bottleneckReport: `${HOME_PATH}/reports/bottleneck`,
+  /** CD-83 — รายงานยอดขาย */
+  salesReport: `${HOME_PATH}/reports/sales`,
 
   /** CRM ระยะ 1 — ทะเบียนลูกค้า (CM-01, spec artifact 856c08fd). */
   customers: `${HOME_PATH}/customers`,

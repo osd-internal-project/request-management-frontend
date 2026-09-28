@@ -76,6 +76,7 @@ export const messages = {
     opportunities: "โอกาสการขาย",
     quotations: "ใบเสนอราคา",
     saleOrders: "ใบสั่งขาย",
+    salesReport: "รายงานยอดขาย",
     adminGroup: "ผู้ดูแลระบบ",
     adminCrm: "ตั้งค่า CRM",
     adminApiKeys: "กุญแจ API",
@@ -759,6 +760,50 @@ export const messages = {
     },
     pendingNote:
       "ขั้นที่ยังไม่ตัดสินไม่ถูกนำมาเฉลี่ย ",
+  },
+
+  /** CD-83 */
+  salesReport: {
+    title: "รายงานยอดขาย",
+    subtitle: "ยอดขาย อัตราการปิด เหตุผลที่แพ้ และผลงานรายบุคคล",
+    scopeNote:
+      "นับเฉพาะโอกาสการขายและใบสั่งขายที่คุณเห็นได้ — พนักงานเห็นของตัวเอง หัวหน้าเห็นของทีม",
+    filterPeriod: "ช่วงเวลา",
+    thisMonth: "เดือนนี้",
+    lastMonth: "เดือนที่แล้ว",
+    thisYear: "ปีนี้",
+    periodLabel: (from: string, to: string) => `ข้อมูลวันที่ ${from} ถึง ${to}`,
+    salesAmount: "ยอดขาย",
+    salesAmountHint: (count: number) =>
+      `ใบสั่งขาย ${count.toLocaleString("th-TH")} ใบ (ไม่นับที่ยกเลิก)`,
+    winRate: "อัตราการปิด",
+    winRateHint: (won: number, lost: number) =>
+      `ชนะ ${won.toLocaleString("th-TH")} · แพ้ ${lost.toLocaleString("th-TH")}`,
+    winRateNone: "ยังไม่มีดีลที่ปิดในช่วงนี้",
+    wonAmount: "มูลค่าที่ชนะ",
+    lostAmount: "มูลค่าที่แพ้",
+    openPipeline: "ค้างใน pipeline ตอนนี้",
+    openPipelineHint: (count: number) =>
+      `${count.toLocaleString("th-TH")} โอกาส · ไม่ขึ้นกับช่วงที่เลือก`,
+    lostReasonsTitle: "เหตุผลที่แพ้",
+    lostReasonsEmpty: "ไม่มีดีลที่แพ้ในช่วงนี้",
+    byOwnerTitle: "ผลงานรายบุคคล",
+    byOwnerEmpty: "ไม่มีข้อมูลในช่วงนี้",
+    columns: {
+      reason: "เหตุผล",
+      count: "จำนวน",
+      share: "สัดส่วน",
+      amount: "มูลค่า (บาท)",
+      owner: "พนักงานขาย",
+      sales: "ยอดขาย (บาท)",
+      saleOrders: "ใบสั่งขาย",
+      won: "ชนะ",
+      lost: "แพ้",
+      winRate: "อัตราการปิด",
+      open: "ค้างใน pipeline (บาท)",
+    },
+    definitions:
+      "ยอดขาย = ใบสั่งขายที่เปิดในช่วง · ชนะ/แพ้ = โอกาสที่ปิดในช่วง · อัตราการปิด = ชนะ ÷ (ชนะ + แพ้)",
   },
 
   requestTypes: {
