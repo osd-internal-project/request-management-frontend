@@ -946,6 +946,8 @@ export interface LeadRow {
   email: string | null;
   note: string | null;
   sourceCode: string | null;
+  /** CD-71 — แคมเปญที่ Lead นี้มาจาก. */
+  campaign?: { id: string; code: string; name: string } | null;
   /** ข้อมูลบริษัท/ลูกค้าเป้าหมาย — free text ระหว่างคัดกรอง (หน้ารายละเอียด Lead). */
   nameEn: string | null;
   taxId: string | null;

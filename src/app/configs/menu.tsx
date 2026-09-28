@@ -93,6 +93,13 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     permissions: ["crm.sales.read"],
     group: messages.nav.crmGroup,
   },
+  /** CD-71 — แคมเปญการตลาดและผลถึงยอดขาย. */
+  {
+    label: messages.nav.campaigns,
+    href: ROUTES.campaigns,
+    permissions: ["crm.sales.read"],
+    group: messages.nav.crmGroup,
+  },
   /** CD-82 — เป้ารายเดือนเทียบยอดจริงและพยากรณ์. */
   {
     label: messages.nav.salesTargets,

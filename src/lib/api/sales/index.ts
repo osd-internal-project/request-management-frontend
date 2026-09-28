@@ -24,6 +24,7 @@ export async function getLeads(options?: {
   search?: string;
   status?: string;
   view?: "mine";
+  campaign_id?: string;
   page?: number;
   page_size?: number;
 }): Promise<ApiResult<Paginated<LeadRow>>> {
@@ -31,6 +32,7 @@ export async function getLeads(options?: {
   if (options?.search) params.set("search", options.search);
   if (options?.status) params.set("status", options.status);
   if (options?.view) params.set("view", options.view);
+  if (options?.campaign_id) params.set("campaign_id", options.campaign_id);
   params.set("page", String(options?.page ?? 1));
   params.set("page_size", String(options?.page_size ?? 50));
   return apiGet(`leads?${params.toString()}`);

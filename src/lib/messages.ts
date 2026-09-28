@@ -80,6 +80,7 @@ export const messages = {
     saleOrders: "ใบสั่งขาย",
     salesReport: "รายงานยอดขาย",
     salesTargets: "เป้าและพยากรณ์",
+    campaigns: "แคมเปญ",
     adminGroup: "ผู้ดูแลระบบ",
     adminCrm: "ตั้งค่า CRM",
     adminApiKeys: "กุญแจ API",
@@ -854,6 +855,52 @@ export const messages = {
     completed: "ทำเสร็จเดือนนี้",
     stale: "ดีลเงียบเกินเกณฑ์",
     openList: "ดูรายการ",
+  },
+
+  /** CD-71 */
+  campaigns: {
+    title: "แคมเปญ",
+    subtitle: "ผูก Lead กับกิจกรรมการตลาด แล้ววัดผลถึงยอดขาย",
+    scopeNote: "ผลนับเฉพาะ Lead ที่คุณมองเห็น",
+    create: "สร้างแคมเปญ",
+    edit: "แก้ไข",
+    leads: "ดู Lead",
+    empty: "ยังไม่มีแคมเปญ",
+    activeTag: "เปิด",
+    closedTag: "ปิดแล้ว",
+    columns: {
+      campaign: "แคมเปญ",
+      period: "ช่วงเวลา",
+      budget: "งบ (บาท)",
+      leads: "Lead",
+      converted: "เป็นโอกาส",
+      won: "ชนะ",
+      sales: "ยอดขาย (บาท)",
+      costPerLead: "ต้นทุน/Lead",
+      salesPerBudget: "ยอดขาย/งบ",
+    },
+    form: {
+      titleNew: "สร้างแคมเปญ",
+      titleEdit: (code: string) => `แก้ไขแคมเปญ ${code}`,
+      code: "รหัส",
+      codeHint:
+        "ใช้ในเว็บฟอร์มและไฟล์นำเข้า (A-Z, 0-9, -, _) — ตั้งแล้วแก้ไม่ได้",
+      name: "ชื่อแคมเปญ",
+      channel: "ช่องทาง",
+      channelPlaceholder: "เช่น อีเวนต์, Facebook Ads, อีเมล",
+      period: "ช่วงเวลา",
+      budget: "งบประมาณ (บาท)",
+      note: "หมายเหตุ",
+      active: "เปิดรับ Lead",
+      activeHint: "ปิดแล้ว = ผูก Lead ใหม่ไม่ได้ แต่ผลเดิมยังอยู่",
+      submit: "บันทึก",
+      saved: "บันทึกแคมเปญแล้ว",
+      required: "จำเป็น",
+    },
+    definitions:
+      "เป็นโอกาส = Lead ที่แปลงเป็นโอกาสการขายแล้ว · ยอดขาย = ใบสั่งขายที่ไม่ยกเลิกจากโอกาสเหล่านั้น · ต้นทุน/Lead = งบ ÷ จำนวน Lead",
+    leadField: "แคมเปญ",
+    leadFieldPlaceholder: "ไม่ผูกแคมเปญ",
   },
 
   /** CD-82 */
@@ -1867,6 +1914,7 @@ export const messages = {
           phone: "โทรศัพท์",
           email: "อีเมล",
           source: "แหล่งที่มา",
+          campaign: "รหัสแคมเปญ",
           note: "บันทึก",
         },
         missingNameColumn:

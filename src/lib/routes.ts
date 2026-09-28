@@ -76,6 +76,8 @@ export const ROUTES = {
   decisionLog: `${HOME_PATH}/reports/approval-decisions`,
   /** CD-73 — แดชบอร์ด CRM */
   crmDashboard: `${HOME_PATH}/crm`,
+  /** CD-71 — แคมเปญ */
+  campaigns: `${HOME_PATH}/campaigns`,
   /** CD-82 — เป้าและพยากรณ์ */
   salesTargets: `${HOME_PATH}/sales-targets`,
   /** CD-83 — รายงานยอดขาย */
