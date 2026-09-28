@@ -23,16 +23,13 @@ import { TypeDetailForm } from "./type-detail-form";
 import { draftFrom, draftToPatch, type TypeDraft } from "./type-draft";
 import { TypeActions, TypeTitle } from "./type-header";
 import { TypeList } from "./type-list";
+import { FlowTab } from "./flow/flow-tab";
 
 /**
- * The detail pane's tabs.
- *
- * `approval-requester` is the `:pre` ladder (§8.1 `BEFORE_WORK`, climbing the
- * requester's chart) and `approval-receiver` the plain one (`AFTER_WORK`,
- * climbing the assignee's) — the stage is carried in the subject string, so
- * these keys and `subjectOf` are the only place the mapping is written down.
+ * The detail pane's tabs. `approval` switches between the `:pre` ladder (before
+ * the work) and the plain one (after it); step ladders live in `flow`.
  */
-const TAB_KEYS = ["detail", "approval-requester", "approval-receiver"] as const;
+const TAB_KEYS = ["detail", "flow", "approval"] as const;
 type TabKey = (typeof TAB_KEYS)[number];
 
 function isTabKey(key: string): key is TabKey {
@@ -86,6 +83,7 @@ export function RequestTypeAdmin({
     ...initialMatrix,
   ]);
   const [tab, setTab] = useState<TabKey>("detail");
+  const [approvalStage, setApprovalStage] = useState<"pre" | "post">("post");
   const [selectedCode, setSelectedCode] = useState<string | null>(
     initial[0]?.code ?? null,
   );
@@ -237,6 +235,9 @@ export function RequestTypeAdmin({
         userNames={userNames}
         orgUnits={orgUnits}
         onPublished={() => loadMatrix(activeCompany)}
+        conditionFields={Object.entries(selected?.formSchema?.properties ?? {}).map(
+          ([key, property]) => ({ value: key, label: property.title || key }),
+        )}
       />
     );
   }
@@ -339,14 +340,53 @@ export function RequestTypeAdmin({
                   ),
                 },
                 {
-                  key: "approval-requester",
-                  label: messages.requestTypes.tabApprovalRequester,
-                  children: approvalPanel(`${subjectOf(selected)}:pre`),
+                  key: "flow",
+                  label: messages.requestTypes.tabFlow,
+                  children: (
+                    // Remounted per type and company: the draft belongs to the pair.
+                    <FlowTab
+                      key={`${selected.code}:${activeCompany}`}
+                      type={selected}
+                      types={types}
+                      people={people}
+                      matrix={{
+                        canManage: canManageMatrix,
+                        companyId: activeCompany,
+                        versions: matrixVersions,
+                        userNames,
+                        orgUnits,
+                        onPublished: () => loadMatrix(activeCompany),
+                      }}
+                    />
+                  ),
                 },
                 {
-                  key: "approval-receiver",
-                  label: messages.requestTypes.tabApprovalReceiver,
-                  children: approvalPanel(subjectOf(selected)),
+                  key: "approval",
+                  label: messages.requestTypes.tabApproval,
+                  children: (
+                    <div className="space-y-3">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <Segmented
+                          value={approvalStage}
+                          onChange={(value) =>
+                            setApprovalStage(value === "pre" ? "pre" : "post")
+                          }
+                          options={[
+                            { value: "pre", label: messages.requestTypes.approvalBefore },
+                            { value: "post", label: messages.requestTypes.approvalAfter },
+                          ]}
+                        />
+                        <span className="text-xs text-black/45">
+                          {messages.requestTypes.approvalStepHint}
+                        </span>
+                      </div>
+                      {approvalPanel(
+                        approvalStage === "pre"
+                          ? `${subjectOf(selected)}:pre`
+                          : subjectOf(selected),
+                      )}
+                    </div>
+                  ),
                 },
               ]}
             />

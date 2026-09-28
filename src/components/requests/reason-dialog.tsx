@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Input, Modal } from "antd";
+import { Button, Drawer, Grid, Input, Modal } from "antd";
 import Text from "antd/es/typography/Text";
 import type { CodedLabel } from "@/lib/api/types";
 import { messages } from "@/lib/messages";
@@ -49,6 +49,8 @@ export function ReasonDialog({
   busy,
   reasons,
   returnToRequester,
+  returnLabel,
+  approveNoteOptional = false,
   onCancel,
   onConfirm,
 }: {
@@ -69,16 +71,21 @@ export function ReasonDialog({
    * asks for a coded reason.
    */
   readonly returnToRequester: boolean;
+  /** Overrides the `return` title, e.g. who a send-back goes to. */
+  readonly returnLabel?: string;
+  /** The approval level lets `approve` go without a note. */
+  readonly approveNoteOptional?: boolean;
   readonly onCancel: () => void;
-  readonly onConfirm: (
-    note: string,
-    reasonCode?: string,
-  ) => void | Promise<void>;
+  /** Resolves true on success; the dialog keeps what was typed until then. */
+  readonly onConfirm: (note: string, reasonCode?: string) => boolean | Promise<boolean>;
 }) {
+  const screens = Grid.useBreakpoint();
   const [note, setNote] = useState("");
   const [reasonCode, setReasonCode] = useState<string | undefined>();
 
-  const optional = action ? OPTIONAL_NOTE.has(action) : false;
+  const optional = action
+    ? OPTIONAL_NOTE.has(action) || (action === "approve" && approveNoteOptional)
+    : false;
   /*
     Returning a request to its requester needs a code as well as a remark:
     REQ-04 exists so "why do requests bounce?" can be counted, and free text
@@ -94,25 +101,20 @@ export function ReasonDialog({
     setReasonCode(undefined);
   }
 
-  return (
-    <Modal
-      open={Boolean(action)}
-      title={action ? ACTION_TITLE[action] : ""}
-      okText={action ? ACTION_TITLE[action] : ""}
-      cancelText={messages.org.confirmCancel}
-      confirmLoading={busy}
-      okButtonProps={{ disabled: !ready }}
-      onCancel={() => {
-        reset();
-        onCancel();
-      }}
-      onOk={() => {
-        const values = [note, reasonCode] as const;
-        reset();
-        void onConfirm(values[0], values[1]);
-      }}
-      destroyOnHidden
-    >
+  const title =
+    action === "return" && returnLabel ? returnLabel : action ? ACTION_TITLE[action] : "";
+
+  function cancel() {
+    reset();
+    onCancel();
+  }
+
+  async function confirm() {
+    if (await onConfirm(note, reasonCode)) reset();
+  }
+
+  const content = (
+    <>
       {needsReason && (
         <div className="mb-2">
           <Text strong className="mb-1 block">
@@ -153,6 +155,54 @@ export function ReasonDialog({
           {messages.requestDetail.returnReasonMissing}
         </Text>
       )}
+    </>
+  );
+
+  // Phones get a bottom sheet: a centred modal leaves the keyboard covering the note.
+  if (!screens.md) {
+    return (
+      <Drawer
+        open={Boolean(action)}
+        placement="bottom"
+        size="auto"
+        title={title}
+        onClose={cancel}
+        destroyOnHidden
+        footer={
+          <div className="flex gap-2">
+            <Button block onClick={cancel}>
+              {messages.org.confirmCancel}
+            </Button>
+            <Button
+              block
+              type="primary"
+              loading={busy}
+              disabled={!ready}
+              onClick={() => void confirm()}
+            >
+              {title}
+            </Button>
+          </div>
+        }
+      >
+        {content}
+      </Drawer>
+    );
+  }
+
+  return (
+    <Modal
+      open={Boolean(action)}
+      title={title}
+      okText={title}
+      cancelText={messages.org.confirmCancel}
+      confirmLoading={busy}
+      okButtonProps={{ disabled: !ready }}
+      onCancel={cancel}
+      onOk={confirm}
+      destroyOnHidden
+    >
+      {content}
     </Modal>
   );
 }

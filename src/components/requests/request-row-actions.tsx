@@ -15,7 +15,7 @@ import {
 import { ReasonDialog, type ReasonAction } from "@/components/requests/reason-dialog";
 import type { RequestRow } from "@/lib/api/types";
 import type { Session } from "@/lib/session-shape";
-import { can } from "@/lib/session-shape";
+import { offeredActions } from "@/components/requests/action-permissions";
 import { messages } from "@/lib/messages";
 
 /**
@@ -39,26 +39,6 @@ const ROW_ACTIONS = [
 ] as const;
 
 type RowAction = (typeof ROW_ACTIONS)[number];
-
-/**
- * The permission each move needs, matching the `@Permissions()` on its route.
- *
- * The second of two gates, and the weaker one. `available_actions` already
- * says whether this person holds the *authority* over this row; this says
- * whether their role may perform the move at all. Both have to pass, because
- * they answer different questions and the backend checks both.
- */
-const PERMISSION_FOR: Record<RowAction, string> = {
-  receive: "request.complete",
-  complete: "request.complete",
-  resume: "request.hold",
-  approve: "approval.decide",
-  reject: "approval.decide",
-  send_back: "approval.decide",
-  return: "request.return",
-  close: "request.create",
-  cancel: "request.cancel.own",
-};
 
 const LABEL_FOR: Record<RowAction, string> = {
   receive: messages.requestDetail.receive,
@@ -100,11 +80,8 @@ export function RequestRowActions({
   const [busy, setBusy] = useState<RowAction | null>(null);
   const [asking, setAsking] = useState<RowAction | null>(null);
 
-  const offered = ROW_ACTIONS.filter(
-    (action) =>
-      (row.available_actions ?? []).includes(action) &&
-      can(session, PERMISSION_FOR[action]),
-  );
+  const allowed = offeredActions(row.available_actions, session);
+  const offered = ROW_ACTIONS.filter((action) => allowed.has(action));
 
   if (!offered.length) return null;
 
@@ -120,11 +97,12 @@ export function RequestRowActions({
 
     if (!result.ok) {
       void message.error(result.message ?? messages.common.loadError);
-      return;
+      return false;
     }
 
     void message.success(messages.requestDetail.actionDone);
     router.refresh();
+    return true;
   }
 
   function perform(action: RowAction, note: string, reasonCode?: string) {
@@ -197,10 +175,11 @@ export function RequestRowActions({
         onCancel={() => setAsking(null)}
         onConfirm={async (note, reasonCode) => {
           const action = asking;
-          if (!action) return;
+          if (!action) return false;
 
-          setAsking(null);
-          await perform(action, note, reasonCode);
+          const ok = await perform(action, note, reasonCode);
+          if (ok) setAsking(null);
+          return ok;
         }}
       />
     </div>

@@ -21,7 +21,13 @@ import { ROUTES } from "@/lib/routes";
 import { ALL_FILTER, OPEN_FILTER } from "@/lib/work-filters";
 import { RequestRowActions } from "@/components/requests/request-row-actions";
 import { DueCell } from "@/components/requests/due-badge";
+import {
+  BatchDecideBar,
+  BATCH_LIMIT,
+} from "@/components/requests/batch-decide-bar";
+import { STATUS_COLOR } from "@/components/requests/status";
 import type { Session } from "@/lib/session-shape";
+import { can } from "@/lib/session-shape";
 
 import type {
   RequestRow,
@@ -30,18 +36,6 @@ export type {
   RequestRow,
 } from "@/lib/api/types";
 
-/** Shared with the scope-wide list on `/pages/requests`. */
-export const STATUS_COLOR: Record<string, string> = {
-  draft: "default",
-  submitted: "blue",
-  pending_approval: "gold",
-  returned: "orange",
-  approved: "green",
-  rejected: "red",
-  in_progress: "cyan",
-  completed: "green",
-  cancelled: "default",
-};
 
 /**
  * Screen §16 หน้าที่ 2 — งานค้างของฉัน, the landing page after login.
@@ -272,19 +266,38 @@ export function MyWork({
   }
 
   const columns = requestColumns(now, session);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
-  const table = (rows: RequestRow[], emptyText: string) =>
+  const table = (rows: RequestRow[], emptyText: string, selectable = false) =>
     rows.length ? (
       <Table
         rowKey="id"
         size="small"
         dataSource={rows}
         columns={columns}
+        rowSelection={
+          selectable
+            ? {
+                selectedRowKeys: selectedIds,
+                onChange: (keys) =>
+                  setSelectedIds(keys.map(String).slice(0, BATCH_LIMIT)),
+                // Only what the backend says this person may approve right now.
+                getCheckboxProps: (row) => ({
+                  disabled: !row.available_actions?.includes("approve"),
+                }),
+              }
+            : undefined
+        }
         pagination={{ pageSize: 20, hideOnSinglePage: true }}
         scroll={{ x: true }}
         onRow={(row) => ({
           className: "cursor-pointer",
-          onClick: () => router.push(ROUTES.requestDetail(row.id)),
+          onClick: (event) => {
+            // Ticking a checkbox selects the row; it must not open it.
+            const target = event.target;
+            if (target instanceof Element && target.closest(".ant-table-selection-column")) return;
+            router.push(ROUTES.requestDetail(row.id));
+          },
         })}
       />
     ) : (
@@ -390,9 +403,20 @@ export function MyWork({
                       )}
                     </span>
                   ),
-                  children: table(
-                    approver.rows,
-                    messages.myWork.emptyApprovals,
+                  children: (
+                    <>
+                      <BatchDecideBar
+                        rows={approver.rows.filter((row) =>
+                          selectedIds.includes(row.id),
+                        )}
+                        onClear={() => setSelectedIds([])}
+                      />
+                      {table(
+                        approver.rows,
+                        messages.myWork.emptyApprovals,
+                        can(session, "approval.decide"),
+                      )}
+                    </>
                   ),
                 },
               ]

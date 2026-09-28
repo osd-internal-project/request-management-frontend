@@ -8,6 +8,7 @@ import {
   assignRequest,
   cancelRequest,
   closeRequest,
+  advanceRequest,
   completeRequest,
   decideCase,
   holdRequest,
@@ -15,7 +16,7 @@ import {
   resumeRequest,
   returnRequest,
 } from "@/lib/api/client-requests";
-import type { CodedLabel } from "@/lib/api/types";
+import type { CodedLabel, FlowMoves } from "@/lib/api/types";
 import { messages } from "@/lib/messages";
 import { SearchSelect } from "@/components/ui/search-select";
 import {
@@ -23,6 +24,8 @@ import {
   type ReasonAction,
 } from "@/components/requests/reason-dialog";
 import { ROUTES } from "@/lib/routes";
+import type { Session } from "@/lib/session-shape";
+import { offeredActions } from "@/components/requests/action-permissions";
 
 /**
  * What this person can do to this ticket, right now.
@@ -38,18 +41,15 @@ import { ROUTES } from "@/lib/routes";
  */
 export function RequestActions({
   request,
-  viewerId,
+  session,
 }: {
   readonly request: {
     id: string;
     status: string;
-    requesterId?: string;
-    receiverUserId?: string | null;
-    assigneeUserId?: string | null;
+    /** From the backend's `availableActions` — see `offeredActions`. */
+    available_actions?: string[];
     /** The open approval case, when the request is waiting on a decision. */
     approvalCaseId?: string | null;
-    /** Everyone who may decide the step it is waiting on. */
-    approverCandidateIds?: string[];
     /** The type asks the receiver for a form — see `ReceiverForm`. */
     hasReceiverForm?: boolean;
     /**
@@ -60,21 +60,27 @@ export function RequestActions({
     returnReasons?: readonly CodedLabel[];
     /** Required checklist sub requests not yet raised; blocks "ทำเสร็จแล้ว". */
     missingSubRequests?: number;
+    /** Where the step flow may go from here; null when the type has no flow. */
+    flowMoves?: FlowMoves | null;
+    /** Step code → name, for labelling the step buttons. */
+    stepNames?: Readonly<Record<string, string>>;
+    /** The open case's subject, e.g. `request:X:pre`. */
+    approvalStage?: string | null;
+    /** The current approval level lets an approval go without a note. */
+    approveNoteOptional?: boolean;
   };
-  readonly viewerId: string;
+  readonly session: Session | null;
 }) {
   // antd's `message` from context, so it inherits the app theme.
-  const { message } = App.useApp();
+  const { message, modal } = App.useApp();
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   /** Which reason dialog is open, if any. */
   const [asking, setAsking] = useState<ReasonAction | null>(null);
 
-  const isRequester = request.requesterId === viewerId;
-  const isReceiver = request.receiverUserId === viewerId;
-  const isWorker = request.assigneeUserId === viewerId || isReceiver;
-  const isApprover = (request.approverCandidateIds ?? []).includes(viewerId);
+  // Offered moves come from the backend's `availableActions` — the table `assertMayAct` enforces.
+  const offered = offeredActions(request.available_actions, session);
 
   async function run(name: string, action: () => Promise<{ ok: boolean; message?: string }>) {
     setBusy(name);
@@ -89,12 +95,15 @@ export function RequestActions({
       router.refresh();
     } else {
       setError(result.message ?? messages.common.loadError);
+      // A toast too: the inline alert sits behind an open dialog.
+      void message.error(result.message ?? messages.common.loadError);
     }
+    return result.ok;
   }
 
   const actions: React.ReactNode[] = [];
 
-  if (request.status === "submitted" && isReceiver) {
+  if (offered.has("receive")) {
     actions.push(
       <Button
         key="receive"
@@ -107,16 +116,69 @@ export function RequestActions({
     );
   }
 
-  if (request.status === "in_progress" && isWorker) {
+  const moves = request.flowMoves ?? null;
+  // Before the work a send-back goes to the requester; after it, or out of a step, to the team.
+  const sendBackLabel =
+    request.status === "pending_approval" && request.approvalStage
+      ? request.approvalStage.endsWith(":pre")
+        ? messages.requestDetail.sendBackToRequester
+        : messages.requestDetail.sendBackToTeam
+      : undefined;
+  const stepName = (code: string) => request.stepNames?.[code] ?? code;
+
+  if (offered.has("advance") && moves) {
+    if (moves.forward) {
+      const target = moves.forward;
+      actions.push(
+        <Button
+          key="advance"
+          type="primary"
+          loading={busy === "advance"}
+          onClick={() =>
+            void run("advance", () => advanceRequest(request.id, target))
+          }
+        >
+          {moves.requires_approval
+            ? messages.requestDetail.flow.advanceForApproval(stepName(target))
+            : messages.requestDetail.flow.advance(stepName(target))}
+        </Button>,
+      );
+    }
+    for (const target of moves.backward) {
+      actions.push(
+        <Button
+          key={`back-${target}`}
+          onClick={() =>
+            void modal.confirm({
+              title: messages.requestDetail.flow.backConfirm(stepName(target)),
+              content: messages.requestDetail.flow.backConfirmBody,
+              onOk: () =>
+                run("advance", () => advanceRequest(request.id, target)),
+            })
+          }
+        >
+          {messages.requestDetail.flow.back(stepName(target))}
+        </Button>,
+      );
+    }
+  }
+
+  /*
+    Raising a child from here rather than from the blank form: the parent is
+    the context, and a child created without it would not hold the parent
+    open — which is the whole point of splitting the work.
+  */
+  if (offered.has("complete") && offered.has("create_child")) {
     actions.push(
-      /*
-        Raising a child from here rather than from the blank form: the parent is
-        the context, and a child created without it would not hold the parent
-        open — which is the whole point of splitting the work.
-      */
       <Link key="child" href={`${ROUTES.newRequest}?parent=${request.id}`}>
         <Button>{messages.requestDetail.addChild}</Button>
       </Link>,
+    );
+  }
+
+  // On a flow, "ทำเสร็จแล้ว" belongs to the last step only.
+  if (offered.has("complete") && (!moves || moves.is_last)) {
+    actions.push(
       ...(request.hasReceiverForm
         ? []
         : [
@@ -143,7 +205,15 @@ export function RequestActions({
     );
   }
 
-  if (request.status === "on_hold" && isWorker) {
+  if (offered.has("hold")) {
+    actions.push(
+      <Button key="hold" onClick={() => setAsking("hold")}>
+        {messages.requestDetail.hold}
+      </Button>,
+    );
+  }
+
+  if (offered.has("resume")) {
     actions.push(
       <Button
         key="resume"
@@ -160,21 +230,30 @@ export function RequestActions({
     queue. The approver is looking at what they are approving, which is the one
     place the form, the documents and the chain are all on screen.
   */
-  if (request.status === "pending_approval" && isApprover) {
+  if (offered.has("approve")) {
     actions.push(
       <Button key="approve" type="primary" onClick={() => setAsking("approve")}>
         {messages.requestDetail.approve}
       </Button>,
+    );
+  }
+  if (offered.has("reject")) {
+    actions.push(
       <Button key="reject" danger onClick={() => setAsking("reject")}>
         {messages.requestDetail.reject}
       </Button>,
+    );
+  }
+  // `send_back` (approver) and `return` (carrier) never overlap: one needs pending_approval, the other not.
+  if (offered.has("send_back") || offered.has("return")) {
+    actions.push(
       <Button key="send-back" onClick={() => setAsking("return")}>
-        {messages.requestDetail.returnToRequester}
+        {sendBackLabel ?? messages.requestDetail.returnToRequester}
       </Button>,
     );
   }
 
-  if (request.status === "approved" && isRequester) {
+  if (offered.has("close")) {
     actions.push(
       <Button key="close" type="primary" onClick={() => setAsking("close")}>
         {messages.requestDetail.close}
@@ -182,11 +261,8 @@ export function RequestActions({
     );
   }
 
-  // H2.2 ข้อ 6 — available at every step, to whoever is carrying the request.
-  if (
-    (isRequester || isWorker) &&
-    !["closed", "cancelled", "rejected"].includes(request.status)
-  ) {
+  // H2.2 ข้อ 6 — cancel; since A1 it also closes an open approval case.
+  if (offered.has("cancel")) {
     actions.push(
       <Button key="cancel" danger onClick={() => setAsking("cancel")}>
         {messages.requestDetail.cancel}
@@ -197,7 +273,8 @@ export function RequestActions({
   if (!actions.length && !error) return null;
 
   return (
-    <div className="space-y-2">
+    // Phones: a bar pinned to the bottom, so the next move is always in reach.
+    <div className="space-y-2 max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:z-20 max-md:border-t max-md:border-black/10 max-md:bg-white max-md:p-3 max-md:pb-[max(0.75rem,env(safe-area-inset-bottom))] max-md:shadow-[0_-4px_12px_rgba(0,0,0,0.06)]">
       {error && <Alert type="error" showIcon title={error} />}
       {actions.length > 0 && <Space wrap>{actions}</Space>}
 
@@ -206,14 +283,14 @@ export function RequestActions({
         busy={busy !== null}
         reasons={request.returnReasons ?? []}
         returnToRequester={request.status !== "pending_approval"}
+        returnLabel={sendBackLabel}
+        approveNoteOptional={request.approveNoteOptional}
         onCancel={() => setAsking(null)}
         onConfirm={async (note, reasonCode) => {
           const action = asking;
-          if (!action) return;
+          if (!action) return false;
 
-          setAsking(null);
-
-          await run(action, () => {
+          const ok = await run(action, () => {
             switch (action) {
               case "approve":
               case "reject":
@@ -243,6 +320,8 @@ export function RequestActions({
                 return cancelRequest(request.id, { reason: note });
             }
           });
+          if (ok) setAsking(null);
+          return ok;
         }}
       />
     </div>

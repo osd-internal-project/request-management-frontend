@@ -10,7 +10,11 @@ import {
   Menu,
   Splitter,
 } from "antd";
-import { MessageOutlined, MessageTwoTone } from "@ant-design/icons";
+import {
+  MenuOutlined,
+  MessageOutlined,
+  MessageTwoTone,
+} from "@ant-design/icons";
 import { usePathname, useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import type { MenuEntry } from "@/app/configs/menu";
@@ -81,6 +85,7 @@ export function AppShell({
   const pathname = usePathname();
   const screens = Grid.useBreakpoint();
   const [chatOpen, setChatOpen] = useState(false);
+  const [navOpen, setNavOpen] = useState(false);
   const [chatWidth, setChatWidth] = useState<number | null>(null);
 
   // Below `lg` the Sider is already collapsed — two panes would leave neither
@@ -126,6 +131,23 @@ export function AppShell({
     ];
   }, [menus]);
 
+  // One menu, shown in the Sider on desktop and in a drawer below `lg`.
+  const navMenu = (
+    <Menu
+      // min-h-0: a flex item defaults to min-height:auto, which would let a
+      // long menu stretch the Sider instead of scrolling.
+      className="min-h-0 flex-1 overflow-y-auto"
+      mode="inline"
+      selectedKeys={[pathname]}
+      items={items}
+      onClick={({ key }) => {
+        if (key.startsWith("group:")) return;
+        setNavOpen(false);
+        router.push(key);
+      }}
+    />
+  );
+
   const avatarDropdownItems = [
     {
       key: "logout",
@@ -143,27 +165,29 @@ export function AppShell({
     // The shell is exactly one viewport tall; scrolling belongs to the menu
     // and the content, never to the page.
     <Layout className="h-screen overflow-hidden">
+      {/* Hidden by CSS below `lg` rather than by `useBreakpoint`, which the
+          server cannot know — a JS switch would flash the layout on hydration. */}
       <Sider
-        breakpoint="lg"
-        collapsedWidth="0"
+        className="max-lg:hidden!"
         classNames={{ body: "flex h-full flex-col" }}
       >
         <div className="flex h-16 w-full shrink-0 items-center justify-center">
           <h1 className="text-xl font-bold">{messages.app.name}</h1>
         </div>
 
-        <Menu
-          // min-h-0: a flex item defaults to min-height:auto, which would let a
-          // long menu stretch the Sider instead of scrolling.
-          className="min-h-0 flex-1 overflow-y-auto"
-          mode="inline"
-          selectedKeys={[pathname]}
-          items={items}
-          onClick={({ key }) => {
-            if (!key.startsWith("group:")) router.push(key);
-          }}
-        />
+        {navMenu}
       </Sider>
+
+      <Drawer
+        open={navOpen}
+        placement="left"
+        size={280}
+        title={messages.app.name}
+        styles={{ body: { padding: 0, display: "flex", flexDirection: "column" } }}
+        onClose={() => setNavOpen(false)}
+      >
+        {navMenu}
+      </Drawer>
 
       {/* The Splitter renders even while the panel is closed: swapping the
           wrapper on toggle would move `children` in the React tree and remount
@@ -176,14 +200,21 @@ export function AppShell({
               style={{ padding: 0 }}
               className="shrink-0 bg-white shadow-sm"
             >
-              <div className="mx-4 flex h-full items-center justify-between">
+              <div className="mx-3 flex h-full items-center justify-between gap-2 md:mx-4">
+                <Button
+                  type="text"
+                  className="lg:hidden!"
+                  icon={<MenuOutlined />}
+                  aria-label={messages.nav.openMenu}
+                  onClick={() => setNavOpen(true)}
+                />
                 <CompanySwitcher
                   companies={user.companies}
                   activeCompanyId={user.activeCompanyId}
                 />
-                <div className="flex items-center gap-3">
+                <div className="flex shrink-0 items-center gap-2 md:gap-3">
                   {canReadNotifications && <NotificationBell />}
-                  <span className="text-sm text-gray-700">
+                  <span className="text-sm text-gray-700 max-md:hidden">
                     {user.displayName}
                   </span>
                   <Dropdown
@@ -207,7 +238,7 @@ export function AppShell({
 
             {/* The app's only scroll region: viewport height minus the header. */}
             <Content className="min-h-0 flex-1 overflow-y-auto">
-              <div className="p-6">{children}</div>
+              <div className="p-3 md:p-6">{children}</div>
 
               <Footer className="text-center">
                 {messages.app.name} ©{currentYear}

@@ -367,6 +367,70 @@ export interface SubRequestTypeRule {
   required: boolean;
 }
 
+export const FLOW_CONDITION_OPS = ["gt", "gte", "lt", "lte", "eq", "neq", "in"] as const;
+export type FlowConditionOp = (typeof FLOW_CONDITION_OPS)[number];
+
+/** `{ field, op, value }` over the request's answers; see `request-flow.ts`. */
+export interface FlowCondition {
+  field: string;
+  op: FlowConditionOp;
+  value: unknown;
+}
+
+/** Who carries the work on entering a step. */
+export type FlowAssigneeRule =
+  | { type: "keep" }
+  | { type: "requester" }
+  | { type: "user"; userId: string };
+
+export interface RequestFlowStep {
+  code: string;
+  name: string;
+  sortOrder: number;
+  formSchema: FormSchema | null;
+  subRequestTypes: SubRequestTypeRule[];
+  requiresApproval: boolean;
+  assigneeRule: FlowAssigneeRule | null;
+  slaHours: number | null;
+}
+
+export interface RequestFlowTransition {
+  fromStepCode: string;
+  toStepCode: string;
+  sortOrder: number;
+  condition: FlowCondition | null;
+  backward: boolean;
+}
+
+/** One published, immutable version of a type's step flow. */
+export interface RequestFlowVersion {
+  id: string;
+  version: number;
+  publishedAt: string;
+  publishedBy: string | null;
+  steps: RequestFlowStep[];
+  transitions: RequestFlowTransition[];
+}
+
+/** One stay of a request in one flow step. */
+export interface RequestStepRun {
+  id: string;
+  stepCode: string;
+  enteredAt: string;
+  leftAt: string | null;
+  outcome: string | null;
+}
+
+/** The detail endpoint's answer to "where can the work go from here". */
+export interface FlowMoves {
+  current: string;
+  forward: string | null;
+  backward: string[];
+  is_last: boolean;
+  requires_approval: boolean;
+  checklist: NamedSubRequestType[];
+}
+
 /** A checklist entry as the submit snapshot keeps it. */
 export interface NamedSubRequestType extends SubRequestTypeRule {
   name: string;
@@ -449,6 +513,13 @@ export interface RequestDetailStep {
    */
   note: string | null;
   approver: { displayName: string } | null;
+  /** `any`: one candidate decides; `all`: every candidate approves. */
+  mode?: "any" | "all";
+  /** `reject_or_return` lets an approval go without a note. */
+  noteRequired?: "always" | "reject_or_return";
+  /** Why a `skipped` step was never asked. */
+  skipReason?: "condition" | "same_approver" | null;
+  votes?: { userId: string; decision: string }[];
 }
 
 /** H2.2 — one note somebody left on a request. */
@@ -467,6 +538,8 @@ export interface RequestTreeNode {
   status: string;
   parentRequestId: string | null;
   ancestorIds: string[];
+  /** The parent's flow step this child was raised in, if any. */
+  parentStepCode?: string | null;
   requester: { displayName: string } | null;
   assignee: { displayName: string } | null;
   receiver: { displayName: string } | null;
@@ -517,6 +590,8 @@ export interface RequestDetail
   approvalCases?: {
     /** Needed to decide on the case from the request screen. */
     id: string;
+    status?: string;
+    subjectType?: string;
     currentStep: number;
     matrixVersion: number;
     amount: string | null;
@@ -552,6 +627,22 @@ export interface RequestDetail
     /** The sub-request checklist as it stood at submit, names attached. */
     subRequestTypes?: NamedSubRequestType[];
   } | null;
+  /** The step flow pinned at submit; null runs the fixed lifecycle. */
+  flowVersionId?: string | null;
+  currentStepCode?: string | null;
+  /** Answers to each step's form, keyed by step code. */
+  stepFormData?: Record<string, Record<string, unknown>>;
+  flowVersion?: {
+    id: string;
+    version: number;
+    steps: Pick<
+      RequestFlowStep,
+      "code" | "name" | "sortOrder" | "formSchema" | "subRequestTypes" | "requiresApproval"
+    >[];
+  } | null;
+  stepRuns?: RequestStepRun[];
+  /** Where `advance` may go from the current step; null without a flow. */
+  flow_moves?: FlowMoves | null;
   attachments?: RequestAttachment[];
   events?: RequestEventRow[];
   comments?: RequestComment[];
@@ -702,9 +793,19 @@ export interface MatrixTier {
  * head of the group they sit in, `2` the department above it. `org` names
  * groups; with `userIds` those people approve, without it the groups' heads do.
  */
-export type MatrixLevel =
-  | { type: "supervisor"; up: number }
-  | { type: "org"; orgUnitIds: string[]; userIds?: string[] };
+/** Per-level rules; absent keys keep the default (any / always / no condition). */
+export interface MatrixLevelOptions {
+  mode?: "any" | "all";
+  noteRequired?: "always" | "reject_or_return";
+  condition?: FlowCondition;
+  slaHours?: number;
+}
+
+export type MatrixLevel = MatrixLevelOptions &
+  (
+    | { type: "supervisor"; up: number }
+    | { type: "org"; orgUnitIds: string[]; userIds?: string[] }
+  );
 
 export interface ApprovalMatrixVersion {
   /** Who published it — a userId; A1 resolves it to a name for display. */

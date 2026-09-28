@@ -1,16 +1,34 @@
 "use client";
 
 import { Fragment, useState } from "react";
-import { Alert, App, Button, Card, Empty, Form, Modal, Segmented, Table, Tag } from "antd";
+import {
+  Alert,
+  App,
+  Button,
+  Card,
+  Empty,
+  Form,
+  Input,
+  InputNumber,
+  Modal,
+  Radio,
+  Segmented,
+  Select,
+  Table,
+  Tag,
+} from "antd";
 import type { FormInstance } from "antd";
 import Text from "antd/es/typography/Text";
 import Paragraph from "antd/es/typography/Paragraph";
 import { adminApi } from "@/lib/api/client";
-import type {
-  ApprovalMatrixVersion,
-  MatrixLevel,
-  OrgUnitNode,
-  RequestType,
+import {
+  FLOW_CONDITION_OPS,
+  type ApprovalMatrixVersion,
+  type FlowCondition,
+  type MatrixLevel,
+  type MatrixLevelOptions,
+  type OrgUnitNode,
+  type RequestType,
 } from "@/lib/api/types";
 import { messages } from "@/lib/messages";
 import {
@@ -109,9 +127,12 @@ export function SubjectMatrixPanel({
   userNames,
   orgUnits,
   onPublished,
+  conditionFields = [],
 }: {
   /** `request:<CODE>` or `request:<CODE>:pre` — see {@link subjectOf}. */
   subject: string;
+  /** Form fields a level condition may name; none hides the condition controls. */
+  conditionFields?: readonly { value: string; label: string }[];
   companyId: string;
   /** Every version the company has; this panel keeps only its own subject's. */
   versions: ApprovalMatrixVersion[];
@@ -129,6 +150,9 @@ export function SubjectMatrixPanel({
   const [publishing, setPublishing] = useState(false);
 
   const unitTree = buildUnitTree(orgUnits);
+  const live = versions
+    .filter((version) => version.subjectType === subject && version.publishedAt)
+    .sort((a, b) => b.version - a.version)[0];
   const unitNames = Object.fromEntries(
     orgUnits.map((unit) => [unit.id, unit.name]),
   );
@@ -151,14 +175,16 @@ export function SubjectMatrixPanel({
         unitNames={unitNames}
       />
 
-      {/* Keyed on the subject so switching tabs or request types mounts a fresh
-          form rather than reusing the levels typed for the previous ladder. */}
+      {/* Keyed on the subject and the live version so switching ladders, or
+          publishing one, mounts a fresh form seeded from what is in force. */}
       <PublishDialog
-        key={subject}
+        key={`${subject}:${live?.id ?? "none"}`}
+        live={live}
         open={publishing}
         companyId={companyId}
         subject={subject}
         unitTree={unitTree}
+        conditionFields={conditionFields}
         onClose={() => setPublishing(false)}
         onDone={async () => {
           setPublishing(false);
@@ -438,13 +464,19 @@ function LevelFields({
   name,
   form,
   unitTree,
+  conditionFields,
   onRemove,
 }: {
   name: number;
   form: FormInstance;
   unitTree: UnitTreeNode[];
+  /** Fields a condition may name; empty hides the condition controls. */
+  conditionFields: readonly { value: string; label: string }[];
   onRemove: () => void;
 }) {
+  const condition = Form.useWatch(["levels", name, "condition"], form) as
+    | FlowCondition
+    | undefined;
   const type = Form.useWatch(["levels", name, "type"], form) as
     | "supervisor"
     | "org"
@@ -483,6 +515,13 @@ function LevelFields({
     }
 
     setPeople([...found.values()]);
+
+    // People picked under groups that are no longer chosen would still approve; drop them.
+    const picked = (form.getFieldValue(["levels", name, "userIds"]) ?? []) as string[];
+    form.setFieldValue(
+      ["levels", name, "userIds"],
+      picked.filter((userId) => found.has(userId)),
+    );
   }
 
   return (
@@ -548,19 +587,102 @@ function LevelFields({
           />
         </Form.Item>
       )}
+
+      <div className="grid gap-x-4 md:grid-cols-3">
+        <Form.Item name={[name, "mode"]} label={messages.matrix.levelMode} initialValue="any">
+          <Radio.Group
+            options={[
+              { value: "any", label: messages.matrix.modeAny },
+              { value: "all", label: messages.matrix.modeAll },
+            ]}
+          />
+        </Form.Item>
+        <Form.Item
+          name={[name, "noteRequired"]}
+          label={messages.matrix.levelNote}
+          initialValue="always"
+        >
+          <Select
+            options={[
+              { value: "always", label: messages.matrix.noteAlways },
+              { value: "reject_or_return", label: messages.matrix.noteRejectOnly },
+            ]}
+          />
+        </Form.Item>
+        <Form.Item
+          name={[name, "slaHours"]}
+          label={messages.matrix.levelSla}
+          extra={messages.matrix.levelSlaHint}
+        >
+          <InputNumber min={1} className="w-full" />
+        </Form.Item>
+      </div>
+
+      {conditionFields.length > 0 && (
+        <div className="space-y-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-medium">{messages.matrix.levelCondition}</span>
+            {condition ? (
+              <>
+                <Form.Item name={[name, "condition", "field"]} noStyle rules={[{ required: true }]}>
+                  <Select className="min-w-36" options={[...conditionFields]} />
+                </Form.Item>
+                <Form.Item name={[name, "condition", "op"]} noStyle>
+                  <Select
+                    className="min-w-32"
+                    options={FLOW_CONDITION_OPS.map((op) => ({
+                      value: op,
+                      label: messages.requestTypes.flow.ops[op],
+                    }))}
+                  />
+                </Form.Item>
+                <Form.Item name={[name, "condition", "value"]} noStyle rules={[{ required: true }]}>
+                  <Input className="w-36" />
+                </Form.Item>
+              </>
+            ) : (
+              <span className="text-black/45">{messages.matrix.conditionAlways}</span>
+            )}
+            <Button
+              type="link"
+              size="small"
+              onClick={() =>
+                form.setFieldValue(
+                  ["levels", name, "condition"],
+                  condition
+                    ? undefined
+                    : { field: conditionFields[0]?.value, op: "gt", value: "" },
+                )
+              }
+            >
+              {condition ? messages.matrix.removeCondition : messages.matrix.addCondition}
+            </Button>
+          </div>
+          {condition && (
+            <span className="block text-xs text-black/45">{messages.matrix.conditionHint}</span>
+          )}
+        </div>
+      )}
     </Card>
   );
 }
 
+const DEFAULT_LEVELS: MatrixLevel[] = [{ type: "supervisor", up: 1 }];
+
 function PublishDialog({
   open,
+  live,
   companyId,
   subject,
   unitTree,
+  conditionFields,
   onClose,
   onDone,
 }: {
   open: boolean;
+  conditionFields: readonly { value: string; label: string }[];
+  /** The version in force; the form starts from its levels rather than blank. */
+  live?: ApprovalMatrixVersion;
   companyId: string;
   /** The tab's own subject — fixed, so the dialog cannot publish another one. */
   subject: string;
@@ -574,12 +696,12 @@ function PublishDialog({
 
   async function submit() {
     const values = (await form.validateFields()) as {
-      levels: {
+      levels: (MatrixLevelOptions & {
         type: "supervisor" | "org";
         up?: number;
         orgUnitIds?: string[];
         userIds?: string[];
-      }[];
+      })[];
     };
 
     setSaving(true);
@@ -593,15 +715,16 @@ function PublishDialog({
         // Only the fields the chosen shape uses. Sending an `up` on an `org`
         // level would be stored and then never read, which is how a ladder
         // starts describing something it does not do.
-        levels: values.levels.map((level) =>
-          level.type === "supervisor"
+        levels: values.levels.map((level) => ({
+          ...(level.type === "supervisor"
             ? { type: "supervisor", up: level.up ?? 1 }
             : {
                 type: "org",
                 orgUnitIds: level.orgUnitIds ?? [],
                 userIds: level.userIds ?? [],
-              },
-        ),
+              }),
+          ...levelOptionsOf(level),
+        })),
       }),
     });
 
@@ -627,10 +750,29 @@ function PublishDialog({
         <Alert type="error" showIcon title={error} className="mb-3!" />
       )}
 
+      {live?.levels?.length ? (
+        <Alert
+          type="info"
+          showIcon
+          className="mb-3!"
+          title={messages.matrix.copiedFromCurrent(live.version)}
+          action={
+            <Button
+              size="small"
+              onClick={() => form.setFieldsValue({ levels: DEFAULT_LEVELS })}
+            >
+              {messages.matrix.startOver}
+            </Button>
+          }
+        />
+      ) : null}
+
       <Form
         form={form}
         layout="vertical"
-        initialValues={{ levels: [{ type: "supervisor", up: 1 }] }}
+        initialValues={{
+          levels: live?.levels?.length ? live.levels : DEFAULT_LEVELS,
+        }}
       >
         <Form.List name="levels">
           {(fields, { add, remove }) => (
@@ -641,6 +783,7 @@ function PublishDialog({
                   name={field.name}
                   form={form}
                   unitTree={unitTree}
+                  conditionFields={conditionFields}
                   onRemove={() => remove(field.name)}
                 />
               ))}
@@ -653,4 +796,38 @@ function PublishDialog({
       </Form>
     </Modal>
   );
+}
+
+/** Only options that differ from the default, so an unchanged ladder publishes as before. */
+function levelOptionsOf(level: MatrixLevelOptions): MatrixLevelOptions {
+  const condition = level.condition?.field
+    ? {
+        ...level.condition,
+        value:
+          level.condition.op === "in"
+            ? textOf(level.condition.value)
+                .split(",")
+                .map((part) => part.trim())
+                .filter(Boolean)
+            : numberOrText(level.condition.value),
+      }
+    : undefined;
+
+  return {
+    ...(level.mode === "all" ? { mode: "all" as const } : {}),
+    ...(level.noteRequired === "reject_or_return"
+      ? { noteRequired: "reject_or_return" as const }
+      : {}),
+    ...(typeof level.slaHours === "number" ? { slaHours: level.slaHours } : {}),
+    ...(condition ? { condition } : {}),
+  };
+}
+
+function textOf(value: unknown): string {
+  return typeof value === "string" || typeof value === "number" ? String(value) : "";
+}
+
+function numberOrText(value: unknown): unknown {
+  const text = textOf(value).trim();
+  return text !== "" && !Number.isNaN(Number(text)) ? Number(text) : text;
 }

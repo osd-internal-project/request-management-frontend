@@ -10,6 +10,7 @@ import type {
   ChainPreview,
   RequestComment,
   RequestAttachment,
+  RequestFlowVersion,
   RequestRow,
   RequestType,
 } from "./types";
@@ -289,5 +290,72 @@ export function updateRequestType(
   return adminApi<RequestType>(`request-types/${code}`, {
     method: "PATCH",
     body: JSON.stringify(input),
+  });
+}
+
+/** Every published flow version of a type in one company, newest first. */
+export function getRequestFlows(
+  code: string,
+  companyId: string,
+): Promise<ClientResult<RequestFlowVersion[]>> {
+  return adminApi<RequestFlowVersion[]>(
+    `request-types/${code}/flows?company_id=${encodeURIComponent(companyId)}`,
+  );
+}
+
+/** Publishes the next flow version; requests already submitted keep theirs. */
+export function publishRequestFlow(
+  code: string,
+  input: Record<string, unknown>,
+): Promise<ClientResult<RequestFlowVersion>> {
+  return adminApi<RequestFlowVersion>(`request-types/${code}/flows`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+/** Moves the work to another step of the type's flow (forward or back). */
+export function advanceRequest(
+  id: string,
+  toStep: string,
+): Promise<ClientResult<RequestRow>> {
+  return appApi<RequestRow>(`requests/${id}/advance`, {
+    method: "POST",
+    body: JSON.stringify({ to_step: toStep }),
+  });
+}
+
+/** Saves draft answers to the current step's form; checked only on leaving. */
+export function saveStepForm(
+  id: string,
+  data: Record<string, unknown>,
+): Promise<ClientResult<RequestRow>> {
+  return appApi<RequestRow>(`requests/${id}/step-form`, {
+    method: "PATCH",
+    body: JSON.stringify({ data }),
+  });
+}
+
+/** One outcome of a batch decision; each case is decided on its own (APV-04). */
+export interface BatchDecideResult {
+  case_id: string;
+  ok: boolean;
+  status?: string;
+  error?: { code: string; message: string };
+}
+
+/** Decides up to 50 cases with one note; a refusal on one does not undo the rest. */
+export function batchDecide(input: {
+  caseIds: string[];
+  decision: "approve" | "reject";
+  note: string;
+}): Promise<ClientResult<{ results: BatchDecideResult[] }>> {
+  return appApi<{ results: BatchDecideResult[] }>("approvals/batch-decide", {
+    method: "POST",
+    body: JSON.stringify({
+      case_ids: input.caseIds,
+      decision: input.decision,
+      note: input.note,
+    }),
   });
 }

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Empty, Tag } from "antd";
 import Paragraph from "antd/es/typography/Paragraph";
 import Text from "antd/es/typography/Text";
-import { STATUS_COLOR } from "@/components/requests/my-work";
+import { STATUS_COLOR } from "@/components/requests/status";
 import type { RequestTree, RequestTreeNode } from "@/lib/api/types";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";

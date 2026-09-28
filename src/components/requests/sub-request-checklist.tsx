@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Alert, Button, Tag } from "antd";
 import Text from "antd/es/typography/Text";
-import { STATUS_COLOR } from "@/components/requests/my-work";
+import { STATUS_COLOR } from "@/components/requests/status";
 import {
   missingRequiredSubRequests,
   type NamedSubRequestType,

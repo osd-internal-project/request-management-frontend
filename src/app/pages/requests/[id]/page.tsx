@@ -23,9 +23,12 @@ import { RequestComments } from "@/components/requests/request-comments";
 import { RequestTimeline } from "@/components/requests/request-timeline";
 import { RequestTreePanel } from "@/components/requests/request-tree";
 import { SubRequestChecklist } from "@/components/requests/sub-request-checklist";
+import { RequestStepper } from "@/components/requests/request-stepper";
+import { CurrentStepCard } from "@/components/requests/current-step-card";
 import { DueBadge } from "@/components/requests/due-badge";
 import { getSession } from "@/lib/session";
 import { messages } from "@/lib/messages";
+import { STATUS_COLOR } from "@/components/requests/status";
 
 /** Thai date + time as §16 prints it: `23 ส.ค. 16:40 น.` */
 function when(iso: string): string {
@@ -80,27 +83,31 @@ function fileSize(bytes: number): string {
     : `${Math.max(Math.round(bytes / 1024), 1)} KB`;
 }
 
-/** What actually happened at a rung, in the words §16 uses. */
-function stepOutcome(status: string, decision: string | null): string {
-  if (decision === "approved") return messages.requestDetail.stepApproved;
-  if (decision === "rejected") return messages.requestDetail.stepRejected;
-  if (status === "pending") return messages.requestDetail.stepPending;
+/** What happened at a rung, read off the step's status (the stored decision is a verb). */
+function stepOutcome(
+  stepStatus: string,
+  caseStatus: string | undefined,
+): string {
+  if (stepStatus === "skipped") return "";
+  if (stepStatus === "approved") return messages.requestDetail.stepApproved;
+  if (stepStatus === "rejected") return messages.requestDetail.stepRejected;
+  if (stepStatus === "returned") return messages.requestDetail.stepReturned;
+  if (caseStatus && caseStatus !== "pending")
+    return messages.requestDetail.stepClosed;
+  if (stepStatus === "pending") return messages.requestDetail.stepPending;
 
   return messages.requestDetail.stepWaiting;
 }
 
-const STATUS_COLOR: Record<string, string> = {
-  draft: "default",
-  submitted: "blue",
-  pending_approval: "gold",
-  returned: "orange",
-  approved: "green",
-  rejected: "red",
-  in_progress: "cyan",
-  completed: "green",
-  cancelled: "default",
-  on_hold: "purple",
-};
+/** antd `Steps` state for a rung. */
+function stepState(
+  stepStatus: string,
+): "finish" | "error" | "process" | "wait" {
+  if (stepStatus === "approved") return "finish";
+  if (stepStatus === "rejected" || stepStatus === "returned") return "error";
+  if (stepStatus === "pending") return "process";
+  return "wait";
+}
 
 /**
  * Screen §16 หน้าที่ 4 — รายละเอียดคำขอ + ไทม์ไลน์.
@@ -186,6 +193,15 @@ export default async function RequestDetailPage({
 
   // Snapshot only: the checklist is fixed at submit, and a draft has none yet.
   const checklist = request.typeSnapshot?.subRequestTypes ?? [];
+  // The step flow pinned at submit; empty for a type that runs the fixed lifecycle.
+  const flowSteps = request.flowVersion?.steps ?? [];
+  const stepNames = Object.fromEntries(
+    flowSteps.map((step) => [step.code, step.name]),
+  );
+  const currentFlowStep =
+    flowSteps.find((step) => step.code === request.currentStepCode) ?? null;
+  const flowMoves = request.flow_moves ?? null;
+
   const directChildren = tree.descendants.filter(
     (node) => node.parentRequestId === request.id,
   );
@@ -214,15 +230,19 @@ export default async function RequestDetailPage({
         request={{
           ...request,
           approvalCaseId: approvalCase?.id ?? null,
-          approverCandidateIds: currentStep?.candidateUserIds ?? [],
+          approvalStage: approvalCase?.subjectType ?? null,
+          // The level may let an approval go without a note (B4).
+          approveNoteOptional: currentStep?.noteRequired === "reject_or_return",
           // The plain "ทำเสร็จแล้ว" button steps aside when there is a form:
           // finishing *is* submitting it, and two controls for one action is
           // how a request gets completed with the form still blank.
           hasReceiverForm: Boolean(receiverSchema),
           returnReasons,
           missingSubRequests,
+          flowMoves,
+          stepNames,
         }}
-        viewerId={viewerId}
+        session={session}
       />
 
       {checklist.length > 0 && (
@@ -260,8 +280,41 @@ export default async function RequestDetailPage({
         </span>
       </div>
 
+      {flowSteps.length > 0 && (
+        <RequestStepper
+          steps={flowSteps}
+          runs={request.stepRuns ?? []}
+          currentStepCode={request.currentStepCode ?? null}
+          waitingApproval={request.status === "pending_approval"}
+          assigneeName={request.assignee?.displayName ?? null}
+        />
+      )}
+
+      {/*
+        Below `lg` both columns dissolve (`contents`) into one stack ordered by
+        what the reader has to do: the step's work, the decision, then the facts.
+      */}
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,0.5fr)]">
-        <div className="space-y-2">
+        <div className="space-y-2 max-lg:contents [&>*]:max-lg:order-4">
+          {currentFlowStep &&
+            flowMoves &&
+            ["in_progress", "pending_approval"].includes(request.status) && (
+              <div className="max-lg:order-1!">
+                <CurrentStepCard
+                  requestId={request.id}
+                  stepName={currentFlowStep.name}
+                  formSchema={currentFlowStep.formSchema}
+                  initial={request.stepFormData?.[currentFlowStep.code] ?? {}}
+                  checklist={flowMoves.checklist}
+                  childRequests={directChildren.filter(
+                    (child) => child.parentStepCode === currentFlowStep.code,
+                  )}
+                  requiresApproval={flowMoves.requires_approval}
+                  isLast={flowMoves.is_last}
+                  canEdit={showReceiverForm}
+                />
+              </div>
+            )}
           {/*
             Who is holding this, before what it says. "ใครรับเรื่องนี้" is the
             question a reader arrives with, and until now the screen answered
@@ -325,15 +378,17 @@ export default async function RequestDetailPage({
             because it is about what the request *is*, and the timeline is
             about what has happened to it.
           */}
-          <div>
-            {receiverSchema && showReceiverForm && (
-              <ReceiverForm
-                requestId={request.id}
-                schema={receiverSchema}
-                initial={request.receiverFormData ?? {}}
-                blocked={missingSubRequests > 0}
-              />
-            )}
+          <div className="max-lg:order-2!">
+            {receiverSchema &&
+              showReceiverForm &&
+              (!flowMoves || flowMoves.is_last) && (
+                <ReceiverForm
+                  requestId={request.id}
+                  schema={receiverSchema}
+                  initial={request.receiverFormData ?? {}}
+                  blocked={missingSubRequests > 0}
+                />
+              )}
           </div>
           <div>
             <Card title={messages.requestDetail.treeTitle} size="small">
@@ -355,13 +410,13 @@ export default async function RequestDetailPage({
             </Card>
           </div>
         </div>
-        <div className=" space-y-2">
-           <div>
+        <div className="space-y-2 max-lg:contents">
+          <div className="max-lg:order-4">
             <Card title={messages.requestDetail.peopleTitle} size="small">
               <RequestPeople request={request} />
             </Card>
           </div>
-          <div>
+          <div className="max-lg:order-3">
             <Card title={messages.requestDetail.chainTitle} size="small">
               {approvalCase ? (
                 <>
@@ -370,12 +425,21 @@ export default async function RequestDetailPage({
                     size="small"
                     current={approvalCase.currentStep - 1}
                     items={approvalCase.steps.map((step) => ({
+                      status: stepState(step.status),
                       title: `${messages.requestDetail.chainStep(step.stepNo)} · ${step.approverRole}`,
                       description: (
                         <span className="text-xs">
                           {step.approver?.displayName ?? "—"}
                           {" · "}
-                          {stepOutcome(step.status, step.decision)}
+                          {step.status === "skipped"
+                            ? messages.requestDetail.stepSkipped(step.skipReason)
+                            : stepOutcome(step.status, approvalCase.status)}
+                          {step.mode === "all" &&
+                            step.status === "pending" &&
+                            ` · ${messages.requestDetail.stepVotes(
+                              (step.votes ?? []).filter((vote) => vote.decision === "approve").length,
+                              step.candidateUserIds.length,
+                            )}`}
                           {step.decidedAt && ` · ${when(step.decidedAt)}`}
                           {/*
                             The decider's own words, beside their decision.
@@ -397,12 +461,14 @@ export default async function RequestDetailPage({
 
                   {/* The two lines §16 requires under the stepper. */}
                   <Paragraph type="secondary" className="mt-3! mb-1! text-xs">
-                    {messages.requestDetail.chainFrom(
-                      approvalCase.amount
-                        ? Number(approvalCase.amount).toLocaleString("th-TH")
-                        : "—",
-                      approvalCase.matrixVersion,
-                    )}
+                    {approvalCase.amount
+                      ? messages.requestDetail.chainFrom(
+                          Number(approvalCase.amount).toLocaleString("th-TH"),
+                          approvalCase.matrixVersion,
+                        )
+                      : messages.requestDetail.chainVersion(
+                          approvalCase.matrixVersion,
+                        )}
                   </Paragraph>
                   <Paragraph type="secondary" className="mb-0! text-xs">
                     {messages.requestDetail.voidNote}
@@ -416,13 +482,15 @@ export default async function RequestDetailPage({
             </Card>
           </div>
 
-          <div>
+          <div className="max-lg:order-5">
             <Card title={messages.requestDetail.timelineTitle} size="small">
               <RequestTimeline events={events} />
             </Card>
           </div>
         </div>
       </div>
+      {/* Room for the action bar pinned to the bottom on phones. */}
+      <div className="h-24 md:hidden" aria-hidden />
     </div>
   );
 }
