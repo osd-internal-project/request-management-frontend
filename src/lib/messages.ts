@@ -2558,6 +2558,43 @@ export const messages = {
         },
       },
       futureTabNote: (phase: string) => `แท็บนี้ ${phase}`,
+      /** CD-89 — แท็บการเงิน: ใบแจ้งหนี้และการรับชำระจาก SAP */
+      tabFinancials: "การเงิน",
+      invoices: {
+        source: {
+          mock: "รอเชื่อม SAP จริง — ระบบยังใช้ตัวเชื่อมจำลอง จึงไม่แสดงตัวเลข",
+          not_synced: "ลูกค้ารายนี้ยังไม่ได้ส่งเข้า SAP — ยังไม่มีใบแจ้งหนี้",
+          unavailable: "อ่านข้อมูลจาก SAP ไม่ได้ในขณะนี้ — ลองใหม่ภายหลัง",
+        } as Record<string, string>,
+        openSummary: (count: number, amount: string) =>
+          `ค้างชำระ ${count} ใบ · ${amount} บาท`,
+        overdueSummary: (count: number, amount: string) =>
+          `เกินกำหนด ${count} ใบ · ${amount} บาท`,
+        asOf: (when: string) => `ข้อมูลจาก SAP ณ ${when}`,
+        empty: "ยังไม่มีใบแจ้งหนี้ใน SAP",
+        overdueTag: "เกินกำหนด",
+        status: {
+          open: "ค้างชำระ",
+          paid: "ชำระแล้ว",
+          cancelled: "ยกเลิก",
+        } as Record<string, string>,
+        statusColor: {
+          open: "gold",
+          paid: "green",
+          cancelled: "default",
+        } as Record<string, string>,
+        columns: {
+          docNo: "เลขที่",
+          reference: "อ้างอิง",
+          issued: "วันที่ออก",
+          due: "ครบกำหนด",
+          total: "ยอด",
+          paid: "ชำระแล้ว",
+          outstanding: "คงค้าง",
+          status: "สถานะ",
+        },
+        note: "อ่านจาก SAP (read-only) — 50 ใบล่าสุด รวมใบจากระบบสายบัญชีทุกระบบ",
+      },
     },
 
     /** CM-10 — นำเข้าลูกค้าเดิมจาก Excel (admin.crm.manage). */
