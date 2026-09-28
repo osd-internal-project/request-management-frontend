@@ -1263,6 +1263,42 @@ export interface OpportunityDetail extends OpportunityRow {
   contractRequestTypeCode?: string | null;
 }
 
+/** CD-79 — a company's standard trade term (CRM settings). */
+export interface TradeTermStandard {
+  code: string;
+  name: string;
+  standardValue: string;
+  active?: boolean;
+  sortOrder?: number;
+}
+
+/** CD-79 — one agreed term, with the standard as it stood that day. */
+export interface NegotiationTerm {
+  code: string | null;
+  name: string;
+  agreed: string;
+  standard: string | null;
+  nonStandard: boolean;
+  note: string | null;
+}
+
+/** CD-79 — one negotiation round on a deal. */
+export interface NegotiationRound {
+  id: string;
+  roundNo: number;
+  occurredOn: string;
+  summary: string | null;
+  terms: NegotiationTerm[];
+  nonStandardCount: number;
+  /** The contract-review request sent to Legal, when there was one. */
+  legalRequestId: string | null;
+  /** Why it did not reach Legal (or reached only as a draft). */
+  legalSendError: string | null;
+  createdBy: string;
+  createdByName?: string;
+  createdAt: string;
+}
+
 export interface OpportunityLostReason {
   code: string;
   name: string;

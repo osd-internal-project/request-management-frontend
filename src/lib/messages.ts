@@ -2287,6 +2287,46 @@ export const messages = {
         fromLead: (name: string) => `มาจาก Lead: ${name}`,
         tabRequests: "คำขอที่อ้างโอกาสการขายนี้",
         raiseRequest: "ยื่นคำขอ",
+        /* CD-79 — การต่อรองเงื่อนไขการค้า. */
+        negotiations: {
+          title: "การต่อรองเงื่อนไข",
+          record: "บันทึกรอบการต่อรอง",
+          empty: "ยังไม่มีการบันทึกการต่อรอง",
+          round: (no: number) => `รอบที่ ${no}`,
+          formTitle: (no: number) => `บันทึกการต่อรองรอบที่ ${no}`,
+          date: "วันที่ต่อรอง",
+          summary: "สรุปการต่อรอง",
+          pickTerm: "เลือกเงื่อนไข",
+          otherTerm: "เงื่อนไขอื่น (นอกรายการ)",
+          otherName: "ชื่อเงื่อนไข",
+          agreedPlaceholder: "ค่าที่ตกลง",
+          note: "หมายเหตุ",
+          addTerm: "เพิ่มเงื่อนไข",
+          standardIs: (value: string) => `มาตรฐาน: ${value}`,
+          otherAlwaysFlagged: "นอกรายการ = นอกมาตรฐาน",
+          noStandards:
+            "บริษัทยังไม่ได้ตั้งเงื่อนไขมาตรฐาน (หน้าตั้งค่า CRM) — ทุกเงื่อนไขจะนับเป็นนอกมาตรฐาน",
+          willSend: (count: number) =>
+            `มีเงื่อนไขนอกมาตรฐาน ${count} รายการ — บันทึกแล้วระบบจะส่งฝ่ายกฎหมายตรวจทันที`,
+          save: "บันทึก",
+          saveAndSend: "บันทึกและส่งฝ่ายกฎหมาย",
+          saved: "บันทึกการต่อรองแล้ว",
+          savedSent: "บันทึกแล้ว และส่งฝ่ายกฎหมายตรวจแล้ว",
+          savedNotSent:
+            "บันทึกแล้ว แต่ยังส่งฝ่ายกฎหมายไม่สำเร็จ — ดูรายละเอียดในการ์ด",
+          nonStandard: "นอกมาตรฐาน",
+          nonStandardCount: (count: number) => `นอกมาตรฐาน ${count} รายการ`,
+          allStandard: "ตามมาตรฐาน",
+          notInList: "— (นอกรายการ)",
+          sentToLegal: "ส่งฝ่ายกฎหมายตรวจแล้ว",
+          openRequest: "เปิดคำขอ",
+          openDraft: "เปิดร่างคำขอ",
+          columns: {
+            term: "เงื่อนไข",
+            standard: "มาตรฐาน",
+            agreed: "ที่ตกลง",
+          },
+        },
         /* CD-81 — ประสานงานสัญญากับฝ่ายกฎหมายจากหน้าดีล. */
         contracts: {
           title: "สัญญา",
@@ -2911,6 +2951,15 @@ export const messages = {
       quotationApprovalTypeCode: "ประเภทคำขอที่ใช้ขออนุมัติ margin ต่ำ",
       sectionTargets: "เป้าขาย",
       targetApprovalTypeCode: "ประเภทคำขอที่ใช้ขออนุมัติการปรับเป้า",
+      /* CD-79 */
+      sectionTradeTerms: "เงื่อนไขการค้ามาตรฐาน",
+      tradeTermsHint:
+        "การต่อรองที่ตกลงค่าต่างจากมาตรฐาน (หรือเงื่อนไขนอกรายการ) จะถูกทำเครื่องหมายและส่งฝ่ายกฎหมายตรวจอัตโนมัติ — ลบออกจากรายการ = ปิดใช้ (รอบการต่อรองเก่ายังเก็บค่ามาตรฐาน ณ วันนั้น)",
+      tradeTermCode: "รหัส",
+      tradeTermName: "เงื่อนไข",
+      tradeTermStandard: "ค่ามาตรฐาน",
+      tradeTermAdd: "เพิ่มเงื่อนไข",
+      tradeTermSave: "บันทึกเงื่อนไขมาตรฐาน",
       /* CD-81 */
       sectionContracts: "สัญญา",
       contractRequestTypeCode: "ประเภทคำขอที่ฝ่ายกฎหมายรับทำ/แก้สัญญา",

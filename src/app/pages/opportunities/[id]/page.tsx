@@ -3,6 +3,7 @@ import { OpportunityDetailView } from "@/components/crm/opportunities/opportunit
 import {
   getOpportunity,
   getOpportunityActivities,
+  getNegotiations,
   getLostReasons,
   getQuotations,
 } from "@/lib/api/sales";
@@ -49,6 +50,7 @@ export default async function OpportunityDetailPage({
     quotationsResult,
     activitiesResult,
     typesResult,
+    negotiationsResult,
   ] = await Promise.all([
     getLostReasons(),
     canReadRequests
@@ -69,6 +71,8 @@ export default async function OpportunityDetailPage({
     opportunityResult.data.contractRequestTypeCode && canReadRequests
       ? getRequestTypes()
       : Promise.resolve(null),
+    // CD-79 — same `crm.sales.read`.
+    getNegotiations(id),
   ]);
   const contractCode = opportunityResult.data.contractRequestTypeCode ?? null;
   const contractTypeName =
@@ -92,6 +96,7 @@ export default async function OpportunityDetailPage({
       activities={activitiesResult.ok ? activitiesResult.data : []}
       canManage={canManage}
       contractTypeName={contractTypeName}
+      negotiations={negotiationsResult.ok ? negotiationsResult.data : null}
       openSaleOrderOnLoad={action === "sale-order"}
     />
   );

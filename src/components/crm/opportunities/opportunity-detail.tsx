@@ -1,6 +1,7 @@
 "use client";
 
 import { ContractCard } from "@/components/crm/opportunities/contract-card";
+import { NegotiationCard } from "@/components/crm/opportunities/negotiation-card";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -43,6 +44,8 @@ import { appApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import type {
+  NegotiationRound,
+  TradeTermStandard,
   CustomerRow,
   OpportunityActivity,
   OpportunityDetail,
@@ -71,6 +74,7 @@ export function OpportunityDetailView({
   quotations,
   activities,
   canManage,
+  negotiations = null,
   contractTypeName = null,
   openSaleOrderOnLoad = false,
 }: {
@@ -85,6 +89,11 @@ export function OpportunityDetailView({
   /** CD-65 กิจกรรมและนัดติดตาม — ใหม่สุดก่อน. */
   activities: OpportunityActivity[];
   canManage: boolean;
+  /** CD-79 — null = could not be read (the card is hidden). */
+  negotiations?: {
+    standards: TradeTermStandard[];
+    rounds: NegotiationRound[];
+  } | null;
   /** CD-81 — name of the contract type when the viewer may raise it. */
   contractTypeName?: string | null;
   /** มาจากกระดานการ์ด (ลากไป "ชนะ") — เปิดกล่องเปิดใบสั่งขายให้ทันที. */
@@ -437,6 +446,15 @@ export function OpportunityDetailView({
         activities={activities}
         canManage={canManage}
       />
+
+      {negotiations && (
+        <NegotiationCard
+          opportunityId={opportunity.id}
+          rounds={negotiations.rounds}
+          standards={negotiations.standards}
+          editable={editable}
+        />
+      )}
 
       {/* CD-76 ใบเสนอราคา — สร้างร่างที่นี่ แก้/ยื่น/ส่งในหน้ารายละเอียดของใบ */}
       <Card

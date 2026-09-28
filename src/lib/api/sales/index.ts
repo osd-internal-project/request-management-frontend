@@ -4,6 +4,8 @@
  */
 import { apiGet, type ApiResult } from "../core";
 import type {
+  NegotiationRound,
+  TradeTermStandard,
   LeadDetail,
   OpportunityActivity,
   OpportunityDetail,
@@ -76,6 +78,15 @@ export async function getOpportunityActivities(
   id: string,
 ): Promise<ApiResult<OpportunityActivity[]>> {
   return apiGet(`opportunities/${id}/activities`);
+}
+
+/** CD-79 — the deal's negotiation rounds and the standards the form offers. */
+export async function getNegotiations(
+  id: string,
+): Promise<
+  ApiResult<{ standards: TradeTermStandard[]; rounds: NegotiationRound[] }>
+> {
+  return apiGet(`opportunities/${id}/negotiations`);
 }
 
 export async function getLostReasons(): Promise<
