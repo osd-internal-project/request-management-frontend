@@ -45,6 +45,13 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     permissions: ["report.request.read"],
     group: messages.nav.biGroup,
   },
+  /** APV-06 (CD-45) — ใครอนุมัติอะไร เมื่อไร ในฐานะอะไร + export. */
+  {
+    label: messages.nav.decisionLog,
+    href: ROUTES.decisionLog,
+    permissions: ["approval.history.read"],
+    group: messages.nav.biGroup,
+  },
 
   /** CD-73 — ภาพรวมลูกค้า Lead โอกาสการขาย กิจกรรม (ตามขอบเขตที่เห็น). */
   {

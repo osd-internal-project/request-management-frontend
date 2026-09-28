@@ -72,6 +72,8 @@ export const ROUTES = {
   allWork: `${HOME_PATH}/approvals`,
   /** REQ-09 — รายงานคอขวด */
   bottleneckReport: `${HOME_PATH}/reports/bottleneck`,
+  /** APV-06 (CD-45) — ประวัติการใช้อำนาจอนุมัติ */
+  decisionLog: `${HOME_PATH}/reports/approval-decisions`,
   /** CD-73 — แดชบอร์ด CRM */
   crmDashboard: `${HOME_PATH}/crm`,
   /** CD-82 — เป้าและพยากรณ์ */

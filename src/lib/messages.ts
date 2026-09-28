@@ -70,6 +70,7 @@ export const messages = {
     newRequest: "ยื่นคำขอใหม่",
     allWork: "งานทั้งหมด",
     bottleneckReport: "รายงานคอขวด",
+    decisionLog: "ประวัติการใช้อำนาจอนุมัติ",
     crmGroup: "ลูกค้า (CRM)",
     crmDashboard: "ภาพรวม CRM",
     customers: "ทะเบียนลูกค้า",
@@ -737,6 +738,57 @@ export const messages = {
       "approval.decided": "ผลการอนุมัติ",
       "sla.escalated": "เกินกำหนด — เร่งงานอัตโนมัติ",
     } as Record<string, string>,
+  },
+
+  /** APV-06 (CD-45) */
+  decisionLog: {
+    title: "ประวัติการใช้อำนาจอนุมัติ",
+    subtitle:
+      "ใครอนุมัติอะไร เมื่อไร ในฐานะอะไร และด้วยข้อมูลชุดใด — รวมการอนุมัติแทนและการตัดสินนอกสายปกติ",
+    period: "ช่วงเวลา",
+    basis: "ในฐานะ",
+    allBases: "ทั้งหมด",
+    export: "ดาวน์โหลด CSV",
+    exportHint:
+      "ไม่เกิน 10,000 แถวต่อไฟล์ · ทุกการดาวน์โหลดถูกบันทึกใน Audit Log",
+    empty: "ไม่มีการตัดสินในช่วงนี้",
+    periodLabel: (from: string, to: string) => `ข้อมูลวันที่ ${from} ถึง ${to}`,
+    bases: {
+      chain: "ตามสายอนุมัติ",
+      delegate: "แทน (มอบอำนาจ)",
+      scope_grant: "สิทธิ์ขอบเขต (นอกสาย)",
+    } as Record<string, string>,
+    basisColor: {
+      chain: "default",
+      delegate: "blue",
+      scope_grant: "orange",
+    } as Record<string, string>,
+    decisions: {
+      approve: "อนุมัติ",
+      reject: "ไม่อนุมัติ",
+      return: "ตีกลับ",
+    } as Record<string, string>,
+    decisionColor: {
+      approve: "green",
+      reject: "red",
+      return: "gold",
+    } as Record<string, string>,
+    columns: {
+      when: "เมื่อ",
+      request: "คำขอ",
+      amount: "มูลค่า",
+      step: "ขั้น",
+      named: "ผู้อนุมัติตามสาย",
+      decidedBy: "ผู้ตัดสิน",
+      basis: "ในฐานะ",
+      decision: "ผล",
+      note: "หมายเหตุ",
+      data: "ข้อมูลที่ใช้ตัดสิน",
+    },
+    dataCell: (matrix: number | null, snapshot: number, hash: string) =>
+      `ตาราง v${matrix ?? "—"} · snapshot v${snapshot} ${hash.slice(0, 8)}`,
+    basisNote:
+      '"สิทธิ์ขอบเขต (นอกสาย)" = ผู้ตัดสินไม่ใช่ผู้อนุมัติที่สายระบุ และไม่ได้รับมอบอำนาจ — ตัดสินด้วยสิทธิ์ที่ผู้ดูแลให้ไว้ในหน้าผังทีมและสิทธิ์',
   },
 
   bottleneck: {

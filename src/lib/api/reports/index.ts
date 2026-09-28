@@ -113,3 +113,51 @@ export function getCrmDashboard(options?: {
   const view = options?.view === "mine" ? "?view=mine" : "";
   return apiGet<CrmDashboard>(`/opportunities/dashboard${view}`);
 }
+
+/** APV-06 (CD-45) — ตัดสินในฐานะอะไร. */
+export type DecisionBasis = "chain" | "delegate" | "scope_grant";
+
+export interface DecisionLogRow {
+  step_id: string;
+  case_id: string;
+  decided_at: string | null;
+  request_id: string | null;
+  request_no: string | null;
+  type_code: string | null;
+  subject_type: string;
+  amount: number | null;
+  currency: string | null;
+  step_no: number;
+  approver_role: string;
+  approver_name: string | null;
+  decided_by_name: string | null;
+  basis: DecisionBasis;
+  decision: "approve" | "reject" | "return" | null;
+  note: string | null;
+  case_status: string;
+  matrix_version: number | null;
+  snapshot_version: number;
+  snapshot_hash: string;
+}
+
+import {
+  decisionLogQuery,
+  type DecisionLogFilters,
+} from "./decision-log-query";
+
+export { decisionLogQuery, type DecisionLogFilters };
+
+export function getDecisionLog(filters: DecisionLogFilters): Promise<
+  ApiResult<{
+    data: DecisionLogRow[];
+    total: number;
+    page: number;
+    page_size: number;
+    period: { from: string; to: string };
+  }>
+> {
+  const params = new URLSearchParams(decisionLogQuery(filters));
+  params.set("page", filters.page ?? "1");
+  params.set("page_size", "50");
+  return apiGet(`/approvals/decisions?${params.toString()}`);
+}
