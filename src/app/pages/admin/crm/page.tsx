@@ -11,8 +11,9 @@ import { can, getSession } from "@/lib/session";
 import type { CrmConfig } from "@/lib/api/types";
 
 /**
- * ตั้งค่า CRM (admin.crm.manage) — CM-07 segment dimensions/values, CM-02
- * customer-code shape, CM-03 dedup threshold. Configuration over code (D-09):
+ * ตั้งค่า CRM (admin.crm.manage) — CM-07 segment dimensions/values, CM-03
+ * dedup threshold (the CM-02 customer-code shape lives on the เลขรันเอกสาร
+ * page). Configuration over code (D-09):
  * everything here changes behaviour without a deploy.
  */
 export default async function CrmAdminPage() {
@@ -58,8 +59,6 @@ export default async function CrmAdminPage() {
           configResult.ok
             ? configResult.data
             : {
-                codePrefix: "CUS",
-                codePadding: 6,
                 dedupThreshold: 0.85,
                 minMarginPct: 15,
                 quotationValidityDays: 30,
@@ -77,10 +76,6 @@ export default async function CrmAdminPage() {
                 letterheadLogo: null,
                 quotationTerms: null,
               }
-        }
-        docPrefix={
-          session?.companies.find((c) => c.id === session.active_company_id)
-            ?.doc_prefix ?? "CTD"
         }
       />
     </div>

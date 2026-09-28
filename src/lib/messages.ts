@@ -2376,10 +2376,9 @@ export const messages = {
       inactiveTag: "ปิดใช้",
       valueInUse: "กลุ่มนี้มีลูกค้าถูกจัดอยู่ — ปิดใช้งานแทนการลบ",
       deleteValueConfirm: "ลบค่านี้? (ลบได้เฉพาะค่าที่ยังไม่มีลูกค้าใช้)",
-      sectionConfig: "รูปแบบรหัสลูกค้าและการตรวจซ้ำ",
-      codePrefix: "Prefix รหัสลูกค้า",
-      codePadding: "จำนวนหลักลำดับ",
-      codePreview: (example: string) => `ตัวอย่างรหัสที่จะออก: ${example}`,
+      sectionConfig: "การตรวจลูกค้าซ้ำ",
+      codeFormatMoved: "รูปแบบรหัสลูกค้า (prefix / จำนวนหลัก) ตั้งที่หน้า",
+      codeFormatLink: "เลขรันเอกสาร",
       dedupThreshold: "ระดับความคล้ายที่เตือน (0.5–1.0)",
       dedupThresholdHint:
         "ยิ่งต่ำยิ่งเตือนบ่อย — ค่าตั้งต้น 0.85 · จูนได้ระหว่าง UAT",

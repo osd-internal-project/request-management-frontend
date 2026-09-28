@@ -1333,8 +1333,6 @@ export interface SegmentValue {
 
 /** CM-02/03 per-company configuration. */
 export interface CrmConfig {
-  codePrefix: string;
-  codePadding: number;
   dedupThreshold: number;
   /** CD-76 — margin ขั้นต่ำ (%) ก่อนออกใบเสนอราคา. */
   minMarginPct: number;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   App,
@@ -20,6 +21,7 @@ import Text from "antd/es/typography/Text";
 import { LetterheadSettings } from "@/components/admin/letterhead-settings";
 import { adminApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
+import { ROUTES } from "@/lib/routes";
 import { ProductPicker } from "@/components/crm/quotations/product-picker";
 import type {
   CrmConfig,
@@ -37,12 +39,10 @@ const m = messages.customers.admin;
 export function CrmAdmin({
   dimensions,
   config,
-  docPrefix,
   kycProducts,
 }: {
   dimensions: SegmentDimension[];
   config: CrmConfig;
-  docPrefix: string;
   kycProducts: KycProductRule[];
 }) {
   const router = useRouter();
@@ -72,7 +72,7 @@ export function CrmAdmin({
 
       <SegmentSection dimensions={dimensions} onCall={call} />
       <KycProductSection rows={kycProducts} onCall={call} />
-      <ConfigSection config={config} docPrefix={docPrefix} onCall={call} />
+      <ConfigSection config={config} onCall={call} />
       <LetterheadSettings config={config} onCall={call} />
     </div>
   );
@@ -287,15 +287,11 @@ function SegmentSection({
 
 function ConfigSection({
   config,
-  docPrefix,
   onCall,
 }: {
   config: CrmConfig;
-  docPrefix: string;
   onCall: (path: string, method: string, body?: unknown) => Promise<boolean>;
 }) {
-  const [prefix, setPrefix] = useState(config.codePrefix);
-  const [padding, setPadding] = useState(config.codePadding);
   const [threshold, setThreshold] = useState(config.dedupThreshold);
   const [minMargin, setMinMargin] = useState(config.minMarginPct);
   const [validityDays, setValidityDays] = useState(config.quotationValidityDays);
@@ -306,16 +302,9 @@ function ConfigSection({
   );
   const [busy, setBusy] = useState(false);
 
-  const example = `${prefix || "CUS"}-${docPrefix}-${"1".padStart(
-    padding || 6,
-    "0",
-  )}`;
-
   async function save() {
     setBusy(true);
     await onCall("config", "PATCH", {
-      code_prefix: prefix || undefined,
-      code_padding: padding,
       dedup_threshold: threshold,
       min_margin_pct: minMargin,
       quotation_validity_days: validityDays,
@@ -330,24 +319,6 @@ function ConfigSection({
     <Card size="small" title={m.sectionConfig}>
       <div className="grid max-w-2xl grid-cols-1 gap-4 md:grid-cols-3">
         <div>
-          <Text className="mb-1 block text-xs">{m.codePrefix}</Text>
-          <Input
-            value={prefix}
-            maxLength={10}
-            onChange={(e) => setPrefix(e.target.value.toUpperCase())}
-          />
-        </div>
-        <div>
-          <Text className="mb-1 block text-xs">{m.codePadding}</Text>
-          <InputNumber
-            min={3}
-            max={10}
-            value={padding}
-            onChange={(value) => setPadding(value ?? 6)}
-            className="w-full"
-          />
-        </div>
-        <div>
           <Text className="mb-1 block text-xs">{m.dedupThreshold}</Text>
           <InputNumber
             min={0.5}
@@ -361,8 +332,10 @@ function ConfigSection({
       </div>
 
       <div className="mt-3 space-y-1">
+        {/* CM-02 — รูปแบบรหัสลูกค้าย้ายไปอยู่ที่ run-number-service แล้ว */}
         <Text type="secondary" className="block text-xs">
-          {m.codePreview(example)}
+          {m.codeFormatMoved}{" "}
+          <Link href={ROUTES.adminRunNumbers}>{m.codeFormatLink}</Link>
         </Text>
         <Text type="secondary" className="block text-xs">
           {m.dedupThresholdHint}
