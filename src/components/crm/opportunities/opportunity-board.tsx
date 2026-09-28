@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { App, Button, Card, Dropdown, Space, Tag } from "antd";
+import { App, Button, Card, Dropdown, Progress, Space, Tag } from "antd";
 import { MoreOutlined } from "@ant-design/icons";
 import Text from "antd/es/typography/Text";
 import dayjs from "dayjs";
@@ -16,6 +16,8 @@ import {
   OpportunityParty,
 } from "@/components/crm/opportunities/opportunity-list";
 import { appApi } from "@/lib/api/client";
+import type { OpportunityStageSummary } from "@/lib/api/sales";
+import type { SalesTargetRow } from "@/lib/api/sales-targets";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import type { OpportunityRow } from "@/lib/api/types";
@@ -41,10 +43,16 @@ export function OpportunityBoard({
   onWin,
   onLose,
   onMoved,
+  stageSummary,
+  targets = [],
 }: {
   rows: OpportunityRow[];
   total: number;
   canManage: boolean;
+  /** CD-74 — ยอดของทุกแถวที่ตรงตัวกรอง; ไม่มี = รวมจากการ์ดที่โหลด. */
+  stageSummary?: OpportunityStageSummary[];
+  /** CD-74 — เป้าเดือนนี้ที่ใช้เทียบ. */
+  targets?: SalesTargetRow[];
   onWin: (opportunity: OpportunityRow) => void;
   onLose: (opportunity: OpportunityRow) => void;
   onMoved: () => void;
@@ -91,6 +99,7 @@ export function OpportunityBoard({
 
   return (
     <div className="space-y-2">
+      {targets.length > 0 && <PipelineTargets targets={targets} />}
       {canManage && (
         <Text type="secondary" className="text-xs">
           {mb.dragHint}
@@ -101,7 +110,12 @@ export function OpportunityBoard({
         {BOARD_COLUMNS.map((stage) => {
           const cards = rows.filter((row) => row.stage === stage);
           const active = accepts(stage);
-          const sum = cards.reduce((acc, row) => acc + Number(row.amount ?? 0), 0);
+          const server = stageSummary?.find((entry) => entry.stage === stage);
+          const count = server?.count ?? cards.length;
+          const sum =
+            server?.amount ??
+            cards.reduce((acc, row) => acc + Number(row.amount ?? 0), 0);
+          const weighted = server?.weighted_amount ?? null;
 
           return (
             <div
@@ -127,15 +141,23 @@ export function OpportunityBoard({
                 <Tag color={m.stageColor[stage]} className="m-0!">
                   {m.stage[stage] ?? stage}
                 </Tag>
-                <Text type="secondary" className="text-xs">
-                  {mb.count(cards.length)}
+                <Text type="secondary" className="text-right text-xs">
+                  {mb.count(count)}
                   {sum > 0 && ` · ${formatAmount(sum)}`}
+                  {weighted !== null && weighted > 0 && (
+                    <span className="block">
+                      {mb.weighted(formatAmount(weighted))}
+                    </span>
+                  )}
                 </Text>
               </div>
 
               <div className="flex max-h-[62vh] flex-col gap-2 overflow-y-auto">
                 {cards.length === 0 ? (
-                  <Text type="secondary" className="px-1 py-4 text-center text-xs">
+                  <Text
+                    type="secondary"
+                    className="px-1 py-4 text-center text-xs"
+                  >
                     {mb.empty}
                   </Text>
                 ) : (
@@ -206,7 +228,10 @@ function OpportunityCard({
       onDragEnd={onDragEnd}
     >
       <Space orientation="vertical" size={2} className="w-full">
-        <Link href={ROUTES.opportunityDetail(opportunity.id)} className="font-medium">
+        <Link
+          href={ROUTES.opportunityDetail(opportunity.id)}
+          className="font-medium"
+        >
           {opportunity.title}
         </Link>
         <Text type="secondary" className="text-xs">
@@ -223,7 +248,8 @@ function OpportunityCard({
           </span>
           {opportunity.expectedCloseAt && (
             <Text type="secondary" className="text-xs">
-              {m.columns.expectedClose} {dayjs(opportunity.expectedCloseAt).format("D MMM YY")}
+              {m.columns.expectedClose}{" "}
+              {dayjs(opportunity.expectedCloseAt).format("D MMM YY")}
             </Text>
           )}
         </div>
@@ -261,6 +287,48 @@ function OpportunityCard({
           </Space>
         )}
       </Space>
+    </Card>
+  );
+}
+
+/**
+ * CD-74 — "เทียบกับเป้าของทีม": เป้าเดือนนี้ vs ยอดขายแล้ว และพยากรณ์ (ยอดแล้ว +
+ * pipeline ถ่วงที่คาดว่าจะปิดในเดือน) — ตัวเลขชุดเดียวกับหน้าเป้าและพยากรณ์ (CD-82).
+ */
+function PipelineTargets({ targets }: { targets: SalesTargetRow[] }) {
+  return (
+    <Card size="small">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <Text strong className="text-sm">
+          {mb.targetTitle(targets[0].period)}
+        </Text>
+        <Link href={ROUTES.salesTargets} className="text-xs">
+          {mb.targetLink}
+        </Link>
+      </div>
+      <div className="mt-2 grid grid-cols-1 gap-3 md:grid-cols-2">
+        {targets.map((target) => (
+          <div key={target.id}>
+            <div className="flex items-baseline justify-between gap-2 text-xs">
+              <Text>{target.subject_name}</Text>
+              <Text type="secondary">
+                {mb.targetLine(
+                  formatAmount(target.actual),
+                  formatAmount(target.forecast),
+                  formatAmount(target.amount),
+                )}
+              </Text>
+            </div>
+            {/* แถบเข้ม = ขายแล้ว, แถบจาง = พยากรณ์ */}
+            <Progress
+              size="small"
+              percent={Math.min(target.forecast_pct ?? 0, 100)}
+              success={{ percent: Math.min(target.attainment_pct ?? 0, 100) }}
+              format={() => `${target.forecast_pct ?? 0}%`}
+            />
+          </div>
+        ))}
+      </div>
     </Card>
   );
 }

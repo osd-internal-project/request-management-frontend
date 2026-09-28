@@ -1862,6 +1862,11 @@ export const messages = {
       },
       board: {
         count: (n: number) => `${n} รายการ`,
+        weighted: (amount: string) => `ถ่วงความน่าจะเป็น ${amount}`,
+        targetTitle: (period: string) => `เป้าเดือน ${period}`,
+        targetLink: "ดูเป้าและพยากรณ์",
+        targetLine: (actual: string, forecast: string, target: string) =>
+          `ขายแล้ว ${actual} · พยากรณ์ ${forecast} / เป้า ${target}`,
         empty: "ไม่มีโอกาสการขายในขั้นนี้",
         dragHint:
           'ลากการ์ดไปวางในคอลัมน์เพื่อเปลี่ยนขั้น — วางที่ "ชนะ" จะพาไปเปิดใบสั่งขาย, วางที่ "แพ้" ต้องระบุเหตุผล',
