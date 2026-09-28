@@ -21,6 +21,7 @@ import { ROUTES } from "@/lib/routes";
 import { ALL_FILTER, OPEN_FILTER } from "@/lib/work-filters";
 import { RequestRowActions } from "@/components/requests/request-row-actions";
 import { DueCell } from "@/components/requests/due-badge";
+import { SeverityTag } from "@/components/requests/severity";
 import type { Session } from "@/lib/session-shape";
 
 import type {
@@ -155,10 +156,14 @@ export function requestColumns(now: number, session: Session | null = null) {
     {
       title: messages.myWork.columns.status,
       dataIndex: "status",
-      render: (value: string) => (
-        <Tag color={STATUS_COLOR[value]}>
-          {messages.myWork.status[value] ?? value}
-        </Tag>
+      render: (value: string, row: RequestRow) => (
+        <>
+          <Tag color={STATUS_COLOR[value]}>
+            {messages.myWork.status[value] ?? value}
+          </Tag>
+          {/* CD-67 — a case shows how severe it is where its state is read. */}
+          <SeverityTag severity={row.severity} />
+        </>
       ),
     },
     {

@@ -535,6 +535,34 @@ export const messages = {
     next: "ถัดไป",
   },
 
+  /** CD-67 — ระดับความรุนแรงของเคส และนาฬิกาเวลาตอบกลับ. */
+  severity: {
+    label: "ระดับความรุนแรง",
+    levels: {
+      critical: "วิกฤต",
+      high: "สูง",
+      medium: "ปานกลาง",
+      low: "ต่ำ",
+    } as Record<string, string>,
+    placeholder: "เลือกระดับความรุนแรง",
+    required: "ประเภทคำขอนี้เป็นเคส — เลือกระดับความรุนแรงก่อนยื่น",
+    hint: "เวลาตอบกลับและเวลาแก้ไขนับตามระดับที่เลือก (ชั่วโมงตามเวลาที่ประเภทนี้นับ)",
+    option: (level: string, response: number, resolution: number) =>
+      `${level} — ตอบกลับใน ${response} ชม. · แก้ไขใน ${resolution} ชม.`,
+    responseDue: (when: string) => `ต้องตอบกลับภายใน ${when}`,
+    respondedOnTime: (when: string) => `ตอบกลับแล้ว ${when}`,
+    respondedLate: (when: string) => `ตอบกลับช้า — ${when}`,
+    responseOverdue: "เลยเวลาตอบกลับ",
+    /* A2 — the per-type editor. */
+    caseToggle:
+      "ประเภทนี้เป็นเคส/ข้อร้องเรียน — ผู้ยื่นต้องเลือกระดับความรุนแรง",
+    caseHint:
+      "เวลาตอบกลับ = ผู้รับเรื่องต้องรับเรื่อง มอบหมาย หรือตอบความเห็นแรกภายในเวลานี้ · เวลาแก้ไขแทนที่ SLA ด้านบนสำหรับเคส · ใช้กับบริษัทที่กำลังแก้อยู่",
+    columnLevel: "ระดับ",
+    columnResponse: "ตอบกลับ (ชม.)",
+    columnResolution: "แก้ไข (ชม.)",
+  },
+
   requestForm: {
     receiver: "ผู้รับเรื่อง",
     receiverTeam: "ทีมผู้รับ",

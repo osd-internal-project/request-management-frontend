@@ -309,10 +309,33 @@ export function isRequiredDoc(doc: RequiredDoc): boolean {
   return doc.required !== false;
 }
 
+/** CD-67 — ระดับความรุนแรงของเคส, worst first. */
+export type RequestSeverity = "critical" | "high" | "medium" | "low";
+export const REQUEST_SEVERITIES: RequestSeverity[] = [
+  "critical",
+  "high",
+  "medium",
+  "low",
+];
+export type SeverityTargets = Record<
+  RequestSeverity,
+  { responseHours: number; resolutionHours: number }
+>;
+
+/** CD-67 — what A2 offers when a type is first made a case (same as the backend). */
+export const DEFAULT_SEVERITY_TARGETS: SeverityTargets = {
+  critical: { responseHours: 1, resolutionHours: 4 },
+  high: { responseHours: 4, resolutionHours: 24 },
+  medium: { responseHours: 8, resolutionHours: 72 },
+  low: { responseHours: 24, resolutionHours: 120 },
+};
+
 export interface RequestType {
   id?: string;
   code: string;
   name: string;
+  /** CD-67 — set = a case type: severity required, clocks from these targets. */
+  severityTargets?: SeverityTargets | null;
   /**
    * The team that receives this type — §16 A2's `ทีมผู้รับ`.
    *
@@ -623,7 +646,13 @@ export interface RequestRow {
     state: string;
     dueAt: string | null;
     breachedAt?: string | null;
+    /** CD-67 — the response clock, cases only. */
+    responseDueAt?: string | null;
+    respondedAt?: string | null;
+    responseBreachedAt?: string | null;
   } | null;
+  /** CD-67 — ระดับความรุนแรง (เฉพาะเคส). */
+  severity?: RequestSeverity | null;
   approvalCases?: {
     /** The decision endpoint addresses the case, not the request. */
     id?: string;

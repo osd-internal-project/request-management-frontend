@@ -51,8 +51,10 @@ import type {
   FormSchemaProperty,
   OrgUnitShape,
   RequestAttachment,
+  RequestSeverity,
   RequestType,
 } from "@/lib/api/types";
+import { REQUEST_SEVERITIES } from "@/lib/api/types";
 import { messages } from "@/lib/messages";
 import { SearchSelect, SearchTreeSelect } from "@/components/ui/search-select";
 import { buildUnitTree, subtreeIds } from "@/lib/org/org-tree";
@@ -217,6 +219,8 @@ export function RequestForm({
   const [receiverOrgUnitId, setReceiverOrgUnitId] = useState<
     string | undefined
   >(initialType?.receiverOrgUnitId ?? undefined);
+  /** CD-67 — only asked for, and only sent, when the type is a case type. */
+  const [severity, setSeverity] = useState<RequestSeverity | undefined>();
   const [values, setValues] = useState<Record<string, unknown>>({});
   const [refId, setRefId] = useState(initialRef?.id ?? "");
   const [draftId, setDraftId] = useState<string | null>(null);
@@ -325,6 +329,8 @@ export function RequestForm({
 
   /** REQ-03 — the type decides whether `อ้างอิงโอกาสการขาย` blocks a submit. */
   const refRequired = type?.refRequired ?? false;
+  const severityTargets = type?.severityTargets ?? null;
+  const sentSeverity = severityTargets ? severity : undefined;
 
   /** The draft row must exist before a document can hang off it. */
   async function ensureDraft(): Promise<string | null> {
@@ -341,6 +347,7 @@ export function RequestForm({
       ref_id: refId || undefined,
       receiver_user_id: receiverId,
       receiver_org_unit_id: receiverOrgUnitId,
+      ...(sentSeverity ? { severity: sentSeverity } : {}),
       ...(parentRequestId ? { parent_request_id: parentRequestId } : {}),
     });
 
@@ -462,6 +469,7 @@ export function RequestForm({
         ref_id: refId || null,
         receiver_user_id: receiverId ?? null,
         receiver_org_unit_id: receiverOrgUnitId,
+        ...(sentSeverity ? { severity: sentSeverity } : {}),
       });
 
       if (saved.ok) {
@@ -511,6 +519,10 @@ export function RequestForm({
       setError(messages.requestForm.refRequired);
       return;
     }
+    if (severityTargets && !severity) {
+      setError(messages.severity.required);
+      return;
+    }
 
     setBusy(true);
     setError(null);
@@ -531,6 +543,7 @@ export function RequestForm({
         ref_id: refId || null,
         receiver_user_id: receiverId ?? null,
         receiver_org_unit_id: receiverOrgUnitId,
+        ...(sentSeverity ? { severity: sentSeverity } : {}),
       });
 
       const sent = await submitRequest(id);
@@ -577,6 +590,7 @@ export function RequestForm({
                   setAfterWork(EMPTY_STAGE);
                   setDraftId(null);
                   setAttachments([]);
+                  setSeverity(undefined);
 
                   // The new type brings its own default team, and the person
                   // picked from the old team may not be in it.
@@ -649,6 +663,29 @@ export function RequestForm({
                 }
               />
             </Field>
+
+            {severityTargets && (
+              <Field
+                label={messages.severity.label}
+                required
+                hint={messages.severity.hint}
+              >
+                <SearchSelect
+                  className="w-full"
+                  value={severity}
+                  onChange={(next?: RequestSeverity) => setSeverity(next)}
+                  placeholder={messages.severity.placeholder}
+                  options={REQUEST_SEVERITIES.map((level) => ({
+                    value: level,
+                    label: messages.severity.option(
+                      messages.severity.levels[level],
+                      severityTargets[level].responseHours,
+                      severityTargets[level].resolutionHours,
+                    ),
+                  }))}
+                />
+              </Field>
+            )}
 
             {/*
               Required only when the type says so.

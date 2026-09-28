@@ -11,6 +11,7 @@ import type {
   RequestComment,
   RequestAttachment,
   RequestRow,
+  RequestSeverity,
   RequestType,
 } from "./types";
 
@@ -25,6 +26,8 @@ export function createDraft(input: {
   receiver_org_unit_id?: string;
   /** Set when this request is spawned from another one. */
   parent_request_id?: string;
+  /** CD-67 — required at submit when the type is a case type. */
+  severity?: RequestSeverity;
 }): Promise<ClientResult<RequestRow>> {
   return appApi<RequestRow>("requests", {
     method: "POST",
@@ -40,6 +43,7 @@ export function saveDraft(
     ref_id?: string | null;
     receiver_user_id?: string | null;
     receiver_org_unit_id?: string;
+    severity?: RequestSeverity | null;
   },
 ): Promise<ClientResult<RequestRow>> {
   return appApi<RequestRow>(`requests/${id}`, {

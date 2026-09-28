@@ -24,6 +24,7 @@ import { RequestTimeline } from "@/components/requests/request-timeline";
 import { RequestTreePanel } from "@/components/requests/request-tree";
 import { SubRequestChecklist } from "@/components/requests/sub-request-checklist";
 import { DueBadge } from "@/components/requests/due-badge";
+import { ResponseClock, SeverityTag } from "@/components/requests/severity";
 import { getSession } from "@/lib/session";
 import { messages } from "@/lib/messages";
 
@@ -249,6 +250,9 @@ export default async function RequestDetailPage({
             page it opened cannot report different deadlines.
           */}
           <DueBadge row={request} />
+          {/* CD-67 — a case also carries its severity and response clock. */}
+          <SeverityTag severity={request.severity} />
+          <ResponseClock row={request} />
           {approvalCase && (
             <Text type="secondary">
               {messages.myWork.step(
