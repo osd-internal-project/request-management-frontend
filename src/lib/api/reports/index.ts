@@ -33,6 +33,52 @@ export function getBottleneck(options?: {
   );
 }
 
+/** CD-50 — one group's SLA figures; see `SlaComplianceService` for the three populations. */
+export interface SlaComplianceRow {
+  key: string | null;
+  label: string;
+  finished: number;
+  on_time: number;
+  late: number;
+  /** null = nothing finished in the period (not 0%). */
+  compliance_pct: number | null;
+  /** Open now and past due. null on month rows. */
+  open_overdue: number | null;
+  open_on_track: number | null;
+  responses: number;
+  responses_on_time: number;
+  response_pct: number | null;
+}
+
+export type SlaGroupBy = "team" | "type" | "month";
+
+export interface SlaComplianceReport {
+  from: string;
+  to: string;
+  group_by: SlaGroupBy;
+  totals: SlaComplianceRow;
+  rows: SlaComplianceRow[];
+}
+
+/** CD-50 — `from`/`to` are `YYYY-MM-DD`, whole Bangkok days, both ends included. */
+export function getSlaCompliance(options: {
+  group_by?: string;
+  type_code?: string;
+  from?: string;
+  to?: string;
+}): Promise<ApiResult<SlaComplianceReport>> {
+  const params = new URLSearchParams();
+  if (options.group_by) params.set("group_by", options.group_by);
+  if (options.type_code) params.set("type_code", options.type_code);
+  if (options.from) params.set("from", `${options.from}T00:00:00+07:00`);
+  if (options.to) params.set("to", `${options.to}T23:59:59.999+07:00`);
+
+  const query = params.toString();
+  return apiGet<SlaComplianceReport>(
+    `/reports/sla-compliance${query ? `?${query}` : ""}`,
+  );
+}
+
 /** CD-83 — ตัวเลขชุดเดียวกันใช้ทั้งยอดรวมและรายบุคคล. */
 export interface SalesFigures {
   sales_amount: number;

@@ -70,6 +70,7 @@ export const messages = {
     newRequest: "ยื่นคำขอใหม่",
     allWork: "งานทั้งหมด",
     bottleneckReport: "รายงานคอขวด",
+    slaReport: "รายงานการทำตามกำหนด (SLA)",
     decisionLog: "ประวัติการใช้อำนาจอนุมัติ",
     crmGroup: "ลูกค้า (CRM)",
     crmDashboard: "ภาพรวม CRM",
@@ -818,6 +819,40 @@ export const messages = {
       `ตาราง v${matrix ?? "—"} · snapshot v${snapshot} ${hash.slice(0, 8)}`,
     basisNote:
       '"สิทธิ์ขอบเขต (นอกสาย)" = ผู้ตัดสินไม่ใช่ผู้อนุมัติที่สายระบุ และไม่ได้รับมอบอำนาจ — ตัดสินด้วยสิทธิ์ที่ผู้ดูแลให้ไว้ในหน้าผังทีมและสิทธิ์',
+  },
+
+  /** CD-50 — SLA compliance. */
+  slaReport: {
+    title: "รายงานการทำตามกำหนด (SLA)",
+    subtitle:
+      "สัดส่วนงานที่ปิดทันกำหนด แยกตามทีมผู้รับ ประเภทคำขอ หรือเดือน และคำขอที่ค้างเกินกำหนดอยู่ตอนนี้",
+    scopeNote: "นับเฉพาะคำขอที่คุณเปิดดูได้ — คนละคนอาจเห็นตัวเลขไม่เท่ากัน",
+    groupBy: { team: "ทีมผู้รับ", type: "ประเภทคำขอ", month: "เดือนที่ปิดงาน" },
+    filterType: "ทุกประเภทคำขอ",
+    defaultPeriod: "ค่าเริ่มต้น: 30 วันล่าสุด",
+    period: (from: string, to: string) => `งานที่ปิดระหว่าง ${from} – ${to}`,
+    clearFilters: "ล้างตัวกรอง",
+    compliance: "ปิดทันกำหนด",
+    finishedOf: (onTime: number, finished: number) =>
+      `${onTime} จาก ${finished} งานที่ปิด`,
+    openOverdue: "ค้างเกินกำหนดตอนนี้",
+    openOnTrack: (count: number) => `ยังไม่เลยกำหนด ${count} งาน`,
+    response: "เคสตอบกลับทันเวลา",
+    responseOf: (onTime: number, total: number) =>
+      total ? `${onTime} จาก ${total} เคส` : "ยังไม่มีเคสที่ตอบกลับในช่วงนี้",
+    none: "—",
+    empty: "ยังไม่มีงานในช่วงที่เลือก",
+    columns: {
+      finished: "ปิดแล้ว",
+      onTime: "ทันกำหนด",
+      late: "เกินกำหนด",
+      compliance: "% ทันกำหนด",
+      openOverdue: "ค้างเกินกำหนด",
+      openOnTrack: "ค้าง (ยังทัน)",
+      response: "% ตอบกลับทัน (เคส)",
+    },
+    definitions:
+      "ปิดทันกำหนด = งานที่ปิดในช่วงที่เลือกและเสร็จก่อนครบกำหนด SLA (ไม่นับงานที่ยกเลิก) · ค้างเกินกำหนด = งานที่ยังไม่ปิดและเลยกำหนดแล้ว ณ ตอนนี้ ไม่ขึ้นกับช่วงที่เลือก — งานที่พักนาฬิกาอยู่ไม่นับว่าเกินเพียงเพราะพัก · นิยามเดียวกับแดชบอร์ด SLA บน Metabase",
   },
 
   bottleneck: {

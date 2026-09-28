@@ -45,6 +45,13 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     permissions: ["report.request.read"],
     group: messages.nav.biGroup,
   },
+  /** CD-50 — สัดส่วนงานตรงเวลา และคำขอค้างเกินกำหนด. */
+  {
+    label: messages.nav.slaReport,
+    href: ROUTES.slaReport,
+    permissions: ["report.request.read"],
+    group: messages.nav.biGroup,
+  },
   /** APV-06 (CD-45) — ใครอนุมัติอะไร เมื่อไร ในฐานะอะไร + export. */
   {
     label: messages.nav.decisionLog,
