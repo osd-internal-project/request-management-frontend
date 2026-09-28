@@ -10,13 +10,13 @@ import {
   Pagination,
   Segmented,
   Space,
-  Switch,
 } from "antd";
 import Text from "antd/es/typography/Text";
 import {
   NotificationList,
   notificationHref,
 } from "@/components/notifications/notification-list";
+import { NotificationPreferencesCard } from "@/components/notifications/notification-preferences";
 import { appApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
@@ -57,7 +57,6 @@ export function NotificationsView({
   const { message } = App.useApp();
   const [error, setError] = useState<string | null>(loadError);
   const [busy, setBusy] = useState(false);
-  const [email, setEmail] = useState(preferences?.email ?? true);
 
   function navigate(next: { filter?: Filter; page?: number }) {
     const filter = next.filter ?? (unreadOnly ? "unread" : "all");
@@ -95,22 +94,8 @@ export function NotificationsView({
     router.refresh();
   }
 
-  async function saveEmail(next: boolean) {
-    setEmail(next);
-    const result = await appApi("notifications/preferences", {
-      method: "PUT",
-      body: JSON.stringify({ email: next }),
-    });
-    if (!result.ok) {
-      setEmail(!next);
-      setError(result.message);
-      return;
-    }
-    message.success(mn.preferences.saved);
-  }
-
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_280px]">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px]">
       <Card
         size="small"
         title={
@@ -157,27 +142,7 @@ export function NotificationsView({
       </Card>
 
       {preferences && (
-        <Card size="small" title={mn.preferences.title} className="self-start">
-          <div className="space-y-3 text-sm">
-            <div className="flex items-center justify-between">
-              <span>{mn.preferences.inApp}</span>
-              <Switch size="small" checked disabled />
-            </div>
-            <div className="flex items-center justify-between">
-              <span>{mn.preferences.email}</span>
-              <Switch
-                size="small"
-                checked={email}
-                onChange={(next) => void saveEmail(next)}
-              />
-            </div>
-            {!preferences.email_delivery_available && (
-              <Text type="secondary" className="block text-xs">
-                {mn.preferences.emailUnavailable}
-              </Text>
-            )}
-          </div>
-        </Card>
+        <NotificationPreferencesCard initial={preferences} onError={setError} />
       )}
     </div>
   );

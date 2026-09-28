@@ -1405,12 +1405,23 @@ export interface AppNotification {
   createdAt: string;
 }
 
+export type NotificationFrequency = "immediate" | "daily";
+
 export interface NotificationPreferences {
   in_app: true;
   in_app_locked: true;
   email: boolean;
   /** false until SMTP exists (open question B) — the screen says so. */
   email_delivery_available: boolean;
+  /** CD-52 — Bangkok hour the daily digest goes out, working days. */
+  digest_hour: number;
+  categories: {
+    key: string;
+    /** false = urgent (SLA): immediate only. */
+    digestible: boolean;
+    email: boolean;
+    frequency: NotificationFrequency;
+  }[];
 }
 
 /** `GET /quotations/:id/print` — the customer's copy; never carries cost or margin. */
