@@ -32,6 +32,7 @@ import { can } from "@/lib/session-shape";
 import type {
   RequestRow,
 } from "@/lib/api/types";
+import { SeverityTag } from "./severity";
 export type {
   RequestRow,
 } from "@/lib/api/types";
