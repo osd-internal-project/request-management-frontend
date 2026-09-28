@@ -74,3 +74,42 @@ export function getSalesReport(options?: {
     `/opportunities/report${query ? `?${query}` : ""}`,
   );
 }
+
+/** CD-73 — `view`: `team` = ทุกอย่างที่เห็นได้, `mine` = ที่ตัวเองเป็นเจ้าของ. */
+export interface CrmDashboard {
+  view: "mine" | "team";
+  /** ต้นเดือนนี้ตามเวลาไทย — ฐานของตัวเลข "เดือนนี้". */
+  month_from: string;
+  /** null = ไม่มีสิทธิ์ดูทะเบียนลูกค้า (ไม่ใช่ 0 ราย). */
+  customers: { active: number; new_this_month: number } | null;
+  leads: {
+    open: number;
+    new_this_month: number;
+    by_status: { code: string; name: string; color: string; count: number }[];
+  };
+  opportunities: {
+    open_count: number;
+    open_amount: number;
+    weighted_amount: number;
+    stale_count: number;
+    won_this_month: { count: number; amount: number };
+    by_stage: {
+      stage: string;
+      count: number;
+      amount: number;
+      weighted_amount: number;
+    }[];
+  };
+  activities: {
+    overdue: number;
+    due_soon: number;
+    completed_this_month: number;
+  };
+}
+
+export function getCrmDashboard(options?: {
+  view?: string;
+}): Promise<ApiResult<CrmDashboard>> {
+  const view = options?.view === "mine" ? "?view=mine" : "";
+  return apiGet<CrmDashboard>(`/opportunities/dashboard${view}`);
+}

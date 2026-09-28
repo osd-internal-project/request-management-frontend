@@ -46,6 +46,13 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     group: messages.nav.biGroup,
   },
 
+  /** CD-73 — ภาพรวมลูกค้า Lead โอกาสการขาย กิจกรรม (ตามขอบเขตที่เห็น). */
+  {
+    label: messages.nav.crmDashboard,
+    href: ROUTES.crmDashboard,
+    permissions: ["crm.sales.read"],
+    group: messages.nav.crmGroup,
+  },
   /** CRM ระยะ 1 (CD-59) — หน้ารายละเอียดลูกค้าจะโตเป็นมุมมอง 360°. */
   {
     label: messages.nav.customers,

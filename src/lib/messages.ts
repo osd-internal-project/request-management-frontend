@@ -71,6 +71,7 @@ export const messages = {
     allWork: "งานทั้งหมด",
     bottleneckReport: "รายงานคอขวด",
     crmGroup: "ลูกค้า (CRM)",
+    crmDashboard: "ภาพรวม CRM",
     customers: "ทะเบียนลูกค้า",
     leads: "Lead",
     opportunities: "โอกาสการขาย",
@@ -760,6 +761,41 @@ export const messages = {
     },
     pendingNote:
       "ขั้นที่ยังไม่ตัดสินไม่ถูกนำมาเฉลี่ย ",
+  },
+
+  /** CD-73 */
+  crmDashboard: {
+    title: "ภาพรวม CRM",
+    subtitle: "ลูกค้า Lead โอกาสการขาย และกิจกรรมในหน้าเดียว",
+    viewTeam: "ทั้งหมดที่เห็นได้",
+    viewMine: "ของฉัน",
+    scopeNote:
+      "\"ทั้งหมดที่เห็นได้\" = ของตัวเอง และของทีมถ้าคุณเป็นหัวหน้า · \"ของฉัน\" = เฉพาะที่คุณเป็นเจ้าของ",
+    monthNote: (from: string) => `ตัวเลข "เดือนนี้" นับตั้งแต่ ${from}`,
+    customersActive: "ลูกค้าที่ใช้งานอยู่",
+    customersNew: (n: number) => `ใหม่เดือนนี้ ${n.toLocaleString("th-TH")} ราย`,
+    leadsOpen: "Lead ที่ยังเปิด",
+    leadsNew: (n: number) => `เข้าใหม่เดือนนี้ ${n.toLocaleString("th-TH")} ราย`,
+    pipeline: "มูลค่าใน pipeline",
+    pipelineHint: (count: number, weighted: string) =>
+      `${count.toLocaleString("th-TH")} โอกาส · ถ่วงความน่าจะเป็น ${weighted}`,
+    wonThisMonth: "ชนะเดือนนี้",
+    wonHint: (n: number) => `${n.toLocaleString("th-TH")} ดีล`,
+    leadsByStatus: "Lead ตามสถานะ",
+    leadsEmpty: "ไม่มี Lead ที่ยังเปิด",
+    pipelineByStage: "โอกาสการขายตามขั้น",
+    stageColumns: {
+      stage: "ขั้น",
+      count: "จำนวน",
+      amount: "มูลค่า (บาท)",
+      weighted: "ถ่วงความน่าจะเป็น (บาท)",
+    },
+    activitiesTitle: "กิจกรรมติดตาม",
+    overdue: "เลยกำหนด",
+    dueSoon: "ถึงกำหนดใน 7 วัน",
+    completed: "ทำเสร็จเดือนนี้",
+    stale: "ดีลเงียบเกินเกณฑ์",
+    openList: "ดูรายการ",
   },
 
   /** CD-83 */
