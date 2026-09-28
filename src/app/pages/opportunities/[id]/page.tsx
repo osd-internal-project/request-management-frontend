@@ -6,7 +6,7 @@ import {
   getLostReasons,
   getQuotations,
 } from "@/lib/api/sales";
-import { getRequests } from "@/lib/api/requests";
+import { getRequests, getRequestTypes } from "@/lib/api/requests";
 import { getCustomers } from "@/lib/api/customers";
 import { HOME_PATH } from "@/lib/routes";
 import { can, getSession } from "@/lib/session";
@@ -48,6 +48,7 @@ export default async function OpportunityDetailPage({
     customersResult,
     quotationsResult,
     activitiesResult,
+    typesResult,
   ] = await Promise.all([
     getLostReasons(),
     canReadRequests
@@ -64,7 +65,16 @@ export default async function OpportunityDetailPage({
     getQuotations({ opportunity_id: id, current: true, page_size: 50 }),
     // CD-65 — same `crm.sales.read`.
     getOpportunityActivities(id),
+    // CD-81 — only to tell whether the viewer may raise the contract type.
+    opportunityResult.data.contractRequestTypeCode && canReadRequests
+      ? getRequestTypes()
+      : Promise.resolve(null),
   ]);
+  const contractCode = opportunityResult.data.contractRequestTypeCode ?? null;
+  const contractTypeName =
+    (typesResult?.ok &&
+      typesResult.data.find((type) => type.code === contractCode)?.name) ||
+    null;
 
   return (
     <OpportunityDetailView
@@ -81,6 +91,7 @@ export default async function OpportunityDetailPage({
       quotations={quotationsResult.ok ? quotationsResult.data.data : []}
       activities={activitiesResult.ok ? activitiesResult.data : []}
       canManage={canManage}
+      contractTypeName={contractTypeName}
       openSaleOrderOnLoad={action === "sale-order"}
     />
   );

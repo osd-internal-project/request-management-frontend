@@ -1259,6 +1259,8 @@ export interface OpportunityDetail extends OpportunityRow {
   saleOrders: SaleOrderRow[];
   /** CM-04 ชุดงาน B — เตือน ไม่ block. */
   kycWarning: { required: boolean; products: string[] };
+  /** CD-81 — the company's contract request type; null = no contract card. */
+  contractRequestTypeCode?: string | null;
 }
 
 export interface OpportunityLostReason {
@@ -1379,6 +1381,8 @@ export interface CrmConfig {
   quotationApprovalTypeCode: string;
   /** CD-82 — ประเภทคำขอสำหรับอนุมัติการปรับเป้าระหว่างงวด; null = ยังไม่ตั้ง. */
   targetApprovalTypeCode?: string | null;
+  /** CD-81 — ประเภทคำขอที่ฝ่ายกฎหมายรับทำสัญญา; null = ไม่แสดงการ์ดสัญญา. */
+  contractRequestTypeCode?: string | null;
   /** CD-65 — ดีลเปิดที่ไม่มีกิจกรรมเกินกี่วันจึงแจ้งหัวหน้า; 0 = ปิด. */
   staleOpportunityDays: number;
   /** หัวกระดาษใบเสนอราคา — null = ไม่ได้ตั้ง. */

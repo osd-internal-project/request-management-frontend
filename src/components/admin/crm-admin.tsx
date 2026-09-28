@@ -309,12 +309,16 @@ function ConfigSection({
   const [targetType, setTargetType] = useState(
     config.targetApprovalTypeCode ?? "",
   );
+  const [contractType, setContractType] = useState(
+    config.contractRequestTypeCode ?? "",
+  );
   const [busy, setBusy] = useState(false);
 
   async function save() {
     setBusy(true);
     await onCall("config", "PATCH", {
       target_approval_type_code: targetType,
+      contract_request_type_code: contractType,
       dedup_threshold: threshold,
       min_margin_pct: minMargin,
       quotation_validity_days: validityDays,
@@ -437,6 +441,23 @@ function ConfigSection({
       </div>
       <Text type="secondary" className="mt-2 block text-xs">
         {m.targetHint}
+      </Text>
+
+      {/* CD-81 — ประเภทคำขอที่ฝ่ายกฎหมายรับทำ/แก้สัญญา */}
+      <Text strong className="mt-5 block">
+        {m.sectionContracts}
+      </Text>
+      <div className="mt-2 max-w-xs">
+        <Text className="mb-1 block text-xs">{m.contractRequestTypeCode}</Text>
+        <Input
+          value={contractType}
+          maxLength={20}
+          allowClear
+          onChange={(e) => setContractType(e.target.value.toUpperCase())}
+        />
+      </div>
+      <Text type="secondary" className="mt-2 block text-xs">
+        {m.contractHint}
       </Text>
 
       <Button

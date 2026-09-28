@@ -1,5 +1,6 @@
 "use client";
 
+import { ContractCard } from "@/components/crm/opportunities/contract-card";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -70,6 +71,7 @@ export function OpportunityDetailView({
   quotations,
   activities,
   canManage,
+  contractTypeName = null,
   openSaleOrderOnLoad = false,
 }: {
   opportunity: OpportunityDetail;
@@ -83,6 +85,8 @@ export function OpportunityDetailView({
   /** CD-65 กิจกรรมและนัดติดตาม — ใหม่สุดก่อน. */
   activities: OpportunityActivity[];
   canManage: boolean;
+  /** CD-81 — name of the contract type when the viewer may raise it. */
+  contractTypeName?: string | null;
   /** มาจากกระดานการ์ด (ลากไป "ชนะ") — เปิดกล่องเปิดใบสั่งขายให้ทันที. */
   openSaleOrderOnLoad?: boolean;
 }) {
@@ -571,6 +575,18 @@ export function OpportunityDetailView({
           <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={md.noSaleOrders} />
         )}
       </Card>
+
+      {/* CD-81 — the deal's contract requests, followed from here. */}
+      {relatedRequests !== null && opportunity.contractRequestTypeCode && (
+        <ContractCard
+          opportunityCode={opportunity.opportunityCode}
+          typeCode={opportunity.contractRequestTypeCode}
+          typeName={contractTypeName}
+          requests={relatedRequests.filter(
+            (row) => row.typeCode === opportunity.contractRequestTypeCode,
+          )}
+        />
+      )}
 
       {relatedRequests !== null && (
         <Card
