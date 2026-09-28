@@ -86,6 +86,13 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     permissions: ["crm.sales.read"],
     group: messages.nav.crmGroup,
   },
+  /** CD-82 — เป้ารายเดือนเทียบยอดจริงและพยากรณ์. */
+  {
+    label: messages.nav.salesTargets,
+    href: ROUTES.salesTargets,
+    permissions: ["crm.sales.read"],
+    group: messages.nav.crmGroup,
+  },
   /** CD-83 — ยอดขาย อัตราการปิด เหตุผลที่แพ้ ผลงานรายบุคคล (ตามขอบเขตที่เห็น). */
   {
     label: messages.nav.salesReport,

@@ -238,14 +238,18 @@ function SegmentSection({
             placeholder={m.dimensionCode}
             value={newDimension?.code}
             onChange={(e) =>
-              setNewDimension((prev) => prev && { ...prev, code: e.target.value })
+              setNewDimension(
+                (prev) => prev && { ...prev, code: e.target.value },
+              )
             }
           />
           <Input
             placeholder={m.dimensionName}
             value={newDimension?.name}
             onChange={(e) =>
-              setNewDimension((prev) => prev && { ...prev, name: e.target.value })
+              setNewDimension(
+                (prev) => prev && { ...prev, name: e.target.value },
+              )
             }
           />
         </Space>
@@ -294,17 +298,23 @@ function ConfigSection({
 }) {
   const [threshold, setThreshold] = useState(config.dedupThreshold);
   const [minMargin, setMinMargin] = useState(config.minMarginPct);
-  const [validityDays, setValidityDays] = useState(config.quotationValidityDays);
+  const [validityDays, setValidityDays] = useState(
+    config.quotationValidityDays,
+  );
   const [vat, setVat] = useState(config.vatPct);
   const [staleDays, setStaleDays] = useState(config.staleOpportunityDays ?? 14);
   const [approvalType, setApprovalType] = useState(
     config.quotationApprovalTypeCode,
+  );
+  const [targetType, setTargetType] = useState(
+    config.targetApprovalTypeCode ?? "",
   );
   const [busy, setBusy] = useState(false);
 
   async function save() {
     setBusy(true);
     await onCall("config", "PATCH", {
+      target_approval_type_code: targetType,
       dedup_threshold: threshold,
       min_margin_pct: minMargin,
       quotation_validity_days: validityDays,
@@ -380,7 +390,9 @@ function ConfigSection({
           />
         </div>
         <div>
-          <Text className="mb-1 block text-xs">{m.quotationApprovalTypeCode}</Text>
+          <Text className="mb-1 block text-xs">
+            {m.quotationApprovalTypeCode}
+          </Text>
           <Input
             value={approvalType}
             maxLength={20}
@@ -408,6 +420,23 @@ function ConfigSection({
       </div>
       <Text type="secondary" className="mt-2 block text-xs">
         {m.staleHint}
+      </Text>
+
+      {/* CD-82 — ปรับเป้าของงวดที่เริ่มแล้วผ่านคำขออนุมัติ */}
+      <Text strong className="mt-5 block">
+        {m.sectionTargets}
+      </Text>
+      <div className="mt-2 max-w-xs">
+        <Text className="mb-1 block text-xs">{m.targetApprovalTypeCode}</Text>
+        <Input
+          value={targetType}
+          maxLength={20}
+          allowClear
+          onChange={(e) => setTargetType(e.target.value.toUpperCase())}
+        />
+      </div>
+      <Text type="secondary" className="mt-2 block text-xs">
+        {m.targetHint}
       </Text>
 
       <Button

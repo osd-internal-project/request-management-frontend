@@ -74,6 +74,8 @@ export const ROUTES = {
   bottleneckReport: `${HOME_PATH}/reports/bottleneck`,
   /** CD-73 — แดชบอร์ด CRM */
   crmDashboard: `${HOME_PATH}/crm`,
+  /** CD-82 — เป้าและพยากรณ์ */
+  salesTargets: `${HOME_PATH}/sales-targets`,
   /** CD-83 — รายงานยอดขาย */
   salesReport: `${HOME_PATH}/reports/sales`,
 

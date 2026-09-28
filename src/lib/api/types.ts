@@ -255,18 +255,13 @@ export function isMultilineField(property: FormSchemaProperty): boolean {
 
 /** What a field is, for editing and rendering. Mirrors `typeOf` in core-service `form-schema.ts`. */
 export type FieldKind =
-  | "text"
-  | "number"
-  | "boolean"
-  | "date"
-  | "datetime"
-  | "select"
-  | "table";
+  "text" | "number" | "boolean" | "date" | "datetime" | "select" | "table";
 
 export function fieldKindOf(property: FormSchemaProperty): FieldKind {
   if (property.enum?.length) return "select";
   if (property.type === "array") return "table";
-  if (property.type === "number" || property.type === "integer") return "number";
+  if (property.type === "number" || property.type === "integer")
+    return "number";
   if (property.type === "boolean") return "boolean";
   if (property.format === "date") return "date";
   if (property.format === "date-time") return "datetime";
@@ -382,7 +377,8 @@ export function missingRequiredSubRequests(
     .filter(
       (item) =>
         !children.some(
-          (child) => child.typeCode === item.code && child.status !== "cancelled",
+          (child) =>
+            child.typeCode === item.code && child.status !== "cancelled",
         ),
     )
     .map((item) => item.code);
@@ -508,8 +504,10 @@ export interface RequestPerson {
 }
 
 /** The full request as หน้าที่ 4 needs it. */
-export interface RequestDetail
-  extends Omit<RequestRow, "approvalCases" | "requester" | "receiver" | "assignee"> {
+export interface RequestDetail extends Omit<
+  RequestRow,
+  "approvalCases" | "requester" | "receiver" | "assignee"
+> {
   /** Richer than the list's two columns — see {@link RequestPerson}. */
   requester?: RequestPerson | null;
   receiver?: RequestPerson | null;
@@ -937,11 +935,7 @@ export type LeadStatus =
   | "converted";
 export type LeadActivityType = "call" | "email" | "meeting" | "task" | "note";
 export type OpportunityStage =
-  | "qualifying"
-  | "proposing"
-  | "negotiating"
-  | "won"
-  | "lost";
+  "qualifying" | "proposing" | "negotiating" | "won" | "lost";
 
 export interface LeadRow {
   id: string;
@@ -1053,7 +1047,8 @@ export interface OpportunityRow {
 export type SaleOrderStatus = "open" | "cancelled";
 
 /** CD-88 — การส่งใบสั่งขายเข้า SAP (แยกจากสถานะของใบเอง). */
-export type ErpSyncStatus = "not_ready" | "pending" | "synced" | "failed" | "skipped";
+export type ErpSyncStatus =
+  "not_ready" | "pending" | "synced" | "failed" | "skipped";
 
 /** CD-88 — รายการสินค้าของใบสั่งขาย: snapshot จากใบเสนอราคาตอนเปิดใบ. */
 export interface SaleOrderLine {
@@ -1339,6 +1334,8 @@ export interface CrmConfig {
   quotationValidityDays: number;
   vatPct: number;
   quotationApprovalTypeCode: string;
+  /** CD-82 — ประเภทคำขอสำหรับอนุมัติการปรับเป้าระหว่างงวด; null = ยังไม่ตั้ง. */
+  targetApprovalTypeCode?: string | null;
   /** CD-65 — ดีลเปิดที่ไม่มีกิจกรรมเกินกี่วันจึงแจ้งหัวหน้า; 0 = ปิด. */
   staleOpportunityDays: number;
   /** หัวกระดาษใบเสนอราคา — null = ไม่ได้ตั้ง. */
