@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   App,
@@ -18,6 +18,7 @@ import { SearchSelect } from "@/components/ui/search-select";
 import { appApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
 import type { CustomerRow, LeadRow, LeadStatus } from "@/lib/api/types";
+import type { CampaignRow } from "@/lib/api/campaigns";
 
 const m = messages.sales.leads;
 
@@ -38,6 +39,8 @@ export interface LeadFormValues {
   phone?: string | null;
   email?: string | null;
   source_code?: string | null;
+  /** CD-71 — รหัสแคมเปญ; ว่าง = ไม่ผูก. */
+  campaign_code?: string | null;
   note?: string | null;
   name_en?: string | null;
   tax_id?: string | null;
@@ -62,6 +65,7 @@ export function leadToFormValues(lead: LeadRow): LeadFormValues {
     phone: lead.phone,
     email: lead.email,
     source_code: lead.sourceCode,
+    campaign_code: lead.campaign?.code ?? null,
     note: lead.note,
     name_en: lead.nameEn,
     tax_id: lead.taxId,
@@ -117,6 +121,15 @@ export function LeadFormModal({
   const [form] = Form.useForm<LeadFormValues>();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // CD-71 — แคมเปญที่เปิดอยู่ (+ แคมเปญเดิมของใบนี้ถ้าปิดไปแล้ว ให้ยังเห็นชื่อ).
+  const [campaigns, setCampaigns] = useState<CampaignRow[]>([]);
+
+  useEffect(() => {
+    if (!open) return;
+    void appApi<CampaignRow[]>("campaigns?active=true").then((result) => {
+      if (result.ok) setCampaigns(result.data);
+    });
+  }, [open]);
 
   async function submit() {
     let values: LeadFormValues;
@@ -172,7 +185,13 @@ export function LeadFormModal({
             <Form.Item
               name="name"
               label={m.form.name}
-              rules={[{ required: true, whitespace: true, message: m.form.nameRequired }]}
+              rules={[
+                {
+                  required: true,
+                  whitespace: true,
+                  message: m.form.nameRequired,
+                },
+              ]}
             >
               <Input maxLength={255} />
             </Form.Item>
@@ -180,6 +199,32 @@ export function LeadFormModal({
           <Col xs={24} md={12}>
             <Form.Item name="source_code" label={m.columns.source}>
               <Input maxLength={64} placeholder={m.form.source} />
+            </Form.Item>
+          </Col>
+          <Col xs={24} md={12}>
+            <Form.Item
+              name="campaign_code"
+              label={messages.campaigns.leadField}
+            >
+              <SearchSelect
+                allowClear
+                placeholder={messages.campaigns.leadFieldPlaceholder}
+                options={[
+                  ...campaigns.map((campaign) => ({
+                    value: campaign.code,
+                    label: `${campaign.code} · ${campaign.name}`,
+                  })),
+                  ...(lead?.campaign &&
+                  !campaigns.some((c) => c.code === lead.campaign?.code)
+                    ? [
+                        {
+                          value: lead.campaign.code,
+                          label: `${lead.campaign.code} · ${lead.campaign.name}`,
+                        },
+                      ]
+                    : []),
+                ]}
+              />
             </Form.Item>
           </Col>
           <Col xs={24} md={12}>

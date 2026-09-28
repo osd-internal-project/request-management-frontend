@@ -51,12 +51,18 @@ import type {
   FormSchemaProperty,
   OrgUnitShape,
   RequestAttachment,
+  RequestSeverity,
   RequestType,
 } from "@/lib/api/types";
+import { REQUEST_SEVERITIES } from "@/lib/api/types";
 import { messages } from "@/lib/messages";
 import { SearchSelect, SearchTreeSelect } from "@/components/ui/search-select";
 import { buildUnitTree, subtreeIds } from "@/lib/org/org-tree";
 import { ROUTES } from "@/lib/routes";
+import {
+  applyComputedFields,
+  isComputedField,
+} from "@/lib/computed-fields";
 
 
 /**
@@ -217,6 +223,8 @@ export function RequestForm({
   const [receiverOrgUnitId, setReceiverOrgUnitId] = useState<
     string | undefined
   >(initialType?.receiverOrgUnitId ?? undefined);
+  /** CD-67 — only asked for, and only sent, when the type is a case type. */
+  const [severity, setSeverity] = useState<RequestSeverity | undefined>();
   const [values, setValues] = useState<Record<string, unknown>>({});
   const [refId, setRefId] = useState(initialRef?.id ?? "");
   const [draftId, setDraftId] = useState<string | null>(null);
@@ -325,6 +333,8 @@ export function RequestForm({
 
   /** REQ-03 — the type decides whether `อ้างอิงโอกาสการขาย` blocks a submit. */
   const refRequired = type?.refRequired ?? false;
+  const severityTargets = type?.severityTargets ?? null;
+  const sentSeverity = severityTargets ? severity : undefined;
 
   /** The draft row must exist before a document can hang off it. */
   async function ensureDraft(): Promise<string | null> {
@@ -341,6 +351,7 @@ export function RequestForm({
       ref_id: refId || undefined,
       receiver_user_id: receiverId,
       receiver_org_unit_id: receiverOrgUnitId,
+      ...(sentSeverity ? { severity: sentSeverity } : {}),
       ...(parentRequestId ? { parent_request_id: parentRequestId } : {}),
     });
 
@@ -462,6 +473,7 @@ export function RequestForm({
         ref_id: refId || null,
         receiver_user_id: receiverId ?? null,
         receiver_org_unit_id: receiverOrgUnitId,
+        ...(sentSeverity ? { severity: sentSeverity } : {}),
       });
 
       if (saved.ok) {
@@ -511,6 +523,10 @@ export function RequestForm({
       setError(messages.requestForm.refRequired);
       return;
     }
+    if (severityTargets && !severity) {
+      setError(messages.severity.required);
+      return;
+    }
 
     setBusy(true);
     setError(null);
@@ -531,6 +547,7 @@ export function RequestForm({
         ref_id: refId || null,
         receiver_user_id: receiverId ?? null,
         receiver_org_unit_id: receiverOrgUnitId,
+        ...(sentSeverity ? { severity: sentSeverity } : {}),
       });
 
       const sent = await submitRequest(id);
@@ -552,6 +569,8 @@ export function RequestForm({
   const fields = Object.entries(schema?.properties ?? {}).sort(
     ([, a], [, b]) => fieldOrder(a) - fieldOrder(b),
   );
+  // CD-80 — computed fields worked out live from what is typed.
+  const computedValues = applyComputedFields(schema?.properties, values);
 
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
@@ -577,6 +596,7 @@ export function RequestForm({
                   setAfterWork(EMPTY_STAGE);
                   setDraftId(null);
                   setAttachments([]);
+                  setSeverity(undefined);
 
                   // The new type brings its own default team, and the person
                   // picked from the old team may not be in it.
@@ -650,6 +670,29 @@ export function RequestForm({
               />
             </Field>
 
+            {severityTargets && (
+              <Field
+                label={messages.severity.label}
+                required
+                hint={messages.severity.hint}
+              >
+                <SearchSelect
+                  className="w-full"
+                  value={severity}
+                  onChange={(next?: RequestSeverity) => setSeverity(next)}
+                  placeholder={messages.severity.placeholder}
+                  options={REQUEST_SEVERITIES.map((level) => ({
+                    value: level,
+                    label: messages.severity.option(
+                      messages.severity.levels[level],
+                      severityTargets[level].responseHours,
+                      severityTargets[level].resolutionHours,
+                    ),
+                  }))}
+                />
+              </Field>
+            )}
+
             {/*
               Required only when the type says so.
 
@@ -677,7 +720,7 @@ export function RequestForm({
                   name={name}
                   property={prop}
                   required={required.includes(name)}
-                  value={values[name]}
+                  value={computedValues[name]}
                   onChange={(value) => setField(name, value)}
                 />
               ))
@@ -1083,7 +1126,9 @@ export function SchemaField({
 }) {
   const multiline = isMultilineField(property);
   const isTable = property.type === "array" && Boolean(property.items);
-  const special = isTable ? null : kindInput(property, value, onChange);
+  const computed = isComputedField(property);
+  const special =
+    isTable || computed ? null : kindInput(property, value, onChange);
 
   return (
     <Field
@@ -1100,7 +1145,26 @@ export function SchemaField({
         ) : null
       }
     >
-      {isTable ? (
+      {computed ? (
+        // CD-80 — the system's number, not an input: the server recomputes
+        // it on save, so an editable box would only suggest otherwise.
+        <div>
+          <Input
+            readOnly
+            className="w-full"
+            value={
+              typeof value === "number"
+                ? `${value.toLocaleString("th-TH", { maximumFractionDigits: 2 })} %`
+                : ""
+            }
+            placeholder={messages.requestForm.computedPending}
+            status={typeof value === "number" && value < 0 ? "error" : undefined}
+          />
+          <Text type="secondary" className="text-xs">
+            {messages.requestForm.computedHint}
+          </Text>
+        </div>
+      ) : isTable ? (
         <TableField property={property} value={value} onChange={onChange} />
       ) : special ? (
         special

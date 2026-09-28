@@ -4,6 +4,8 @@
  */
 import { apiGet, type ApiResult } from "../core";
 import type {
+  NegotiationRound,
+  TradeTermStandard,
   LeadDetail,
   OpportunityActivity,
   OpportunityDetail,
@@ -24,6 +26,7 @@ export async function getLeads(options?: {
   search?: string;
   status?: string;
   view?: "mine";
+  campaign_id?: string;
   page?: number;
   page_size?: number;
 }): Promise<ApiResult<Paginated<LeadRow>>> {
@@ -31,6 +34,7 @@ export async function getLeads(options?: {
   if (options?.search) params.set("search", options.search);
   if (options?.status) params.set("status", options.status);
   if (options?.view) params.set("view", options.view);
+  if (options?.campaign_id) params.set("campaign_id", options.campaign_id);
   params.set("page", String(options?.page ?? 1));
   params.set("page_size", String(options?.page_size ?? 50));
   return apiGet(`leads?${params.toString()}`);
@@ -63,7 +67,9 @@ export async function getOpportunities(options?: {
   return apiGet(`opportunities?${params.toString()}`);
 }
 
-export async function getOpportunity(id: string): Promise<ApiResult<OpportunityDetail>> {
+export async function getOpportunity(
+  id: string,
+): Promise<ApiResult<OpportunityDetail>> {
   return apiGet(`opportunities/${id}`);
 }
 
@@ -74,7 +80,18 @@ export async function getOpportunityActivities(
   return apiGet(`opportunities/${id}/activities`);
 }
 
-export async function getLostReasons(): Promise<ApiResult<OpportunityLostReason[]>> {
+/** CD-79 — the deal's negotiation rounds and the standards the form offers. */
+export async function getNegotiations(
+  id: string,
+): Promise<
+  ApiResult<{ standards: TradeTermStandard[]; rounds: NegotiationRound[] }>
+> {
+  return apiGet(`opportunities/${id}/negotiations`);
+}
+
+export async function getLostReasons(): Promise<
+  ApiResult<OpportunityLostReason[]>
+> {
   return apiGet(`opportunities/lost-reasons`);
 }
 
@@ -91,7 +108,8 @@ export async function getQuotations(options?: {
   page_size?: number;
 }): Promise<ApiResult<Paginated<QuotationRow>>> {
   const params = new URLSearchParams();
-  if (options?.opportunity_id) params.set("opportunity_id", options.opportunity_id);
+  if (options?.opportunity_id)
+    params.set("opportunity_id", options.opportunity_id);
   if (options?.customer_id) params.set("customer_id", options.customer_id);
   if (options?.status) params.set("status", options.status);
   if (options?.search) params.set("search", options.search);
@@ -102,7 +120,9 @@ export async function getQuotations(options?: {
   return apiGet(`quotations?${params.toString()}`);
 }
 
-export async function getQuotation(id: string): Promise<ApiResult<QuotationDetail>> {
+export async function getQuotation(
+  id: string,
+): Promise<ApiResult<QuotationDetail>> {
   return apiGet(`quotations/${id}`);
 }
 
@@ -127,7 +147,8 @@ export async function getSaleOrders(options?: {
   page_size?: number;
 }): Promise<ApiResult<Paginated<SaleOrderRow>>> {
   const params = new URLSearchParams();
-  if (options?.opportunity_id) params.set("opportunity_id", options.opportunity_id);
+  if (options?.opportunity_id)
+    params.set("opportunity_id", options.opportunity_id);
   if (options?.customer_id) params.set("customer_id", options.customer_id);
   if (options?.status) params.set("status", options.status);
   if (options?.erp_status) params.set("erp_status", options.erp_status);
@@ -149,3 +170,27 @@ const salesApi = {
   getSaleOrders,
 };
 export default salesApi;
+
+/** CD-74 — ยอดต่อขั้นของทุกแถวที่ตรงตัวกรอง (ไม่แบ่งหน้า). */
+export interface OpportunityStageSummary {
+  stage: string;
+  count: number;
+  amount: number;
+  /** null สำหรับขั้นที่ปิดแล้ว (ชนะ/แพ้). */
+  weighted_amount: number | null;
+}
+
+export async function getOpportunityStageSummary(options?: {
+  search?: string;
+  stage?: string;
+  view?: "mine";
+  follow_up?: "overdue" | "stale";
+}): Promise<ApiResult<OpportunityStageSummary[]>> {
+  const params = new URLSearchParams();
+  if (options?.search) params.set("search", options.search);
+  if (options?.stage) params.set("stage", options.stage);
+  if (options?.view) params.set("view", options.view);
+  if (options?.follow_up) params.set("follow_up", options.follow_up);
+  const query = params.toString();
+  return apiGet(`opportunities/summary${query ? `?${query}` : ""}`);
+}

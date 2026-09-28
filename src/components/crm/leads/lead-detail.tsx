@@ -71,8 +71,6 @@ const PIPELINE: LeadStatus[] = [
 /** ปุ่มลัดด้านขวา — สี่อย่างที่คนขายทำบ่อย; "บันทึก" อยู่ที่การ์ดผู้ติดต่อ. */
 const QUICK_TYPES = ["call", "email", "meeting", "task"] as const;
 
-
-
 function dash(value: string | number | null | undefined): string {
   if (value === null || value === undefined || value === "") return "—";
   return String(value);
@@ -129,10 +127,10 @@ export function LeadDetailView({
 
   async function toggleActivity(activity: SalesActivity, completed: boolean) {
     setError(null);
-    const result = await appApi(
-      `leads/${lead.id}/activities/${activity.id}`,
-      { method: "PATCH", body: JSON.stringify({ completed }) },
-    );
+    const result = await appApi(`leads/${lead.id}/activities/${activity.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ completed }),
+    });
     if (!result.ok) {
       setError(result.message);
       return;
@@ -192,6 +190,13 @@ export function LeadDetailView({
               {m.status[lead.status] ?? lead.status}
             </Tag>
             {lead.sourceCode && <Tag>{lead.sourceCode}</Tag>}
+            {lead.campaign && (
+              <Link href={`${ROUTES.leads}?campaign_id=${lead.campaign.id}`}>
+                <Tag color="purple">
+                  {messages.campaigns.leadField}: {lead.campaign.name}
+                </Tag>
+              </Link>
+            )}
             <Text type="secondary" className="text-xs">
               {md.createdAt(formatWhen(lead.createdAt))}
             </Text>
@@ -221,8 +226,7 @@ export function LeadDetailView({
           onChange={editable && !busy ? onStep : undefined}
           items={[
             ...PIPELINE.map((status) => ({
-              title:
-                status === "converted" ? md.convertStep : m.status[status],
+              title: status === "converted" ? md.convertStep : m.status[status],
               disabled: !editable,
               // คัดออก = ออกจาก pipeline ไม่ใช่ผ่านทุกขั้น — ทุกขั้นค้างเป็น wait
               ...(disqualified ? { status: "wait" as const } : {}),
@@ -368,8 +372,11 @@ export function LeadDetailView({
                             </Descriptions.Item>
                             <Descriptions.Item label={md.fields.customer}>
                               {lead.customer ? (
-                                <Link href={ROUTES.customerDetail(lead.customer.id)}>
-                                  {lead.customer.customerCode} · {lead.customer.nameTh}
+                                <Link
+                                  href={ROUTES.customerDetail(lead.customer.id)}
+                                >
+                                  {lead.customer.customerCode} ·{" "}
+                                  {lead.customer.nameTh}
                                   {lead.customer.branchName
                                     ? ` · ${lead.customer.branchName}`
                                     : ""}
@@ -399,12 +406,17 @@ export function LeadDetailView({
                               {formatWhen(lead.updatedAt)}
                             </Descriptions.Item>
                             {lead.disqualifyReason && (
-                              <Descriptions.Item label={md.fields.disqualifyReason} span={2}>
+                              <Descriptions.Item
+                                label={md.fields.disqualifyReason}
+                                span={2}
+                              >
                                 {lead.disqualifyReason}
                               </Descriptions.Item>
                             )}
                             <Descriptions.Item label={md.fields.note} span={2}>
-                              <span className="whitespace-pre-wrap">{dash(lead.note)}</span>
+                              <span className="whitespace-pre-wrap">
+                                {dash(lead.note)}
+                              </span>
                             </Descriptions.Item>
                           </Descriptions>
                         ),
@@ -427,19 +439,35 @@ export function LeadDetailView({
                     }
                   >
                     <Descriptions size="small" column={1} bordered>
-                      <Descriptions.Item label={md.fields.name}>{lead.name}</Descriptions.Item>
-                      <Descriptions.Item label={md.fields.nameEn}>{dash(lead.nameEn)}</Descriptions.Item>
-                      <Descriptions.Item label={md.fields.taxId}>{dash(lead.taxId)}</Descriptions.Item>
-                      <Descriptions.Item label={md.fields.industry}>{dash(lead.industry)}</Descriptions.Item>
-                      <Descriptions.Item label={md.fields.companySize}>{dash(lead.companySize)}</Descriptions.Item>
+                      <Descriptions.Item label={md.fields.name}>
+                        {lead.name}
+                      </Descriptions.Item>
+                      <Descriptions.Item label={md.fields.nameEn}>
+                        {dash(lead.nameEn)}
+                      </Descriptions.Item>
+                      <Descriptions.Item label={md.fields.taxId}>
+                        {dash(lead.taxId)}
+                      </Descriptions.Item>
+                      <Descriptions.Item label={md.fields.industry}>
+                        {dash(lead.industry)}
+                      </Descriptions.Item>
+                      <Descriptions.Item label={md.fields.companySize}>
+                        {dash(lead.companySize)}
+                      </Descriptions.Item>
                       <Descriptions.Item label={md.fields.employeeCount}>
                         {lead.employeeCount === null
                           ? "—"
                           : lead.employeeCount.toLocaleString("th-TH")}
                       </Descriptions.Item>
-                      <Descriptions.Item label={md.fields.source}>{dash(lead.sourceCode)}</Descriptions.Item>
-                      <Descriptions.Item label={md.fields.productGroup}>{dash(lead.productGroup)}</Descriptions.Item>
-                      <Descriptions.Item label={md.fields.subProduct}>{dash(lead.subProduct)}</Descriptions.Item>
+                      <Descriptions.Item label={md.fields.source}>
+                        {dash(lead.sourceCode)}
+                      </Descriptions.Item>
+                      <Descriptions.Item label={md.fields.productGroup}>
+                        {dash(lead.productGroup)}
+                      </Descriptions.Item>
+                      <Descriptions.Item label={md.fields.subProduct}>
+                        {dash(lead.subProduct)}
+                      </Descriptions.Item>
                       <Descriptions.Item label={md.fields.projectRevenue}>
                         {lead.projectRevenue === null
                           ? "—"
@@ -447,7 +475,9 @@ export function LeadDetailView({
                       </Descriptions.Item>
                       <Descriptions.Item label={md.fields.owner}>
                         <Space size={6}>
-                          <Avatar size="small">{initials(lead.owner.displayName)}</Avatar>
+                          <Avatar size="small">
+                            {initials(lead.owner.displayName)}
+                          </Avatar>
                           {lead.owner.displayName}
                         </Space>
                       </Descriptions.Item>
@@ -469,11 +499,21 @@ export function LeadDetailView({
                     }
                   >
                     <Descriptions size="small" column={1} bordered>
-                      <Descriptions.Item label={md.fields.addressLine}>{dash(lead.addressLine)}</Descriptions.Item>
-                      <Descriptions.Item label={md.fields.district}>{dash(lead.district)}</Descriptions.Item>
-                      <Descriptions.Item label={md.fields.province}>{dash(lead.province)}</Descriptions.Item>
-                      <Descriptions.Item label={md.fields.postalCode}>{dash(lead.postalCode)}</Descriptions.Item>
-                      <Descriptions.Item label={md.fields.country}>{lead.country}</Descriptions.Item>
+                      <Descriptions.Item label={md.fields.addressLine}>
+                        {dash(lead.addressLine)}
+                      </Descriptions.Item>
+                      <Descriptions.Item label={md.fields.district}>
+                        {dash(lead.district)}
+                      </Descriptions.Item>
+                      <Descriptions.Item label={md.fields.province}>
+                        {dash(lead.province)}
+                      </Descriptions.Item>
+                      <Descriptions.Item label={md.fields.postalCode}>
+                        {dash(lead.postalCode)}
+                      </Descriptions.Item>
+                      <Descriptions.Item label={md.fields.country}>
+                        {lead.country}
+                      </Descriptions.Item>
                     </Descriptions>
                   </Card>
                 </div>
@@ -515,18 +555,16 @@ export function LeadDetailView({
           {editable && (
             <Card size="small">
               <div className="grid grid-cols-4 gap-2">
-                {QUICK_TYPES.map(
-                  (type) => (
-                    <Button
-                      key={type}
-                      className="h-14! flex-col!"
-                      icon={ACTIVITY_ICON[type]}
-                      onClick={() => setLogging(type)}
-                    >
-                      <span className="text-xs">{md.quick[type]}</span>
-                    </Button>
-                  ),
-                )}
+                {QUICK_TYPES.map((type) => (
+                  <Button
+                    key={type}
+                    className="h-14! flex-col!"
+                    icon={ACTIVITY_ICON[type]}
+                    onClick={() => setLogging(type)}
+                  >
+                    <span className="text-xs">{md.quick[type]}</span>
+                  </Button>
+                ))}
               </div>
             </Card>
           )}
@@ -607,7 +645,9 @@ export function LeadDetailView({
         lead={converting ? lead : null}
         customers={customers}
         onClose={() => setConverting(false)}
-        onDone={(opportunityId) => router.push(ROUTES.opportunityDetail(opportunityId))}
+        onDone={(opportunityId) =>
+          router.push(ROUTES.opportunityDetail(opportunityId))
+        }
       />
       <ActivityModal
         key={logging ? `log-${logging}` : "log-closed"}

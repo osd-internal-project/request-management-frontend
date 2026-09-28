@@ -149,10 +149,14 @@ export function requestColumns(now: number, session: Session | null = null) {
     {
       title: messages.myWork.columns.status,
       dataIndex: "status",
-      render: (value: string) => (
-        <Tag color={STATUS_COLOR[value]}>
-          {messages.myWork.status[value] ?? value}
-        </Tag>
+      render: (value: string, row: RequestRow) => (
+        <>
+          <Tag color={STATUS_COLOR[value]}>
+            {messages.myWork.status[value] ?? value}
+          </Tag>
+          {/* CD-67 — a case shows how severe it is where its state is read. */}
+          <SeverityTag severity={row.severity} />
+        </>
       ),
     },
     {

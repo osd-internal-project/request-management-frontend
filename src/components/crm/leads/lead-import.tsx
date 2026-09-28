@@ -20,6 +20,7 @@ interface ParsedRow {
   phone?: string;
   email?: string;
   source_code?: string;
+  campaign_code?: string;
   note?: string;
 }
 
@@ -43,12 +44,14 @@ const HEADER_MAP: Record<string, keyof Omit<ParsedRow, "row_no">> = {
   [H.phone]: "phone",
   [H.email]: "email",
   [H.source]: "source_code",
+  [H.campaign]: "campaign_code",
   [H.note]: "note",
   name: "name",
   contact_name: "contact_name",
   phone: "phone",
   email: "email",
   source_code: "source_code",
+  campaign_code: "campaign_code",
   note: "note",
 };
 
@@ -81,7 +84,15 @@ export function LeadImport() {
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet("leads");
 
-    sheet.addRow([H.name, H.contactName, H.phone, H.email, H.source, H.note]);
+    sheet.addRow([
+      H.name,
+      H.contactName,
+      H.phone,
+      H.email,
+      H.source,
+      H.campaign,
+      H.note,
+    ]);
     sheet.getRow(1).font = { bold: true };
     sheet.getColumn(3).numFmt = "@"; // โทรศัพท์เป็น text — กันเลข 0 หน้าหาย
     sheet.addRow([
@@ -90,6 +101,7 @@ export function LeadImport() {
       "0812345678",
       "somying@example.co.th",
       "งานอีเวนต์ 2569",
+      "",
       "สนใจระบบโทรศัพท์",
     ]);
     sheet.columns.forEach((column) => {
@@ -142,7 +154,8 @@ export function LeadImport() {
         const record: ParsedRow = { row_no: rowNo, name: "" };
         fieldOf.forEach((field, col) => {
           const text = row.getCell(col).text?.trim();
-          if (text) (record as unknown as Record<string, unknown>)[field] = text;
+          if (text)
+            (record as unknown as Record<string, unknown>)[field] = text;
         });
         if (!record.name && !record.phone && !record.email) return;
         record.phone = repairPhone(record.phone);
@@ -334,7 +347,12 @@ export function LeadImport() {
                   render: (reasons: string[], row) =>
                     row.action === "error"
                       ? reasons
-                          .map((reason) => m.reasonLabels[reason] ?? reason)
+                          .map(
+                            (reason) =>
+                              m.reasonLabels[reason] ??
+                              // CD-71 — "campaign_code: <ข้อความจาก server>"
+                              reason.replace(/^campaign_code: /, ""),
+                          )
                           .join(" · ")
                       : reasons.join(" · ") || "—",
                 },

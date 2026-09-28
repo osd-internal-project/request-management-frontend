@@ -72,6 +72,18 @@ export const ROUTES = {
   allWork: `${HOME_PATH}/approvals`,
   /** REQ-09 — รายงานคอขวด */
   bottleneckReport: `${HOME_PATH}/reports/bottleneck`,
+  /** CD-50 — รายงานการทำตามกำหนด (SLA) */
+  slaReport: `${HOME_PATH}/reports/sla-compliance`,
+  /** APV-06 (CD-45) — ประวัติการใช้อำนาจอนุมัติ */
+  decisionLog: `${HOME_PATH}/reports/approval-decisions`,
+  /** CD-73 — แดชบอร์ด CRM */
+  crmDashboard: `${HOME_PATH}/crm`,
+  /** CD-71 — แคมเปญ */
+  campaigns: `${HOME_PATH}/campaigns`,
+  /** CD-82 — เป้าและพยากรณ์ */
+  salesTargets: `${HOME_PATH}/sales-targets`,
+  /** CD-83 — รายงานยอดขาย */
+  salesReport: `${HOME_PATH}/reports/sales`,
 
   /** CRM ระยะ 1 — ทะเบียนลูกค้า (CM-01, spec artifact 856c08fd). */
   customers: `${HOME_PATH}/customers`,
@@ -112,6 +124,10 @@ export const ROUTES = {
   adminUsers: `${HOME_PATH}/admin/users`,
   /** SUP-04 — Audit log */
   adminAudit: `${HOME_PATH}/admin/audit`,
+  /** CD-55 — บันทึกการแจ้งเตือน */
+  adminNotificationLog: `${HOME_PATH}/admin/notification-log`,
+  /** CD-54 — ถ้อยคำการแจ้งเตือน */
+  adminNotificationTemplates: `${HOME_PATH}/admin/notification-templates`,
   /** กุญแจ API ของช่องทางภายนอก — สิทธิ์ `integration.*` ออกที่นี่. */
   adminApiKeys: `${HOME_PATH}/admin/api-keys`,
   adminErpSync: `${HOME_PATH}/admin/erp-sync`,

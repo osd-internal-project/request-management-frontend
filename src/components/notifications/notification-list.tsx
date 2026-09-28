@@ -79,7 +79,8 @@ export function NotificationList({
                 {notification.title}
               </span>
               <span
-                className={`block text-xs text-gray-500 ${compact ? "line-clamp-2" : ""}`}
+                // pre-line: the CD-52 daily digest lists one item per line.
+                className={`block text-xs whitespace-pre-line text-gray-500 ${compact ? "line-clamp-2" : ""}`}
               >
                 {notification.body}
               </span>

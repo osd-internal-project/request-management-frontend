@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   App,
@@ -20,12 +21,14 @@ import Text from "antd/es/typography/Text";
 import { LetterheadSettings } from "@/components/admin/letterhead-settings";
 import { adminApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
+import { ROUTES } from "@/lib/routes";
 import { ProductPicker } from "@/components/crm/quotations/product-picker";
 import type {
   CrmConfig,
   KycProductRule,
   SegmentDimension,
   SegmentValue,
+  TradeTermStandard,
 } from "@/lib/api/types";
 
 const m = messages.customers.admin;
@@ -37,13 +40,14 @@ const m = messages.customers.admin;
 export function CrmAdmin({
   dimensions,
   config,
-  docPrefix,
   kycProducts,
+  tradeTerms = [],
 }: {
   dimensions: SegmentDimension[];
   config: CrmConfig;
-  docPrefix: string;
   kycProducts: KycProductRule[];
+  /** CD-79 — every standard term, inactive included. */
+  tradeTerms?: TradeTermStandard[];
 }) {
   const router = useRouter();
   const { message } = App.useApp();
@@ -72,7 +76,8 @@ export function CrmAdmin({
 
       <SegmentSection dimensions={dimensions} onCall={call} />
       <KycProductSection rows={kycProducts} onCall={call} />
-      <ConfigSection config={config} docPrefix={docPrefix} onCall={call} />
+      <ConfigSection config={config} onCall={call} />
+      <TradeTermsSection terms={tradeTerms} onCall={call} />
       <LetterheadSettings config={config} onCall={call} />
     </div>
   );
@@ -238,14 +243,18 @@ function SegmentSection({
             placeholder={m.dimensionCode}
             value={newDimension?.code}
             onChange={(e) =>
-              setNewDimension((prev) => prev && { ...prev, code: e.target.value })
+              setNewDimension(
+                (prev) => prev && { ...prev, code: e.target.value },
+              )
             }
           />
           <Input
             placeholder={m.dimensionName}
             value={newDimension?.name}
             onChange={(e) =>
-              setNewDimension((prev) => prev && { ...prev, name: e.target.value })
+              setNewDimension(
+                (prev) => prev && { ...prev, name: e.target.value },
+              )
             }
           />
         </Space>
@@ -287,35 +296,34 @@ function SegmentSection({
 
 function ConfigSection({
   config,
-  docPrefix,
   onCall,
 }: {
   config: CrmConfig;
-  docPrefix: string;
   onCall: (path: string, method: string, body?: unknown) => Promise<boolean>;
 }) {
-  const [prefix, setPrefix] = useState(config.codePrefix);
-  const [padding, setPadding] = useState(config.codePadding);
   const [threshold, setThreshold] = useState(config.dedupThreshold);
   const [minMargin, setMinMargin] = useState(config.minMarginPct);
-  const [validityDays, setValidityDays] = useState(config.quotationValidityDays);
+  const [validityDays, setValidityDays] = useState(
+    config.quotationValidityDays,
+  );
   const [vat, setVat] = useState(config.vatPct);
   const [staleDays, setStaleDays] = useState(config.staleOpportunityDays ?? 14);
   const [approvalType, setApprovalType] = useState(
     config.quotationApprovalTypeCode,
   );
+  const [targetType, setTargetType] = useState(
+    config.targetApprovalTypeCode ?? "",
+  );
+  const [contractType, setContractType] = useState(
+    config.contractRequestTypeCode ?? "",
+  );
   const [busy, setBusy] = useState(false);
-
-  const example = `${prefix || "CUS"}-${docPrefix}-${"1".padStart(
-    padding || 6,
-    "0",
-  )}`;
 
   async function save() {
     setBusy(true);
     await onCall("config", "PATCH", {
-      code_prefix: prefix || undefined,
-      code_padding: padding,
+      target_approval_type_code: targetType,
+      contract_request_type_code: contractType,
       dedup_threshold: threshold,
       min_margin_pct: minMargin,
       quotation_validity_days: validityDays,
@@ -330,24 +338,6 @@ function ConfigSection({
     <Card size="small" title={m.sectionConfig}>
       <div className="grid max-w-2xl grid-cols-1 gap-4 md:grid-cols-3">
         <div>
-          <Text className="mb-1 block text-xs">{m.codePrefix}</Text>
-          <Input
-            value={prefix}
-            maxLength={10}
-            onChange={(e) => setPrefix(e.target.value.toUpperCase())}
-          />
-        </div>
-        <div>
-          <Text className="mb-1 block text-xs">{m.codePadding}</Text>
-          <InputNumber
-            min={3}
-            max={10}
-            value={padding}
-            onChange={(value) => setPadding(value ?? 6)}
-            className="w-full"
-          />
-        </div>
-        <div>
           <Text className="mb-1 block text-xs">{m.dedupThreshold}</Text>
           <InputNumber
             min={0.5}
@@ -361,8 +351,10 @@ function ConfigSection({
       </div>
 
       <div className="mt-3 space-y-1">
+        {/* CM-02 — รูปแบบรหัสลูกค้าย้ายไปอยู่ที่ run-number-service แล้ว */}
         <Text type="secondary" className="block text-xs">
-          {m.codePreview(example)}
+          {m.codeFormatMoved}{" "}
+          <Link href={ROUTES.adminRunNumbers}>{m.codeFormatLink}</Link>
         </Text>
         <Text type="secondary" className="block text-xs">
           {m.dedupThresholdHint}
@@ -407,7 +399,9 @@ function ConfigSection({
           />
         </div>
         <div>
-          <Text className="mb-1 block text-xs">{m.quotationApprovalTypeCode}</Text>
+          <Text className="mb-1 block text-xs">
+            {m.quotationApprovalTypeCode}
+          </Text>
           <Input
             value={approvalType}
             maxLength={20}
@@ -435,6 +429,40 @@ function ConfigSection({
       </div>
       <Text type="secondary" className="mt-2 block text-xs">
         {m.staleHint}
+      </Text>
+
+      {/* CD-82 — ปรับเป้าของงวดที่เริ่มแล้วผ่านคำขออนุมัติ */}
+      <Text strong className="mt-5 block">
+        {m.sectionTargets}
+      </Text>
+      <div className="mt-2 max-w-xs">
+        <Text className="mb-1 block text-xs">{m.targetApprovalTypeCode}</Text>
+        <Input
+          value={targetType}
+          maxLength={20}
+          allowClear
+          onChange={(e) => setTargetType(e.target.value.toUpperCase())}
+        />
+      </div>
+      <Text type="secondary" className="mt-2 block text-xs">
+        {m.targetHint}
+      </Text>
+
+      {/* CD-81 — ประเภทคำขอที่ฝ่ายกฎหมายรับทำ/แก้สัญญา */}
+      <Text strong className="mt-5 block">
+        {m.sectionContracts}
+      </Text>
+      <div className="mt-2 max-w-xs">
+        <Text className="mb-1 block text-xs">{m.contractRequestTypeCode}</Text>
+        <Input
+          value={contractType}
+          maxLength={20}
+          allowClear
+          onChange={(e) => setContractType(e.target.value.toUpperCase())}
+        />
+      </div>
+      <Text type="secondary" className="mt-2 block text-xs">
+        {m.contractHint}
       </Text>
 
       <Button
@@ -537,6 +565,114 @@ function KycProductSection({
             },
           ]}
         />
+      </Space>
+    </Card>
+  );
+}
+
+/**
+ * CD-79 — the company's standard trade terms. Saved as a whole list: a row
+ * removed here is deactivated on the server, never deleted, because rounds
+ * recorded against it keep their own copy of the standard.
+ */
+function TradeTermsSection({
+  terms,
+  onCall,
+}: {
+  terms: TradeTermStandard[];
+  onCall: (path: string, method: string, body?: unknown) => Promise<boolean>;
+}) {
+  const [rows, setRows] = useState(
+    terms
+      .filter((term) => term.active !== false)
+      .map((term) => ({
+        code: term.code,
+        name: term.name,
+        standard: term.standardValue,
+      })),
+  );
+  const [busy, setBusy] = useState(false);
+
+  function update(index: number, patch: Partial<(typeof rows)[number]>) {
+    setRows((list) =>
+      list.map((row, i) => (i === index ? { ...row, ...patch } : row)),
+    );
+  }
+
+  async function save() {
+    setBusy(true);
+    await onCall("trade-terms", "PUT", {
+      terms: rows
+        .filter((row) => row.code.trim())
+        .map((row) => ({
+          code: row.code.trim(),
+          name: row.name.trim(),
+          standard_value: row.standard.trim(),
+        })),
+    });
+    setBusy(false);
+  }
+
+  return (
+    <Card size="small" title={m.sectionTradeTerms}>
+      <Text type="secondary" className="mb-3 block text-xs">
+        {m.tradeTermsHint}
+      </Text>
+      <div className="space-y-2">
+        {rows.map((row, index) => (
+          <div key={index} className="flex flex-wrap items-center gap-2">
+            <Input
+              style={{ width: 130 }}
+              placeholder={m.tradeTermCode}
+              maxLength={40}
+              value={row.code}
+              onChange={(e) =>
+                update(index, { code: e.target.value.toUpperCase() })
+              }
+            />
+            <Input
+              style={{ width: 220 }}
+              placeholder={m.tradeTermName}
+              maxLength={200}
+              value={row.name}
+              onChange={(e) => update(index, { name: e.target.value })}
+            />
+            <Input
+              style={{ width: 200 }}
+              placeholder={m.tradeTermStandard}
+              maxLength={500}
+              value={row.standard}
+              onChange={(e) => update(index, { standard: e.target.value })}
+            />
+            <Button
+              type="text"
+              danger
+              onClick={() =>
+                setRows((list) => list.filter((_, i) => i !== index))
+              }
+            >
+              ✕
+            </Button>
+          </div>
+        ))}
+      </div>
+      <Space className="mt-3">
+        <Button
+          size="small"
+          onClick={() =>
+            setRows((list) => [...list, { code: "", name: "", standard: "" }])
+          }
+        >
+          {m.tradeTermAdd}
+        </Button>
+        <Button
+          type="primary"
+          size="small"
+          loading={busy}
+          onClick={() => void save()}
+        >
+          {m.tradeTermSave}
+        </Button>
       </Space>
     </Card>
   );

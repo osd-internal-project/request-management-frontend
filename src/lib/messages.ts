@@ -47,8 +47,7 @@ export const messages = {
         "การเข้าสู่ระบบหมดอายุหรือไม่ถูกต้อง กรุณาเริ่มใหม่อีกครั้ง",
       missing_state: "การเข้าสู่ระบบหมดอายุ กรุณาเริ่มใหม่อีกครั้ง",
       access_denied: "การเข้าสู่ระบบถูกยกเลิก",
-      session_expired:
-        "เซสชันหมดอายุหรือถูกยกเลิก กรุณาเข้าสู่ระบบอีกครั้ง",
+      session_expired: "เซสชันหมดอายุหรือถูกยกเลิก กรุณาเข้าสู่ระบบอีกครั้ง",
       default: "เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง",
     },
 
@@ -59,7 +58,8 @@ export const messages = {
         "ยังไปต่อที่หน้าเข้าสู่ระบบไม่ได้ในตอนนี้ ระบบไม่ได้พาคุณวนกลับไปซ้ำ เพราะจะไม่สำเร็จจนกว่าการเชื่อมต่อจะกลับมา",
       retryButton: "ลองเชื่อมต่ออีกครั้ง",
       hint: "มักเกิดจากระบบหลังบ้านหรือ Keycloak กำลังปิดปรับปรุงหรือเครือข่ายภายในขัดข้อง หากกดลองใหม่แล้วยังไม่ได้ ให้แจ้งผู้ดูแลระบบ",
-      contactPrefix: "ยังเชื่อมต่อไม่ได้หลังลองใหม่หลายครั้ง แจ้งผู้ดูแลระบบที่",
+      contactPrefix:
+        "ยังเชื่อมต่อไม่ได้หลังลองใหม่หลายครั้ง แจ้งผู้ดูแลระบบที่",
     },
   },
 
@@ -70,12 +70,18 @@ export const messages = {
     newRequest: "ยื่นคำขอใหม่",
     allWork: "งานทั้งหมด",
     bottleneckReport: "รายงานคอขวด",
+    slaReport: "รายงานการทำตามกำหนด (SLA)",
+    decisionLog: "ประวัติการใช้อำนาจอนุมัติ",
     crmGroup: "ลูกค้า (CRM)",
+    crmDashboard: "ภาพรวม CRM",
     customers: "ทะเบียนลูกค้า",
     leads: "Lead",
     opportunities: "โอกาสการขาย",
     quotations: "ใบเสนอราคา",
     saleOrders: "ใบสั่งขาย",
+    salesReport: "รายงานยอดขาย",
+    salesTargets: "เป้าและพยากรณ์",
+    campaigns: "แคมเปญ",
     adminGroup: "ผู้ดูแลระบบ",
     adminCrm: "ตั้งค่า CRM",
     adminApiKeys: "กุญแจ API",
@@ -86,6 +92,8 @@ export const messages = {
     adminOrg: "ผังทีมและสิทธิ์",
     adminUsers: "ผู้ใช้",
     adminAudit: "Audit Log",
+    adminNotificationLog: "บันทึกการแจ้งเตือน",
+    adminNotificationTemplates: "ข้อความแจ้งเตือน",
     biGroup: "แดชบอร์ดผู้บริหาร",
     adminBi: "ตั้งค่า Dashboard",
     openMenu: "เปิดเมนู",
@@ -111,8 +119,7 @@ export const messages = {
     subtitle: "ดูแลในระบบ (LDAP ใช้ล็อกอินเท่านั้น)",
     treeTitle: "โครงสร้างทีม",
     unassignedTitle: "รอจัดสังกัด",
-    unassignedHint:
-      "ล็อกอินครั้งแรกแล้วแต่ยังยื่นคำขอไม่ได้จนกว่าจะมีหัวหน้า",
+    unassignedHint: "ล็อกอินครั้งแรกแล้วแต่ยังยื่นคำขอไม่ได้จนกว่าจะมีหัวหน้า",
     unassignedEmpty: "ไม่มีผู้ใช้รอจัดสังกัด",
     manager: "หัวหน้า",
     /** §16 A3 shows the unit's own lead as "หัวหน้าทีม", not plain "หัวหน้า". */
@@ -136,7 +143,8 @@ export const messages = {
     deleteConfirmBody:
       "ลบแล้วเอากลับไม่ได้ — ถ้าต้องการเก็บประวัติไว้ ให้ปิดใช้งานแทน",
     addMember: "เพิ่มสมาชิก",
-    addMemberHint: "เลือกได้จากคนทั้งบริษัท คนที่ถูกเลือกจะย้ายมาสังกัดหน่วยงานนี้",
+    addMemberHint:
+      "เลือกได้จากคนทั้งบริษัท คนที่ถูกเลือกจะย้ายมาสังกัดหน่วยงานนี้",
     selectUser: "ค้นหาชื่อหรือชื่อผู้ใช้",
     editRoles: "แก้ role",
     editRolesTitle: (name: string) => `role ของ ${name}`,
@@ -144,7 +152,8 @@ export const messages = {
       "role ที่มาจาก Keycloak ถอนที่นี่ไม่ได้ — ต้องแก้ที่ Keycloak · ที่ผูกมือไว้ถอนได้",
     fromKeycloak: "จาก Keycloak",
     manualGrant: "ผูกมือ",
-    leadFromCompany: "เลือกหัวหน้าได้จากคนทั้งบริษัท ไม่จำเป็นต้องเป็นสมาชิกหน่วยงานนี้",
+    leadFromCompany:
+      "เลือกหัวหน้าได้จากคนทั้งบริษัท ไม่จำเป็นต้องเป็นสมาชิกหน่วยงานนี้",
     unitKind: "ประเภทหน่วยงาน",
     /**
      * `OrgUnitKind`. The chart order is บริษัท → ฝ่าย → แผนก → ทีม → ตำแหน่ง and
@@ -241,7 +250,8 @@ export const messages = {
     columnRemove: "",
     remove: "ลบ",
     /* A person has no subtree, so the checkbox has nothing to reach. */
-    descendantsNotForUser: "ใช้ได้เฉพาะปลายทางที่เป็นกลุ่ม — บุคคลไม่มีกลุ่มย่อย",
+    descendantsNotForUser:
+      "ใช้ได้เฉพาะปลายทางที่เป็นกลุ่ม — บุคคลไม่มีกลุ่มย่อย",
     empty: "ยังไม่ได้ให้สิทธิ์เห็นงานของกลุ่มหรือบุคคลใด",
     save: "บันทึก",
     saved: "บันทึกแล้ว",
@@ -425,7 +435,8 @@ export const messages = {
 
     newRoleTitle: "สร้าง role ใหม่",
     code: "รหัส role",
-    codeHint: "ตัวพิมพ์เล็กและขีดล่าง เช่น sales_support — เปลี่ยนภายหลังไม่ได้",
+    codeHint:
+      "ตัวพิมพ์เล็กและขีดล่าง เช่น sales_support — เปลี่ยนภายหลังไม่ได้",
     name: "ชื่อที่แสดง",
     description: "คำอธิบาย",
   },
@@ -528,12 +539,41 @@ export const messages = {
     next: "ถัดไป",
   },
 
+  /** CD-67 — ระดับความรุนแรงของเคส และนาฬิกาเวลาตอบกลับ. */
+  severity: {
+    label: "ระดับความรุนแรง",
+    levels: {
+      critical: "วิกฤต",
+      high: "สูง",
+      medium: "ปานกลาง",
+      low: "ต่ำ",
+    } as Record<string, string>,
+    placeholder: "เลือกระดับความรุนแรง",
+    required: "ประเภทคำขอนี้เป็นเคส — เลือกระดับความรุนแรงก่อนยื่น",
+    hint: "เวลาตอบกลับและเวลาแก้ไขนับตามระดับที่เลือก (ชั่วโมงตามเวลาที่ประเภทนี้นับ)",
+    option: (level: string, response: number, resolution: number) =>
+      `${level} — ตอบกลับใน ${response} ชม. · แก้ไขใน ${resolution} ชม.`,
+    responseDue: (when: string) => `ต้องตอบกลับภายใน ${when}`,
+    respondedOnTime: (when: string) => `ตอบกลับแล้ว ${when}`,
+    respondedLate: (when: string) => `ตอบกลับช้า — ${when}`,
+    responseOverdue: "เลยเวลาตอบกลับ",
+    /* A2 — the per-type editor. */
+    caseToggle:
+      "ประเภทนี้เป็นเคส/ข้อร้องเรียน — ผู้ยื่นต้องเลือกระดับความรุนแรง",
+    caseHint:
+      "เวลาตอบกลับ = ผู้รับเรื่องต้องรับเรื่อง มอบหมาย หรือตอบความเห็นแรกภายในเวลานี้ · เวลาแก้ไขแทนที่ SLA ด้านบนสำหรับเคส · ใช้กับบริษัทที่กำลังแก้อยู่",
+    columnLevel: "ระดับ",
+    columnResponse: "ตอบกลับ (ชม.)",
+    columnResolution: "แก้ไข (ชม.)",
+  },
+
   requestForm: {
     receiver: "ผู้รับเรื่อง",
     receiverTeam: "ทีมผู้รับ",
     receiverTeamHint: "ค่าตั้งต้นมาจากประเภทคำขอ — เปลี่ยนได้",
     receiverTeamPlaceholder: "เลือกทีมผู้รับ",
-    receiverTeamEmpty: "ทีมนี้ยังไม่มีสมาชิก — เลือกทีมอื่นหรือล้างช่องทีมผู้รับ",
+    receiverTeamEmpty:
+      "ทีมนี้ยังไม่มีสมาชิก — เลือกทีมอื่นหรือล้างช่องทีมผู้รับ",
     receiverPlaceholder: "เลือกผู้รับเรื่อง — คำขอจะไปอยู่ในคิวของคนนี้",
     receiverFixedHint: "ประเภทคำขอนี้กำหนดผู้รับเรื่องไว้แล้ว",
     receiverRequired: "ต้องระบุผู้รับเรื่องก่อนยื่นคำขอ",
@@ -543,6 +583,9 @@ export const messages = {
     draftBanner: "สถานะ: ร่าง — เลขคำขอจะออกเมื่อกดยื่น",
     type: "ประเภทคำขอ",
     typeRequired: "เลือกประเภทคำขอก่อน",
+    /* CD-80 — a field the system computes (e.g. margin after discount). */
+    computedPending: "กรอกมูลค่า ส่วนลด และต้นทุน เพื่อคำนวณ",
+    computedHint: "ระบบคำนวณให้ — คำนวณซ้ำอีกครั้งเมื่อบันทึก",
     refLabel: "อ้างอิงโอกาสการขาย",
     refRequired: "กรอกเลขอ้างอิงโอกาสการขายก่อนยื่น",
     requiredDocsTitle: "เอกสารบังคับตามประเภทคำขอ",
@@ -765,6 +808,91 @@ export const messages = {
     } as Record<string, string>,
   },
 
+  /** APV-06 (CD-45) */
+  decisionLog: {
+    title: "ประวัติการใช้อำนาจอนุมัติ",
+    subtitle:
+      "ใครอนุมัติอะไร เมื่อไร ในฐานะอะไร และด้วยข้อมูลชุดใด — รวมการอนุมัติแทนและการตัดสินนอกสายปกติ",
+    period: "ช่วงเวลา",
+    basis: "ในฐานะ",
+    allBases: "ทั้งหมด",
+    export: "ดาวน์โหลด CSV",
+    exportHint:
+      "ไม่เกิน 10,000 แถวต่อไฟล์ · ทุกการดาวน์โหลดถูกบันทึกใน Audit Log",
+    empty: "ไม่มีการตัดสินในช่วงนี้",
+    periodLabel: (from: string, to: string) => `ข้อมูลวันที่ ${from} ถึง ${to}`,
+    bases: {
+      chain: "ตามสายอนุมัติ",
+      delegate: "แทน (มอบอำนาจ)",
+      scope_grant: "สิทธิ์ขอบเขต (นอกสาย)",
+    } as Record<string, string>,
+    basisColor: {
+      chain: "default",
+      delegate: "blue",
+      scope_grant: "orange",
+    } as Record<string, string>,
+    decisions: {
+      approve: "อนุมัติ",
+      reject: "ไม่อนุมัติ",
+      return: "ตีกลับ",
+    } as Record<string, string>,
+    decisionColor: {
+      approve: "green",
+      reject: "red",
+      return: "gold",
+    } as Record<string, string>,
+    columns: {
+      when: "เมื่อ",
+      request: "คำขอ",
+      amount: "มูลค่า",
+      step: "ขั้น",
+      named: "ผู้อนุมัติตามสาย",
+      decidedBy: "ผู้ตัดสิน",
+      basis: "ในฐานะ",
+      decision: "ผล",
+      note: "หมายเหตุ",
+      data: "ข้อมูลที่ใช้ตัดสิน",
+    },
+    dataCell: (matrix: number | null, snapshot: number, hash: string) =>
+      `ตาราง v${matrix ?? "—"} · snapshot v${snapshot} ${hash.slice(0, 8)}`,
+    basisNote:
+      '"สิทธิ์ขอบเขต (นอกสาย)" = ผู้ตัดสินไม่ใช่ผู้อนุมัติที่สายระบุ และไม่ได้รับมอบอำนาจ — ตัดสินด้วยสิทธิ์ที่ผู้ดูแลให้ไว้ในหน้าผังทีมและสิทธิ์',
+  },
+
+  /** CD-50 — SLA compliance. */
+  slaReport: {
+    title: "รายงานการทำตามกำหนด (SLA)",
+    subtitle:
+      "สัดส่วนงานที่ปิดทันกำหนด แยกตามทีมผู้รับ ประเภทคำขอ หรือเดือน และคำขอที่ค้างเกินกำหนดอยู่ตอนนี้",
+    scopeNote: "นับเฉพาะคำขอที่คุณเปิดดูได้ — คนละคนอาจเห็นตัวเลขไม่เท่ากัน",
+    groupBy: { team: "ทีมผู้รับ", type: "ประเภทคำขอ", month: "เดือนที่ปิดงาน" },
+    filterType: "ทุกประเภทคำขอ",
+    defaultPeriod: "ค่าเริ่มต้น: 30 วันล่าสุด",
+    period: (from: string, to: string) => `งานที่ปิดระหว่าง ${from} – ${to}`,
+    clearFilters: "ล้างตัวกรอง",
+    compliance: "ปิดทันกำหนด",
+    finishedOf: (onTime: number, finished: number) =>
+      `${onTime} จาก ${finished} งานที่ปิด`,
+    openOverdue: "ค้างเกินกำหนดตอนนี้",
+    openOnTrack: (count: number) => `ยังไม่เลยกำหนด ${count} งาน`,
+    response: "เคสตอบกลับทันเวลา",
+    responseOf: (onTime: number, total: number) =>
+      total ? `${onTime} จาก ${total} เคส` : "ยังไม่มีเคสที่ตอบกลับในช่วงนี้",
+    none: "—",
+    empty: "ยังไม่มีงานในช่วงที่เลือก",
+    columns: {
+      finished: "ปิดแล้ว",
+      onTime: "ทันกำหนด",
+      late: "เกินกำหนด",
+      compliance: "% ทันกำหนด",
+      openOverdue: "ค้างเกินกำหนด",
+      openOnTrack: "ค้าง (ยังทัน)",
+      response: "% ตอบกลับทัน (เคส)",
+    },
+    definitions:
+      "ปิดทันกำหนด = งานที่ปิดในช่วงที่เลือกและเสร็จก่อนครบกำหนด SLA (ไม่นับงานที่ยกเลิก) · ค้างเกินกำหนด = งานที่ยังไม่ปิดและเลยกำหนดแล้ว ณ ตอนนี้ ไม่ขึ้นกับช่วงที่เลือก — งานที่พักนาฬิกาอยู่ไม่นับว่าเกินเพียงเพราะพัก · นิยามเดียวกับแดชบอร์ด SLA บน Metabase",
+  },
+
   bottleneck: {
     filterType: "ประเภทคำขอ",
     filterPeriod: "ช่วงเวลา",
@@ -790,8 +918,203 @@ export const messages = {
       mean: "เฉลี่ย (ชม.)",
       max: "นานสุด (ชม.)",
     },
-    pendingNote:
-      "ขั้นที่ยังไม่ตัดสินไม่ถูกนำมาเฉลี่ย ",
+    pendingNote: "ขั้นที่ยังไม่ตัดสินไม่ถูกนำมาเฉลี่ย ",
+  },
+
+  /** CD-73 */
+  crmDashboard: {
+    title: "ภาพรวม CRM",
+    subtitle: "ลูกค้า Lead โอกาสการขาย และกิจกรรมในหน้าเดียว",
+    viewTeam: "ทั้งหมดที่เห็นได้",
+    viewMine: "ของฉัน",
+    scopeNote:
+      '"ทั้งหมดที่เห็นได้" = ของตัวเอง และของทีมถ้าคุณเป็นหัวหน้า · "ของฉัน" = เฉพาะที่คุณเป็นเจ้าของ',
+    monthNote: (from: string) => `ตัวเลข "เดือนนี้" นับตั้งแต่ ${from}`,
+    customersActive: "ลูกค้าที่ใช้งานอยู่",
+    customersNew: (n: number) =>
+      `ใหม่เดือนนี้ ${n.toLocaleString("th-TH")} ราย`,
+    leadsOpen: "Lead ที่ยังเปิด",
+    leadsNew: (n: number) =>
+      `เข้าใหม่เดือนนี้ ${n.toLocaleString("th-TH")} ราย`,
+    pipeline: "มูลค่าใน pipeline",
+    pipelineHint: (count: number, weighted: string) =>
+      `${count.toLocaleString("th-TH")} โอกาส · ถ่วงความน่าจะเป็น ${weighted}`,
+    wonThisMonth: "ชนะเดือนนี้",
+    wonHint: (n: number) => `${n.toLocaleString("th-TH")} ดีล`,
+    leadsByStatus: "Lead ตามสถานะ",
+    leadsEmpty: "ไม่มี Lead ที่ยังเปิด",
+    pipelineByStage: "โอกาสการขายตามขั้น",
+    stageColumns: {
+      stage: "ขั้น",
+      count: "จำนวน",
+      amount: "มูลค่า (บาท)",
+      weighted: "ถ่วงความน่าจะเป็น (บาท)",
+    },
+    activitiesTitle: "กิจกรรมติดตาม",
+    overdue: "เลยกำหนด",
+    dueSoon: "ถึงกำหนดใน 7 วัน",
+    completed: "ทำเสร็จเดือนนี้",
+    stale: "ดีลเงียบเกินเกณฑ์",
+    openList: "ดูรายการ",
+  },
+
+  /** CD-71 */
+  campaigns: {
+    title: "แคมเปญ",
+    subtitle: "ผูก Lead กับกิจกรรมการตลาด แล้ววัดผลถึงยอดขาย",
+    scopeNote: "ผลนับเฉพาะ Lead ที่คุณมองเห็น",
+    create: "สร้างแคมเปญ",
+    edit: "แก้ไข",
+    leads: "ดู Lead",
+    empty: "ยังไม่มีแคมเปญ",
+    activeTag: "เปิด",
+    closedTag: "ปิดแล้ว",
+    columns: {
+      campaign: "แคมเปญ",
+      period: "ช่วงเวลา",
+      budget: "งบ (บาท)",
+      leads: "Lead",
+      converted: "เป็นโอกาส",
+      won: "ชนะ",
+      sales: "ยอดขาย (บาท)",
+      costPerLead: "ต้นทุน/Lead",
+      salesPerBudget: "ยอดขาย/งบ",
+    },
+    form: {
+      titleNew: "สร้างแคมเปญ",
+      titleEdit: (code: string) => `แก้ไขแคมเปญ ${code}`,
+      code: "รหัส",
+      codeHint:
+        "ใช้ในเว็บฟอร์มและไฟล์นำเข้า (A-Z, 0-9, -, _) — ตั้งแล้วแก้ไม่ได้",
+      name: "ชื่อแคมเปญ",
+      channel: "ช่องทาง",
+      channelPlaceholder: "เช่น อีเวนต์, Facebook Ads, อีเมล",
+      period: "ช่วงเวลา",
+      budget: "งบประมาณ (บาท)",
+      note: "หมายเหตุ",
+      active: "เปิดรับ Lead",
+      activeHint: "ปิดแล้ว = ผูก Lead ใหม่ไม่ได้ แต่ผลเดิมยังอยู่",
+      submit: "บันทึก",
+      saved: "บันทึกแคมเปญแล้ว",
+      required: "จำเป็น",
+    },
+    definitions:
+      "เป็นโอกาส = Lead ที่แปลงเป็นโอกาสการขายแล้ว · ยอดขาย = ใบสั่งขายที่ไม่ยกเลิกจากโอกาสเหล่านั้น · ต้นทุน/Lead = งบ ÷ จำนวน Lead",
+    leadField: "แคมเปญ",
+    leadFieldPlaceholder: "ไม่ผูกแคมเปญ",
+  },
+
+  /** CD-82 */
+  salesTargets: {
+    title: "เป้าและพยากรณ์",
+    subtitle: "เป้ายอดขายรายเดือนเทียบยอดจริงและพยากรณ์",
+    scopeNote:
+      "เห็นเป้าของตัวเองและของทีมที่คุณดูแล · ผู้ตั้งเป้าเห็นทั้งบริษัท",
+    month: "เดือน",
+    started: "เดือนนี้เริ่มแล้ว — ปรับเป้าที่ตั้งไว้ต้องขออนุมัติ",
+    closed: "เดือนนี้จบแล้ว — พยากรณ์ = ยอดจริง",
+    future: "เดือนนี้ยังไม่เริ่ม — ตั้งและแก้เป้าได้ทันที",
+    notConfigured:
+      "ยังไม่ได้ตั้งประเภทคำขอสำหรับอนุมัติการปรับเป้า — ปรับเป้าของเดือนที่เริ่มแล้วไม่ได้จนกว่าผู้ดูแลจะตั้งที่ ตั้งค่า CRM",
+    setTarget: "ตั้งเป้า",
+    adjust: "ปรับเป้า",
+    history: "ประวัติ",
+    empty: "ยังไม่มีเป้าของเดือนนี้",
+    pendingTag: (amount: string) => `รออนุมัติ → ${amount}`,
+    openRequest: "เปิดคำขอ",
+    columns: {
+      subject: "พนักงาน / กลุ่ม",
+      target: "เป้า (บาท)",
+      actual: "ยอดจริง (บาท)",
+      attainment: "ทำได้",
+      forecast: "พยากรณ์ (บาท)",
+      forecastPct: "พยากรณ์เทียบเป้า",
+    },
+    scopeUser: "พนักงาน",
+    scopeUnit: "ทีม / ฝ่าย",
+    form: {
+      titleNew: "ตั้งเป้า",
+      titleAdjust: (name: string) => `ปรับเป้า — ${name}`,
+      scope: "ตั้งให้",
+      subject: "เลือก",
+      subjectPlaceholder: "ค้นหาชื่อ",
+      amount: "เป้า (บาท)",
+      reason: "เหตุผล",
+      reasonRequired:
+        "จำเป็นเมื่อปรับเป้าของเดือนที่เริ่มแล้ว — ไปอยู่ในคำขออนุมัติ",
+      approvalNote:
+        "เดือนนี้เริ่มแล้ว: ระบบจะสร้างร่างคำขออนุมัติให้ เป้าใหม่มีผลเมื่ออนุมัติ — คุณต้องเปิดคำขอเพื่อยื่นเอง",
+      submit: "บันทึก",
+      saved: "บันทึกเป้าแล้ว",
+      drafted: "สร้างร่างคำขออนุมัติแล้ว — เปิดคำขอเพื่อยื่น",
+    },
+    historyTitle: (name: string) => `ประวัติเป้า — ${name}`,
+    historyColumns: {
+      when: "เมื่อ",
+      who: "โดย",
+      from: "จาก",
+      to: "เป็น",
+      status: "สถานะ",
+      reason: "เหตุผล",
+    },
+    revisionStatus: {
+      applied: "มีผล",
+      pending_approval: "รออนุมัติ",
+      rejected: "ไม่อนุมัติ",
+      cancelled: "ยกเลิก",
+    } as Record<string, string>,
+    revisionColor: {
+      applied: "green",
+      pending_approval: "gold",
+      rejected: "red",
+      cancelled: "default",
+    } as Record<string, string>,
+    definitions:
+      "ยอดจริง = ใบสั่งขายที่เปิดในเดือน (ไม่นับที่ยกเลิก) · พยากรณ์ = ยอดจริง + มูลค่า × ความน่าจะเป็น ของโอกาสที่ยังเปิดและคาดว่าจะปิดในเดือน · เป้าของทีม/ฝ่ายนับยอดของทุกกลุ่มใต้มัน",
+  },
+
+  /** CD-83 */
+  salesReport: {
+    title: "รายงานยอดขาย",
+    subtitle: "ยอดขาย อัตราการปิด เหตุผลที่แพ้ และผลงานรายบุคคล",
+    scopeNote:
+      "นับเฉพาะโอกาสการขายและใบสั่งขายที่คุณเห็นได้ — พนักงานเห็นของตัวเอง หัวหน้าเห็นของทีม",
+    filterPeriod: "ช่วงเวลา",
+    thisMonth: "เดือนนี้",
+    lastMonth: "เดือนที่แล้ว",
+    thisYear: "ปีนี้",
+    periodLabel: (from: string, to: string) => `ข้อมูลวันที่ ${from} ถึง ${to}`,
+    salesAmount: "ยอดขาย",
+    salesAmountHint: (count: number) =>
+      `ใบสั่งขาย ${count.toLocaleString("th-TH")} ใบ (ไม่นับที่ยกเลิก)`,
+    winRate: "อัตราการปิด",
+    winRateHint: (won: number, lost: number) =>
+      `ชนะ ${won.toLocaleString("th-TH")} · แพ้ ${lost.toLocaleString("th-TH")}`,
+    winRateNone: "ยังไม่มีดีลที่ปิดในช่วงนี้",
+    wonAmount: "มูลค่าที่ชนะ",
+    lostAmount: "มูลค่าที่แพ้",
+    openPipeline: "ค้างใน pipeline ตอนนี้",
+    openPipelineHint: (count: number) =>
+      `${count.toLocaleString("th-TH")} โอกาส · ไม่ขึ้นกับช่วงที่เลือก`,
+    lostReasonsTitle: "เหตุผลที่แพ้",
+    lostReasonsEmpty: "ไม่มีดีลที่แพ้ในช่วงนี้",
+    byOwnerTitle: "ผลงานรายบุคคล",
+    byOwnerEmpty: "ไม่มีข้อมูลในช่วงนี้",
+    columns: {
+      reason: "เหตุผล",
+      count: "จำนวน",
+      share: "สัดส่วน",
+      amount: "มูลค่า (บาท)",
+      owner: "พนักงานขาย",
+      sales: "ยอดขาย (บาท)",
+      saleOrders: "ใบสั่งขาย",
+      won: "ชนะ",
+      lost: "แพ้",
+      winRate: "อัตราการปิด",
+      open: "ค้างใน pipeline (บาท)",
+    },
+    definitions:
+      "ยอดขาย = ใบสั่งขายที่เปิดในช่วง · ชนะ/แพ้ = โอกาสที่ปิดในช่วง · อัตราการปิด = ชนะ ÷ (ชนะ + แพ้)",
   },
 
   requestTypes: {
@@ -985,7 +1308,8 @@ export const messages = {
     noReceiver: "ยังไม่ได้กำหนดทีมผู้รับ",
     fixedReceiver: "ผู้รับเรื่องประจำ",
     fixedReceiverPlaceholder: "ผู้ยื่นเลือกเอง",
-    fixedReceiverHint: "ถ้ากำหนดไว้ ทุกคำขอของประเภทนี้จะส่งถึงคนนี้ ผู้ยื่นเปลี่ยนไม่ได้",
+    fixedReceiverHint:
+      "ถ้ากำหนดไว้ ทุกคำขอของประเภทนี้จะส่งถึงคนนี้ ผู้ยื่นเปลี่ยนไม่ได้",
     /** SUP-01 — which hours the SLA clock actually counts. */
     coverage: {
       H24X7: "24x7 — นับตลอดเวลา",
@@ -1163,7 +1487,8 @@ export const messages = {
      * publishing, so the tab has nothing it may fetch.
      */
     noPermission: "ไม่มีสิทธิ์ดูตารางอำนาจอนุมัติ",
-    emptyForSubject: "ประเภทงานนี้ยังไม่มีตารางอำนาจอนุมัติ — กด “สร้างเวอร์ชันใหม่” เพื่อเริ่ม",
+    emptyForSubject:
+      "ประเภทงานนี้ยังไม่มีตารางอำนาจอนุมัติ — กด “สร้างเวอร์ชันใหม่” เพื่อเริ่ม",
 
     version: "เวอร์ชัน",
     effectiveFrom: "มีผลตั้งแต่",
@@ -1182,6 +1507,15 @@ export const messages = {
      * specification; say the word and this becomes `เผยแพร่เวอร์ชันใหม่`.
      */
     publishNew: "สร้างเวอร์ชันใหม่",
+    /* CD-80 — end a ladder without editing any version. */
+    retire: "ยกเลิกขั้นอนุมัตินี้",
+    retireConfirm:
+      "ยกเลิกขั้นอนุมัตินี้? คำขอที่ยื่นหลังจากนี้จะไม่ผ่านขั้นนี้ — คำขอที่อยู่ระหว่างอนุมัติยังใช้เวอร์ชันเดิมจนจบ",
+    retired: "ยกเลิกขั้นอนุมัติแล้ว",
+    retiredTitle: (on: string) => `ยกเลิกขั้นอนุมัตินี้แล้ว ตั้งแต่ ${on}`,
+    retiredHint:
+      "คำขอใหม่ไม่ผ่านขั้นนี้ — กด “สร้างเวอร์ชันใหม่” เพื่อเปิดขั้นอนุมัตินี้อีกครั้ง",
+    retiredSummary: "ยกเลิกขั้นอนุมัติ",
     /**
      * §16 splits what used to be one sentence: immutability stays here, while
      * "งานที่เดินอยู่ใช้เวอร์ชัน ณ ขณะยื่น" becomes rule 3 of `alwaysEnforced`.
@@ -1259,6 +1593,72 @@ export const messages = {
     historyChainChanged: (level: string) => `ปรับสายอนุมัติ ${level}`,
     historyNoChange: "ไม่เปลี่ยนสายอนุมัติ",
   },
+  /** CD-54 — ถ้อยคำการแจ้งเตือนต่อเหตุการณ์. */
+  notificationTemplates: {
+    title: "ข้อความแจ้งเตือน",
+    subtitle: (company: string) =>
+      `ถ้อยคำที่ระบบใช้แจ้งเตือนแต่ละเหตุการณ์ ของบริษัท ${company} — แก้แล้วมีผลกับการแจ้งเตือนครั้งถัดไป ไม่ต้องแก้โปรแกรม`,
+    customTag: "แก้แล้ว",
+    usingStandard: "ใช้ข้อความมาตรฐาน",
+    customSince: (at: Date) =>
+      `ข้อความของบริษัท · แก้ล่าสุด ${at.toLocaleString("th-TH")}`,
+    titleLabel: "หัวข้อ",
+    bodyLabel: "ข้อความ",
+    variablesHint:
+      "ตัวแปรที่ใช้ได้ (คลิกเพื่อเพิ่มท้ายข้อความ) — ใช้ตัวอื่นไม่ได้",
+    preview: "ตัวอย่าง (ค่าสมมติ)",
+    emailSignature: (company: string) =>
+      `อีเมลจะลงท้ายด้วยหัวจดหมายของ ${company} (ตั้งที่หน้า ตั้งค่า CRM)`,
+    save: "บันทึก",
+    saved: "บันทึกข้อความแล้ว",
+    discard: "ยกเลิกการแก้",
+    reset: "กลับไปใช้ข้อความมาตรฐาน",
+    resetConfirm: "ลบข้อความของบริษัทนี้และกลับไปใช้ข้อความมาตรฐาน?",
+    resetDone: "กลับไปใช้ข้อความมาตรฐานแล้ว",
+    standardIs: (title: string) => `ข้อความมาตรฐาน: “${title}”`,
+  },
+
+  /** CD-55 — ส่งถึงใคร เมื่อไร ช่องทางใด อ่านแล้วหรือยัง. */
+  notificationLog: {
+    title: "บันทึกการแจ้งเตือน",
+    subtitle:
+      "ทุกการแจ้งเตือนที่ระบบส่ง — ส่งถึงใคร เมื่อไร ช่องทางใด และเปิดอ่านแล้วหรือยัง ใช้อ้างอิงเมื่อมีข้อโต้แย้งว่าไม่เคยได้รับแจ้ง",
+    searchPlaceholder: "ผู้รับ (ชื่อ / username / อีเมล) หรือหัวข้อ",
+    anyEvent: "ทุกเหตุการณ์",
+    anyRead: "สถานะการอ่านทั้งหมด",
+    clear: "ล้างตัวกรอง",
+    resultCount: (total: number) =>
+      `พบ ${total.toLocaleString("th-TH")} รายการ`,
+    empty: "ไม่พบการแจ้งเตือนตามเงื่อนไข",
+    unread: "ยังไม่อ่าน",
+    readOpened: "เปิดอ่านแล้ว",
+    readMarkAll: "กด “อ่านทั้งหมด”",
+    readUnknown: "อ่านแล้ว (ไม่ทราบวิธี)",
+    resource: "อ้างถึง",
+    sameResource: "ดูทุกการแจ้งเตือนของรายการนี้",
+    resourceFilter: (type: string, id: string) =>
+      `เฉพาะการแจ้งเตือนของ ${type} ${id}`,
+    channel: "ช่องทาง",
+    target: "ส่งถึง",
+    deliveryStatus: "ผลการส่ง",
+    sentAt: "เวลา",
+    channels: { in_app: "ในระบบ", email: "อีเมล" } as Record<string, string>,
+    statuses: {
+      sent: "ส่งแล้ว",
+      queued: "รอส่ง",
+      failed: "ส่งไม่สำเร็จ",
+    } as Record<string, string>,
+    columns: {
+      createdAt: "เวลาที่แจ้ง",
+      recipient: "ผู้รับ",
+      message: "ข้อความ",
+      channels: "ช่องทาง",
+      read: "การอ่าน",
+    },
+    readNote:
+      "เวลาอ่านคือครั้งแรกที่อ่าน (ไม่เปลี่ยนเมื่อเปิดซ้ำ) · “เปิดอ่านแล้ว” = ผู้รับกดเปิดข้อความนั้น · “กด อ่านทั้งหมด” = ล้างกระดิ่งทีเดียว ไม่ได้ยืนยันว่าเห็นข้อความ · “ไม่ทราบวิธี” = อ่านก่อนระบบเริ่มบันทึกวิธีอ่าน (28 ก.ย. 2569) · หน้านี้อ่านอย่างเดียว",
+  },
+
   audit: {
     title: "Audit Log",
     subtitle: "บันทึกอย่างเดียว แก้ไขหรือลบไม่ได้ (SUP-04)",
@@ -1280,10 +1680,10 @@ export const messages = {
       clear: "ล้างตัวกรอง",
       anyEvent: "ทุกเหตุการณ์",
       anyResource: "ทุกชนิด",
-      actorHint:
-        "ค้นด้วย user id — คัดลอกได้จากหน้าผังทีมและสิทธิ์",
+      actorHint: "ค้นด้วย user id — คัดลอกได้จากหน้าผังทีมและสิทธิ์",
     },
-    resultCount: (total: number) => `พบ ${total.toLocaleString("th-TH")} รายการ`,
+    resultCount: (total: number) =>
+      `พบ ${total.toLocaleString("th-TH")} รายการ`,
     appendOnly:
       "หน้านี้อ่านอย่างเดียวเพราะ API ไม่มีเส้นทางแก้หรือลบ — log เป็น append-only ตาม SUP-04",
   },
@@ -1347,7 +1747,12 @@ export const messages = {
       lastSynced: (when: string) => `ดึงล่าสุด ${when}`,
       never: "ยังไม่เคยดึงจาก SAP — ตอนนี้ยังไม่ตรวจรหัสสินค้าบนใบเสนอราคา",
       syncNow: "ดึงจาก SAP ตอนนี้",
-      synced: (r: { total: number; created: number; updated: number; deactivated: number }) =>
+      synced: (r: {
+        total: number;
+        created: number;
+        updated: number;
+        deactivated: number;
+      }) =>
         `ดึงแล้ว ${r.total} รายการ — ใหม่ ${r.created} · แก้ ${r.updated} · เลิกขาย ${r.deactivated}`,
     },
     title: "คิวส่ง SAP",
@@ -1470,9 +1875,11 @@ export const messages = {
     docTitleEn: "QUOTATION",
     print: "พิมพ์ / บันทึก PDF",
     back: "กลับไปหน้าใบเสนอราคา",
-    printHint: "ในหน้าต่างพิมพ์ เลือก \"บันทึกเป็น PDF\" เพื่อได้ไฟล์ — ตั้งกระดาษ A4 และปิด \"ส่วนหัวและท้ายกระดาษ\"",
+    printHint:
+      'ในหน้าต่างพิมพ์ เลือก "บันทึกเป็น PDF" เพื่อได้ไฟล์ — ตั้งกระดาษ A4 และปิด "ส่วนหัวและท้ายกระดาษ"',
     draftWatermark: "ร่าง",
-    draftBanner: "ใบนี้ยังไม่ผ่านการอนุมัติ — ฉบับพิมพ์มีลายน้ำ \"ร่าง\" และไม่ควรส่งลูกค้า",
+    draftBanner:
+      'ใบนี้ยังไม่ผ่านการอนุมัติ — ฉบับพิมพ์มีลายน้ำ "ร่าง" และไม่ควรส่งลูกค้า',
     taxId: "เลขประจำตัวผู้เสียภาษี",
     tel: "โทร",
     email: "อีเมล",
@@ -1523,12 +1930,14 @@ export const messages = {
     loadFailed: "โหลดการแจ้งเตือนไม่สำเร็จ",
     filter: { all: "ทั้งหมด", unread: "ยังไม่อ่าน" },
     unreadCount: (n: number) => `ยังไม่อ่าน ${n} รายการ`,
-    scopeNote: "แสดงการแจ้งเตือนของบริษัทที่เลือกอยู่ — สลับบริษัทเพื่อดูของบริษัทอื่น",
+    scopeNote:
+      "แสดงการแจ้งเตือนของบริษัทที่เลือกอยู่ — สลับบริษัทเพื่อดูของบริษัทอื่น",
     open: "เปิดรายการ",
     resource: {
       request: "คำขอ",
       approval_case: "งานอนุมัติ",
       opportunity: "โอกาสการขาย",
+      notification_digest: "สรุปรายวัน",
     } as Record<string, string>,
     preferences: {
       title: "ช่องทางการแจ้งเตือน",
@@ -1537,6 +1946,25 @@ export const messages = {
       emailUnavailable:
         "ยังส่งอีเมลจริงไม่ได้จนกว่าจะตั้งค่าเซิร์ฟเวอร์อีเมล — ระบบบันทึกความต้องการของคุณไว้ก่อน",
       saved: "บันทึกการตั้งค่าแล้ว",
+      /* CD-52 */
+      perCategory: "แยกตามเรื่อง",
+      perCategoryHint:
+        "เลือกรับทันที หรือรวมเป็นสรุปวันละครั้ง — รายการยังเข้าคิวงานตามปกติ เปลี่ยนแค่การเตือน",
+      categories: {
+        approval: "รออนุมัติจากฉัน",
+        my_requests: "ผลการอนุมัติคำขอของฉัน",
+        crm: "เตือนงานขาย",
+        sla: "เกินกำหนด / เลยเวลาตอบกลับ",
+      } as Record<string, string>,
+      emailShort: "อีเมล",
+      emailFor: "ส่งอีเมลสำหรับเรื่องนี้ด้วย",
+      immediate: "ทันที",
+      daily: "สรุปรายวัน",
+      alwaysImmediate: "ส่งทันทีเสมอ — เรื่องเร่งด่วนรวมเป็นสรุปไม่ได้",
+      digestHour: "เวลาส่งสรุปรายวัน",
+      digestHint:
+        "ส่งวันทำงานตามปฏิทินบริษัท เวลาไทย — ถ้าไม่มีรายการค้างก็ไม่ส่ง · เรื่องที่ตั้งเป็นสรุปรายวันจะไม่เด้งที่กระดิ่งทีละรายการ",
+      digestUnused: "ใช้เมื่อมีเรื่องที่ตั้งเป็น “สรุปรายวัน”",
     },
   },
   runNumbers: {
@@ -1793,10 +2221,11 @@ export const messages = {
           phone: "โทรศัพท์",
           email: "อีเมล",
           source: "แหล่งที่มา",
+          campaign: "รหัสแคมเปญ",
           note: "บันทึก",
         },
         missingNameColumn:
-          "ไม่พบคอลัมน์ \"ชื่อ Lead (บริษัท/บุคคล)\" — ใช้ไฟล์ต้นแบบเป็นตัวตั้ง",
+          'ไม่พบคอลัมน์ "ชื่อ Lead (บริษัท/บุคคล)" — ใช้ไฟล์ต้นแบบเป็นตัวตั้ง',
         reasonLabels: {
           "name: required": "ไม่มีชื่อ Lead",
           "email: format": "อีเมลไม่ถูกต้อง",
@@ -1840,9 +2269,14 @@ export const messages = {
       },
       board: {
         count: (n: number) => `${n} รายการ`,
+        weighted: (amount: string) => `ถ่วงความน่าจะเป็น ${amount}`,
+        targetTitle: (period: string) => `เป้าเดือน ${period}`,
+        targetLink: "ดูเป้าและพยากรณ์",
+        targetLine: (actual: string, forecast: string, target: string) =>
+          `ขายแล้ว ${actual} · พยากรณ์ ${forecast} / เป้า ${target}`,
         empty: "ไม่มีโอกาสการขายในขั้นนี้",
         dragHint:
-          "ลากการ์ดไปวางในคอลัมน์เพื่อเปลี่ยนขั้น — วางที่ \"ชนะ\" จะพาไปเปิดใบสั่งขาย, วางที่ \"แพ้\" ต้องระบุเหตุผล",
+          'ลากการ์ดไปวางในคอลัมน์เพื่อเปลี่ยนขั้น — วางที่ "ชนะ" จะพาไปเปิดใบสั่งขาย, วางที่ "แพ้" ต้องระบุเหตุผล',
         moved: "เปลี่ยนขั้นแล้ว",
         pageNote: (shown: number, total: number) =>
           `กระดานแสดง ${shown} รายการจากทั้งหมด ${total} รายการ — เปลี่ยนหน้าด้านล่างเพื่อดูที่เหลือ`,
@@ -1960,8 +2394,10 @@ export const messages = {
           skipped: "ไม่ต้องส่ง",
         } as Record<string, string>,
         saleOrderErpHint: {
-          not_ready: "ยังไม่มีรายการสินค้า — เปิดใบสั่งขายจากใบเสนอราคาที่ลูกค้ายอมรับเพื่อส่งเข้า SAP",
-          pending: "บันทึกใน Connect the Dot แล้ว — ระบบจะส่งเข้า SAP ให้อัตโนมัติ",
+          not_ready:
+            "ยังไม่มีรายการสินค้า — เปิดใบสั่งขายจากใบเสนอราคาที่ลูกค้ายอมรับเพื่อส่งเข้า SAP",
+          pending:
+            "บันทึกใน Connect the Dot แล้ว — ระบบจะส่งเข้า SAP ให้อัตโนมัติ",
           skipped: "ยกเลิกก่อนถึง SAP — ไม่มีอะไรต้องส่ง",
         } as Record<string, string>,
         saleOrderErpCancelled: "ยกเลิกใน SAP แล้ว",
@@ -1974,7 +2410,8 @@ export const messages = {
           "มูลค่าใบสั่งขาย = ยอดรวมรายการ (ก่อน VAT) — ใบที่มีรายการส่งเข้า SAP ให้อัตโนมัติ",
         saleOrderNoLinesHint:
           "ไม่ใส่รายการก็เปิดใบได้ แต่ส่งเข้า SAP ไม่ได้จนกว่าจะมีรายการสินค้า",
-        saleOrderNoLines: "ใบสั่งขายนี้ไม่มีรายการสินค้า (เปิดตรงจากโอกาสการขาย)",
+        saleOrderNoLines:
+          "ใบสั่งขายนี้ไม่มีรายการสินค้า (เปิดตรงจากโอกาสการขาย)",
         cancelSaleOrder: "ยกเลิกใบสั่งขาย",
         cancelReason: "เหตุผลที่ยกเลิก",
         cancelled: "ยกเลิกใบสั่งขายแล้ว",
@@ -1984,7 +2421,8 @@ export const messages = {
         lostReasonText: "รายละเอียดเพิ่มเติม",
         lostDone: "บันทึกปิดแพ้แล้ว",
         closedWonBanner: "โอกาสการขายนี้ปิดแล้ว — ชนะ",
-        closedLostBanner: (reason: string) => `โอกาสการขายนี้ปิดแล้ว — แพ้ (${reason})`,
+        closedLostBanner: (reason: string) =>
+          `โอกาสการขายนี้ปิดแล้ว — แพ้ (${reason})`,
         kycWarningTitle: "โอกาสการขายนี้มี product ที่ต้องยืนยันตัวตน (KYC)",
         kycWarningBody: (products: string, customer: string) =>
           `${products} อยู่ในเงื่อนไขต้องทำ KYC และลูกค้า ${customer} ยังไม่ผ่านการยืนยันตัวตน — ยื่น KYC ได้เลย ธุรกรรมยังเดินต่อได้`,
@@ -1993,6 +2431,72 @@ export const messages = {
         fromLead: (name: string) => `มาจาก Lead: ${name}`,
         tabRequests: "คำขอที่อ้างโอกาสการขายนี้",
         raiseRequest: "ยื่นคำขอ",
+        /* CD-79 — การต่อรองเงื่อนไขการค้า. */
+        negotiations: {
+          title: "การต่อรองเงื่อนไข",
+          record: "บันทึกรอบการต่อรอง",
+          empty: "ยังไม่มีการบันทึกการต่อรอง",
+          round: (no: number) => `รอบที่ ${no}`,
+          formTitle: (no: number) => `บันทึกการต่อรองรอบที่ ${no}`,
+          date: "วันที่ต่อรอง",
+          summary: "สรุปการต่อรอง",
+          pickTerm: "เลือกเงื่อนไข",
+          otherTerm: "เงื่อนไขอื่น (นอกรายการ)",
+          otherName: "ชื่อเงื่อนไข",
+          agreedPlaceholder: "ค่าที่ตกลง",
+          note: "หมายเหตุ",
+          addTerm: "เพิ่มเงื่อนไข",
+          standardIs: (value: string) => `มาตรฐาน: ${value}`,
+          otherAlwaysFlagged: "นอกรายการ = นอกมาตรฐาน",
+          noStandards:
+            "บริษัทยังไม่ได้ตั้งเงื่อนไขมาตรฐาน (หน้าตั้งค่า CRM) — ทุกเงื่อนไขจะนับเป็นนอกมาตรฐาน",
+          willSend: (count: number) =>
+            `มีเงื่อนไขนอกมาตรฐาน ${count} รายการ — บันทึกแล้วระบบจะส่งฝ่ายกฎหมายตรวจทันที`,
+          save: "บันทึก",
+          saveAndSend: "บันทึกและส่งฝ่ายกฎหมาย",
+          saved: "บันทึกการต่อรองแล้ว",
+          savedSent: "บันทึกแล้ว และส่งฝ่ายกฎหมายตรวจแล้ว",
+          savedNotSent:
+            "บันทึกแล้ว แต่ยังส่งฝ่ายกฎหมายไม่สำเร็จ — ดูรายละเอียดในการ์ด",
+          nonStandard: "นอกมาตรฐาน",
+          nonStandardCount: (count: number) => `นอกมาตรฐาน ${count} รายการ`,
+          allStandard: "ตามมาตรฐาน",
+          notInList: "— (นอกรายการ)",
+          sentToLegal: "ส่งฝ่ายกฎหมายตรวจแล้ว",
+          openRequest: "เปิดคำขอ",
+          openDraft: "เปิดร่างคำขอ",
+          columns: {
+            term: "เงื่อนไข",
+            standard: "มาตรฐาน",
+            agreed: "ที่ตกลง",
+          },
+        },
+        /* CD-81 — ประสานงานสัญญากับฝ่ายกฎหมายจากหน้าดีล. */
+        contracts: {
+          title: "สัญญา",
+          raise: "ขอจัดทำ/แก้ไขสัญญา",
+          empty: "ยังไม่มีคำขอสัญญาของดีลนี้",
+          cannotRaise: "คุณยังยื่นคำขอประเภทสัญญาไม่ได้ — ติดต่อผู้ดูแลระบบ",
+          draftNo: "(ร่าง)",
+          columns: {
+            no: "เลขคำขอ",
+            stage: "สถานะร่างสัญญา",
+            owner: "ผู้รับผิดชอบ",
+            raised: "วันที่ขอ",
+          },
+          stages: {
+            draft: "ยังไม่ได้ยื่น",
+            submitted: "รอฝ่ายกฎหมายรับเรื่อง",
+            in_progress: "ฝ่ายกฎหมายกำลังร่าง",
+            on_hold: "พักไว้",
+            returned: "ส่งกลับให้แก้ข้อมูล",
+            completed: "ร่างเสร็จ — รอตรวจรับ",
+            approved: "สัญญาพร้อมใช้",
+            closed: "สัญญาพร้อมใช้",
+            rejected: "ฝ่ายกฎหมายไม่รับทำ",
+            cancelled: "ยกเลิก",
+          } as Record<string, string>,
+        },
         noRequests: "ยังไม่มีคำขอที่อ้างโอกาสการขายนี้",
         edit: "แก้ไข",
         quotationsTitle: "ใบเสนอราคา",
@@ -2000,7 +2504,8 @@ export const messages = {
         activitiesTitle: "กิจกรรมและการติดตาม",
         pendingTitle: "นัดติดตามที่ค้างอยู่",
         doneTitle: (n: number) => `ทำแล้ว · ${n}`,
-        noPending: "ไม่มีนัดติดตามค้าง — ใส่กำหนดตอนลงกิจกรรมเพื่อนัดครั้งถัดไป",
+        noPending:
+          "ไม่มีนัดติดตามค้าง — ใส่กำหนดตอนลงกิจกรรมเพื่อนัดครั้งถัดไป",
         noActivities: "ยังไม่มีกิจกรรม",
         lastActivity: "กิจกรรมล่าสุด",
         nextFollowUp: "ติดตามครั้งถัดไป",
@@ -2118,7 +2623,8 @@ export const messages = {
           margin: "margin",
           minMargin: (pct: string) => `เกณฑ์ที่ใช้ตัดสิน: ${pct}%`,
         },
-        unsavedPreview: "ตัวเลขด้านล่างคำนวณจากที่แก้อยู่ — บันทึกแล้วระบบจะคำนวณยืนยันอีกครั้ง",
+        unsavedPreview:
+          "ตัวเลขด้านล่างคำนวณจากที่แก้อยู่ — บันทึกแล้วระบบจะคำนวณยืนยันอีกครั้ง",
         versionsTitle: "เวอร์ชันของใบนี้",
         current: "ฉบับที่กำลังดู",
         saleOrdersTitle: "ใบสั่งขายที่เปิดตามใบนี้",
@@ -2134,15 +2640,18 @@ export const messages = {
         reasonHint:
           "ระบบจะสร้างร่างคำขออนุมัติพร้อมตัวเลขจากใบนี้ให้ — คุณต้องเปิดคำขอเพื่อแนบใบเสนอราคาฉบับร่าง เลือกผู้รับเรื่อง แล้วยื่นเอง",
         reasonPlaceholder: "เหตุผลที่ต้องเสนอราคา margin ต่ำ",
-        requestDrafted: "สร้างร่างคำขออนุมัติแล้ว — เปิดคำขอเพื่อแนบเอกสารและยื่น",
+        requestDrafted:
+          "สร้างร่างคำขออนุมัติแล้ว — เปิดคำขอเพื่อแนบเอกสารและยื่น",
         pendingBanner:
           "ใบนี้รออนุมัติ margin — สถานะจะเปลี่ยนเองเมื่อคำขออนุมัติได้ผล (อนุมัติ = พร้อมส่ง, ไม่อนุมัติ/ยกเลิก = กลับเป็นร่าง)",
         openRequest: (no: string) => `เปิดคำขอ ${no}`,
         requestDraftNo: "ร่างคำขอ (ยังไม่ยื่น)",
         requestStatus: (status: string) => `สถานะคำขอ: ${status}`,
-        lockedBanner: "ใบนี้ยื่นแล้ว แก้ไขไม่ได้ — ต้องการเปลี่ยนให้ออกเวอร์ชันใหม่",
+        lockedBanner:
+          "ใบนี้ยื่นแล้ว แก้ไขไม่ได้ — ต้องการเปลี่ยนให้ออกเวอร์ชันใหม่",
         supersededBanner: "ฉบับนี้ถูกแทนด้วยเวอร์ชันใหม่แล้ว",
-        expiredBanner: "ใบนี้หมดอายุแล้ว — ส่งหรือบันทึกลูกค้ายอมรับไม่ได้ ออกเวอร์ชันใหม่เพื่อกำหนดวันใหม่",
+        expiredBanner:
+          "ใบนี้หมดอายุแล้ว — ส่งหรือบันทึกลูกค้ายอมรับไม่ได้ ออกเวอร์ชันใหม่เพื่อกำหนดวันใหม่",
         send: "บันทึกว่าส่งลูกค้าแล้ว",
         sent: "บันทึกการส่งแล้ว",
         accept: "ลูกค้ายอมรับ",
@@ -2162,7 +2671,8 @@ export const messages = {
         cancelReason: "เหตุผลที่ยกเลิก",
         cancelled: "ยกเลิกใบเสนอราคาแล้ว",
         cancelledBanner: (reason: string) => `ใบนี้ถูกยกเลิก — ${reason}`,
-        openSaleOrderHint: "ลูกค้ายอมรับแล้ว — ไปหน้าโอกาสการขายเพื่อเปิดใบสั่งขายตามใบนี้",
+        openSaleOrderHint:
+          "ลูกค้ายอมรับแล้ว — ไปหน้าโอกาสการขายเพื่อเปิดใบสั่งขายตามใบนี้",
         goOpportunity: "ไปหน้าโอกาสการขาย",
         created: (no: string) => `สร้างใบเสนอราคา ${no} แล้ว`,
       },
@@ -2216,7 +2726,8 @@ export const messages = {
       nameEn: "ชื่อ (อังกฤษ)",
       taxId: "เลขผู้เสียภาษี 13 หลัก",
       branchCode: "รหัสสาขา (5 หลัก)",
-      branchCodeHint: "00000 = สำนักงานใหญ่ · สาขาย่อยสร้างเป็นลูกค้ารายใหม่ด้วยเลขภาษีเดิม + รหัสสาขาของตน",
+      branchCodeHint:
+        "00000 = สำนักงานใหญ่ · สาขาย่อยสร้างเป็นลูกค้ารายใหม่ด้วยเลขภาษีเดิม + รหัสสาขาของตน",
       branchName: "ชื่อสาขา (ถ้ามี)",
       branchNamePlaceholder: "เช่น สาขาราชวงศ์",
       accountOwner: "ผู้รับผิดชอบบัญชี (account owner)",
@@ -2229,7 +2740,8 @@ export const messages = {
       saved: "บันทึกการแก้ไขแล้ว",
 
       locationName: "ชื่อที่อยู่/ไซต์",
-      locationNameHint: "เช่น สำนักงาน / ไซต์โรงงานบางปู / ห้องเซิร์ฟเวอร์ชั้น 3",
+      locationNameHint:
+        "เช่น สำนักงาน / ไซต์โรงงานบางปู / ห้องเซิร์ฟเวอร์ชั้น 3",
       locationRoles: "ใช้ทำอะไร",
       roleBilling: "ใช้ออกใบกำกับ",
       roleSite: "จุดติดตั้ง/รับของ",
@@ -2316,8 +2828,7 @@ export const messages = {
       reasonRequired: "ต้องระบุเหตุผล",
       suspendTitle: "พักใช้งานลูกค้า",
       deactivateTitle: "ปิดใช้งานลูกค้า",
-      deactivateHint:
-        "ข้อมูลไม่หายและค้นย้อนได้เสมอ — ระบบนี้ไม่มีการลบลูกค้า",
+      deactivateHint: "ข้อมูลไม่หายและค้นย้อนได้เสมอ — ระบบนี้ไม่มีการลบลูกค้า",
       statusChanged: "เปลี่ยนสถานะแล้ว",
       mergedInto: (code: string) =>
         `ลูกค้ารายนี้ถูกรวมเข้ากับ ${code} — แก้ไขที่รายหลักแทน`,
@@ -2394,24 +2905,69 @@ export const messages = {
       },
       /** C360-01 — โครงหน้าครบตั้งแต่แรก: แท็บที่ยังไม่มาระบุระยะไว้เลย */
       futureTabs: {
-        opportunities: { label: "โอกาสการขาย", phase: "มาพร้อมโมดูล Sales (CRM ระยะถัดไป)" },
+        opportunities: {
+          label: "โอกาสการขาย",
+          phase: "มาพร้อมโมดูล Sales (CRM ระยะถัดไป)",
+        },
         quotations: {
           label: "ใบเสนอราคา",
           phase: "มาพร้อมโมดูล Sales (CRM ระยะถัดไป)",
         },
         contracts: { label: "สัญญา", phase: "มาพร้อมโมดูล Legal (ระยะ 2)" },
         projects: { label: "โครงการ", phase: "มาพร้อมโมดูล PM (ระยะ 3)" },
-        cases: { label: "เคส", phase: "มาพร้อมงานเคส/ข้อร้องเรียน (CRM ระยะถัดไป)" },
+        cases: {
+          label: "เคส",
+          phase: "มาพร้อมงานเคส/ข้อร้องเรียน (CRM ระยะถัดไป)",
+        },
         financials: {
           label: "การเงิน",
-          phase: "มาพร้อมตัวเชื่อม SAP (ชุดงาน D) — ยอดค้างชำระอ่านจาก SAP ที่เดียว",
+          phase:
+            "มาพร้อมตัวเชื่อม SAP (ชุดงาน D) — ยอดค้างชำระอ่านจาก SAP ที่เดียว",
         },
         assets: {
           label: "อุปกรณ์",
-          phase: "มาพร้อมโมดูล Service & Support — ทะเบียนอุปกรณ์สร้างอัตโนมัติตอนส่งมอบ",
+          phase:
+            "มาพร้อมโมดูล Service & Support — ทะเบียนอุปกรณ์สร้างอัตโนมัติตอนส่งมอบ",
         },
       },
       futureTabNote: (phase: string) => `แท็บนี้ ${phase}`,
+      /** CD-89 — แท็บการเงิน: ใบแจ้งหนี้และการรับชำระจาก SAP */
+      tabFinancials: "การเงิน",
+      invoices: {
+        source: {
+          mock: "รอเชื่อม SAP จริง — ระบบยังใช้ตัวเชื่อมจำลอง จึงไม่แสดงตัวเลข",
+          not_synced: "ลูกค้ารายนี้ยังไม่ได้ส่งเข้า SAP — ยังไม่มีใบแจ้งหนี้",
+          unavailable: "อ่านข้อมูลจาก SAP ไม่ได้ในขณะนี้ — ลองใหม่ภายหลัง",
+        } as Record<string, string>,
+        openSummary: (count: number, amount: string) =>
+          `ค้างชำระ ${count} ใบ · ${amount} บาท`,
+        overdueSummary: (count: number, amount: string) =>
+          `เกินกำหนด ${count} ใบ · ${amount} บาท`,
+        asOf: (when: string) => `ข้อมูลจาก SAP ณ ${when}`,
+        empty: "ยังไม่มีใบแจ้งหนี้ใน SAP",
+        overdueTag: "เกินกำหนด",
+        status: {
+          open: "ค้างชำระ",
+          paid: "ชำระแล้ว",
+          cancelled: "ยกเลิก",
+        } as Record<string, string>,
+        statusColor: {
+          open: "gold",
+          paid: "green",
+          cancelled: "default",
+        } as Record<string, string>,
+        columns: {
+          docNo: "เลขที่",
+          reference: "อ้างอิง",
+          issued: "วันที่ออก",
+          due: "ครบกำหนด",
+          total: "ยอด",
+          paid: "ชำระแล้ว",
+          outstanding: "คงค้าง",
+          status: "สถานะ",
+        },
+        note: "อ่านจาก SAP (read-only) — 50 ใบล่าสุด รวมใบจากระบบสายบัญชีทุกระบบ",
+      },
     },
 
     /** CM-10 — นำเข้าลูกค้าเดิมจาก Excel (admin.crm.manage). */
@@ -2424,15 +2980,17 @@ export const messages = {
       templateFile: "customer-import-template.xlsx",
       templateHint:
         "คอลัมน์เลขผู้เสียภาษี/รหัสสาขา/รหัสไปรษณีย์ ตั้งเป็นข้อความไว้แล้ว — อย่าเปลี่ยนเป็นตัวเลข เลข 0 นำหน้าจะหาย",
-      uploadHint: "ลากไฟล์ .xlsx มาวาง หรือคลิกเลือกไฟล์ (ใช้ชีตแรก แถวแรกเป็นหัวคอลัมน์)",
+      uploadHint:
+        "ลากไฟล์ .xlsx มาวาง หรือคลิกเลือกไฟล์ (ใช้ชีตแรก แถวแรกเป็นหัวคอลัมน์)",
       parsing: "กำลังอ่านไฟล์…",
-      parsedRows: (n: string) => `อ่านได้ ${n} แถว — ตรวจสอบผลด้านล่างก่อนยืนยัน`,
+      parsedRows: (n: string) =>
+        `อ่านได้ ${n} แถว — ตรวจสอบผลด้านล่างก่อนยืนยัน`,
       checking: "กำลังตรวจกับระบบ…",
       importing: "กำลังนำเข้า…",
       confirm: "ยืนยันนำเข้า",
       reupload: "เลือกไฟล์ใหม่",
       emptyFile: "ไฟล์ไม่มีข้อมูล (ต้องมีหัวคอลัมน์ + อย่างน้อย 1 แถว)",
-      missingNameColumn: "ไม่พบคอลัมน์ \"ชื่อ (ไทย)\" — ใช้ไฟล์ต้นแบบเป็นตัวตั้ง",
+      missingNameColumn: 'ไม่พบคอลัมน์ "ชื่อ (ไทย)" — ใช้ไฟล์ต้นแบบเป็นตัวตั้ง',
       done: (n: string) => `นำเข้าสำเร็จ ${n} ราย`,
       backToList: "ไปหน้าทะเบียนลูกค้า",
       summary: {
@@ -2454,8 +3012,10 @@ export const messages = {
         error: "ติดปัญหา",
       } as Record<string, string>,
       headOfficeNote: (code: string) => `ผูกเป็นสาขาของ ${code}`,
-      headOfficeRowNote: (row: string) => `ผูกเป็นสาขาของรายในแถว ${row} ของไฟล์นี้`,
-      duplicateOfRow: (row: string) => `เลขภาษี+สาขาซ้ำกับแถว ${row} ของไฟล์นี้`,
+      headOfficeRowNote: (row: string) =>
+        `ผูกเป็นสาขาของรายในแถว ${row} ของไฟล์นี้`,
+      duplicateOfRow: (row: string) =>
+        `เลขภาษี+สาขาซ้ำกับแถว ${row} ของไฟล์นี้`,
       possibleDuplicate: (code: string) =>
         `ไม่มีเลขภาษี แต่ชื่อตรงกับลูกค้า ${code} ที่มีอยู่แล้ว — ตรวจก่อนยืนยัน จะถูกสร้างเป็นรายใหม่`,
       possibleDuplicateRow: (row: string) =>
@@ -2471,8 +3031,10 @@ export const messages = {
         "branch_code: format": "รหัสสาขาต้องเป็นตัวเลข 5 หลัก",
         "postal_code: format": "รหัสไปรษณีย์ต้องเป็นตัวเลข 5 หลัก",
         "contact_email: format": "อีเมลไม่ถูกต้อง",
-        duplicate_race: "มีลูกค้าเลขภาษี+สาขานี้ถูกสร้างพร้อมกันจากที่อื่น — นำเข้าซ้ำเพื่อให้ข้ามแถวนี้",
-        internal: "ระบบขัดข้องระหว่างนำเข้าแถวนี้ — ลองนำเข้าใหม่ (แถวที่เข้าแล้วจะถูกข้าม)",
+        duplicate_race:
+          "มีลูกค้าเลขภาษี+สาขานี้ถูกสร้างพร้อมกันจากที่อื่น — นำเข้าซ้ำเพื่อให้ข้ามแถวนี้",
+        internal:
+          "ระบบขัดข้องระหว่างนำเข้าแถวนี้ — ลองนำเข้าใหม่ (แถวที่เข้าแล้วจะถูกข้าม)",
       } as Record<string, string>,
       headers: {
         type: "ประเภท",
@@ -2520,10 +3082,9 @@ export const messages = {
       inactiveTag: "ปิดใช้",
       valueInUse: "กลุ่มนี้มีลูกค้าถูกจัดอยู่ — ปิดใช้งานแทนการลบ",
       deleteValueConfirm: "ลบค่านี้? (ลบได้เฉพาะค่าที่ยังไม่มีลูกค้าใช้)",
-      sectionConfig: "รูปแบบรหัสลูกค้าและการตรวจซ้ำ",
-      codePrefix: "Prefix รหัสลูกค้า",
-      codePadding: "จำนวนหลักลำดับ",
-      codePreview: (example: string) => `ตัวอย่างรหัสที่จะออก: ${example}`,
+      sectionConfig: "การตรวจลูกค้าซ้ำ",
+      codeFormatMoved: "รูปแบบรหัสลูกค้า (prefix / จำนวนหลัก) ตั้งที่หน้า",
+      codeFormatLink: "เลขรันเอกสาร",
       dedupThreshold: "ระดับความคล้ายที่เตือน (0.5–1.0)",
       dedupThresholdHint:
         "ยิ่งต่ำยิ่งเตือนบ่อย — ค่าตั้งต้น 0.85 · จูนได้ระหว่าง UAT",
@@ -2532,6 +3093,24 @@ export const messages = {
       quotationValidityDays: "อายุใบเสนอราคา (วัน)",
       vatPct: "VAT (%)",
       quotationApprovalTypeCode: "ประเภทคำขอที่ใช้ขออนุมัติ margin ต่ำ",
+      sectionTargets: "เป้าขาย",
+      targetApprovalTypeCode: "ประเภทคำขอที่ใช้ขออนุมัติการปรับเป้า",
+      /* CD-79 */
+      sectionTradeTerms: "เงื่อนไขการค้ามาตรฐาน",
+      tradeTermsHint:
+        "การต่อรองที่ตกลงค่าต่างจากมาตรฐาน (หรือเงื่อนไขนอกรายการ) จะถูกทำเครื่องหมายและส่งฝ่ายกฎหมายตรวจอัตโนมัติ — ลบออกจากรายการ = ปิดใช้ (รอบการต่อรองเก่ายังเก็บค่ามาตรฐาน ณ วันนั้น)",
+      tradeTermCode: "รหัส",
+      tradeTermName: "เงื่อนไข",
+      tradeTermStandard: "ค่ามาตรฐาน",
+      tradeTermAdd: "เพิ่มเงื่อนไข",
+      tradeTermSave: "บันทึกเงื่อนไขมาตรฐาน",
+      /* CD-81 */
+      sectionContracts: "สัญญา",
+      contractRequestTypeCode: "ประเภทคำขอที่ฝ่ายกฎหมายรับทำ/แก้สัญญา",
+      contractHint:
+        "หน้าดีลจะมีการ์ด “สัญญา” พร้อมปุ่มขอจัดทำ/แก้ไขสัญญาด้วยประเภทนี้ และติดตามสถานะร่างได้จากหน้าดีล — เว้นว่าง = ไม่แสดงการ์ด · ประเภทคำขอต้องเปิดให้บริษัทนี้ใช้",
+      targetHint:
+        "ปรับเป้าของเดือนที่เริ่มแล้วต้องผ่านคำขอประเภทนี้ (ผู้อนุมัติตามตารางอำนาจอนุมัติของประเภท) — เว้นว่าง = ปรับเป้าระหว่างเดือนไม่ได้ · ตั้งเป้าเดือนหน้าทำได้เสมอ",
       quotationHint:
         "ใบเสนอราคาที่ margin ต่ำกว่าเกณฑ์ต้องผ่านคำขออนุมัติก่อนส่งลูกค้า — เกณฑ์ที่ใช้ถูกเก็บลงใบตอนยื่น แก้ค่าที่นี่ไม่ตัดสินใบเดิมใหม่ · ประเภทคำขอต้องเปิดให้บริษัทนี้ใช้",
       letterhead: {
@@ -2541,7 +3120,8 @@ export const messages = {
         noLogo: "ยังไม่มีโลโก้",
         chooseLogo: "เลือกไฟล์โลโก้",
         removeLogo: "ลบโลโก้",
-        logoHint: "png, jpeg หรือ webp ไม่เกิน 360KB — แนะนำพื้นหลังโปร่งใส สูงประมาณ 200px",
+        logoHint:
+          "png, jpeg หรือ webp ไม่เกิน 360KB — แนะนำพื้นหลังโปร่งใส สูงประมาณ 200px",
         logoType: "โลโก้ต้องเป็นไฟล์ png, jpeg หรือ webp",
         logoTooLarge: "ไฟล์โลโก้ใหญ่เกิน 360KB — ย่อขนาดก่อนอัปโหลด",
         nameTh: "ชื่อบริษัท (ไทย) ตามทะเบียน",
@@ -2553,7 +3133,8 @@ export const messages = {
         email: "อีเมล",
         website: "เว็บไซต์",
         terms: "เงื่อนไขมาตรฐานท้ายใบเสนอราคา",
-        termsPlaceholder: "เช่น 1. ราคานี้รวมค่าติดตั้งแล้ว\n2. รับประกันอุปกรณ์ 1 ปี",
+        termsPlaceholder:
+          "เช่น 1. ราคานี้รวมค่าติดตั้งแล้ว\n2. รับประกันอุปกรณ์ 1 ปี",
         save: "บันทึกหัวกระดาษ",
       },
       sectionFollowUp: "การติดตามโอกาสการขาย",
@@ -2577,7 +3158,9 @@ export function thaiForPermission(code: string): string {
 }
 
 /** Maps a callback `?error=` code to Thai copy, with a safe fallback. */
-export function loginErrorMessage(code: string | null | undefined): string | null {
+export function loginErrorMessage(
+  code: string | null | undefined,
+): string | null {
   if (!code) return null;
 
   const errors = messages.login.errors as Record<string, string>;

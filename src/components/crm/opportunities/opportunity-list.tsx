@@ -25,6 +25,8 @@ import { OpportunityBoard } from "@/components/crm/opportunities/opportunity-boa
 import { SearchSelect } from "@/components/ui/search-select";
 import { ProductMultiPicker } from "@/components/crm/quotations/product-picker";
 import { appApi } from "@/lib/api/client";
+import type { OpportunityStageSummary } from "@/lib/api/sales";
+import type { SalesTargetRow } from "@/lib/api/sales-targets";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import type {
@@ -84,6 +86,8 @@ export function OpportunityList({
   customers,
   lostReasons,
   canManage,
+  stageSummary,
+  targets = [],
 }: {
   rows: OpportunityRow[];
   total: number;
@@ -101,6 +105,10 @@ export function OpportunityList({
   /** ตัวเลือกเหตุผลปิดแพ้ — ใช้เมื่อลากการ์ดไปคอลัมน์ "แพ้". */
   lostReasons: OpportunityLostReason[];
   canManage: boolean;
+  /** CD-74 — ยอดต่อขั้นจาก server; ไม่มี = รวมจากการ์ดที่โหลด. */
+  stageSummary?: OpportunityStageSummary[];
+  /** CD-74 — เป้าเดือนนี้ที่เทียบบนกระดาน. */
+  targets?: SalesTargetRow[];
 }) {
   const router = useRouter();
   const { message } = App.useApp();
@@ -122,7 +130,9 @@ export function OpportunityList({
   const [productCodes, setProductCodes] = useState<string[]>([]);
 
   const partyReady =
-    partyMode === "existing" ? Boolean(customerId) : Boolean(prospectName.trim());
+    partyMode === "existing"
+      ? Boolean(customerId)
+      : Boolean(prospectName.trim());
 
   const emailInvalid =
     partyMode === "prospect" &&
@@ -132,7 +142,10 @@ export function OpportunityList({
   /** รับเฉพาะรหัสที่ DTO รับ แล้วบอกทันทีว่าตัวไหนถูกตัดออก. */
   /** ทุกอย่างที่หน้านี้อ่านจาก URL — ตัวกรอง มุมมอง และหน้าที่เปิดอยู่. */
   function navigate(
-    next: Partial<typeof filters> & { layout?: OpportunityLayout; page?: number },
+    next: Partial<typeof filters> & {
+      layout?: OpportunityLayout;
+      page?: number;
+    },
   ) {
     const merged = { ...filters, layout, ...next };
     const params = new URLSearchParams();
@@ -165,16 +178,19 @@ export function OpportunityList({
             prospect_email: prospectEmail.trim() || undefined,
           };
 
-    const result = await appApi<{ id: string; opportunityCode: string }>("opportunities", {
-      method: "POST",
-      body: JSON.stringify({
-        ...party,
-        title: title.trim(),
-        amount: amount ?? undefined,
-        expected_close_at: expectedClose ?? undefined,
-        product_codes: productCodes.length ? productCodes : undefined,
-      }),
-    });
+    const result = await appApi<{ id: string; opportunityCode: string }>(
+      "opportunities",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          ...party,
+          title: title.trim(),
+          amount: amount ?? undefined,
+          expected_close_at: expectedClose ?? undefined,
+          product_codes: productCodes.length ? productCodes : undefined,
+        }),
+      },
+    );
 
     setBusy(false);
     if (!result.ok) {
@@ -265,10 +281,14 @@ export function OpportunityList({
             canManage={canManage}
             // เปิดใบสั่งขายต้องสร้างทะเบียนลูกค้า — กล่องนั้นอยู่ที่หน้ารายละเอียด
             onWin={(row) =>
-              router.push(`${ROUTES.opportunityDetail(row.id)}?action=sale-order`)
+              router.push(
+                `${ROUTES.opportunityDetail(row.id)}?action=sale-order`,
+              )
             }
             onLose={(row) => setLosing(row)}
             onMoved={() => router.refresh()}
+            stageSummary={stageSummary}
+            targets={targets}
           />
           {total > pageSize && (
             <Pagination
@@ -282,72 +302,73 @@ export function OpportunityList({
           )}
         </>
       ) : (
-      <Table<OpportunityRow>
-        size="small"
-        rowKey="id"
-        dataSource={rows}
-        locale={{ emptyText: m.empty }}
-        pagination={{
-          current: page,
-          pageSize,
-          total,
-          hideOnSinglePage: true,
-          onChange: (next) => navigate({ page: next }),
-        }}
-        columns={[
-          {
-            title: m.columns.code,
-            dataIndex: "opportunityCode",
-            width: 150,
-            render: (code: string, row) => (
-              <Link href={ROUTES.opportunityDetail(row.id)}>{code}</Link>
-            ),
-          },
-          { title: m.columns.title, dataIndex: "title" },
-          {
-            title: m.columns.customer,
-            key: "party",
-            render: (_: unknown, row) => <OpportunityParty row={row} />,
-          },
-          {
-            title: m.columns.stage,
-            dataIndex: "stage",
-            width: 110,
-            render: (stage: string) => (
-              <Tag color={m.stageColor[stage]}>{m.stage[stage] ?? stage}</Tag>
-            ),
-          },
-          {
-            title: m.columns.amount,
-            dataIndex: "amount",
-            width: 130,
-            align: "right" as const,
-            render: (amount: OpportunityRow["amount"]) => formatAmount(amount),
-          },
-          {
-            title: m.columns.expectedClose,
-            dataIndex: "expectedCloseAt",
-            width: 120,
-            render: (at: string | null) =>
-              at ? dayjs(at).format("D MMM YY") : "—",
-          },
-          {
-            title: m.columns.nextFollowUp,
-            key: "followUp",
-            width: 170,
-            render: (_: unknown, row) => (
-              <Space size={4} wrap>
-                <span>
-                  {row.nextFollowUpAt
-                    ? dayjs(row.nextFollowUpAt).format("D MMM YY HH:mm")
-                    : "—"}
-                </span>
-                <FollowUpTags row={row} />
-              </Space>
-            ),
-          },
-        ]}
-      />
+        <Table<OpportunityRow>
+          size="small"
+          rowKey="id"
+          dataSource={rows}
+          locale={{ emptyText: m.empty }}
+          pagination={{
+            current: page,
+            pageSize,
+            total,
+            hideOnSinglePage: true,
+            onChange: (next) => navigate({ page: next }),
+          }}
+          columns={[
+            {
+              title: m.columns.code,
+              dataIndex: "opportunityCode",
+              width: 150,
+              render: (code: string, row) => (
+                <Link href={ROUTES.opportunityDetail(row.id)}>{code}</Link>
+              ),
+            },
+            { title: m.columns.title, dataIndex: "title" },
+            {
+              title: m.columns.customer,
+              key: "party",
+              render: (_: unknown, row) => <OpportunityParty row={row} />,
+            },
+            {
+              title: m.columns.stage,
+              dataIndex: "stage",
+              width: 110,
+              render: (stage: string) => (
+                <Tag color={m.stageColor[stage]}>{m.stage[stage] ?? stage}</Tag>
+              ),
+            },
+            {
+              title: m.columns.amount,
+              dataIndex: "amount",
+              width: 130,
+              align: "right" as const,
+              render: (amount: OpportunityRow["amount"]) =>
+                formatAmount(amount),
+            },
+            {
+              title: m.columns.expectedClose,
+              dataIndex: "expectedCloseAt",
+              width: 120,
+              render: (at: string | null) =>
+                at ? dayjs(at).format("D MMM YY") : "—",
+            },
+            {
+              title: m.columns.nextFollowUp,
+              key: "followUp",
+              width: 170,
+              render: (_: unknown, row) => (
+                <Space size={4} wrap>
+                  <span>
+                    {row.nextFollowUpAt
+                      ? dayjs(row.nextFollowUpAt).format("D MMM YY HH:mm")
+                      : "—"}
+                  </span>
+                  <FollowUpTags row={row} />
+                </Space>
+              ),
+            },
+          ]}
+        />
       )}
 
       <LoseOpportunityModal
@@ -365,7 +386,9 @@ export function OpportunityList({
         title={m.newOpportunity}
         okText={m.form.save}
         confirmLoading={busy}
-        okButtonProps={{ disabled: !partyReady || !title.trim() || emailInvalid }}
+        okButtonProps={{
+          disabled: !partyReady || !title.trim() || emailInvalid,
+        }}
         onCancel={() => setCreating(false)}
         onOk={() => void create()}
         destroyOnHidden

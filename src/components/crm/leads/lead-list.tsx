@@ -3,7 +3,16 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Button, Checkbox, Input, Pagination, Segmented, Space, Table, Tag } from "antd";
+import {
+  Button,
+  Checkbox,
+  Input,
+  Pagination,
+  Segmented,
+  Space,
+  Table,
+  Tag,
+} from "antd";
 import Text from "antd/es/typography/Text";
 import {
   ConvertLeadModal,
@@ -185,14 +194,24 @@ export function LeadList({
               title: m.columns.contact,
               dataIndex: "contactName",
               render: (contactName: string | null, row) =>
-                [contactName, row.phone, row.email].filter(Boolean).join(" · ") ||
-                "—",
+                [contactName, row.phone, row.email]
+                  .filter(Boolean)
+                  .join(" · ") || "—",
             },
             {
               title: m.columns.source,
               dataIndex: "sourceCode",
               width: 140,
-              render: (source: string | null) => source ?? "—",
+              render: (source: string | null, row) => (
+                <span>
+                  {source ?? "—"}
+                  {row.campaign && (
+                    <span className="block text-xs text-gray-500">
+                      {row.campaign.code}
+                    </span>
+                  )}
+                </span>
+              ),
             },
             {
               title: m.columns.status,
@@ -204,7 +223,11 @@ export function LeadList({
                     {m.status[status] ?? status}
                   </Tag>
                   {row.convertedOpportunity && (
-                    <Link href={ROUTES.opportunityDetail(row.convertedOpportunity.id)}>
+                    <Link
+                      href={ROUTES.opportunityDetail(
+                        row.convertedOpportunity.id,
+                      )}
+                    >
                       <Text type="secondary" className="text-xs">
                         {row.convertedOpportunity.opportunityCode}
                       </Text>
@@ -278,7 +301,9 @@ export function LeadList({
         lead={converting}
         customers={customers}
         onClose={() => setConverting(null)}
-        onDone={(opportunityId) => router.push(ROUTES.opportunityDetail(opportunityId))}
+        onDone={(opportunityId) =>
+          router.push(ROUTES.opportunityDetail(opportunityId))
+        }
       />
     </div>
   );

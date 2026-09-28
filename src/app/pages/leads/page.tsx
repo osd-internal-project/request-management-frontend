@@ -18,6 +18,8 @@ export default async function LeadsPage({
     view?: string;
     layout?: string;
     page?: string;
+    /** CD-71 — มาจากลิงก์ "ดู Lead" ในหน้าแคมเปญ. */
+    campaign_id?: string;
   }>;
 }) {
   const session = await getSession();
@@ -34,6 +36,7 @@ export default async function LeadsPage({
       search: query.search,
       status: query.status,
       view: query.view === "mine" ? "mine" : undefined,
+      campaign_id: query.campaign_id,
       page,
       page_size: pageSize,
     }),

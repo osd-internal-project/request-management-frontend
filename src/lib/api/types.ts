@@ -221,6 +221,16 @@ export interface FormSchemaProperty {
   /** A long answer; rendered as a textarea rather than a single line. */
   "x-multiline"?: boolean;
   /**
+   * CD-80 — worked out by the system, never typed: shown read-only and
+   * recomputed by the server on save. See `src/lib/computed-fields.ts`.
+   */
+  "x-computed"?: {
+    kind: "margin_pct";
+    value: string;
+    discount_pct?: string;
+    cost: string;
+  };
+  /**
    * Display position, ascending.
    *
    * Required because `formSchema` is a `jsonb` column and Postgres does not
@@ -255,18 +265,13 @@ export function isMultilineField(property: FormSchemaProperty): boolean {
 
 /** What a field is, for editing and rendering. Mirrors `typeOf` in core-service `form-schema.ts`. */
 export type FieldKind =
-  | "text"
-  | "number"
-  | "boolean"
-  | "date"
-  | "datetime"
-  | "select"
-  | "table";
+  "text" | "number" | "boolean" | "date" | "datetime" | "select" | "table";
 
 export function fieldKindOf(property: FormSchemaProperty): FieldKind {
   if (property.enum?.length) return "select";
   if (property.type === "array") return "table";
-  if (property.type === "number" || property.type === "integer") return "number";
+  if (property.type === "number" || property.type === "integer")
+    return "number";
   if (property.type === "boolean") return "boolean";
   if (property.format === "date") return "date";
   if (property.format === "date-time") return "datetime";
@@ -314,10 +319,33 @@ export function isRequiredDoc(doc: RequiredDoc): boolean {
   return doc.required !== false;
 }
 
+/** CD-67 — ระดับความรุนแรงของเคส, worst first. */
+export type RequestSeverity = "critical" | "high" | "medium" | "low";
+export const REQUEST_SEVERITIES: RequestSeverity[] = [
+  "critical",
+  "high",
+  "medium",
+  "low",
+];
+export type SeverityTargets = Record<
+  RequestSeverity,
+  { responseHours: number; resolutionHours: number }
+>;
+
+/** CD-67 — what A2 offers when a type is first made a case (same as the backend). */
+export const DEFAULT_SEVERITY_TARGETS: SeverityTargets = {
+  critical: { responseHours: 1, resolutionHours: 4 },
+  high: { responseHours: 4, resolutionHours: 24 },
+  medium: { responseHours: 8, resolutionHours: 72 },
+  low: { responseHours: 24, resolutionHours: 120 },
+};
+
 export interface RequestType {
   id?: string;
   code: string;
   name: string;
+  /** CD-67 — set = a case type: severity required, clocks from these targets. */
+  severityTargets?: SeverityTargets | null;
   /**
    * The team that receives this type — §16 A2's `ทีมผู้รับ`.
    *
@@ -446,7 +474,8 @@ export function missingRequiredSubRequests(
     .filter(
       (item) =>
         !children.some(
-          (child) => child.typeCode === item.code && child.status !== "cancelled",
+          (child) =>
+            child.typeCode === item.code && child.status !== "cancelled",
         ),
     )
     .map((item) => item.code);
@@ -581,8 +610,10 @@ export interface RequestPerson {
 }
 
 /** The full request as หน้าที่ 4 needs it. */
-export interface RequestDetail
-  extends Omit<RequestRow, "approvalCases" | "requester" | "receiver" | "assignee"> {
+export interface RequestDetail extends Omit<
+  RequestRow,
+  "approvalCases" | "requester" | "receiver" | "assignee"
+> {
   /** Richer than the list's two columns — see {@link RequestPerson}. */
   requester?: RequestPerson | null;
   receiver?: RequestPerson | null;
@@ -716,7 +747,13 @@ export interface RequestRow {
     state: string;
     dueAt: string | null;
     breachedAt?: string | null;
+    /** CD-67 — the response clock, cases only. */
+    responseDueAt?: string | null;
+    respondedAt?: string | null;
+    responseBreachedAt?: string | null;
   } | null;
+  /** CD-67 — ระดับความรุนแรง (เฉพาะเคส). */
+  severity?: RequestSeverity | null;
   approvalCases?: {
     /** The decision endpoint addresses the case, not the request. */
     id?: string;
@@ -819,6 +856,8 @@ export interface ApprovalMatrixVersion {
   levels: MatrixLevel[] | null;
   effectiveFrom: string;
   publishedAt: string | null;
+  /** CD-80 — this version ends the ladder: from it on, no approval stage. */
+  retired?: boolean;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1038,11 +1077,7 @@ export type LeadStatus =
   | "converted";
 export type LeadActivityType = "call" | "email" | "meeting" | "task" | "note";
 export type OpportunityStage =
-  | "qualifying"
-  | "proposing"
-  | "negotiating"
-  | "won"
-  | "lost";
+  "qualifying" | "proposing" | "negotiating" | "won" | "lost";
 
 export interface LeadRow {
   id: string;
@@ -1053,6 +1088,8 @@ export interface LeadRow {
   email: string | null;
   note: string | null;
   sourceCode: string | null;
+  /** CD-71 — แคมเปญที่ Lead นี้มาจาก. */
+  campaign?: { id: string; code: string; name: string } | null;
   /** ข้อมูลบริษัท/ลูกค้าเป้าหมาย — free text ระหว่างคัดกรอง (หน้ารายละเอียด Lead). */
   nameEn: string | null;
   taxId: string | null;
@@ -1154,7 +1191,8 @@ export interface OpportunityRow {
 export type SaleOrderStatus = "open" | "cancelled";
 
 /** CD-88 — การส่งใบสั่งขายเข้า SAP (แยกจากสถานะของใบเอง). */
-export type ErpSyncStatus = "not_ready" | "pending" | "synced" | "failed" | "skipped";
+export type ErpSyncStatus =
+  "not_ready" | "pending" | "synced" | "failed" | "skipped";
 
 /** CD-88 — รายการสินค้าของใบสั่งขาย: snapshot จากใบเสนอราคาตอนเปิดใบ. */
 export interface SaleOrderLine {
@@ -1322,6 +1360,44 @@ export interface OpportunityDetail extends OpportunityRow {
   saleOrders: SaleOrderRow[];
   /** CM-04 ชุดงาน B — เตือน ไม่ block. */
   kycWarning: { required: boolean; products: string[] };
+  /** CD-81 — the company's contract request type; null = no contract card. */
+  contractRequestTypeCode?: string | null;
+}
+
+/** CD-79 — a company's standard trade term (CRM settings). */
+export interface TradeTermStandard {
+  code: string;
+  name: string;
+  standardValue: string;
+  active?: boolean;
+  sortOrder?: number;
+}
+
+/** CD-79 — one agreed term, with the standard as it stood that day. */
+export interface NegotiationTerm {
+  code: string | null;
+  name: string;
+  agreed: string;
+  standard: string | null;
+  nonStandard: boolean;
+  note: string | null;
+}
+
+/** CD-79 — one negotiation round on a deal. */
+export interface NegotiationRound {
+  id: string;
+  roundNo: number;
+  occurredOn: string;
+  summary: string | null;
+  terms: NegotiationTerm[];
+  nonStandardCount: number;
+  /** The contract-review request sent to Legal, when there was one. */
+  legalRequestId: string | null;
+  /** Why it did not reach Legal (or reached only as a draft). */
+  legalSendError: string | null;
+  createdBy: string;
+  createdByName?: string;
+  createdAt: string;
 }
 
 export interface OpportunityLostReason {
@@ -1434,14 +1510,16 @@ export interface SegmentValue {
 
 /** CM-02/03 per-company configuration. */
 export interface CrmConfig {
-  codePrefix: string;
-  codePadding: number;
   dedupThreshold: number;
   /** CD-76 — margin ขั้นต่ำ (%) ก่อนออกใบเสนอราคา. */
   minMarginPct: number;
   quotationValidityDays: number;
   vatPct: number;
   quotationApprovalTypeCode: string;
+  /** CD-82 — ประเภทคำขอสำหรับอนุมัติการปรับเป้าระหว่างงวด; null = ยังไม่ตั้ง. */
+  targetApprovalTypeCode?: string | null;
+  /** CD-81 — ประเภทคำขอที่ฝ่ายกฎหมายรับทำสัญญา; null = ไม่แสดงการ์ดสัญญา. */
+  contractRequestTypeCode?: string | null;
   /** CD-65 — ดีลเปิดที่ไม่มีกิจกรรมเกินกี่วันจึงแจ้งหัวหน้า; 0 = ปิด. */
   staleOpportunityDays: number;
   /** หัวกระดาษใบเสนอราคา — null = ไม่ได้ตั้ง. */
@@ -1480,12 +1558,23 @@ export interface AppNotification {
   createdAt: string;
 }
 
+export type NotificationFrequency = "immediate" | "daily";
+
 export interface NotificationPreferences {
   in_app: true;
   in_app_locked: true;
   email: boolean;
   /** false until SMTP exists (open question B) — the screen says so. */
   email_delivery_available: boolean;
+  /** CD-52 — Bangkok hour the daily digest goes out, working days. */
+  digest_hour: number;
+  categories: {
+    key: string;
+    /** false = urgent (SLA): immediate only. */
+    digestible: boolean;
+    email: boolean;
+    frequency: NotificationFrequency;
+  }[];
 }
 
 /** `GET /quotations/:id/print` — the customer's copy; never carries cost or margin. */

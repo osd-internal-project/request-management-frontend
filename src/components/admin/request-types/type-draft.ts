@@ -2,6 +2,7 @@ import type {
   CodedLabel,
   RequestType,
   RequiredDoc,
+  SeverityTargets,
   SlaCoverage,
   SubRequestTypeRule,
 } from "@/lib/api/types";
@@ -15,6 +16,8 @@ export interface TypeDraft {
   readonly name: string;
   readonly slaHours: number | null;
   readonly coverage: SlaCoverage;
+  /** CD-67 — set = a case type in the company being edited. */
+  readonly severityTargets: SeverityTargets | null;
   readonly receiver: string | null;
   readonly fixedReceiver: string | null;
   readonly eligibleUnits: string[];
@@ -32,6 +35,7 @@ export function draftFrom(type: RequestType | undefined): TypeDraft {
     name: type?.name ?? "",
     slaHours: type?.slaHours ?? null,
     coverage: type?.slaCoverage ?? DEFAULT_COVERAGE,
+    severityTargets: type?.severityTargets ?? null,
     receiver: type?.receiverOrgUnitId ?? null,
     fixedReceiver: type?.receiverUserId ?? null,
     eligibleUnits: type?.eligibleUnits?.map((entry) => entry.orgUnitId) ?? [],
@@ -51,6 +55,8 @@ export function draftToPatch(draft: TypeDraft): Record<string, unknown> {
     form_schema: toSchema(draft.rows),
     ...(draft.slaHours === null ? {} : { sla_hours: draft.slaHours }),
     sla_coverage: draft.coverage,
+    // Sent even when null: unticking the case box has to reach the server.
+    severity_targets: draft.severityTargets,
     // `null` clears the receiver's form; an empty editor means the type has
     // no second step rather than a step with no fields.
     receiver_form_schema: draft.receiverRows.length

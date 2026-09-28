@@ -15,6 +15,7 @@ import {
   Segmented,
   Select,
   Table,
+  Popconfirm,
   Tag,
 } from "antd";
 import type { FormInstance } from "antd";
@@ -148,6 +149,32 @@ export function SubjectMatrixPanel({
   // antd's `message` from context, so it inherits the app theme.
   const { message } = App.useApp();
   const [publishing, setPublishing] = useState(false);
+  const [retiring, setRetiring] = useState(false);
+  const [retireError, setRetireError] = useState<string | null>(null);
+
+  const own = versions.filter((version) => version.subjectType === subject);
+  // The newest published version decides whether a ladder is in force.
+  const latest = own
+    .filter((version) => version.publishedAt)
+    .sort((a, b) => b.version - a.version)[0];
+  const inForce = Boolean(latest && !latest.retired);
+
+  /** CD-80 — ends the ladder with a retired version; nothing is edited. */
+  async function retire() {
+    setRetiring(true);
+    setRetireError(null);
+    const result = await adminApi("approval-matrix/retire", {
+      method: "POST",
+      body: JSON.stringify({ company_id: companyId, subject_type: subject }),
+    });
+    setRetiring(false);
+    if (!result.ok) {
+      setRetireError(result.message);
+      return;
+    }
+    void message.success(messages.matrix.retired);
+    await onPublished();
+  }
 
   const unitTree = buildUnitTree(orgUnits);
   const live = versions
@@ -160,17 +187,27 @@ export function SubjectMatrixPanel({
   return (
     <div className="space-y-4">
       {canManage && (
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-2">
+          {inForce && (
+            <Popconfirm
+              title={messages.matrix.retireConfirm}
+              okText={messages.matrix.retire}
+              onConfirm={() => void retire()}
+            >
+              <Button danger loading={retiring}>
+                {messages.matrix.retire}
+              </Button>
+            </Popconfirm>
+          )}
           <Button type="primary" onClick={() => setPublishing(true)}>
             {messages.matrix.publishNew}
           </Button>
         </div>
       )}
+      {retireError && <Alert type="error" showIcon title={retireError} />}
 
       <SubjectLadder
-        versions={versions.filter(
-          (version) => version.subjectType === subject,
-        )}
+        versions={own}
         userNames={userNames}
         unitNames={unitNames}
       />
@@ -226,7 +263,14 @@ function SubjectLadder({
 
   return (
     <div className="space-y-4">
-      {shown && (
+      {shown?.retired ? (
+        <Alert
+          type="info"
+          showIcon
+          title={messages.matrix.retiredTitle(thaiDate(shown.effectiveFrom))}
+          description={messages.matrix.retiredHint}
+        />
+      ) : shown && (
         <MatrixVersionTable
           version={shown}
           live={shown.version === liveVersion}
@@ -293,7 +337,10 @@ function VersionHistory({ versions }: { versions: ApprovalMatrixVersion[] }) {
                   {messages.matrix.version} {version.version}
                 </Text>{" "}
                 <Text type="secondary">
-                  · {changeSummary(version.levels, previous?.levels ?? null)}
+                  ·{" "}
+                  {version.retired
+                    ? messages.matrix.retiredSummary
+                    : changeSummary(version.levels, previous?.levels ?? null)}
                 </Text>
               </span>
 

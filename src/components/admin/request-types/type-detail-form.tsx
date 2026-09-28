@@ -18,6 +18,7 @@ import { ROUTES } from "@/lib/routes";
 import { SearchSelect, SearchTreeSelect } from "@/components/ui/search-select";
 import { RequiredDocs, ReturnReasons } from "./coded-label-editors";
 import { FormSchemaEditor } from "./form-schema-editor";
+import { SeverityTargetsEditor } from "./severity-targets-editor";
 import { SubRequestEditor } from "./sub-request-editor";
 import type { TypeDraft } from "./type-draft";
 
@@ -132,6 +133,11 @@ export function TypeDetailForm({
             </Text>
           </Link>
         </label>
+
+        <SeverityTargetsEditor
+          value={draft.severityTargets}
+          onChange={(severityTargets) => onChange({ severityTargets })}
+        />
       </Section>
 
       <Section title={messages.requestTypes.sectionEligibility}>

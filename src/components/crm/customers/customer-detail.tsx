@@ -24,6 +24,7 @@ import Text from "antd/es/typography/Text";
 import Title from "antd/es/typography/Title";
 import dayjs from "dayjs";
 import { CUSTOMER_STATUS_COLOR } from "@/components/crm/customers/customer-list";
+import { CustomerInvoicesTab } from "@/components/crm/customers/customer-invoices-tab";
 import { formatAmount } from "@/components/crm/opportunities/opportunity-list";
 import { QuotationStatusTags } from "@/components/crm/quotations/quotation-list";
 import { SearchSelect } from "@/components/ui/search-select";
@@ -281,7 +282,9 @@ export function CustomerDetailView({
               <Text type="secondary" className="block text-xs">
                 {m.detail.cards.openOpportunities}
               </Text>
-              <div className="text-xl font-semibold">{summary.opportunities.open}</div>
+              <div className="text-xl font-semibold">
+                {summary.opportunities.open}
+              </div>
               <Text type="secondary" className="text-xs">
                 {m.detail.cards.openOpportunitiesAmount(
                   summary.opportunities.openAmount.toLocaleString("th-TH"),
@@ -405,7 +408,9 @@ export function CustomerDetailView({
                 {
                   key: "opportunities",
                   label: `${m.detail.tabOpportunities} · ${customerOpportunities.length}`,
-                  children: <CustomerOpportunitiesTab rows={customerOpportunities} />,
+                  children: (
+                    <CustomerOpportunitiesTab rows={customerOpportunities} />
+                  ),
                 },
               ]
             : []),
@@ -448,24 +453,33 @@ export function CustomerDetailView({
           },
           /* C360-01 — โครงหน้าครบตั้งแต่แรก: แท็บที่ยังไม่มา เปิดแล้วบอกว่า
              มากับโมดูลไหน ไม่ fetch อะไร (C360-04) */
+          // CD-89 — แท็บการเงินอยู่ใต้สิทธิ์เดียวกับการ์ดยอดค้างชำระ (C360-04)
+          ...(canReadFinancials
+            ? [
+                {
+                  key: "financials",
+                  label: m.detail.tabFinancials,
+                  children: <CustomerInvoicesTab customerId={customer.id} />,
+                },
+              ]
+            : []),
           ...Object.entries(m.detail.futureTabs)
             .filter(
               ([key]) =>
                 !(key === "opportunities" && customerOpportunities !== null) &&
                 !(key === "quotations" && customerQuotations !== null) &&
-                // C360-04 — แท็บการเงินอยู่ใต้สิทธิ์เดียวกับการ์ดยอดค้างชำระ
-                !(key === "financials" && !canReadFinancials),
+                key !== "financials",
             )
             .map(([key, tab]) => ({
-            key: `future-${key}`,
-            label: tab.label,
-            children: (
-              <Empty
-                image={Empty.PRESENTED_IMAGE_SIMPLE}
-                description={m.detail.futureTabNote(tab.phase)}
-              />
-            ),
-          })),
+              key: `future-${key}`,
+              label: tab.label,
+              children: (
+                <Empty
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  description={m.detail.futureTabNote(tab.phase)}
+                />
+              ),
+            })),
         ]}
       />
     </div>
@@ -517,10 +531,15 @@ function LifecycleButtons({
       <Modal
         open={dialog !== null}
         title={
-          dialog === "suspend" ? m.detail.suspendTitle : m.detail.deactivateTitle
+          dialog === "suspend"
+            ? m.detail.suspendTitle
+            : m.detail.deactivateTitle
         }
         okText={dialog === "suspend" ? m.detail.suspend : m.detail.deactivate}
-        okButtonProps={{ danger: dialog === "deactivate", disabled: !reason.trim() }}
+        okButtonProps={{
+          danger: dialog === "deactivate",
+          disabled: !reason.trim(),
+        }}
         confirmLoading={busy}
         cancelText={m.form.cancel}
         onCancel={() => {
@@ -650,7 +669,9 @@ function ContactsTab({
             render: (name: string, row: CustomerDetail["contacts"][number]) => (
               <Space size={4}>
                 {name}
-                {row.isPrimary && <Tag color="blue">{m.form.contactPrimary}</Tag>}
+                {row.isPrimary && (
+                  <Tag color="blue">{m.form.contactPrimary}</Tag>
+                )}
               </Space>
             ),
           },
@@ -773,12 +794,16 @@ function ContactsTab({
             <Input
               placeholder={m.form.contactPhone}
               value={editing.phone}
-              onChange={(e) => setEditing({ ...editing, phone: e.target.value })}
+              onChange={(e) =>
+                setEditing({ ...editing, phone: e.target.value })
+              }
             />
             <Input
               placeholder={m.form.contactEmail}
               value={editing.email}
-              onChange={(e) => setEditing({ ...editing, email: e.target.value })}
+              onChange={(e) =>
+                setEditing({ ...editing, email: e.target.value })
+              }
             />
             <Input
               placeholder={m.form.contactLineId}
@@ -1001,12 +1026,16 @@ function LocationsTab({
             <Input
               placeholder={m.form.addressLine1}
               value={editing.line1}
-              onChange={(e) => setEditing({ ...editing, line1: e.target.value })}
+              onChange={(e) =>
+                setEditing({ ...editing, line1: e.target.value })
+              }
             />
             <Input
               placeholder={m.form.addressLine2}
               value={editing.line2}
-              onChange={(e) => setEditing({ ...editing, line2: e.target.value })}
+              onChange={(e) =>
+                setEditing({ ...editing, line2: e.target.value })
+              }
             />
             <Space.Compact className="w-full">
               <Input
@@ -1100,7 +1129,9 @@ function CustomerOpportunitiesTab({ rows }: { rows: OpportunityRow[] }) {
 function CustomerQuotationsTab({ rows }: { rows: QuotationRow[] }) {
   const mq = messages.sales.quotations;
   if (!rows.length) {
-    return <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={mq.empty} />;
+    return (
+      <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={mq.empty} />
+    );
   }
 
   return (
@@ -1152,7 +1183,8 @@ function CustomerQuotationsTab({ rows }: { rows: QuotationRow[] }) {
           title: mq.columns.validUntil,
           dataIndex: "validUntil",
           width: 110,
-          render: (at: string | null) => (at ? dayjs(at).format("D MMM YYYY") : "—"),
+          render: (at: string | null) =>
+            at ? dayjs(at).format("D MMM YYYY") : "—",
         },
       ]}
     />
@@ -1164,7 +1196,12 @@ function CustomerSaleOrdersTab({ rows }: { rows: SaleOrderRow[] }) {
   const md = messages.sales.opportunities.detail;
   const mq = messages.sales.quotations;
   if (!rows.length) {
-    return <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={md.noSaleOrders} />;
+    return (
+      <Empty
+        image={Empty.PRESENTED_IMAGE_SIMPLE}
+        description={md.noSaleOrders}
+      />
+    );
   }
 
   return (
@@ -1175,7 +1212,11 @@ function CustomerSaleOrdersTab({ rows }: { rows: SaleOrderRow[] }) {
       dataSource={rows}
       expandable={saleOrderExpandable}
       columns={[
-        { title: md.saleOrderColumns.code, dataIndex: "saleOrderCode", width: 160 },
+        {
+          title: md.saleOrderColumns.code,
+          dataIndex: "saleOrderCode",
+          width: 160,
+        },
         {
           title: mq.columns.opportunity,
           dataIndex: "opportunity",
@@ -1196,7 +1237,8 @@ function CustomerSaleOrdersTab({ rows }: { rows: SaleOrderRow[] }) {
           render: (quotation: SaleOrderRow["quotation"]) =>
             quotation ? (
               <Link href={ROUTES.quotationDetail(quotation.id)}>
-                {quotation.quotationNo} <Tag className="ml-1">{mq.version(quotation.version)}</Tag>
+                {quotation.quotationNo}{" "}
+                <Tag className="ml-1">{mq.version(quotation.version)}</Tag>
               </Link>
             ) : (
               "—"

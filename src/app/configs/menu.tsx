@@ -45,7 +45,28 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     permissions: ["report.request.read"],
     group: messages.nav.biGroup,
   },
+  /** CD-50 — สัดส่วนงานตรงเวลา และคำขอค้างเกินกำหนด. */
+  {
+    label: messages.nav.slaReport,
+    href: ROUTES.slaReport,
+    permissions: ["report.request.read"],
+    group: messages.nav.biGroup,
+  },
+  /** APV-06 (CD-45) — ใครอนุมัติอะไร เมื่อไร ในฐานะอะไร + export. */
+  {
+    label: messages.nav.decisionLog,
+    href: ROUTES.decisionLog,
+    permissions: ["approval.history.read"],
+    group: messages.nav.biGroup,
+  },
 
+  /** CD-73 — ภาพรวมลูกค้า Lead โอกาสการขาย กิจกรรม (ตามขอบเขตที่เห็น). */
+  {
+    label: messages.nav.crmDashboard,
+    href: ROUTES.crmDashboard,
+    permissions: ["crm.sales.read"],
+    group: messages.nav.crmGroup,
+  },
   /** CRM ระยะ 1 (CD-59) — หน้ารายละเอียดลูกค้าจะโตเป็นมุมมอง 360°. */
   {
     label: messages.nav.customers,
@@ -76,6 +97,27 @@ const MENU_ITEMS: readonly MenuEntry[] = [
   {
     label: messages.nav.saleOrders,
     href: ROUTES.saleOrders,
+    permissions: ["crm.sales.read"],
+    group: messages.nav.crmGroup,
+  },
+  /** CD-71 — แคมเปญการตลาดและผลถึงยอดขาย. */
+  {
+    label: messages.nav.campaigns,
+    href: ROUTES.campaigns,
+    permissions: ["crm.sales.read"],
+    group: messages.nav.crmGroup,
+  },
+  /** CD-82 — เป้ารายเดือนเทียบยอดจริงและพยากรณ์. */
+  {
+    label: messages.nav.salesTargets,
+    href: ROUTES.salesTargets,
+    permissions: ["crm.sales.read"],
+    group: messages.nav.crmGroup,
+  },
+  /** CD-83 — ยอดขาย อัตราการปิด เหตุผลที่แพ้ ผลงานรายบุคคล (ตามขอบเขตที่เห็น). */
+  {
+    label: messages.nav.salesReport,
+    href: ROUTES.salesReport,
     permissions: ["crm.sales.read"],
     group: messages.nav.crmGroup,
   },
@@ -110,6 +152,20 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     label: messages.nav.adminAudit,
     href: ROUTES.adminAudit,
     permissions: ["audit.read"],
+    group: messages.nav.adminGroup,
+  },
+  /** CD-55 — ส่งถึงใคร เมื่อไร ช่องทางใด อ่านแล้วหรือยัง. */
+  {
+    label: messages.nav.adminNotificationLog,
+    href: ROUTES.adminNotificationLog,
+    permissions: ["audit.read"],
+    group: messages.nav.adminGroup,
+  },
+  /** CD-54 — ถ้อยคำการแจ้งเตือนต่อเหตุการณ์ ของแต่ละบริษัท. */
+  {
+    label: messages.nav.adminNotificationTemplates,
+    href: ROUTES.adminNotificationTemplates,
+    permissions: ["admin.notification.manage"],
     group: messages.nav.adminGroup,
   },
   {
