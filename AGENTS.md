@@ -47,6 +47,16 @@ incidents that produced them are recorded once, in
 [`../request-management-backend/AGENTS.md`](../request-management-backend/AGENTS.md).
 Neither is repeated here.
 
+## Resolving conflicts and verifying a change
+
+The rules are in
+[`../request-management-backend/AGENTS.md`](../request-management-backend/AGENTS.md#resolving-conflicts-and-verifying-a-change)
+and apply here unchanged: never take one side of a conflict whole, read
+`git show --remerge-diff HEAD` before committing a merge, and keep the diff to
+the task. The frontend check before calling a change done is
+`npx tsc --noEmit` plus `yarn build` — and every page that calls an endpoint
+you changed, not only the page you were asked about.
+
 ## Screens
 
 Screens are specified in §16 of
