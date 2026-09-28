@@ -79,6 +79,7 @@ export const CORE_SERVICE_PREFIXES = [
   "/admin/request-types",
   "/admin/sla-configs",
   "/admin/holiday-calendars",
+  "/admin/notification-templates",
 ];
 
 /**

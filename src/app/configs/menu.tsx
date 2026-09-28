@@ -161,6 +161,13 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     permissions: ["audit.read"],
     group: messages.nav.adminGroup,
   },
+  /** CD-54 — ถ้อยคำการแจ้งเตือนต่อเหตุการณ์ ของแต่ละบริษัท. */
+  {
+    label: messages.nav.adminNotificationTemplates,
+    href: ROUTES.adminNotificationTemplates,
+    permissions: ["admin.notification.manage"],
+    group: messages.nav.adminGroup,
+  },
   {
     label: messages.nav.adminBi,
     href: ROUTES.adminBi,

@@ -93,6 +93,7 @@ export const messages = {
     adminUsers: "ผู้ใช้",
     adminAudit: "Audit Log",
     adminNotificationLog: "บันทึกการแจ้งเตือน",
+    adminNotificationTemplates: "ข้อความแจ้งเตือน",
     biGroup: "แดชบอร์ดผู้บริหาร",
     adminBi: "ตั้งค่า Dashboard",
     logout: "ออกจากระบบ",
@@ -1436,6 +1437,31 @@ export const messages = {
     historyChainChanged: (level: string) => `ปรับสายอนุมัติ ${level}`,
     historyNoChange: "ไม่เปลี่ยนสายอนุมัติ",
   },
+  /** CD-54 — ถ้อยคำการแจ้งเตือนต่อเหตุการณ์. */
+  notificationTemplates: {
+    title: "ข้อความแจ้งเตือน",
+    subtitle: (company: string) =>
+      `ถ้อยคำที่ระบบใช้แจ้งเตือนแต่ละเหตุการณ์ ของบริษัท ${company} — แก้แล้วมีผลกับการแจ้งเตือนครั้งถัดไป ไม่ต้องแก้โปรแกรม`,
+    customTag: "แก้แล้ว",
+    usingStandard: "ใช้ข้อความมาตรฐาน",
+    customSince: (at: Date) =>
+      `ข้อความของบริษัท · แก้ล่าสุด ${at.toLocaleString("th-TH")}`,
+    titleLabel: "หัวข้อ",
+    bodyLabel: "ข้อความ",
+    variablesHint:
+      "ตัวแปรที่ใช้ได้ (คลิกเพื่อเพิ่มท้ายข้อความ) — ใช้ตัวอื่นไม่ได้",
+    preview: "ตัวอย่าง (ค่าสมมติ)",
+    emailSignature: (company: string) =>
+      `อีเมลจะลงท้ายด้วยหัวจดหมายของ ${company} (ตั้งที่หน้า ตั้งค่า CRM)`,
+    save: "บันทึก",
+    saved: "บันทึกข้อความแล้ว",
+    discard: "ยกเลิกการแก้",
+    reset: "กลับไปใช้ข้อความมาตรฐาน",
+    resetConfirm: "ลบข้อความของบริษัทนี้และกลับไปใช้ข้อความมาตรฐาน?",
+    resetDone: "กลับไปใช้ข้อความมาตรฐานแล้ว",
+    standardIs: (title: string) => `ข้อความมาตรฐาน: “${title}”`,
+  },
+
   /** CD-55 — ส่งถึงใคร เมื่อไร ช่องทางใด อ่านแล้วหรือยัง. */
   notificationLog: {
     title: "บันทึกการแจ้งเตือน",
