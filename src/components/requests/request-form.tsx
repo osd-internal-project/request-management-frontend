@@ -59,6 +59,10 @@ import { messages } from "@/lib/messages";
 import { SearchSelect, SearchTreeSelect } from "@/components/ui/search-select";
 import { buildUnitTree, subtreeIds } from "@/lib/org/org-tree";
 import { ROUTES } from "@/lib/routes";
+import {
+  applyComputedFields,
+  isComputedField,
+} from "@/lib/computed-fields";
 
 
 /**
@@ -565,6 +569,8 @@ export function RequestForm({
   const fields = Object.entries(schema?.properties ?? {}).sort(
     ([, a], [, b]) => fieldOrder(a) - fieldOrder(b),
   );
+  // CD-80 — computed fields worked out live from what is typed.
+  const computedValues = applyComputedFields(schema?.properties, values);
 
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
@@ -714,7 +720,7 @@ export function RequestForm({
                   name={name}
                   property={prop}
                   required={required.includes(name)}
-                  value={values[name]}
+                  value={computedValues[name]}
                   onChange={(value) => setField(name, value)}
                 />
               ))
@@ -1120,7 +1126,9 @@ export function SchemaField({
 }) {
   const multiline = isMultilineField(property);
   const isTable = property.type === "array" && Boolean(property.items);
-  const special = isTable ? null : kindInput(property, value, onChange);
+  const computed = isComputedField(property);
+  const special =
+    isTable || computed ? null : kindInput(property, value, onChange);
 
   return (
     <Field
@@ -1137,7 +1145,26 @@ export function SchemaField({
         ) : null
       }
     >
-      {isTable ? (
+      {computed ? (
+        // CD-80 — the system's number, not an input: the server recomputes
+        // it on save, so an editable box would only suggest otherwise.
+        <div>
+          <Input
+            readOnly
+            className="w-full"
+            value={
+              typeof value === "number"
+                ? `${value.toLocaleString("th-TH", { maximumFractionDigits: 2 })} %`
+                : ""
+            }
+            placeholder={messages.requestForm.computedPending}
+            status={typeof value === "number" && value < 0 ? "error" : undefined}
+          />
+          <Text type="secondary" className="text-xs">
+            {messages.requestForm.computedHint}
+          </Text>
+        </div>
+      ) : isTable ? (
         <TableField property={property} value={value} onChange={onChange} />
       ) : special ? (
         special

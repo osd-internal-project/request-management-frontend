@@ -221,6 +221,16 @@ export interface FormSchemaProperty {
   /** A long answer; rendered as a textarea rather than a single line. */
   "x-multiline"?: boolean;
   /**
+   * CD-80 — worked out by the system, never typed: shown read-only and
+   * recomputed by the server on save. See `src/lib/computed-fields.ts`.
+   */
+  "x-computed"?: {
+    kind: "margin_pct";
+    value: string;
+    discount_pct?: string;
+    cost: string;
+  };
+  /**
    * Display position, ascending.
    *
    * Required because `formSchema` is a `jsonb` column and Postgres does not
@@ -745,6 +755,8 @@ export interface ApprovalMatrixVersion {
   levels: MatrixLevel[] | null;
   effectiveFrom: string;
   publishedAt: string | null;
+  /** CD-80 — this version ends the ladder: from it on, no approval stage. */
+  retired?: boolean;
 }
 
 /* -------------------------------------------------------------------------- */

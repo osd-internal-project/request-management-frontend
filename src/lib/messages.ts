@@ -582,6 +582,9 @@ export const messages = {
     draftBanner: "สถานะ: ร่าง — เลขคำขอจะออกเมื่อกดยื่น",
     type: "ประเภทคำขอ",
     typeRequired: "เลือกประเภทคำขอก่อน",
+    /* CD-80 — a field the system computes (e.g. margin after discount). */
+    computedPending: "กรอกมูลค่า ส่วนลด และต้นทุน เพื่อคำนวณ",
+    computedHint: "ระบบคำนวณให้ — คำนวณซ้ำอีกครั้งเมื่อบันทึก",
     refLabel: "อ้างอิงโอกาสการขาย",
     refRequired: "กรอกเลขอ้างอิงโอกาสการขายก่อนยื่น",
     requiredDocsTitle: "เอกสารบังคับตามประเภทคำขอ",
@@ -1375,6 +1378,15 @@ export const messages = {
      * specification; say the word and this becomes `เผยแพร่เวอร์ชันใหม่`.
      */
     publishNew: "สร้างเวอร์ชันใหม่",
+    /* CD-80 — end a ladder without editing any version. */
+    retire: "ยกเลิกขั้นอนุมัตินี้",
+    retireConfirm:
+      "ยกเลิกขั้นอนุมัตินี้? คำขอที่ยื่นหลังจากนี้จะไม่ผ่านขั้นนี้ — คำขอที่อยู่ระหว่างอนุมัติยังใช้เวอร์ชันเดิมจนจบ",
+    retired: "ยกเลิกขั้นอนุมัติแล้ว",
+    retiredTitle: (on: string) => `ยกเลิกขั้นอนุมัตินี้แล้ว ตั้งแต่ ${on}`,
+    retiredHint:
+      "คำขอใหม่ไม่ผ่านขั้นนี้ — กด “สร้างเวอร์ชันใหม่” เพื่อเปิดขั้นอนุมัตินี้อีกครั้ง",
+    retiredSummary: "ยกเลิกขั้นอนุมัติ",
     /**
      * §16 splits what used to be one sentence: immutability stays here, while
      * "งานที่เดินอยู่ใช้เวอร์ชัน ณ ขณะยื่น" becomes rule 3 of `alwaysEnforced`.
