@@ -977,6 +977,10 @@ export interface CustomerRow {
   headOfficeId: string | null;
   status: "draft" | "active" | "suspended" | "inactive";
   kycVerified: boolean;
+  /** CD-61 — from the latest verified KYC; null = never verified. */
+  kycRiskLevel?: KycRiskLevel | null;
+  /** CD-61 — the KYC runs out on this day (review date or first document expiry). */
+  kycExpiresOn?: string | null;
   accountOwnerUserId: string | null;
   accountOwner: { id: string; displayName: string } | null;
   segments: {
@@ -1023,6 +1027,55 @@ export interface CustomerContact {
 }
 
 /** `GET /customers/:id` — the detail page, and later the 360° header card. */
+/** CD-61 — ระดับความเสี่ยงลูกค้า. */
+export type KycRiskLevel = "low" | "medium" | "high";
+
+/** CD-61 — one KYC verification on record. */
+export interface CustomerKycRecord {
+  id: string;
+  requestId: string | null;
+  status: "verified" | "screening_hit" | "superseded" | "expired";
+  riskLevel: KycRiskLevel;
+  suggestedRisk: KycRiskLevel;
+  clearanceNote: string | null;
+  documentsExpireOn: string | null;
+  signatories: string | null;
+  reviewDueOn: string;
+  expiresOn: string;
+  recordedAt: string;
+}
+
+/** CD-61 — a possible match on the prohibited list. */
+export interface KycScreeningMatch {
+  entryId: string;
+  name: string;
+  taxId: string | null;
+  reason: string;
+  score: number;
+  byTaxId: boolean;
+}
+
+/** CD-61 — `GET /customers/:id/kyc`. */
+export interface CustomerKyc {
+  verified: boolean;
+  verifiedAt: string | null;
+  riskLevel: KycRiskLevel | null;
+  expiresOn: string | null;
+  screening: { matches: KycScreeningMatch[]; suggestedRisk: KycRiskLevel };
+  records: CustomerKycRecord[];
+}
+
+/** CD-61 — an entry of the company's prohibited list. */
+export interface KycWatchlistEntry {
+  id: string;
+  name: string;
+  taxId: string | null;
+  reason: string;
+  source: string | null;
+  active: boolean;
+  createdAt: string;
+}
+
 export interface CustomerDetail extends CustomerRow {
   deactivateReason: string | null;
   suspendReason: string | null;
@@ -1532,6 +1585,10 @@ export interface CrmConfig {
   targetApprovalTypeCode?: string | null;
   /** CD-81 — ประเภทคำขอที่ฝ่ายกฎหมายรับทำสัญญา; null = ไม่แสดงการ์ดสัญญา. */
   contractRequestTypeCode?: string | null;
+  /** CD-61 — KYC ใช้ได้กี่เดือนก่อนต้องทบทวน ตามความเสี่ยง. */
+  kycReviewMonthsHigh?: number;
+  kycReviewMonthsMedium?: number;
+  kycReviewMonthsLow?: number;
   /** CD-65 — ดีลเปิดที่ไม่มีกิจกรรมเกินกี่วันจึงแจ้งหัวหน้า; 0 = ปิด. */
   staleOpportunityDays: number;
   /** หัวกระดาษใบเสนอราคา — null = ไม่ได้ตั้ง. */

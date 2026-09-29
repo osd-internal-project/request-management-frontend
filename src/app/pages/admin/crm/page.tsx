@@ -8,7 +8,11 @@ import customers from "@/lib/api/customers";
 import { messages } from "@/lib/messages";
 import { HOME_PATH } from "@/lib/routes";
 import { can, getSession } from "@/lib/session";
-import type { CrmConfig, TradeTermStandard } from "@/lib/api/types";
+import type {
+  CrmConfig,
+  KycWatchlistEntry,
+  TradeTermStandard,
+} from "@/lib/api/types";
 
 /**
  * ตั้งค่า CRM (admin.crm.manage) — CM-07 segment dimensions/values, CM-03
@@ -20,14 +24,21 @@ export default async function CrmAdminPage() {
   const session = await getSession();
   if (!can(session, "admin.crm.manage")) redirect(HOME_PATH);
 
-  const [dimensionsResult, configResult, kycProductsResult, tradeTermsResult] =
-    await Promise.all([
-      customers.getSegmentDimensions(),
-      apiGet<CrmConfig>("/admin/crm/config"),
-      customers.getKycProducts(),
-      // CD-79 — เงื่อนไขการค้ามาตรฐาน.
-      apiGet<TradeTermStandard[]>("/admin/crm/trade-terms"),
-    ]);
+  const [
+    dimensionsResult,
+    configResult,
+    kycProductsResult,
+    tradeTermsResult,
+    kycWatchlistResult,
+  ] = await Promise.all([
+    customers.getSegmentDimensions(),
+    apiGet<CrmConfig>("/admin/crm/config"),
+    customers.getKycProducts(),
+    // CD-79 — เงื่อนไขการค้ามาตรฐาน.
+    apiGet<TradeTermStandard[]>("/admin/crm/trade-terms"),
+    // CD-61 — รายชื่อต้องห้าม.
+    apiGet<KycWatchlistEntry[]>("/admin/crm/kyc-watchlist"),
+  ]);
 
   const failed = !dimensionsResult.ok
     ? dimensionsResult
@@ -59,6 +70,7 @@ export default async function CrmAdminPage() {
         dimensions={dimensionsResult.ok ? dimensionsResult.data : []}
         kycProducts={kycProductsResult.ok ? kycProductsResult.data : []}
         tradeTerms={tradeTermsResult.ok ? tradeTermsResult.data : []}
+        kycWatchlist={kycWatchlistResult.ok ? kycWatchlistResult.data : []}
         config={
           configResult.ok
             ? configResult.data

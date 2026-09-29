@@ -2761,6 +2761,48 @@ export const messages = {
     } as Record<string, string>,
     kycVerified: "ยืนยันตัวตนแล้ว (KYC)",
     kycNotVerified: "ยังไม่ผ่าน KYC",
+    /* CD-61 */
+    kycRiskTag: (level: string) => `ความเสี่ยง${level}`,
+    kycValidUntil: (date: string) => `KYC ใช้ได้ถึง ${date}`,
+    kycReviewDue: "KYC ใกล้หมดอายุ — ยื่นทบทวน",
+    kyc: {
+      tab: "KYC",
+      status: "สถานะ",
+      verified: "ยืนยันตัวตนแล้ว",
+      expired: "หมดอายุ",
+      notVerified: "ยังไม่ผ่าน KYC",
+      risk: "ความเสี่ยง",
+      validUntil: "ใช้ได้ถึง",
+      riskLevels: { low: "ต่ำ", medium: "กลาง", high: "สูง" } as Record<
+        string,
+        string
+      >,
+      screeningClear: "ไม่พบชื่อในรายชื่อต้องห้ามของบริษัท",
+      screeningHit: (count: number) =>
+        `พบชื่อที่อาจตรงกับรายชื่อต้องห้าม ${count} รายการ — ผู้ตรวจ KYC ต้องระบุเหตุผลการยกเว้น มิฉะนั้น KYC จะไม่ผ่าน`,
+      byTaxId: "เลขผู้เสียภาษีตรงกัน",
+      byName: (percent: number) => `ชื่อคล้าย ${percent}%`,
+      suggestion: (level: string) =>
+        `ระบบแนะนำความเสี่ยง: ${level} (จากรายชื่อต้องห้าม — ตอนปิดคำขอ KYC ระบบคิดเอกสารที่ขาดด้วย)`,
+      suggestedWas: (level: string) => ` ระบบแนะนำ ${level}`,
+      signatories: "ผู้มีอำนาจลงนาม",
+      clearance: "เหตุผลที่ยกเว้น",
+      noRecords: "ยังไม่เคยผ่านการยืนยันตัวตน — ยื่นคำขอ KYC",
+      openRequest: "เปิดคำขอ",
+      recordStatus: {
+        verified: "ใช้อยู่",
+        screening_hit: "ไม่ผ่าน (ตรงรายชื่อต้องห้าม)",
+        superseded: "ถูกแทนด้วยครั้งใหม่",
+        expired: "หมดอายุ",
+      } as Record<string, string>,
+      columns: {
+        recordedAt: "วันที่ยืนยัน",
+        status: "ผล",
+        risk: "ความเสี่ยง",
+        expiresOn: "ใช้ได้ถึง",
+        request: "คำขอ KYC",
+      },
+    },
     kycHint:
       "KYC บังคับเฉพาะเมื่อโอกาสการขายมี product ที่ต้องยืนยันตัวตน — ลูกค้าทั่วไปใช้งานได้ทันที",
 
@@ -3155,6 +3197,30 @@ export const messages = {
       tradeTermAdd: "เพิ่มเงื่อนไข",
       tradeTermSave: "บันทึกเงื่อนไขมาตรฐาน",
       /* CD-81 */
+      /* CD-61 */
+      sectionKyc: "KYC และรายชื่อต้องห้าม",
+      kycReviewMonths: "ทบทวน KYC ทุก (เดือน)",
+      kycReviewHint:
+        "ตามระดับความเสี่ยงที่ผู้ตรวจกำหนด — เอกสารที่หมดอายุก่อนทำให้ KYC หมดอายุตามวันนั้น · แจ้งผู้รับผิดชอบลูกค้าล่วงหน้า 30 วัน",
+      kycSaveMonths: "บันทึก",
+      watchlistTitle: "รายชื่อต้องห้าม",
+      watchlistHint:
+        "ตอนปิดคำขอ KYC ระบบตรวจเลขผู้เสียภาษี (ตรงทุกหลัก) และชื่อ (คล้าย ≥ 85%) — ตรงแล้วต้องมีเหตุผลการยกเว้นจากผู้ตรวจ ไม่งั้น KYC ไม่ผ่าน",
+      watchlistPaste: "เพิ่มรายชื่อ — บรรทัดละราย: ชื่อ | เลขผู้เสียภาษี | เหตุผล | แหล่งที่มา",
+      watchlistPastePlaceholder:
+        "บริษัท ตัวอย่าง จำกัด | 0105551234567 | อยู่ในรายชื่อคว่ำบาตร | ประกาศ 2569/12",
+      watchlistAdd: "เพิ่มรายชื่อ",
+      watchlistAdded: (count: number) => `เพิ่มแล้ว ${count} รายการ`,
+      watchlistBadLine: (line: number) =>
+        `บรรทัดที่ ${line} ต้องมีอย่างน้อย ชื่อ | เลขผู้เสียภาษี (เว้นว่างได้) | เหตุผล`,
+      watchlistDeactivate: "ปิดใช้",
+      watchlistEmpty: "ยังไม่มีรายชื่อต้องห้าม",
+      watchlistColumns: {
+        name: "ชื่อ",
+        taxId: "เลขผู้เสียภาษี",
+        reason: "เหตุผล",
+        source: "แหล่งที่มา",
+      },
       sectionContracts: "สัญญา",
       contractRequestTypeCode: "ประเภทคำขอที่ฝ่ายกฎหมายรับทำ/แก้สัญญา",
       contractHint:
