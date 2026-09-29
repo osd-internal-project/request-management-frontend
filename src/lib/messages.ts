@@ -405,6 +405,7 @@ export const messages = {
       "admin.bi.manage": "ตั้งค่าแดชบอร์ด",
       "admin.identity.manage": "จัดการผู้ใช้ใน Keycloak",
       "admin.crm.manage": "ตั้งค่า CRM",
+      "admin.customer.merge": "รวมลูกค้าซ้ำ",
       "admin.integration.manage": "ออก/เพิกถอนกุญแจ API",
 
       "integration.request.create": "ยื่นคำขอแทนระบบภายนอก",
@@ -3282,6 +3283,41 @@ export const messages = {
   },
 
   customers: {
+    /** CD-122 — รวมลูกค้าซ้ำ (admin). */
+    merge: {
+      button: "รวมเข้ากับลูกค้าอื่น",
+      title: (code: string) => `รวม ${code} เข้ากับลูกค้าอื่น`,
+      intro:
+        "ใช้เมื่อลูกค้ารายเดียวกันถูกลงทะเบียนซ้ำ — เอกสารทั้งหมดของรายนี้ย้ายไปอยู่ที่รายหลัก รายนี้กลายเป็นรหัสเดิม (อ่านอย่างเดียว) ที่ลิงก์ไปหารายหลัก",
+      into: "รายหลัก (ลูกค้าที่จะคงไว้)",
+      searchPlaceholder: "พิมพ์ชื่อหรือรหัสลูกค้า",
+      searchHint: "พิมพ์อย่างน้อย 2 ตัวอักษร",
+      becomesAlias: "รายนี้ (ถูกรวม)",
+      stays: "รายหลัก",
+      moved: "สิ่งที่ย้ายไป",
+      nothingMoved: "ไม่มีเอกสารให้ย้าย",
+      kinds: {
+        lead: "Lead",
+        opportunity: "โอกาสการขาย",
+        saleOrder: "ใบสั่งขาย",
+        quotation: "ใบเสนอราคา",
+        customerContact: "ผู้ติดต่อ",
+        customerLocation: "สถานที่",
+        customerKycRecord: "KYC",
+        customerContract: "สัญญา",
+        customerTouchpoint: "การติดต่อ/ทบทวน",
+        customerTimelineEvent: "ไทม์ไลน์",
+        segments: "กลุ่มลูกค้า",
+        requests: "คำขอ",
+        branches: "สาขา",
+      } as Record<string, string>,
+      reason: "เหตุผล",
+      reasonPlaceholder: "เช่น ลงทะเบียนซ้ำจากการนำเข้า Excel",
+      irreversible:
+        "ย้อนกลับไม่ได้ในระบบ — บันทึกลง audit ทั้งสองราย",
+      confirm: "รวมลูกค้า",
+      done: "รวมลูกค้าแล้ว",
+    },
     title: "ทะเบียนลูกค้า",
     scopeNote:
       "เห็นเฉพาะลูกค้าที่คุณรับผิดชอบหรืออยู่ในทีมของคุณ ตามสิทธิ์ที่ได้รับ",
