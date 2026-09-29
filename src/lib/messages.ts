@@ -4343,6 +4343,26 @@ export const messages = {
       steps: "ขั้นตอนเมื่อยกเลิกจริง",
       addStep: "+ เพิ่มขั้นตอน",
       liabilityNote: "หมายเหตุความรับผิด",
+      /* CD-151 */
+      service: "ระดับบริการ",
+      serviceHint:
+        "เคสที่อ้างอิงสัญญานี้จะนับเวลาตอบกลับ/แก้ไขตามตัวเลขนี้ แทนค่าตั้งต้นของประเภทเคส",
+      serviceEnable: "ผูกพันระดับบริการ",
+      serviceDefault: "ใช้ค่าตั้งต้น",
+      severity: "ระดับ",
+      responseHours: "ตอบกลับ (ชม.)",
+      resolutionHours: "แก้ไข (ชม.)",
+      coverage: "นับเวลา",
+      coverageDefault: "ตามประเภทเคส",
+      availability: "ความพร้อมใช้งาน (%)",
+      reportEvery: "รายงานผลบริการ",
+      reports: {
+        monthly: "รายเดือน",
+        quarterly: "รายไตรมาส",
+      } as Record<string, string>,
+      levelLine: (response: number, resolution: number) =>
+        `ตอบกลับ ${response} ชม. · แก้ไข ${resolution} ชม.`,
+      availabilityLine: (pct: number) => `ความพร้อมใช้งาน ${pct}%`,
     },
   },
   /** CD-66 — ช่องทางรับคำขอจากลูกค้า (ผู้ดูแล). */

@@ -46,7 +46,26 @@ interface Draft {
   conditions: string;
   consequences: string;
   steps: string[];
+  /** CD-151 */
+  serviceOn: boolean;
+  levels: Levels;
+  coverage?: string;
+  availabilityPct: number | null;
+  reportEvery?: string;
 }
+
+const SEVERITIES = ["critical", "high", "medium", "low"] as const;
+type Levels = Record<
+  (typeof SEVERITIES)[number],
+  { responseHours: number | null; resolutionHours: number | null }
+>;
+/** The same starting point the case-type screen offers (CD-67). */
+const DEFAULT_LEVELS: Levels = {
+  critical: { responseHours: 1, resolutionHours: 4 },
+  high: { responseHours: 4, resolutionHours: 24 },
+  medium: { responseHours: 8, resolutionHours: 72 },
+  low: { responseHours: 24, resolutionHours: 120 },
+};
 
 const draftOf = (view: ContractTermsView): Draft => ({
   unlimited: view.liability.unlimited,
@@ -66,6 +85,11 @@ const draftOf = (view: ContractTermsView): Draft => ({
   conditions: view.termination.conditions ?? "",
   consequences: view.termination.consequences ?? "",
   steps: view.termination.steps,
+  serviceOn: Boolean(view.service.levels),
+  levels: view.service.levels ?? DEFAULT_LEVELS,
+  coverage: view.service.coverage ?? undefined,
+  availabilityPct: view.service.availabilityPct,
+  reportEvery: view.service.reportEvery ?? undefined,
 });
 
 /**
@@ -115,6 +139,10 @@ export function ContractTermsCard({
         termination_conditions: draft.conditions,
         termination_consequences: draft.consequences,
         termination_steps: draft.steps.filter((step) => step.trim()),
+        service_levels: draft.serviceOn ? draft.levels : null,
+        service_coverage: draft.serviceOn ? (draft.coverage ?? null) : null,
+        availability_pct: draft.availabilityPct,
+        service_report_every: draft.reportEvery ?? null,
       }),
     });
     setBusy(false);
@@ -314,6 +342,56 @@ export function ContractTermsCard({
             none
           ),
         )}
+
+        {section(
+          m.service,
+          view.service.levels ||
+            view.service.availabilityPct !== null ||
+            view.service.reportEvery ? (
+            <>
+              {view.service.levels && (
+                <table className="text-xs">
+                  <tbody>
+                    {SEVERITIES.map((level) => (
+                      <tr key={level}>
+                        <td className="pr-3">
+                          {messages.severity.levels[level]}
+                        </td>
+                        <td>
+                          {m.levelLine(
+                            view.service.levels![level].responseHours,
+                            view.service.levels![level].resolutionHours,
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+              {view.service.levels && (
+                <Text type="secondary" className="block text-xs">
+                  {m.coverage}:{" "}
+                  {view.service.coverage
+                    ? messages.requestTypes.coverage[view.service.coverage]
+                    : m.coverageDefault}
+                </Text>
+              )}
+              {view.service.availabilityPct !== null && (
+                <div>{m.availabilityLine(view.service.availabilityPct)}</div>
+              )}
+              {view.service.reportEvery && (
+                <div>
+                  {m.reportEvery}: {m.reports[view.service.reportEvery]}
+                </div>
+              )}
+              <Text type="secondary" className="block text-xs">
+                {m.serviceHint}
+              </Text>
+            </>
+          ) : (
+            none
+          ),
+        )}
       </div>
 
       <Modal
@@ -448,6 +526,104 @@ export function ContractTermsCard({
                 value={draft.exclusions}
                 onChange={(event) => set({ exclusions: event.target.value })}
               />
+            </div>
+          </div>
+
+          <div>
+            <Text strong>{m.service}</Text>
+            <div className="mt-1 space-y-2">
+              <Checkbox
+                checked={draft.serviceOn}
+                onChange={(event) => set({ serviceOn: event.target.checked })}
+              >
+                {m.serviceEnable}
+              </Checkbox>
+              {draft.serviceOn && (
+                <>
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left text-xs text-gray-500">
+                        <th className="pb-1 font-normal">{m.severity}</th>
+                        <th className="pb-1 font-normal">{m.responseHours}</th>
+                        <th className="pb-1 font-normal">
+                          {m.resolutionHours}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {SEVERITIES.map((level) => (
+                        <tr key={level}>
+                          <td className="pr-2">
+                            {messages.severity.levels[level]}
+                          </td>
+                          {(["responseHours", "resolutionHours"] as const).map(
+                            (field) => (
+                              <td key={field} className="pr-2 pb-1">
+                                <InputNumber
+                                  className="w-full!"
+                                  min={0.25}
+                                  step={0.5}
+                                  value={draft.levels[level][field]}
+                                  onChange={(value) =>
+                                    set({
+                                      levels: {
+                                        ...draft.levels,
+                                        [level]: {
+                                          ...draft.levels[level],
+                                          [field]: value ?? null,
+                                        },
+                                      },
+                                    })
+                                  }
+                                />
+                              </td>
+                            ),
+                          )}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Select
+                      className="min-w-64"
+                      allowClear
+                      placeholder={m.coverageDefault}
+                      value={draft.coverage}
+                      onChange={(coverage?: string) => set({ coverage })}
+                      options={Object.entries(
+                        messages.requestTypes.coverage,
+                      ).map(([value, label]) => ({ value, label }))}
+                    />
+                    <Button
+                      size="small"
+                      onClick={() => set({ levels: DEFAULT_LEVELS })}
+                    >
+                      {m.serviceDefault}
+                    </Button>
+                  </div>
+                </>
+              )}
+              <div className="grid gap-2 sm:grid-cols-2">
+                <InputNumber
+                  className="w-full!"
+                  min={0}
+                  max={100}
+                  step={0.1}
+                  placeholder={m.availability}
+                  value={draft.availabilityPct}
+                  onChange={(value) => set({ availabilityPct: value ?? null })}
+                />
+                <Select
+                  allowClear
+                  placeholder={m.reportEvery}
+                  value={draft.reportEvery}
+                  onChange={(reportEvery?: string) => set({ reportEvery })}
+                  options={Object.entries(m.reports).map(([value, label]) => ({
+                    value,
+                    label,
+                  }))}
+                />
+              </div>
             </div>
           </div>
 

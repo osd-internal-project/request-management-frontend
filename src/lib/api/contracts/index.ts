@@ -131,6 +131,16 @@ export interface ContractTermsView {
     consequences: string | null;
     steps: string[];
   };
+  /** CD-151 */
+  service: {
+    levels: Record<
+      "critical" | "high" | "medium" | "low",
+      { responseHours: number; resolutionHours: number }
+    > | null;
+    coverage: "H24X7" | "H8X7" | "H8X5" | null;
+    availabilityPct: number | null;
+    reportEvery: "monthly" | "quarterly" | null;
+  };
   updatedAt: string | null;
 }
 
