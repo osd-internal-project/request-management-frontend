@@ -18,7 +18,7 @@ interface Draft {
 }
 
 /**
- * ROLE-03 — Keycloak realm role → system role, for one company.
+ * ROLE-03 — Keycloak client role (`request-form`) → system role, for one company.
  *
  * No mockup exists for this tab. What it has to communicate above all is the
  * delay: nothing here changes the rights of anyone already signed in. Mapped

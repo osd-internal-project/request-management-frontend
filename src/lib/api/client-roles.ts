@@ -138,7 +138,7 @@ export interface KeycloakNameSyncReport {
 }
 
 /**
- * Re-reads the realm and corrects any mapping whose role was renamed there.
+ * Re-reads the client roles and corrects any mapping whose role was renamed there.
  *
  * One way: the realm decides the names, this system decides the permissions.
  * A rename used to go unnoticed until everyone holding that role silently lost

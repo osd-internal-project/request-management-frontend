@@ -501,7 +501,7 @@ export const messages = {
     subtitle:
       "จับคู่ role ใน Keycloak กับ role ในระบบ ต่อบริษัท — ระบบประเมินใหม่ทุกครั้งที่ล็อกอินหรือ refresh token (ROLE-03)",
     columns: {
-      keycloakRole: "Role ใน Keycloak",
+      keycloakRole: "Role ใน Keycloak (client request-form)",
       systemRole: "Role ในระบบ",
     },
     addMapping: "+ เพิ่มการจับคู่",

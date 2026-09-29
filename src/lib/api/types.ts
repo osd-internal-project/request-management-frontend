@@ -1000,7 +1000,7 @@ export interface ScopeRuleRow {
   scope: "own" | "team" | "department" | "company" | "all";
 }
 
-/** ROLE-03 — a Keycloak realm role bound to a system role, per company. */
+/** ROLE-03 — a Keycloak client role (`request-form`) bound to a system role, per company. */
 export interface KeycloakRoleMappingRow {
   id: string;
   companyId: string;
