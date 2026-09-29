@@ -3,6 +3,7 @@
 import { ContractCard } from "@/components/crm/opportunities/contract-card";
 import { HandoverCard } from "@/components/crm/handover/handover-card";
 import { NegotiationCard } from "@/components/crm/opportunities/negotiation-card";
+import { PhoneNumbersCard } from "@/components/crm/opportunities/phone-numbers-card";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -48,6 +49,7 @@ import type {
   DealHandoverView,
   OrgUnitShape,
   NegotiationRound,
+  PhoneReservationsView,
   TradeTermStandard,
   CustomerRow,
   OpportunityActivity,
@@ -79,6 +81,7 @@ export function OpportunityDetailView({
   canManage,
   currentUserId = null,
   negotiations = null,
+  phoneNumbers = null,
   contractTypeName = null,
   handover = null,
   handoverTeams = [],
@@ -98,6 +101,8 @@ export function OpportunityDetailView({
   /** CD-75 — the viewer, so they can remove their own visit photos. */
   currentUserId?: string | null;
   /** CD-79 — null = could not be read (the card is hidden). */
+  /** CD-78 — numbers held in Reserve-phone; null = could not load. */
+  phoneNumbers?: PhoneReservationsView | null;
   negotiations?: {
     standards: TradeTermStandard[];
     rounds: NegotiationRound[];
@@ -471,6 +476,15 @@ export function OpportunityDetailView({
           rounds={negotiations.rounds}
           standards={negotiations.standards}
           editable={editable}
+        />
+      )}
+
+      {phoneNumbers && (
+        <PhoneNumbersCard
+          opportunityId={opportunity.id}
+          view={phoneNumbers}
+          editable={editable}
+          canManage={canManage}
         />
       )}
 

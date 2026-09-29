@@ -7,6 +7,7 @@ import type {
   DealHandoverView,
   SalesHandover,
   NegotiationRound,
+  PhoneReservationsView,
   TradeTermStandard,
   LeadDetail,
   OpportunityActivity,
@@ -112,6 +113,13 @@ export async function getNegotiations(
   ApiResult<{ standards: TradeTermStandard[]; rounds: NegotiationRound[] }>
 > {
   return apiGet(`opportunities/${id}/negotiations`);
+}
+
+/** CD-78 — numbers held for the deal in Reserve-phone. */
+export async function getPhoneReservations(
+  id: string,
+): Promise<ApiResult<PhoneReservationsView>> {
+  return apiGet(`opportunities/${id}/phone-numbers`);
 }
 
 /** CD-84 — the deal's handover and the checklist its form shows. */

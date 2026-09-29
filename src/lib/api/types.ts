@@ -1600,6 +1600,34 @@ export interface NegotiationTerm {
 }
 
 /** CD-79 — one negotiation round on a deal. */
+/** CD-78 — one number held for a deal in Reserve-phone. */
+export interface PhoneReservation {
+  id: string;
+  number: string;
+  category: string;
+  fee: string | number | null;
+  status: "reserved" | "released" | "expired";
+  expiresAt: string;
+  releasedAt: string | null;
+  releaseReason: "manual" | "deal_lost" | null;
+  createdAt: string;
+  createdByName: string;
+  releasedByName: string | null;
+}
+
+export interface PhoneReservationsView {
+  mode: string;
+  holdDays: number;
+  maxHoldDays: number;
+  reservations: PhoneReservation[];
+}
+
+export interface AvailablePhoneNumber {
+  number: string;
+  category: string;
+  fee: number | null;
+}
+
 export interface NegotiationRound {
   id: string;
   roundNo: number;

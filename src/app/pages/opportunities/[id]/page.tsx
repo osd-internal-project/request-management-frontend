@@ -5,6 +5,7 @@ import {
   getOpportunityActivities,
   getDealHandover,
   getNegotiations,
+  getPhoneReservations,
   getLostReasons,
   getQuotations,
 } from "@/lib/api/sales";
@@ -53,6 +54,7 @@ export default async function OpportunityDetailPage({
     activitiesResult,
     typesResult,
     negotiationsResult,
+    phoneResult,
     handoverResult,
     teamsResult,
   ] = await Promise.all([
@@ -77,6 +79,8 @@ export default async function OpportunityDetailPage({
       : Promise.resolve(null),
     // CD-79 — same `crm.sales.read`.
     getNegotiations(id),
+    // CD-78 — same `crm.sales.read`.
+    getPhoneReservations(id),
     // CD-84 — same `crm.sales.read`; only a won deal has one.
     opportunityResult.data.stage === "won"
       ? getDealHandover(id)
@@ -113,6 +117,7 @@ export default async function OpportunityDetailPage({
       contractTypeName={contractTypeName}
       currentUserId={session?.user.id ?? null}
       negotiations={negotiationsResult.ok ? negotiationsResult.data : null}
+      phoneNumbers={phoneResult.ok ? phoneResult.data : null}
       handover={handoverResult?.ok ? handoverResult.data : null}
       handoverTeams={teamsResult?.ok ? teamsResult.data : []}
       openSaleOrderOnLoad={action === "sale-order"}
