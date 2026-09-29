@@ -60,6 +60,7 @@ export const CORE_SERVICE_PREFIXES = [
   "/approvals",
   "/bi",
   "/customers",
+  "/contracts",
   "/leads",
   "/opportunities",
   "/quotations",
