@@ -11,6 +11,7 @@
 
 import { apiGet, type ApiResult } from "../core";
 import type {
+  RequestRow,
   ContactConsentStatus,
   CustomerDetail,
   CustomerFieldChange,
@@ -78,6 +79,17 @@ export async function getCustomerSummary(
 }
 
 /**
+ * CD-68 — every request about the customer: raised on it directly, or on one
+ * of its deals or quotations. `contractRequestTypeCode` splits out the
+ * contracts tab. Needs `request.read` — the page asks only then.
+ */
+export async function getCustomerRequests(id: string): Promise<
+  ApiResult<{ contractRequestTypeCode: string | null; rows: RequestRow[] }>
+> {
+  return apiGet(`customers/${id}/requests`);
+}
+
+/**
  * CM-07 — active values with their dimensions, for the form's pickers and the
  * register's filter. `crm.customer.read` suffices; the admin surface (which
  * also shows inactive rows and edits them) is a different endpoint behind
@@ -109,6 +121,7 @@ const customersApi = {
   getCustomerHistory,
   getCustomerTimeline,
   getCustomerSummary,
+  getCustomerRequests,
   getContactConsents,
   getKycProducts,
   getSegmentOptions,

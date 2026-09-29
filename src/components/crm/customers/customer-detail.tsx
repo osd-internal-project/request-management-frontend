@@ -82,6 +82,7 @@ export function CustomerDetailView({
   summary,
   consents,
   relatedRequests,
+  contractRequestTypeCode = null,
   customerOpportunities,
   customerQuotations,
   customerSaleOrders,
@@ -97,8 +98,14 @@ export function CustomerDetailView({
   summary: CustomerSummary | null;
   /** CM-05 — live consent per contact from the central PDPA service. */
   consents: ContactConsentStatus[];
-  /** null = viewer has no request.read (C360-04: tab hidden, not empty). */
+  /**
+   * null = viewer has no request.read (C360-04: tab hidden, not empty).
+   * CD-68 — every request about the customer, including those raised on its
+   * deals and quotations.
+   */
   relatedRequests: RequestRow[] | null;
+  /** CD-68 — the contract request type (CD-81); null = no contracts tab. */
+  contractRequestTypeCode?: string | null;
   /** null = viewer has no crm.sales.read. */
   customerOpportunities: OpportunityRow[] | null;
   /** null = viewer has no crm.sales.read. */
@@ -112,6 +119,13 @@ export function CustomerDetailView({
   const [error, setError] = useState<string | null>(null);
 
   const isAlias = Boolean(customer.mergedIntoCustomerId);
+  // CD-68 — the contracts and cases tabs are views of the same request rows.
+  const contractRows = (relatedRequests ?? []).filter(
+    (row) => row.typeCode === contractRequestTypeCode,
+  );
+  const caseRows = (relatedRequests ?? []).filter((row) =>
+    Boolean(row.severity),
+  );
   const editable = canManage && !isAlias;
 
   async function act(path: string, body?: unknown) {
@@ -441,6 +455,26 @@ export function CustomerDetailView({
                 },
               ]
             : []),
+          // CD-68 — contracts: requests of the type Legal takes (CD-81/CD-79).
+          ...(relatedRequests !== null && contractRequestTypeCode
+            ? [
+                {
+                  key: "contracts",
+                  label: `${m.detail.futureTabs.contracts.label} · ${contractRows.length}`,
+                  children: <RelatedRequestsTab rows={contractRows} />,
+                },
+              ]
+            : []),
+          // CD-68 — cases: requests submitted with a severity (CD-67).
+          ...(relatedRequests !== null
+            ? [
+                {
+                  key: "cases",
+                  label: `${m.detail.futureTabs.cases.label} · ${caseRows.length}`,
+                  children: <RelatedRequestsTab rows={caseRows} />,
+                },
+              ]
+            : []),
           {
             key: "history",
             label: m.detail.tabHistory,
@@ -468,6 +502,12 @@ export function CustomerDetailView({
               ([key]) =>
                 !(key === "opportunities" && customerOpportunities !== null) &&
                 !(key === "quotations" && customerQuotations !== null) &&
+                !(
+                  key === "contracts" &&
+                  relatedRequests !== null &&
+                  contractRequestTypeCode
+                ) &&
+                !(key === "cases" && relatedRequests !== null) &&
                 key !== "financials",
             )
             .map(([key, tab]) => ({

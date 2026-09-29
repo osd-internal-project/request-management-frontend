@@ -1,7 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { CustomerDetailView } from "@/components/crm/customers/customer-detail";
 import customers from "@/lib/api/customers";
-import { getRequests } from "@/lib/api/requests";
 import { getOpportunities, getQuotations, getSaleOrders } from "@/lib/api/sales";
 import { HOME_PATH } from "@/lib/routes";
 import { can, getSession } from "@/lib/session";
@@ -50,7 +49,8 @@ export default async function CustomerDetailPage({
       // C360-04: gate-before-fetch — a viewer without request.read never
       // triggers this call, so no guaranteed-403 lands in the logs.
       canReadRequests
-        ? getRequests({ ref_type: "customer", ref_id: id, page_size: 50 })
+        ? // CD-68 — direct, and via the customer's deals and quotations
+          customers.getCustomerRequests(id)
         : Promise.resolve(null),
       // C360-04: no crm.sales.read → no call, tab hidden.
       canReadSales
@@ -80,7 +80,10 @@ export default async function CustomerDetailPage({
       summary={summaryResult.ok ? summaryResult.data : null}
       consents={consentsResult.ok ? consentsResult.data : []}
       relatedRequests={
-        requestsResult?.ok ? requestsResult.data.data : canReadRequests ? [] : null
+        requestsResult?.ok ? requestsResult.data.rows : canReadRequests ? [] : null
+      }
+      contractRequestTypeCode={
+        requestsResult?.ok ? requestsResult.data.contractRequestTypeCode : null
       }
       customerOpportunities={
         opportunitiesResult?.ok ? opportunitiesResult.data.data : canReadSales ? [] : null
