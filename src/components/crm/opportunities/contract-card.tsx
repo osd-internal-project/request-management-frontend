@@ -8,7 +8,23 @@ import type { RequestRow } from "@/lib/api/types";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 
-const m = messages.sales.opportunities.detail.contracts;
+const contractLabels = messages.sales.opportunities.detail.contracts;
+
+/** The card's words — contracts (CD-81) by default, solutions for CD-130. */
+export interface RequestCardLabels {
+  readonly title: string;
+  readonly raise: string;
+  readonly empty: string;
+  readonly cannotRaise: string;
+  readonly draftNo: string;
+  readonly columns: {
+    readonly no: string;
+    readonly stage: string;
+    readonly owner: string;
+    readonly raised: string;
+  };
+  readonly stages: Record<string, string>;
+}
 
 /** Where the draft stands, in the words a salesperson asks with. */
 const STAGE: Record<string, { color: string }> = {
@@ -35,12 +51,15 @@ export function ContractCard({
   typeCode,
   typeName,
   requests,
+  labels: m = contractLabels,
 }: {
   readonly opportunityCode: string;
   readonly typeCode: string;
   /** null = the viewer cannot raise this type (not offered to them). */
   readonly typeName: string | null;
   readonly requests: RequestRow[];
+  /** CD-130 — the same card for the deal's solution requests. */
+  readonly labels?: RequestCardLabels;
 }) {
   const raiseHref = `${ROUTES.newRequest}?type=${encodeURIComponent(typeCode)}&ref_type=opportunity&ref_id=${encodeURIComponent(opportunityCode)}`;
 

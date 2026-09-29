@@ -3063,6 +3063,34 @@ export const messages = {
             cancelled: "ยกเลิก",
           } as Record<string, string>,
         },
+        /** CD-130 — ขอ Solution และประเมินต้นทุน (Sales → Pre-Sales) */
+        solutions: {
+          title: "Solution (Pre-Sales)",
+          raise: "ขอ Solution และประเมินต้นทุน",
+          empty:
+            "ยังไม่ได้ขอ Solution — ต้องกรอกความต้องการ ขอบเขต ไซต์ กำหนดเวลา ผู้ตัดสินใจ และกรอบงบประมาณให้ครบจึงยื่นได้",
+          cannotRaise:
+            "คุณยังยื่นคำขอ Solution ไม่ได้ — ติดต่อผู้ดูแลระบบ",
+          draftNo: "(ร่าง)",
+          columns: {
+            no: "เลขคำขอ",
+            stage: "สถานะ",
+            owner: "ผู้รับผิดชอบ",
+            raised: "วันที่ขอ",
+          },
+          stages: {
+            draft: "ยังไม่ได้ยื่น",
+            submitted: "รอ Pre-Sales รับเรื่อง",
+            in_progress: "Pre-Sales กำลังออกแบบ",
+            on_hold: "พักไว้",
+            returned: "Pre-Sales ตีกลับ — ข้อมูลไม่พอ",
+            completed: "ส่ง Solution แล้ว — รอตรวจรับ",
+            approved: "ได้ Solution แล้ว",
+            closed: "ได้ Solution แล้ว",
+            rejected: "Pre-Sales ไม่รับทำ",
+            cancelled: "ยกเลิก",
+          } as Record<string, string>,
+        },
         noRequests: "ยังไม่มีคำขอที่อ้างโอกาสการขายนี้",
         edit: "แก้ไข",
         quotationsTitle: "ใบเสนอราคา",
@@ -3813,6 +3841,11 @@ export const messages = {
         source: "แหล่งที่มา",
       },
       sectionContracts: "สัญญา",
+      /* CD-130 */
+      sectionSolutions: "Solution (Pre-Sales)",
+      solutionRequestTypeCode: "ประเภทคำขอ \"ขอ Solution และประเมินต้นทุน\"",
+      solutionHint:
+        "หน้าดีลจะมีการ์ด “Solution” พร้อมปุ่มขอ Solution ด้วยประเภทนี้ — ช่องบังคับของฟอร์มประเภทนี้คือรายการตรวจความครบก่อนยื่น (แก้ได้ที่หน้าประเภทคำขอ) · เว้นว่าง = ไม่แสดงการ์ด",
       contractRequestTypeCode: "ประเภทคำขอที่ฝ่ายกฎหมายรับทำ/แก้สัญญา",
       contractHint:
         "หน้าดีลจะมีการ์ด “สัญญา” พร้อมปุ่มขอจัดทำ/แก้ไขสัญญาด้วยประเภทนี้ และติดตามสถานะร่างได้จากหน้าดีล — เว้นว่าง = ไม่แสดงการ์ด · ประเภทคำขอต้องเปิดให้บริษัทนี้ใช้",

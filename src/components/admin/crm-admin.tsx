@@ -340,6 +340,9 @@ function ConfigSection({
   const [contractType, setContractType] = useState(
     config.contractRequestTypeCode ?? "",
   );
+  const [solutionType, setSolutionType] = useState(
+    config.solutionRequestTypeCode ?? "",
+  );
   const [discoveryRequired, setDiscoveryRequired] = useState(
     config.discoveryRequired ?? false,
   );
@@ -353,6 +356,7 @@ function ConfigSection({
     await onCall("config", "PATCH", {
       target_approval_type_code: targetType,
       contract_request_type_code: contractType,
+      solution_request_type_code: solutionType,
       dedup_threshold: threshold,
       min_margin_pct: minMargin,
       quotation_validity_days: validityDays,
@@ -510,6 +514,23 @@ function ConfigSection({
       </div>
       <Text type="secondary" className="mt-2 block text-xs">
         {m.contractHint}
+      </Text>
+
+      {/* CD-130 — ประเภทคำขอ Solution (Sales → Pre-Sales) */}
+      <Text strong className="mt-5 block">
+        {m.sectionSolutions}
+      </Text>
+      <div className="mt-2 max-w-xs">
+        <Text className="mb-1 block text-xs">{m.solutionRequestTypeCode}</Text>
+        <Input
+          value={solutionType}
+          maxLength={20}
+          allowClear
+          onChange={(e) => setSolutionType(e.target.value.toUpperCase())}
+        />
+      </div>
+      <Text type="secondary" className="mt-2 block text-xs">
+        {m.solutionHint}
       </Text>
 
       <Button

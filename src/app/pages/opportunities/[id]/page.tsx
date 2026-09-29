@@ -73,8 +73,11 @@ export default async function OpportunityDetailPage({
     getQuotations({ opportunity_id: id, current: true, page_size: 50 }),
     // CD-65 — same `crm.sales.read`.
     getOpportunityActivities(id),
-    // CD-81 — only to tell whether the viewer may raise the contract type.
-    opportunityResult.data.contractRequestTypeCode && canReadRequests
+    // CD-81 / CD-130 — only to tell whether the viewer may raise the
+    // contract or the solution type.
+    (opportunityResult.data.contractRequestTypeCode ||
+      opportunityResult.data.solutionRequestTypeCode) &&
+    canReadRequests
       ? getRequestTypes()
       : Promise.resolve(null),
     // CD-79 — same `crm.sales.read`.
@@ -98,6 +101,11 @@ export default async function OpportunityDetailPage({
     (typesResult?.ok &&
       typesResult.data.find((type) => type.code === contractCode)?.name) ||
     null;
+  const solutionCode = opportunityResult.data.solutionRequestTypeCode ?? null;
+  const solutionTypeName =
+    (typesResult?.ok &&
+      typesResult.data.find((type) => type.code === solutionCode)?.name) ||
+    null;
 
   return (
     <OpportunityDetailView
@@ -115,6 +123,7 @@ export default async function OpportunityDetailPage({
       activities={activitiesResult.ok ? activitiesResult.data : []}
       canManage={canManage}
       contractTypeName={contractTypeName}
+      solutionTypeName={solutionTypeName}
       currentUserId={session?.user.id ?? null}
       negotiations={negotiationsResult.ok ? negotiationsResult.data : null}
       phoneNumbers={phoneResult.ok ? phoneResult.data : null}

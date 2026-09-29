@@ -83,6 +83,7 @@ export function OpportunityDetailView({
   negotiations = null,
   phoneNumbers = null,
   contractTypeName = null,
+  solutionTypeName = null,
   handover = null,
   handoverTeams = [],
   openSaleOrderOnLoad = false,
@@ -109,6 +110,8 @@ export function OpportunityDetailView({
   } | null;
   /** CD-81 — name of the contract type when the viewer may raise it. */
   contractTypeName?: string | null;
+  /** CD-130 — name of the solution type when the viewer may raise it. */
+  solutionTypeName?: string | null;
   /** CD-84 — null = could not be read (the card is hidden). */
   handover?: DealHandoverView | null;
   /** CD-84 — teams the salesperson may hand over to. */
@@ -485,6 +488,19 @@ export function OpportunityDetailView({
           view={phoneNumbers}
           editable={editable}
           canManage={canManage}
+        />
+      )}
+
+      {/* CD-130 — ขอ Solution จาก Pre-Sales; ช่องบังคับของฟอร์มคือจุดส่งต่อที่ 2 */}
+      {relatedRequests !== null && opportunity.solutionRequestTypeCode && (
+        <ContractCard
+          opportunityCode={opportunity.opportunityCode}
+          typeCode={opportunity.solutionRequestTypeCode}
+          typeName={editable ? solutionTypeName : null}
+          labels={md.solutions}
+          requests={relatedRequests.filter(
+            (row) => row.typeCode === opportunity.solutionRequestTypeCode,
+          )}
         />
       )}
 
