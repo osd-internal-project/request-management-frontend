@@ -1826,6 +1826,9 @@ export interface NotificationPreferences {
   email: boolean;
   /** false until SMTP exists (open question B) — the screen says so. */
   email_delivery_available: boolean;
+  /** CD-51 — the Teams switch; `teams_available` false = no Teams channel. */
+  teams: boolean;
+  teams_available: boolean;
   /** CD-52 — Bangkok hour the daily digest goes out, working days. */
   digest_hour: number;
   categories: {

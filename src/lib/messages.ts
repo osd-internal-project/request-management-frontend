@@ -2033,7 +2033,11 @@ export const messages = {
     target: "ส่งถึง",
     deliveryStatus: "ผลการส่ง",
     sentAt: "เวลา",
-    channels: { in_app: "ในระบบ", email: "อีเมล" } as Record<string, string>,
+    channels: {
+      in_app: "ในระบบ",
+      email: "อีเมล",
+      teams: "Microsoft Teams",
+    } as Record<string, string>,
     statuses: {
       sent: "ส่งแล้ว",
       queued: "รอส่ง",
@@ -2392,6 +2396,10 @@ export const messages = {
       emailUnavailable:
         "ยังส่งอีเมลจริงไม่ได้จนกว่าจะตั้งค่าเซิร์ฟเวอร์อีเมล — ระบบบันทึกความต้องการของคุณไว้ก่อน",
       saved: "บันทึกการตั้งค่าแล้ว",
+      /* CD-51 */
+      teams: "Microsoft Teams",
+      teamsHint:
+        "ข้อความส่วนตัวจากบอทแจ้งเตือนใน Teams — เรื่องเดียวกับที่แจ้งในระบบ (รายการที่รวมเป็นสรุปรายวันจะไปพร้อมสรุป)",
       /* CD-52 */
       perCategory: "แยกตามเรื่อง",
       perCategoryHint:

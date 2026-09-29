@@ -200,7 +200,10 @@ export function NotificationLog({
                         {m.channels[delivery.channel] ?? delivery.channel}
                       </td>
                       <td className="pr-4">
-                        {delivery.channel === "in_app"
+                        {/* a queued Teams send holds the user id until sent */}
+                        {delivery.channel === "in_app" ||
+                        (delivery.channel === "teams" &&
+                          delivery.status === "queued")
                           ? row.recipient.display_name
                           : delivery.target}
                       </td>
