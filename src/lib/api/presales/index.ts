@@ -12,6 +12,13 @@ export interface SolutionAssumption {
   text: string;
 }
 
+/** CD-134 — a deliverable with the criteria the customer accepts it by. */
+export interface SolutionDeliverable {
+  title: string;
+  description: string;
+  criteria: string[];
+}
+
 export type SolutionVersionStatus = "draft" | "locked" | "superseded";
 
 export interface SolutionFile {
@@ -85,6 +92,9 @@ export interface SolutionDetail {
     summary: string;
     design: string;
     assumptions: SolutionAssumption[];
+    inScope: string[];
+    outOfScope: string[];
+    deliverables: SolutionDeliverable[];
     lockedBy: string | null;
     updatedAt: string;
     files: SolutionFile[];

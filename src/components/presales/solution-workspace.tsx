@@ -36,6 +36,7 @@ import type {
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import { RequirementsCard } from "./requirements-card";
+import { ScopeOfWorkCard, type ScopeOfWork } from "./scope-of-work-card";
 
 const mp = messages.presales;
 
@@ -71,6 +72,11 @@ export function SolutionWorkspace({ solution }: { solution: SolutionDetail }) {
   const [assumptions, setAssumptions] = useState<SolutionAssumption[]>(
     version.assumptions,
   );
+  const [sow, setSow] = useState<ScopeOfWork>({
+    inScope: version.inScope,
+    outOfScope: version.outOfScope,
+    deliverables: version.deliverables,
+  });
   const [busy, setBusy] = useState(false);
   const [opening, setOpening] = useState(false);
   const [changeNote, setChangeNote] = useState("");
@@ -80,8 +86,14 @@ export function SolutionWorkspace({ solution }: { solution: SolutionDetail }) {
       title !== solution.title ||
       summary !== version.summary ||
       design !== version.design ||
-      JSON.stringify(assumptions) !== JSON.stringify(version.assumptions),
-    [title, summary, design, assumptions, solution.title, version],
+      JSON.stringify(assumptions) !== JSON.stringify(version.assumptions) ||
+      JSON.stringify(sow) !==
+        JSON.stringify({
+          inScope: version.inScope,
+          outOfScope: version.outOfScope,
+          deliverables: version.deliverables,
+        }),
+    [title, summary, design, assumptions, sow, solution.title, version],
   );
 
   const base = `presales/solutions/${solution.id}`;
@@ -108,7 +120,15 @@ export function SolutionWorkspace({ solution }: { solution: SolutionDetail }) {
       () =>
         appApi(versionPath, {
           method: "PATCH",
-          body: JSON.stringify({ title, summary, design, assumptions }),
+          body: JSON.stringify({
+            title,
+            summary,
+            design,
+            assumptions,
+            in_scope: sow.inScope,
+            out_of_scope: sow.outOfScope,
+            deliverables: sow.deliverables,
+          }),
         }),
       mp.saved,
     );
@@ -321,6 +341,20 @@ export function SolutionWorkspace({ solution }: { solution: SolutionDetail }) {
           </Space>
         </Card>
       </div>
+
+      <ScopeOfWorkCard
+        value={
+          editable
+            ? sow
+            : {
+                inScope: version.inScope,
+                outOfScope: version.outOfScope,
+                deliverables: version.deliverables,
+              }
+        }
+        editable={editable}
+        onChange={setSow}
+      />
 
       <RequirementsCard solution={solution} />
 

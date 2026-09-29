@@ -2054,6 +2054,28 @@ export const messages = {
     startHint: "คำขอนี้คือโจทย์ Solution — เริ่มออกแบบได้หลังรับเรื่อง",
     cardTitle: "Solution",
 
+    /** CD-134 — ขอบเขตงาน (SOW) */
+    sow: {
+      title: "ขอบเขตงาน (SOW)",
+      hint: "ล็อกไปพร้อมเวอร์ชัน — สัญญาและการส่งมอบอ้างอิงขอบเขตนี้; ยืนยันเวอร์ชันได้เมื่อมีงานในขอบเขต และทุกรายการส่งมอบมีเกณฑ์ตรวจรับ",
+      inScope: "งานในขอบเขต",
+      outOfScope: "งานนอกขอบเขต",
+      inScopePlaceholder: "งานที่รวมอยู่ในข้อเสนอ",
+      outOfScopePlaceholder: "งานที่ไม่รวม (ลูกค้าทำเองหรือเสนอแยก)",
+      addLine: "เพิ่มข้อ",
+      none: "—",
+      deliverables: "รายการส่งมอบ",
+      addDeliverable: "เพิ่มรายการส่งมอบ",
+      noDeliverables: "ยังไม่มีรายการส่งมอบ",
+      deliverableTitle: "ชื่อรายการส่งมอบ",
+      deliverableDescription: "รายละเอียด (ไม่บังคับ)",
+      criteria: "เกณฑ์ตรวจรับ",
+      criterionPlaceholder: "ลูกค้าตรวจรับเมื่อ …",
+      addCriterion: "เพิ่มเกณฑ์",
+      noCriteria: "ยังไม่มีเกณฑ์ตรวจรับ",
+      remove: "เอาออก",
+    },
+
     /** CD-131 — วิเคราะห์ความต้องการ */
     analysis: {
       title: "วิเคราะห์ความต้องการ",
