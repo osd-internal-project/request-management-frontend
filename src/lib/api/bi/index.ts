@@ -45,6 +45,8 @@ export interface BiDashboardConfig {
   metabase_dashboard_id: number;
   sort_order: number;
   active: boolean;
+  /** CD-92 — signed with the viewer's company as a locked `company` parameter. */
+  lock_company: boolean;
   /** Empty = ทั้งบริษัทเห็น */
   org_units: BiAudienceUnit[];
   updated_at: string;
@@ -63,6 +65,7 @@ export interface BiDashboardPayload {
   sort_order?: number;
   org_unit_ids?: string[];
   active?: boolean;
+  lock_company?: boolean;
 }
 
 /** Every dashboard of the active company, retired ones included. */
