@@ -1,5 +1,6 @@
 "use client";
 
+import { CustomerContractsTab } from "@/components/crm/customers/customer-contracts-tab";
 import {
   CustomerKycTab,
   RISK_COLOR,
@@ -481,16 +482,22 @@ export function CustomerDetailView({
                 },
               ]
             : []),
-          // CD-68 — contracts: requests of the type Legal takes (CD-81/CD-79).
-          ...(relatedRequests !== null && contractRequestTypeCode
-            ? [
-                {
-                  key: "contracts",
-                  label: `${m.detail.futureTabs.contracts.label} · ${contractRows.length}`,
-                  children: <RelatedRequestsTab rows={contractRows} />,
-                },
-              ]
-            : []),
+          // CD-70 — the contract register, with the contract requests sent to
+          // Legal (CD-68/CD-81) underneath when the viewer reads requests.
+          {
+            key: "contracts",
+            label: m.detail.futureTabs.contracts.label,
+            children: (
+              <CustomerContractsTab
+                customerId={customer.id}
+                editable={editable}
+              >
+                {relatedRequests !== null && contractRequestTypeCode ? (
+                  <RelatedRequestsTab rows={contractRows} />
+                ) : null}
+              </CustomerContractsTab>
+            ),
+          },
           // CD-68 — cases: requests submitted with a severity (CD-67).
           ...(relatedRequests !== null
             ? [
@@ -534,11 +541,7 @@ export function CustomerDetailView({
               ([key]) =>
                 !(key === "opportunities" && customerOpportunities !== null) &&
                 !(key === "quotations" && customerQuotations !== null) &&
-                !(
-                  key === "contracts" &&
-                  relatedRequests !== null &&
-                  contractRequestTypeCode
-                ) &&
+                key !== "contracts" &&
                 !(key === "cases" && relatedRequests !== null) &&
                 key !== "financials",
             )

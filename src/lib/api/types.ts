@@ -1027,6 +1027,23 @@ export interface CustomerContact {
 }
 
 /** `GET /customers/:id` — the detail page, and later the 360° header card. */
+/** CD-70 — one contract in the customer's register. */
+export interface CustomerContract {
+  id: string;
+  contractNo: string;
+  title: string;
+  startOn: string | null;
+  endOn: string;
+  /** Decimal as a string. */
+  value: string | null;
+  currency: string;
+  status: "active" | "renewed" | "ended" | "cancelled";
+  opportunityId: string | null;
+  requestId: string | null;
+  renewalOpportunityId: string | null;
+  note: string | null;
+}
+
 /** CD-61 — ระดับความเสี่ยงลูกค้า. */
 export type KycRiskLevel = "low" | "medium" | "high";
 
