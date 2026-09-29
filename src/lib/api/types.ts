@@ -1200,7 +1200,24 @@ export type LeadStatus =
   | "qualified"
   | "disqualified"
   | "converted";
-export type LeadActivityType = "call" | "email" | "meeting" | "task" | "note";
+export type LeadActivityType =
+  | "call"
+  | "email"
+  | "meeting"
+  | "task"
+  | "note"
+  // CD-85 — ช่องทางเข้าหา
+  | "visit"
+  | "line"
+  | "social";
+/** CD-85 — ผลการติดต่อหนึ่งครั้ง. */
+export type ActivityOutcome =
+  | "reached"
+  | "no_answer"
+  | "interested"
+  | "not_interested";
+/** CD-85 — สี่อย่างที่ต้องรู้ก่อนเปิดดีล. */
+export type DiscoveryItem = "need" | "budget" | "decision_maker" | "timeframe";
 export type OpportunityStage =
   "qualifying" | "proposing" | "negotiating" | "won" | "lost";
 
@@ -1237,6 +1254,17 @@ export interface LeadRow {
   ownerUserId: string;
   createdAt: string;
   updatedAt: string;
+  /** CD-85 Discovery. */
+  discoveryNeed: string | null;
+  discoveryBudget: string | number | null;
+  discoveryBudgetNote: string | null;
+  discoveryDecisionMaker: string | null;
+  discoveryTimeframe: string | null;
+  discovery_missing: DiscoveryItem[];
+  /** CD-85 Prospecting — completed contacts only. */
+  contact_attempts: number;
+  last_contact_at: string | null;
+  last_outcome: ActivityOutcome | null;
 }
 
 /**
@@ -1255,6 +1283,8 @@ export interface SalesActivity {
   createdAt: string;
   createdBy: string;
   createdByName: string;
+  /** CD-85 — lead activities only. */
+  outcome?: ActivityOutcome | null;
 }
 
 export interface LeadActivity extends SalesActivity {
@@ -1294,6 +1324,48 @@ export interface LeadDetail extends LeadRow {
   } | null;
   owner: { id: string; displayName: string };
   activities: LeadActivity[];
+  /** CD-85 — the target account this lead came from. */
+  targetAccount: {
+    id: string;
+    name: string;
+    priority: TargetAccountPriority;
+    status: TargetAccountStatus;
+  } | null;
+  /** CD-85 — the company wants Discovery done before a deal (the workflow decides). */
+  discovery_required: boolean;
+}
+
+/** CD-85 — บริษัทเป้าหมายของแกน Getter. */
+export type TargetAccountPriority = "high" | "medium" | "low";
+export type TargetAccountStatus =
+  | "targeting"
+  | "approaching"
+  | "converted"
+  | "dropped";
+
+export interface TargetAccountRow {
+  id: string;
+  name: string;
+  nameEn: string | null;
+  taxId: string | null;
+  industry: string | null;
+  companySize: string | null;
+  province: string | null;
+  website: string | null;
+  note: string | null;
+  priority: TargetAccountPriority;
+  status: TargetAccountStatus;
+  dropReason: string | null;
+  ownerUserId: string | null;
+  owner: { id: string; displayName: string } | null;
+  leadId: string | null;
+  lead: {
+    id: string;
+    name: string;
+    status: string;
+    convertedOpportunityId: string | null;
+  } | null;
+  createdAt: string;
 }
 
 export interface OpportunityRow {
@@ -1661,6 +1733,8 @@ export interface CrmConfig {
   kycReviewMonthsHigh?: number;
   kycReviewMonthsMedium?: number;
   kycReviewMonthsLow?: number;
+  /** CD-85 — ต้องทำ Discovery ครบก่อนเปิดดีล (workflow ตัดสิน, หน้าจอเตือน). */
+  discoveryRequired?: boolean;
   /** CD-65 — ไม่มีใครอ่านแล้ว: ย้ายไปเป็นกติกา `opportunity.stale` (CD-53). */
   staleOpportunityDays: number;
   /** หัวกระดาษใบเสนอราคา — null = ไม่ได้ตั้ง. */

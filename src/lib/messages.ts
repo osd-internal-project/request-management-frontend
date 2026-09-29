@@ -82,6 +82,7 @@ export const messages = {
     salesReport: "รายงานยอดขาย",
     salesTargets: "เป้าและพยากรณ์",
     campaigns: "แคมเปญ",
+    targetAccounts: "บริษัทเป้าหมาย",
     visitLog: "บันทึกการเข้าพบ",
     handovers: "งานส่งมอบ",
     adminGroup: "ผู้ดูแลระบบ",
@@ -966,6 +967,81 @@ export const messages = {
   },
 
   /** CD-71 */
+  /** CD-85 — บริษัทเป้าหมาย (Target Account) ของแกน Getter. */
+  targetAccounts: {
+    title: "บริษัทเป้าหมาย",
+    subtitle:
+      "รายชื่อบริษัทที่จะเปิดตลาด จัดลำดับก่อนหลังก่อนเริ่มติดต่อ — กด \"เริ่มเข้าหา\" แล้วงานเดินต่อบน Lead",
+    add: "เพิ่มบริษัทเป้าหมาย",
+    edit: "แก้ไข",
+    searchPlaceholder: "ค้นหาชื่อ / เลขภาษี",
+    allStatus: "สถานะ: ทั้งหมด",
+    allPriority: "ลำดับ: ทั้งหมด",
+    all: "ทั้งหมด",
+    mineOnly: "เฉพาะของฉัน",
+    unassigned: "ยังไม่มีคนรับ",
+    empty: "ยังไม่มีบริษัทเป้าหมาย",
+    columns: {
+      priority: "ลำดับ",
+      name: "บริษัท",
+      industry: "อุตสาหกรรม / จังหวัด",
+      owner: "ผู้รับผิดชอบ",
+      status: "สถานะ",
+      lead: "Lead",
+    },
+    priority: { high: "สูง", medium: "กลาง", low: "ต่ำ" } as Record<
+      string,
+      string
+    >,
+    priorityColor: { high: "red", medium: "gold", low: "default" } as Record<
+      string,
+      string
+    >,
+    status: {
+      targeting: "เล็งไว้",
+      approaching: "กำลังเข้าหา",
+      converted: "เปิดดีลแล้ว",
+      dropped: "ตัดออก",
+    } as Record<string, string>,
+    statusColor: {
+      targeting: "default",
+      approaching: "blue",
+      converted: "green",
+      dropped: "red",
+    } as Record<string, string>,
+    noOwner: "— ยังไม่มีคนรับ —",
+    approach: "เริ่มเข้าหา",
+    approachTitle: (name: string) => `เริ่มเข้าหา ${name}`,
+    approachHint:
+      "ระบบจะสร้าง Lead จากข้อมูลบริษัทนี้ (สถานะตั้งต้น) — ใส่ผู้ติดต่อได้ถ้ารู้แล้ว",
+    approached: "สร้าง Lead แล้ว",
+    openLead: "เปิด Lead",
+    drop: "ตัดออก",
+    dropTitle: "ตัดบริษัทเป้าหมายออก",
+    dropReason: "เหตุผลที่ตัดออก",
+    dropped: "ตัดออกแล้ว",
+    reopen: "นำกลับมาเล็ง",
+    reopened: "นำกลับมาแล้ว",
+    save: "บันทึก",
+    saved: "บันทึกแล้ว",
+    form: {
+      name: "ชื่อบริษัท",
+      nameRequired: "ต้องระบุชื่อบริษัท",
+      nameEn: "ชื่อ (ภาษาอังกฤษ)",
+      taxId: "เลขทะเบียนนิติบุคคล",
+      industry: "อุตสาหกรรม",
+      companySize: "ขนาด",
+      province: "จังหวัด",
+      website: "เว็บไซต์",
+      note: "ทำไมเล็งรายนี้ / ใครแนะนำ",
+      priority: "ลำดับความสำคัญ",
+      owner: "ผู้รับผิดชอบ",
+      contactName: "ผู้ติดต่อ",
+      phone: "โทรศัพท์",
+      email: "อีเมล",
+    },
+  },
+
   campaigns: {
     title: "แคมเปญ",
     subtitle: "ผูก Lead กับกิจกรรมการตลาด แล้ววัดผลถึงยอดขาย",
@@ -2236,6 +2312,40 @@ export const messages = {
     leads: {
       title: "Lead",
       scopeNote: "เห็นเฉพาะ Lead ของคุณและของทีม ตามสิทธิ์ที่ได้รับ",
+      /** CD-85 — แกน Getter. */
+      newCustomerOnly: "เฉพาะลูกค้าใหม่",
+      attempts: (n: number) => `ติดต่อ ${n} ครั้ง`,
+      lastContact: (when: string) => `ล่าสุด ${when}`,
+      discoveryShort: (done: number) => `Discovery ${done}/4`,
+      fromTarget: "จากบริษัทเป้าหมาย",
+      discovery: {
+        title: "Discovery — ก่อนเปิดโอกาสการขาย",
+        hint: "สิ่งที่ต้องรู้ก่อนเปิดดีล: ความต้องการ งบ ผู้ตัดสินใจ และกรอบเวลา",
+        edit: "บันทึก Discovery",
+        saved: "บันทึก Discovery แล้ว",
+        complete: "ครบแล้ว",
+        missing: (n: number) => `ขาด ${n} ข้อ`,
+        requiredWarning:
+          "บริษัทนี้ต้องการ Discovery ครบก่อนเปิดโอกาสการขาย — ขั้นตอนอนุมัติ/เลื่อนขั้นอาจไม่ให้ผ่านจนกว่าจะครบ",
+        convertWarning: (items: string) =>
+          `Discovery ยังไม่ครบ: ${items} — แปลงต่อได้ แต่ควรเก็บข้อมูลให้ครบก่อน`,
+        item: {
+          need: "ความต้องการ / Pain Point",
+          budget: "งบประมาณ",
+          decision_maker: "ผู้ตัดสินใจ",
+          timeframe: "กรอบเวลาตัดสินใจ",
+        } as Record<string, string>,
+        budgetNote: "หมายเหตุงบ (ใช้แทนตัวเลขได้)",
+        budgetAmount: "งบประมาณ (บาท)",
+        timeframePlaceholder: "คาดว่าจะตัดสินใจภายใน",
+      },
+      prospecting: {
+        title: "การเข้าหา",
+        attempts: "จำนวนครั้งที่ติดต่อ",
+        lastContact: "ติดต่อล่าสุด",
+        lastOutcome: "ผลล่าสุด",
+        none: "ยังไม่เคยติดต่อ",
+      },
       newLead: "เพิ่ม Lead",
       searchPlaceholder: "ค้นหา ชื่อ / ผู้ติดต่อ / โทร / อีเมล",
       filterStatus: "สถานะ: ทั้งหมด",
@@ -2389,6 +2499,22 @@ export const messages = {
             meeting: "นัดหมาย",
             task: "งาน",
             note: "บันทึก",
+            visit: "เข้าพบ",
+            line: "LINE",
+            social: "โซเชียล",
+          } as Record<string, string>,
+          /** CD-85 — ผลการติดต่อ. */
+          outcome: {
+            reached: "ติดต่อได้",
+            no_answer: "ติดต่อไม่ได้",
+            interested: "สนใจ",
+            not_interested: "ไม่สนใจ",
+          } as Record<string, string>,
+          outcomeColor: {
+            reached: "blue",
+            no_answer: "orange",
+            interested: "green",
+            not_interested: "red",
           } as Record<string, string>,
           form: {
             title: "ลงกิจกรรม",
@@ -2397,6 +2523,8 @@ export const messages = {
             subjectRequired: "ต้องระบุหัวข้อ",
             detail: "รายละเอียด",
             dueAt: "กำหนด (เว้นว่าง = ทำไปแล้ว)",
+            outcome: "ผลการติดต่อ",
+            outcomeHint: "ใส่เมื่อติดต่อไปแล้ว — ใช้นับจำนวนครั้งที่เข้าหา",
             save: "บันทึก",
             saved: "บันทึกกิจกรรมแล้ว",
           },
@@ -3470,6 +3598,9 @@ export const messages = {
       sectionFollowUp: "การติดตามโอกาสการขาย",
       staleMoved: "เกณฑ์แจ้งเตือนดีลเงียบย้ายไปรวมกับกติกาแจ้งเตือนอื่นแล้ว —",
       staleMovedLink: "ตั้งที่หน้ากติกาแจ้งเตือน",
+      discoveryRequired: "ต้องทำ Discovery ครบก่อนเปิดโอกาสการขายจาก Lead",
+      discoveryRequiredHint:
+        "หน้า Lead จะเตือนเมื่อยังไม่ครบ · การบังคับจริงอยู่ที่ขั้นตอน workflow ของ Lead (lwf-0001) ซึ่งอ่านค่านี้",
       save: "บันทึกการตั้งค่า",
       saved: "บันทึกแล้ว",
     },

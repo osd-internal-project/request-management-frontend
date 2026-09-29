@@ -74,6 +74,13 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     permissions: ["crm.customer.read"],
     group: messages.nav.crmGroup,
   },
+  /** CD-85 — บริษัทเป้าหมายของแกน Getter: เล็ง จัดลำดับ แล้วเริ่มเข้าหาเป็น Lead. */
+  {
+    label: messages.nav.targetAccounts,
+    href: ROUTES.targetAccounts,
+    permissions: ["crm.sales.read"],
+    group: messages.nav.crmGroup,
+  },
   {
     label: messages.nav.leads,
     href: ROUTES.leads,

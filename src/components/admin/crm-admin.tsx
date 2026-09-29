@@ -339,6 +339,9 @@ function ConfigSection({
   const [contractType, setContractType] = useState(
     config.contractRequestTypeCode ?? "",
   );
+  const [discoveryRequired, setDiscoveryRequired] = useState(
+    config.discoveryRequired ?? false,
+  );
   const [busy, setBusy] = useState(false);
 
   async function save() {
@@ -351,6 +354,7 @@ function ConfigSection({
       quotation_validity_days: validityDays,
       vat_pct: vat,
       quotation_approval_type_code: approvalType || undefined,
+      discovery_required: discoveryRequired,
     });
     setBusy(false);
   }
@@ -441,6 +445,18 @@ function ConfigSection({
       <Text type="secondary" className="mt-2 block text-xs">
         {m.staleMoved}{" "}
         <Link href={ROUTES.adminNotificationRules}>{m.staleMovedLink}</Link>
+      </Text>
+      {/* CD-85 — Discovery ก่อนเปิดดีล: workflow ตัดสิน หน้าจอเตือน */}
+      <div className="mt-3 flex items-center gap-2">
+        <Switch
+          size="small"
+          checked={discoveryRequired}
+          onChange={setDiscoveryRequired}
+        />
+        <Text className="text-xs">{m.discoveryRequired}</Text>
+      </div>
+      <Text type="secondary" className="mt-1 block text-xs">
+        {m.discoveryRequiredHint}
       </Text>
 
       {/* CD-82 — ปรับเป้าของงวดที่เริ่มแล้วผ่านคำขออนุมัติ */}
