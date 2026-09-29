@@ -223,3 +223,35 @@ export function getContractInstallments(
 ): Promise<ApiResult<ContractInstallmentsView>> {
   return apiGet(`/contracts/${encodeURIComponent(id)}/installments`);
 }
+
+/** CD-158 — one issue behind the risk level. */
+export interface RiskIssue {
+  title: string;
+  detail: string | null;
+  clause: string | null;
+  severity: "low" | "medium" | "high";
+  escalate: boolean;
+}
+
+/** CD-158 — the legal risk assessment and whether it allows signing. */
+export interface ContractRiskView {
+  assessed: boolean;
+  level: "low" | "medium" | "high" | "critical" | null;
+  summary: string | null;
+  issues: RiskIssue[];
+  assessedBy: string | null;
+  assessedAt: string | null;
+  opinion: {
+    state: "not_needed" | "missing" | "draft" | "pending" | "approved" | "rejected";
+    request: { id: string; requestNo: string | null; status: string } | null;
+    error: string | null;
+  };
+  /** ready: null = not assessed. */
+  signing: { ready: boolean | null; reason: string | null };
+}
+
+export function getContractRisk(
+  id: string,
+): Promise<ApiResult<ContractRiskView>> {
+  return apiGet(`/contracts/${encodeURIComponent(id)}/risk`);
+}

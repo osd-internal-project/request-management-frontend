@@ -29,12 +29,14 @@ import { ContractForm } from "@/components/legal/contract-form";
 import { ContractTermsCard } from "@/components/legal/contract-terms-card";
 import { ContractObligationsCard } from "@/components/legal/contract-obligations-card";
 import { ContractInstallmentsCard } from "@/components/legal/contract-installments-card";
+import { ContractRiskCard } from "@/components/legal/contract-risk-card";
 import { SearchSelect } from "@/components/ui/search-select";
 import { appApi } from "@/lib/api/client";
 import type {
   ContractDetail,
   ContractInstallmentsView,
   ContractObligation,
+  ContractRiskView,
   ContractTermsView,
 } from "@/lib/api/contracts";
 import { messages } from "@/lib/messages";
@@ -61,6 +63,7 @@ export function ContractDetailView({
   terms,
   obligations,
   installments,
+  risk,
   currentUserId,
   people,
 }: {
@@ -71,6 +74,8 @@ export function ContractDetailView({
   readonly obligations: ContractObligation[] | null;
   /** CD-164 — null = could not load. */
   readonly installments: ContractInstallmentsView | null;
+  /** CD-158 — null = could not load. */
+  readonly risk: ContractRiskView | null;
   readonly currentUserId: string | null;
   /** The company's users, for the access list (Legal only). */
   readonly people: { id: string; name: string }[];
@@ -312,6 +317,14 @@ export function ContractDetailView({
             <Text type="secondary">{md.noSubContracts}</Text>
           )}
         </Card>
+      )}
+
+      {risk && (
+        <ContractRiskCard
+          contractId={contract.id}
+          view={risk}
+          canManage={canManage}
+        />
       )}
 
       {terms && (

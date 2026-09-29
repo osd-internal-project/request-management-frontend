@@ -4,6 +4,7 @@ import {
   getContract,
   getContractInstallments,
   getContractObligations,
+  getContractRisk,
   getContractTerms,
 } from "@/lib/api/contracts";
 import { getAllDirectoryUsers } from "@/lib/api/users";
@@ -22,7 +23,8 @@ export default async function ContractPage({ params }: Params) {
 
   const { id } = await params;
   const canManage = can(session, "legal.contract.manage");
-  const [result, terms, obligations, installments, users] = await Promise.all([
+  const [result, terms, obligations, installments, risk, users] =
+    await Promise.all([
     getContract(id),
     // CD-153..156 — same `legal.contract.read`
     getContractTerms(id),
@@ -30,6 +32,8 @@ export default async function ContractPage({ params }: Params) {
     getContractObligations(id),
     // CD-164 — same `legal.contract.read`
     getContractInstallments(id),
+    // CD-158 — same `legal.contract.read`
+    getContractRisk(id),
     // the access list picker — Legal only
     canManage && can(session, "user.read")
       ? getAllDirectoryUsers()
@@ -43,6 +47,7 @@ export default async function ContractPage({ params }: Params) {
       terms={terms.ok ? terms.data : null}
       obligations={obligations.ok ? obligations.data : null}
       installments={installments.ok ? installments.data : null}
+      risk={risk.ok ? risk.data : null}
       currentUserId={session?.user.id ?? null}
       people={(users?.ok ? users.data : []).map((user) => ({
         id: user.id,

@@ -343,6 +343,9 @@ function ConfigSection({
   const [liabilityType, setLiabilityType] = useState(
     config.liabilityApprovalRequestTypeCode ?? "",
   );
+  const [riskOpinionType, setRiskOpinionType] = useState(
+    config.legalRiskOpinionTypeCode ?? "",
+  );
   const [solutionType, setSolutionType] = useState(
     config.solutionRequestTypeCode ?? "",
   );
@@ -363,6 +366,7 @@ function ConfigSection({
       target_approval_type_code: targetType,
       contract_request_type_code: contractType,
       liability_approval_request_type_code: liabilityType,
+      legal_risk_opinion_type_code: riskOpinionType,
       solution_request_type_code: solutionType,
       solution_approval_type_code: solutionApprovalType,
       dedup_threshold: threshold,
@@ -537,6 +541,21 @@ function ConfigSection({
       </div>
       <Text type="secondary" className="mt-2 block text-xs">
         {m.liabilityApprovalHint}
+      </Text>
+      {/* CD-158 — ขอความเห็นความเสี่ยงทางกฎหมาย (ส่งผู้บริหาร) */}
+      <div className="mt-3 max-w-xs">
+        <Text className="mb-1 block text-xs">
+          {m.legalRiskOpinionTypeCode}
+        </Text>
+        <Input
+          value={riskOpinionType}
+          maxLength={20}
+          allowClear
+          onChange={(e) => setRiskOpinionType(e.target.value.toUpperCase())}
+        />
+      </div>
+      <Text type="secondary" className="mt-2 block text-xs">
+        {m.legalRiskOpinionHint}
       </Text>
 
       {/* CD-130 — ประเภทคำขอ Solution (Sales → Pre-Sales) */}

@@ -1768,6 +1768,8 @@ export interface CrmConfig {
   contractRequestTypeCode?: string | null;
   /** CD-153 — ประเภทคำขออนุมัติเพดานความรับผิดเกินมูลค่าสัญญา. */
   liabilityApprovalRequestTypeCode?: string | null;
+  /** CD-158 — ประเภทคำขอความเห็นความเสี่ยงทางกฎหมาย (ส่งผู้บริหาร). */
+  legalRiskOpinionTypeCode?: string | null;
   /** CD-130 — the type Pre-Sales takes solution requests on. */
   solutionRequestTypeCode?: string | null;
   /** CD-143 — the type a Solution version is sent for approval on. */
