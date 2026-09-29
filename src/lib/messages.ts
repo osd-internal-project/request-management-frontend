@@ -3247,6 +3247,7 @@ export const messages = {
       saved: "บันทึกสัญญาแล้ว",
       edit: "แก้ไข",
       cancel: "ยกเลิกสัญญา",
+      openCase: "เปิดเคส",
       empty: "ยังไม่มีสัญญาในทะเบียน",
       requestsTitle: "คำขอสัญญาถึงฝ่ายกฎหมาย",
       openRenewal: "เปิดโอกาสต่ออายุ",
