@@ -665,6 +665,8 @@ export function OpportunityDetailView({
           opportunityCode={opportunity.opportunityCode}
           typeCode={opportunity.contractRequestTypeCode}
           typeName={contractTypeName}
+          // CD-133 — the form starts from the approved Solution's assumptions.
+          prefillFromSolution
           requests={relatedRequests.filter(
             (row) => row.typeCode === opportunity.contractRequestTypeCode,
           )}

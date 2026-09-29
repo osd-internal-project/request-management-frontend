@@ -37,6 +37,7 @@ import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import { RequirementsCard } from "./requirements-card";
 import { ScopeOfWorkCard, type ScopeOfWork } from "./scope-of-work-card";
+import { FeasibilityCard } from "./feasibility-card";
 
 const mp = messages.presales;
 
@@ -54,6 +55,12 @@ export const APPROVAL_COLOR: Record<string, string> = {
   rejected: "red",
   cancelled: "default",
 };
+
+/** CD-133 — what the work depends on someone else for: who and by when. */
+const DEPENDENCY_CATEGORIES: readonly AssumptionCategory[] = [
+  "customer",
+  "third_party",
+];
 
 const CATEGORIES = Object.keys(mp.categories) as AssumptionCategory[];
 
@@ -86,6 +93,10 @@ export function SolutionWorkspace({ solution }: { solution: SolutionDetail }) {
     outOfScope: version.outOfScope,
     deliverables: version.deliverables,
   });
+  const [feasibility, setFeasibility] = useState({
+    verdict: version.feasibility,
+    note: version.feasibilityNote,
+  });
   const [busy, setBusy] = useState(false);
   const [opening, setOpening] = useState(false);
   const [changeNote, setChangeNote] = useState("");
@@ -96,13 +107,24 @@ export function SolutionWorkspace({ solution }: { solution: SolutionDetail }) {
       summary !== version.summary ||
       design !== version.design ||
       JSON.stringify(assumptions) !== JSON.stringify(version.assumptions) ||
+      feasibility.verdict !== version.feasibility ||
+      feasibility.note !== version.feasibilityNote ||
       JSON.stringify(sow) !==
         JSON.stringify({
           inScope: version.inScope,
           outOfScope: version.outOfScope,
           deliverables: version.deliverables,
         }),
-    [title, summary, design, assumptions, sow, solution.title, version],
+    [
+      title,
+      summary,
+      design,
+      assumptions,
+      sow,
+      feasibility,
+      solution.title,
+      version,
+    ],
   );
 
   const base = `presales/solutions/${solution.id}`;
@@ -133,7 +155,14 @@ export function SolutionWorkspace({ solution }: { solution: SolutionDetail }) {
             title,
             summary,
             design,
-            assumptions,
+            assumptions: assumptions.map(({ neededBy, ...item }) => ({
+              ...item,
+              ...(neededBy ? { needed_by: neededBy } : {}),
+            })),
+            ...(feasibility.verdict !== "unassessed"
+              ? { feasibility: feasibility.verdict }
+              : {}),
+            feasibility_note: feasibility.note,
             in_scope: sow.inScope,
             out_of_scope: sow.outOfScope,
             deliverables: sow.deliverables,
@@ -406,6 +435,13 @@ export function SolutionWorkspace({ solution }: { solution: SolutionDetail }) {
         </Card>
       </div>
 
+      <FeasibilityCard
+        verdict={editable ? feasibility.verdict : version.feasibility}
+        note={editable ? feasibility.note : version.feasibilityNote}
+        editable={editable}
+        onChange={(verdict, note) => setFeasibility({ verdict, note })}
+      />
+
       <ScopeOfWorkCard
         value={
           editable
@@ -491,6 +527,45 @@ export function SolutionWorkspace({ solution }: { solution: SolutionDetail }) {
                   />
                 ) : (
                   <span className="whitespace-pre-wrap">{text}</span>
+                ),
+            },
+            {
+              // CD-133 — a dependency says who and by when.
+              title: `${mp.assumptionOwner} / ${mp.assumptionNeededBy}`,
+              key: "dependency",
+              width: 260,
+              render: (_: unknown, row) =>
+                !DEPENDENCY_CATEGORIES.includes(row.category) ? (
+                  "—"
+                ) : editable ? (
+                  <Space orientation="vertical" size={4} className="w-full">
+                    <Input
+                      value={row.owner ?? ""}
+                      maxLength={200}
+                      placeholder={mp.assumptionOwnerPlaceholder}
+                      onChange={(event) =>
+                        setAssumption(row.index, { owner: event.target.value })
+                      }
+                    />
+                    <Input
+                      type="date"
+                      value={row.neededBy ?? ""}
+                      onChange={(event) =>
+                        setAssumption(row.index, {
+                          neededBy: event.target.value || undefined,
+                        })
+                      }
+                    />
+                  </Space>
+                ) : (
+                  <span>
+                    {row.owner ?? "—"}
+                    {row.neededBy && (
+                      <Text type="secondary" className="block text-xs">
+                        {mp.assumptionNeededBy} {row.neededBy}
+                      </Text>
+                    )}
+                  </span>
                 ),
             },
             ...(editable

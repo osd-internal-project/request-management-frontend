@@ -8,7 +8,8 @@ import { getAllDirectoryUsers } from "@/lib/api/users";
 import { getOrgUnitShapes } from "@/lib/api/org-units";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
-import { getSession } from "@/lib/session";
+import { can, getSession } from "@/lib/session";
+import { getContractAssumptions } from "@/lib/api/presales";
 
 /**
  * Screen §16 หน้าที่ 3 — ยื่นคำขอ.
@@ -24,10 +25,12 @@ export default async function NewRequestPage({
     type?: string;
     ref_type?: string;
     ref_id?: string;
+    /** CD-133 — `solution`: start from the deal's approved Solution. */
+    prefill?: string;
   }>;
 }) {
   const session = await getSession();
-  const { parent, type, ref_type, ref_id } = await searchParams;
+  const { parent, type, ref_type, ref_id, prefill } = await searchParams;
 
   /**
    * The directory feeds the `ผู้รับเรื่อง` selector.
@@ -36,13 +39,25 @@ export default async function NewRequestPage({
    * one — fetched here rather than on demand so the field is usable on first
    * paint like every other part of the form.
    */
-  const [typesResult, users, units] = await Promise.all([
+  const [typesResult, users, units, assumptions] = await Promise.all([
     getRequestTypes(parent),
     getAllDirectoryUsers(),
     // The chart, so ทีมผู้รับ can be a tree and the receiver list can follow a
     // whole branch rather than one exact unit.
     getOrgUnitShapes(),
+    // CD-133 — a contract request from the deal page starts with the
+    // approved Solution's assumptions; gated like the deal page itself.
+    prefill === "solution" &&
+    ref_type === "opportunity" &&
+    ref_id &&
+    can(session, "crm.sales.read")
+      ? getContractAssumptions(ref_id)
+      : Promise.resolve(null),
   ]);
+  const initialValues =
+    assumptions?.ok && assumptions.data.text
+      ? { dependencies: assumptions.data.text }
+      : undefined;
 
   const activeCompany = session?.companies.find(
     (company) => company.id === session.active_company_id,
@@ -122,6 +137,7 @@ export default async function NewRequestPage({
         ref_type && ref_id ? { type: ref_type, id: ref_id } : undefined
       }
       initialTypeCode={type}
+      initialValues={initialValues}
       /* The first band of the route panel — who is raising this. */
       requesterName={
         session?.user.display_name ??

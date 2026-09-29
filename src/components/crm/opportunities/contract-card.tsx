@@ -57,6 +57,7 @@ export function ContractCard({
   requests,
   labels: m = contractLabels,
   designs,
+  prefillFromSolution = false,
 }: {
   readonly opportunityCode: string;
   readonly typeCode: string;
@@ -67,8 +68,10 @@ export function ContractCard({
   readonly labels?: RequestCardLabels;
   /** CD-132 — the Solution Pre-Sales designed from each request, by request id. */
   readonly designs?: Record<string, DealSolution>;
+  /** CD-133 — fill the new request from the deal's approved Solution. */
+  readonly prefillFromSolution?: boolean;
 }) {
-  const raiseHref = `${ROUTES.newRequest}?type=${encodeURIComponent(typeCode)}&ref_type=opportunity&ref_id=${encodeURIComponent(opportunityCode)}`;
+  const raiseHref = `${ROUTES.newRequest}?type=${encodeURIComponent(typeCode)}&ref_type=opportunity&ref_id=${encodeURIComponent(opportunityCode)}${prefillFromSolution ? "&prefill=solution" : ""}`;
 
   return (
     <Card

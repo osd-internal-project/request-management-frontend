@@ -2053,7 +2053,29 @@ export const messages = {
       customer: "สิ่งที่ต้องพึ่งพาลูกค้า",
       third_party: "สิ่งที่ต้องพึ่งพาบุคคลที่สาม",
       commercial: "เชิงพาณิชย์",
+      constraint: "ข้อจำกัด",
     } as Record<string, string>,
+    /** CD-133 — สิ่งที่ต้องพึ่งพา: ใครรับผิดชอบ ภายในเมื่อไร */
+    assumptionOwner: "ผู้รับผิดชอบ",
+    assumptionNeededBy: "ต้องพร้อมภายใน",
+    assumptionOwnerPlaceholder: "เช่น ฝ่ายไอทีลูกค้า / ISP",
+    /** CD-133 — ประเมินความเป็นไปได้ */
+    feasibility: {
+      title: "ความเป็นไปได้",
+      hint: "ผลประเมินรวมของเวอร์ชันนี้ — ต้องประเมินก่อนยืนยัน · ไม่เป็นไปได้ยืนยันเพื่อบันทึกผลได้แต่ขออนุมัติไม่ได้ · สิ่งที่ต้องพึ่งพาลูกค้า/บุคคลที่สามกับข้อจำกัด บันทึกในสมมติฐานด้านล่าง แล้วจะไปอยู่ในคำขอสัญญา",
+      verdicts: {
+        unassessed: "ยังไม่ประเมิน",
+        feasible: "เป็นไปได้",
+        conditional: "เป็นไปได้แบบมีเงื่อนไข",
+        not_feasible: "ไม่เป็นไปได้",
+      } as Record<string, string>,
+      notePlaceholder: {
+        unassessed: "",
+        feasible: "หมายเหตุ (ไม่บังคับ)",
+        conditional: "เงื่อนไขที่ทำให้เป็นไปได้ (บังคับ)",
+        not_feasible: "เหตุผลที่ไม่เป็นไปได้ (บังคับ)",
+      } as Record<string, string>,
+    },
     files: "ไฟล์แบบ",
     filesEmpty: "ยังไม่มีไฟล์",
     upload: "แนบไฟล์ (≤ 25 MB)",

@@ -89,6 +89,17 @@ export function TechnicalPackage({
                   ),
                 },
                 {
+                  key: "feasibility",
+                  label: mp.feasibility.title,
+                  children: (
+                    <span className="whitespace-pre-wrap">
+                      {mp.feasibility.verdicts[pkg.feasibility] ??
+                        pkg.feasibility}
+                      {pkg.feasibilityNote && ` — ${pkg.feasibilityNote}`}
+                    </span>
+                  ),
+                },
+                {
                   key: "in",
                   label: mt.inScope,
                   children: <List lines={pkg.inScope} />,
@@ -136,6 +147,18 @@ export function TechnicalPackage({
                             {mp.categories[item.category] ?? item.category}
                           </Tag>
                           {item.text}
+                          {(item.owner || item.neededBy) && (
+                            <div className="text-xs text-gray-500">
+                              {[
+                                item.owner &&
+                                  `${mp.assumptionOwner}: ${item.owner}`,
+                                item.neededBy &&
+                                  `${mp.assumptionNeededBy} ${item.neededBy}`,
+                              ]
+                                .filter(Boolean)
+                                .join(" · ")}
+                            </div>
+                          )}
                         </li>
                       ))}
                     </ol>

@@ -172,6 +172,7 @@ export function RequestForm({
   parentRequestId,
   initialRef,
   initialTypeCode,
+  initialValues,
   requesterName,
 }: {
   types: RequestType[];
@@ -186,6 +187,12 @@ export function RequestForm({
   initialRef?: { type: string; id: string } | null;
   /** Preselect a type (เช่น ปุ่ม "ยื่น KYC" ส่ง type=KYC) — ผู้ใช้เปลี่ยนได้. */
   initialTypeCode?: string;
+  /**
+   * CD-133 — answers to start the form with (e.g. a contract request's
+   * assumptions from the deal's approved Solution). Only keys the type's
+   * form has are kept; the user edits them like any other answer.
+   */
+  initialValues?: Record<string, unknown>;
   /** Who is raising it — the first band of the route panel. */
   requesterName: string;
 }) {
@@ -225,7 +232,12 @@ export function RequestForm({
   >(initialType?.receiverOrgUnitId ?? undefined);
   /** CD-67 — only asked for, and only sent, when the type is a case type. */
   const [severity, setSeverity] = useState<RequestSeverity | undefined>();
-  const [values, setValues] = useState<Record<string, unknown>>({});
+  const [values, setValues] = useState<Record<string, unknown>>(() => {
+    const known = initialType?.formSchema?.properties ?? {};
+    return Object.fromEntries(
+      Object.entries(initialValues ?? {}).filter(([key]) => key in known),
+    );
+  });
   const [refId, setRefId] = useState(initialRef?.id ?? "");
   const [draftId, setDraftId] = useState<string | null>(null);
 

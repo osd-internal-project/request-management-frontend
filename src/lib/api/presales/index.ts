@@ -5,12 +5,20 @@
 import { apiGet, type ApiResult } from "../core";
 
 export type AssumptionCategory =
-  "technical" | "customer" | "third_party" | "commercial";
+  "technical" | "customer" | "third_party" | "commercial" | "constraint";
 
 export interface SolutionAssumption {
   category: AssumptionCategory;
   text: string;
+  /** CD-133 — dependencies only: who must deliver it. */
+  owner?: string;
+  /** CD-133 — dependencies only: needed by, YYYY-MM-DD. */
+  neededBy?: string;
 }
+
+/** CD-133 — the version's overall feasibility verdict. */
+export type FeasibilityVerdict =
+  "unassessed" | "feasible" | "conditional" | "not_feasible";
 
 /** CD-134 — a deliverable with the criteria the customer accepts it by. */
 export interface SolutionDeliverable {
@@ -106,6 +114,8 @@ export interface SolutionDetail {
     inScope: string[];
     outOfScope: string[];
     deliverables: SolutionDeliverable[];
+    feasibility: FeasibilityVerdict;
+    feasibilityNote: string;
     lockedBy: string | null;
     approvalRequestId: string | null;
     approvedAt: string | null;
@@ -156,4 +166,18 @@ export async function getDealSolutions(
   opportunityId: string,
 ): Promise<ApiResult<DealSolution[]>> {
   return apiGet(`opportunities/${opportunityId}/solutions`);
+}
+
+/** CD-133 — the contract request's assumptions, from the deal's approved Solution. */
+export interface ContractAssumptions {
+  solution: { id: string; title: string; versionNo: number } | null;
+  text: string | null;
+}
+
+export async function getContractAssumptions(
+  dealRef: string,
+): Promise<ApiResult<ContractAssumptions>> {
+  return apiGet(
+    `opportunities/${encodeURIComponent(dealRef)}/contract-assumptions`,
+  );
 }

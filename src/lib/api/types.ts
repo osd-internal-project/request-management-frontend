@@ -1943,10 +1943,18 @@ export interface HandoverTechnicalPackage {
   approvedAt: string | null;
   summary: string;
   design: string;
+  /** CD-133 — the verdict the project inherits, with its conditions. */
+  feasibility: string;
+  feasibilityNote: string;
   inScope: string[];
   outOfScope: string[];
   deliverables: { title: string; description: string; criteria: string[] }[];
-  assumptions: { category: string; text: string }[];
+  assumptions: {
+    category: string;
+    text: string;
+    owner?: string;
+    neededBy?: string;
+  }[];
   requirements: {
     seq: number;
     kind: string;
