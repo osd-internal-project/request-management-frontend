@@ -29,6 +29,13 @@ export const RECONNECT_PATH = "/login/reconnect";
 export const LOGIN_PREFIX = "/login";
 
 /**
+ * CD-66 — customers' pages: the public request form and its status link.
+ * They carry no session by design; the proxy leaves this prefix alone and the
+ * pages reach the backend with a server-side API key (`lib/public`).
+ */
+export const PUBLIC_FORM_PREFIX = "/f";
+
+/**
  * Clears the session cookies and ends the Keycloak session.
  *
  * Also the only safe destination when a session cannot be resolved — see the
@@ -140,4 +147,9 @@ export const ROUTES = {
   adminErpSync: `${HOME_PATH}/admin/erp-sync`,
   /** REQ-02 — รูปแบบเลขรันของทุกชนิดเอกสาร. */
   adminRunNumbers: `${HOME_PATH}/admin/run-numbers`,
+  /** CD-66 — ช่องทางรับคำขอจากลูกค้า (web form / LINE / AI CARE). */
+  adminIntakeChannels: `${HOME_PATH}/admin/intake-channels`,
+  /** CD-66 — the public pages: no session, outside the proxy's gate. */
+  publicForm: (slug: string) => `${PUBLIC_FORM_PREFIX}/${slug}`,
+  publicStatus: (token: string) => `${PUBLIC_FORM_PREFIX}/status/${token}`,
 } as const;

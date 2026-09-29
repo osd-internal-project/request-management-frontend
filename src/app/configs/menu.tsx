@@ -156,6 +156,13 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     permissions: ["admin.request-type.manage"],
     group: messages.nav.adminGroup,
   },
+  /** CD-66 — ลูกค้ายื่นคำขอเองผ่านแบบฟอร์มสาธารณะ / LINE / AI CARE. */
+  {
+    label: messages.nav.adminIntakeChannels,
+    href: ROUTES.adminIntakeChannels,
+    permissions: ["admin.request-type.manage"],
+    group: messages.nav.adminGroup,
+  },
   {
     label: messages.nav.adminSla,
     href: ROUTES.adminSla,

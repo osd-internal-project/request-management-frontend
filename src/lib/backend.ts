@@ -80,6 +80,7 @@ export const CORE_SERVICE_PREFIXES = [
   "/admin/bi",
   "/admin/crm",
   "/admin/request-types",
+  "/admin/intake-channels",
   "/admin/sla-configs",
   "/admin/holiday-calendars",
   "/admin/notification-templates",
