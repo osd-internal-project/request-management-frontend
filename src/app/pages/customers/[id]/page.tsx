@@ -95,6 +95,7 @@ export default async function CustomerDetailPage({
       timeline={timelineResult.ok ? timelineResult.data : []}
       segmentOptions={optionsResult.ok ? optionsResult.data : []}
       canManage={can(session, "crm.customer.manage")}
+      canMerge={can(session, "admin.customer.merge")}
       canReadFinancials={canReadFinancials}
       summary={summaryResult.ok ? summaryResult.data : null}
       consents={consentsResult.ok ? consentsResult.data : []}

@@ -5,10 +5,12 @@ import {
   getOpportunityActivities,
   getDealHandover,
   getNegotiations,
+  getPhoneReservations,
   getLostReasons,
   getQuotations,
 } from "@/lib/api/sales";
 import { getRequests, getRequestTypes } from "@/lib/api/requests";
+import { getDealSolutions } from "@/lib/api/presales";
 import { getCustomers } from "@/lib/api/customers";
 import { getOrgUnitShapes } from "@/lib/api/org-units";
 import { HOME_PATH } from "@/lib/routes";
@@ -53,8 +55,10 @@ export default async function OpportunityDetailPage({
     activitiesResult,
     typesResult,
     negotiationsResult,
+    phoneResult,
     handoverResult,
     teamsResult,
+    solutionsResult,
   ] = await Promise.all([
     getLostReasons(),
     canReadRequests
@@ -71,12 +75,17 @@ export default async function OpportunityDetailPage({
     getQuotations({ opportunity_id: id, current: true, page_size: 50 }),
     // CD-65 — same `crm.sales.read`.
     getOpportunityActivities(id),
-    // CD-81 — only to tell whether the viewer may raise the contract type.
-    opportunityResult.data.contractRequestTypeCode && canReadRequests
+    // CD-81 / CD-130 — only to tell whether the viewer may raise the
+    // contract or the solution type.
+    (opportunityResult.data.contractRequestTypeCode ||
+      opportunityResult.data.solutionRequestTypeCode) &&
+    canReadRequests
       ? getRequestTypes()
       : Promise.resolve(null),
     // CD-79 — same `crm.sales.read`.
     getNegotiations(id),
+    // CD-78 — same `crm.sales.read`.
+    getPhoneReservations(id),
     // CD-84 — same `crm.sales.read`; only a won deal has one.
     opportunityResult.data.stage === "won"
       ? getDealHandover(id)
@@ -88,11 +97,20 @@ export default async function OpportunityDetailPage({
     canAny(session, ["user.read", "request.create"])
       ? getOrgUnitShapes()
       : Promise.resolve(null),
+    // CD-132 — same `crm.sales.read`; only a deal that asks for solutions.
+    opportunityResult.data.solutionRequestTypeCode
+      ? getDealSolutions(id)
+      : Promise.resolve(null),
   ]);
   const contractCode = opportunityResult.data.contractRequestTypeCode ?? null;
   const contractTypeName =
     (typesResult?.ok &&
       typesResult.data.find((type) => type.code === contractCode)?.name) ||
+    null;
+  const solutionCode = opportunityResult.data.solutionRequestTypeCode ?? null;
+  const solutionTypeName =
+    (typesResult?.ok &&
+      typesResult.data.find((type) => type.code === solutionCode)?.name) ||
     null;
 
   return (
@@ -111,8 +129,11 @@ export default async function OpportunityDetailPage({
       activities={activitiesResult.ok ? activitiesResult.data : []}
       canManage={canManage}
       contractTypeName={contractTypeName}
+      solutionTypeName={solutionTypeName}
+      solutions={solutionsResult?.ok ? solutionsResult.data : []}
       currentUserId={session?.user.id ?? null}
       negotiations={negotiationsResult.ok ? negotiationsResult.data : null}
+      phoneNumbers={phoneResult.ok ? phoneResult.data : null}
       handover={handoverResult?.ok ? handoverResult.data : null}
       handoverTeams={teamsResult?.ok ? teamsResult.data : []}
       openSaleOrderOnLoad={action === "sale-order"}

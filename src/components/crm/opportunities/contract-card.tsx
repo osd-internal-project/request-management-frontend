@@ -1,14 +1,33 @@
 "use client";
 
 import Link from "next/link";
-import { Button, Card, Empty, Table, Tag } from "antd";
+import { Button, Card, Empty, Space, Table, Tag } from "antd";
 import Text from "antd/es/typography/Text";
 import dayjs from "dayjs";
 import type { RequestRow } from "@/lib/api/types";
+import type { DealSolution } from "@/lib/api/presales";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 
-const m = messages.sales.opportunities.detail.contracts;
+const contractLabels = messages.sales.opportunities.detail.contracts;
+
+/** The card's words — contracts (CD-81) by default, solutions for CD-130. */
+export interface RequestCardLabels {
+  readonly title: string;
+  readonly raise: string;
+  readonly empty: string;
+  readonly cannotRaise: string;
+  readonly draftNo: string;
+  /** CD-132 — heading of the design column, when `designs` is given. */
+  readonly design?: string;
+  readonly columns: {
+    readonly no: string;
+    readonly stage: string;
+    readonly owner: string;
+    readonly raised: string;
+  };
+  readonly stages: Record<string, string>;
+}
 
 /** Where the draft stands, in the words a salesperson asks with. */
 const STAGE: Record<string, { color: string }> = {
@@ -35,12 +54,18 @@ export function ContractCard({
   typeCode,
   typeName,
   requests,
+  labels: m = contractLabels,
+  designs,
 }: {
   readonly opportunityCode: string;
   readonly typeCode: string;
   /** null = the viewer cannot raise this type (not offered to them). */
   readonly typeName: string | null;
   readonly requests: RequestRow[];
+  /** CD-130 — the same card for the deal's solution requests. */
+  readonly labels?: RequestCardLabels;
+  /** CD-132 — the Solution Pre-Sales designed from each request, by request id. */
+  readonly designs?: Record<string, DealSolution>;
 }) {
   const raiseHref = `${ROUTES.newRequest}?type=${encodeURIComponent(typeCode)}&ref_type=opportunity&ref_id=${encodeURIComponent(opportunityCode)}`;
 
@@ -89,6 +114,36 @@ export function ContractCard({
               render: (_: unknown, row) =>
                 row.assignee?.displayName ?? row.receiver?.displayName ?? "—",
             },
+            ...(designs
+              ? [
+                  {
+                    title: m.design,
+                    key: "design",
+                    render: (_: unknown, row: RequestRow) => {
+                      const design = designs[row.id];
+                      if (!design?.latest) return "—";
+                      return (
+                        <Space size={4} wrap>
+                          <Link href={ROUTES.solutionDetail(design.id)}>
+                            {`v${design.latest.versionNo} · ${
+                              messages.presales.versionStatus[
+                                design.latest.status
+                              ] ?? design.latest.status
+                            }`}
+                          </Link>
+                          {design.waiting_customer > 0 && (
+                            <Tag color="orange">
+                              {messages.presales.analysis.waitingOnDeal(
+                                design.waiting_customer,
+                              )}
+                            </Tag>
+                          )}
+                        </Space>
+                      );
+                    },
+                  },
+                ]
+              : []),
             {
               title: m.columns.raised,
               dataIndex: "createdAt",

@@ -3,6 +3,7 @@
 import { ContractCard } from "@/components/crm/opportunities/contract-card";
 import { HandoverCard } from "@/components/crm/handover/handover-card";
 import { NegotiationCard } from "@/components/crm/opportunities/negotiation-card";
+import { PhoneNumbersCard } from "@/components/crm/opportunities/phone-numbers-card";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -42,12 +43,14 @@ import {
   saleOrderExpandable,
 } from "@/components/crm/sale-orders/sale-order-parts";
 import { appApi } from "@/lib/api/client";
+import type { DealSolution } from "@/lib/api/presales";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import type {
   DealHandoverView,
   OrgUnitShape,
   NegotiationRound,
+  PhoneReservationsView,
   TradeTermStandard,
   CustomerRow,
   OpportunityActivity,
@@ -79,7 +82,10 @@ export function OpportunityDetailView({
   canManage,
   currentUserId = null,
   negotiations = null,
+  phoneNumbers = null,
   contractTypeName = null,
+  solutionTypeName = null,
+  solutions = [],
   handover = null,
   handoverTeams = [],
   openSaleOrderOnLoad = false,
@@ -98,12 +104,18 @@ export function OpportunityDetailView({
   /** CD-75 — the viewer, so they can remove their own visit photos. */
   currentUserId?: string | null;
   /** CD-79 — null = could not be read (the card is hidden). */
+  /** CD-78 — numbers held in Reserve-phone; null = could not load. */
+  phoneNumbers?: PhoneReservationsView | null;
   negotiations?: {
     standards: TradeTermStandard[];
     rounds: NegotiationRound[];
   } | null;
   /** CD-81 — name of the contract type when the viewer may raise it. */
   contractTypeName?: string | null;
+  /** CD-130 — name of the solution type when the viewer may raise it. */
+  solutionTypeName?: string | null;
+  /** CD-132 — the Solutions Pre-Sales designed for this deal. */
+  solutions?: DealSolution[];
   /** CD-84 — null = could not be read (the card is hidden). */
   handover?: DealHandoverView | null;
   /** CD-84 — teams the salesperson may hand over to. */
@@ -471,6 +483,31 @@ export function OpportunityDetailView({
           rounds={negotiations.rounds}
           standards={negotiations.standards}
           editable={editable}
+        />
+      )}
+
+      {phoneNumbers && (
+        <PhoneNumbersCard
+          opportunityId={opportunity.id}
+          view={phoneNumbers}
+          editable={editable}
+          canManage={canManage}
+        />
+      )}
+
+      {/* CD-130 — ขอ Solution จาก Pre-Sales; ช่องบังคับของฟอร์มคือจุดส่งต่อที่ 2 */}
+      {relatedRequests !== null && opportunity.solutionRequestTypeCode && (
+        <ContractCard
+          opportunityCode={opportunity.opportunityCode}
+          typeCode={opportunity.solutionRequestTypeCode}
+          typeName={editable ? solutionTypeName : null}
+          labels={md.solutions}
+          designs={Object.fromEntries(
+            solutions.map((solution) => [solution.requestId, solution]),
+          )}
+          requests={relatedRequests.filter(
+            (row) => row.typeCode === opportunity.solutionRequestTypeCode,
+          )}
         />
       )}
 

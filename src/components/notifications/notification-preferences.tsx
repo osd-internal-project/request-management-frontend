@@ -73,6 +73,23 @@ export function NotificationPreferencesCard({
             {mp.emailUnavailable}
           </Text>
         )}
+        {/* CD-51 — shown only once the Teams channel exists (TEAMS_MODE). */}
+        {prefs.teams_available && (
+          <>
+            <div className="flex items-center justify-between">
+              <span>{mp.teams}</span>
+              <Switch
+                size="small"
+                checked={prefs.teams}
+                loading={saving}
+                onChange={(next) => void save({ teams: next })}
+              />
+            </div>
+            <Text type="secondary" className="block text-xs">
+              {mp.teamsHint}
+            </Text>
+          </>
+        )}
 
         <div className="border-t pt-3">
           <Text strong className="block">

@@ -93,6 +93,8 @@ export const ROUTES = {
   visitLog: `${HOME_PATH}/visit`,
   /** CD-84 งานส่งมอบ — กล่องของทีมที่รับ และที่ผู้ขายส่งไป; `?id=` เปิดใบนั้น. */
   handovers: `${HOME_PATH}/handovers`,
+  /** CD-132 — ออกแบบ Solution; `?v=` เปิดเวอร์ชันนั้น. */
+  solutionDetail: (id: string) => `${HOME_PATH}/solutions/${id}`,
   /** CD-82 — เป้าและพยากรณ์ */
   salesTargets: `${HOME_PATH}/sales-targets`,
   /** CD-83 — รายงานยอดขาย */
@@ -147,6 +149,9 @@ export const ROUTES = {
   adminErpSync: `${HOME_PATH}/admin/erp-sync`,
   /** REQ-02 — รูปแบบเลขรันของทุกชนิดเอกสาร. */
   adminRunNumbers: `${HOME_PATH}/admin/run-numbers`,
+  /** CD-161 — คลังสัญญา (ฝ่ายกฎหมาย). */
+  contracts: `${HOME_PATH}/contracts`,
+  contractDetail: (id: string) => `${HOME_PATH}/contracts/${id}`,
   /** CD-66 — ช่องทางรับคำขอจากลูกค้า (web form / LINE / AI CARE). */
   adminIntakeChannels: `${HOME_PATH}/admin/intake-channels`,
   /** CD-66 — the public pages: no session, outside the proxy's gate. */

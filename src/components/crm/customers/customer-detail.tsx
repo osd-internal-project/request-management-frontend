@@ -1,5 +1,6 @@
 "use client";
 
+import { CustomerMergeButton } from "@/components/crm/customers/customer-merge-button";
 import { CustomerAccountTab } from "@/components/crm/customers/customer-account-tab";
 import { CustomerContractsTab } from "@/components/crm/customers/customer-contracts-tab";
 import {
@@ -95,6 +96,7 @@ export function CustomerDetailView({
   customerQuotations,
   customerSaleOrders,
   canManageSales = false,
+  canMerge = false,
   approval = null,
 }: {
   customer: CustomerDetail;
@@ -124,6 +126,8 @@ export function CustomerDetailView({
   customerSaleOrders: SaleOrderRow[] | null;
   /** CD-86 — may open an expansion deal from the account tab. */
   canManageSales?: boolean;
+  /** CD-122 — admin.customer.merge: may fold this duplicate into another. */
+  canMerge?: boolean;
   /** CD-62 — only fetched for a customer not yet approved. */
   approval?: CustomerApprovalView | null;
 }) {
@@ -260,6 +264,7 @@ export function CustomerDetailView({
               <LifecycleButtons status={customer.status} onAct={act} />
             </>
           )}
+          {canMerge && !isAlias && <CustomerMergeButton customer={customer} />}
         </Space>
       </div>
 

@@ -1578,6 +1578,8 @@ export interface OpportunityDetail extends OpportunityRow {
   kycWarning: { required: boolean; products: string[] };
   /** CD-81 — the company's contract request type; null = no contract card. */
   contractRequestTypeCode?: string | null;
+  /** CD-130 — the type Pre-Sales takes solution requests on. */
+  solutionRequestTypeCode?: string | null;
 }
 
 /** CD-79 — a company's standard trade term (CRM settings). */
@@ -1600,6 +1602,34 @@ export interface NegotiationTerm {
 }
 
 /** CD-79 — one negotiation round on a deal. */
+/** CD-78 — one number held for a deal in Reserve-phone. */
+export interface PhoneReservation {
+  id: string;
+  number: string;
+  category: string;
+  fee: string | number | null;
+  status: "reserved" | "released" | "expired";
+  expiresAt: string;
+  releasedAt: string | null;
+  releaseReason: "manual" | "deal_lost" | null;
+  createdAt: string;
+  createdByName: string;
+  releasedByName: string | null;
+}
+
+export interface PhoneReservationsView {
+  mode: string;
+  holdDays: number;
+  maxHoldDays: number;
+  reservations: PhoneReservation[];
+}
+
+export interface AvailablePhoneNumber {
+  number: string;
+  category: string;
+  fee: number | null;
+}
+
 export interface NegotiationRound {
   id: string;
   roundNo: number;
@@ -1736,6 +1766,8 @@ export interface CrmConfig {
   targetApprovalTypeCode?: string | null;
   /** CD-81 — ประเภทคำขอที่ฝ่ายกฎหมายรับทำสัญญา; null = ไม่แสดงการ์ดสัญญา. */
   contractRequestTypeCode?: string | null;
+  /** CD-130 — the type Pre-Sales takes solution requests on. */
+  solutionRequestTypeCode?: string | null;
   /** CD-61 — KYC ใช้ได้กี่เดือนก่อนต้องทบทวน ตามความเสี่ยง. */
   kycReviewMonthsHigh?: number;
   kycReviewMonthsMedium?: number;
@@ -1794,6 +1826,9 @@ export interface NotificationPreferences {
   email: boolean;
   /** false until SMTP exists (open question B) — the screen says so. */
   email_delivery_available: boolean;
+  /** CD-51 — the Teams switch; `teams_available` false = no Teams channel. */
+  teams: boolean;
+  teams_available: boolean;
   /** CD-52 — Bangkok hour the daily digest goes out, working days. */
   digest_hour: number;
   categories: {

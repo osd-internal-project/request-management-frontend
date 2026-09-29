@@ -148,6 +148,13 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     group: messages.nav.crmGroup,
   },
 
+  /** CD-161 — คลังสัญญา: สัญญาทุกฉบับของบริษัท (ลูกค้า NDA MSA คู่สัญญาอื่น). */
+  {
+    label: messages.nav.contracts,
+    href: ROUTES.contracts,
+    permissions: ["legal.contract.read"],
+    group: messages.nav.legalGroup,
+  },
   {
     // ตารางอำนาจอนุมัติ (A1) has no entry of its own: it is two tabs of the
     // request type it belongs to, reached from ประเภทคำขอ below.

@@ -59,6 +59,11 @@ const GROUPS = [
   },
   { key: "crm", modules: ["crm"], label: messages.roleAdmin.groups.crm },
   {
+    key: "presales",
+    modules: ["presales"],
+    label: messages.roleAdmin.groups.presales,
+  },
+  {
     key: "adminAudit",
     modules: ["admin", "audit"],
     label: messages.roleAdmin.groups.adminAudit,
