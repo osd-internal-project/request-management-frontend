@@ -80,6 +80,7 @@ export const CORE_SERVICE_PREFIXES = [
   "/admin/sla-configs",
   "/admin/holiday-calendars",
   "/admin/notification-templates",
+  "/admin/notification-rules",
 ];
 
 /**

@@ -167,6 +167,13 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     permissions: ["audit.read"],
     group: messages.nav.adminGroup,
   },
+  /** CD-53 — กติกาแจ้งเตือนจากเหตุการณ์ (สัญญา/ใบแจ้งหนี้/KYC/ดีลเงียบ) รวมที่เดียว. */
+  {
+    label: messages.nav.adminNotificationRules,
+    href: ROUTES.adminNotificationRules,
+    permissions: ["admin.notification.manage"],
+    group: messages.nav.adminGroup,
+  },
   /** CD-54 — ถ้อยคำการแจ้งเตือนต่อเหตุการณ์ ของแต่ละบริษัท. */
   {
     label: messages.nav.adminNotificationTemplates,

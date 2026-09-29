@@ -312,7 +312,6 @@ function ConfigSection({
     config.quotationValidityDays,
   );
   const [vat, setVat] = useState(config.vatPct);
-  const [staleDays, setStaleDays] = useState(config.staleOpportunityDays ?? 14);
   const [approvalType, setApprovalType] = useState(
     config.quotationApprovalTypeCode,
   );
@@ -334,7 +333,6 @@ function ConfigSection({
       quotation_validity_days: validityDays,
       vat_pct: vat,
       quotation_approval_type_code: approvalType || undefined,
-      stale_opportunity_days: staleDays,
     });
     setBusy(false);
   }
@@ -418,22 +416,13 @@ function ConfigSection({
         {m.quotationHint}
       </Text>
 
-      {/* CD-65 — เกณฑ์ดีลเงียบ */}
+      {/* CD-65 — เกณฑ์ดีลเงียบ ย้ายไปอยู่กับกติกาแจ้งเตือนอื่น (CD-53) */}
       <Text strong className="mt-5 block">
         {m.sectionFollowUp}
       </Text>
-      <div className="mt-2 max-w-xs">
-        <Text className="mb-1 block text-xs">{m.staleOpportunityDays}</Text>
-        <InputNumber
-          min={0}
-          max={365}
-          value={staleDays}
-          onChange={(value) => setStaleDays(value ?? 14)}
-          className="w-full"
-        />
-      </div>
       <Text type="secondary" className="mt-2 block text-xs">
-        {m.staleHint}
+        {m.staleMoved}{" "}
+        <Link href={ROUTES.adminNotificationRules}>{m.staleMovedLink}</Link>
       </Text>
 
       {/* CD-82 — ปรับเป้าของงวดที่เริ่มแล้วผ่านคำขออนุมัติ */}

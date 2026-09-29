@@ -1661,7 +1661,7 @@ export interface CrmConfig {
   kycReviewMonthsHigh?: number;
   kycReviewMonthsMedium?: number;
   kycReviewMonthsLow?: number;
-  /** CD-65 — ดีลเปิดที่ไม่มีกิจกรรมเกินกี่วันจึงแจ้งหัวหน้า; 0 = ปิด. */
+  /** CD-65 — ไม่มีใครอ่านแล้ว: ย้ายไปเป็นกติกา `opportunity.stale` (CD-53). */
   staleOpportunityDays: number;
   /** หัวกระดาษใบเสนอราคา — null = ไม่ได้ตั้ง. */
   letterheadNameTh: string | null;
