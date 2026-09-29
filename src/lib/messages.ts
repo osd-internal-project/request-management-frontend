@@ -2169,6 +2169,34 @@ export const messages = {
       open_requests: "คำขอค้าง",
       request_backlog_daily: "คำขอค้างรายวัน (วันนี้)",
     } as Record<string, string>,
+
+    // CD-90 — Data Lake
+    lakeTitle: "Data Lake (ข้อมูลดิบย้อนหลัง)",
+    lakeHint: (minutes: number) =>
+      (minutes > 0
+        ? `ระบบส่งแถวที่เปลี่ยนจากคำขอ CRM และงานขายลง database แยกทุก ${minutes} นาที (เก็บทุกเวอร์ชัน) และใบแจ้งหนี้ SAP วันละครั้ง`
+        : "การส่งอัตโนมัติปิดอยู่ — กดส่งข้อมูลตอนนี้เพื่อส่งแถวที่เปลี่ยน (เก็บทุกเวอร์ชัน)") +
+      " — ข้อมูลอ่อนไหว (เนื้อหาฟอร์ม ต้นทุน/margin เลขภาษี ข้อมูลติดต่อ) ไม่ถูกส่ง",
+    lakeNotConfigured:
+      "ยังไม่ได้ตั้งค่า Data Lake — ผู้ดูแลระบบต้องกำหนด LAKE_DATABASE_URL ใน .env ของ core-service",
+    lakeRun: "ส่งข้อมูลตอนนี้",
+    lakeRan: "ส่งข้อมูลลง Data Lake แล้ว",
+    lakeNever: "ยังไม่เคยส่ง",
+    lakeModules: {
+      request: "คำขอ",
+      crm: "CRM",
+      sales: "งานขาย",
+      reference: "ข้อมูลอ้างอิง",
+      sap: "SAP",
+    } as Record<string, string>,
+    lakeColumns: {
+      table: "ตาราง",
+      module: "โมดูล",
+      upTo: "ส่งถึง",
+      lastRun: "รอบล่าสุด",
+      total: "แถวสะสม",
+      excluded: "คอลัมน์ที่ไม่ส่ง",
+    },
   },
 
   /** หน้ากุญแจ API ของช่องทางภายนอก (`admin.integration.manage`). */

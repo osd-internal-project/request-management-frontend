@@ -98,6 +98,34 @@ export async function refreshMart(): Promise<ClientResult<MartStatus>> {
   return adminApi<MartStatus>("bi/mart/refresh", { method: "POST" });
 }
 
+/** CD-90 — one Data Lake table: its cursor, last run and running total. */
+export interface LakeTableStatus {
+  table_name: string;
+  module: string;
+  excluded_columns: string[];
+  watermark: string | null;
+  last_run_at: string | null;
+  last_rows: number | null;
+  total_rows: number;
+  last_error: string | null;
+}
+
+export interface LakeStatus {
+  configured: boolean;
+  interval_ms?: number;
+  tables: LakeTableStatus[];
+}
+
+/** CD-90 — the Data Lake feed, per table. */
+export async function getLakeStatus(): Promise<ClientResult<LakeStatus>> {
+  return adminApi<LakeStatus>("bi/lake");
+}
+
+/** CD-90 — send what changed to the Data Lake now; answers the fresh status. */
+export async function runLake(): Promise<ClientResult<LakeStatus>> {
+  return adminApi<LakeStatus>("bi/lake/run", { method: "POST" });
+}
+
 /** Org units of the active company, for the audience picker. */
 export async function listBiOrgUnits(): Promise<
   ClientResult<BiOrgUnitOption[]>
