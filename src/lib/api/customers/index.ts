@@ -17,6 +17,7 @@ import type {
   CustomerFieldChange,
   CustomerRow,
   CustomerSummary,
+  CustomerApprovalView,
   CustomerTimelineEvent,
   Paginated,
   SegmentDimension,
@@ -72,6 +73,13 @@ export async function getContactConsents(
 }
 
 /** C360-01 — ตัวเลขการ์ดหน้า 360° นับผ่าน filter เดียวกับแท็บ. */
+/** CD-62 — the new-customer approval: status, its request, may one be raised. */
+export async function getCustomerApproval(
+  id: string,
+): Promise<ApiResult<CustomerApprovalView>> {
+  return apiGet(`customers/${id}/approval`);
+}
+
 export async function getCustomerSummary(
   id: string,
 ): Promise<ApiResult<CustomerSummary>> {
@@ -121,6 +129,7 @@ const customersApi = {
   getCustomerHistory,
   getCustomerTimeline,
   getCustomerSummary,
+  getCustomerApproval,
   getCustomerRequests,
   getContactConsents,
   getKycProducts,

@@ -4,6 +4,8 @@
  */
 import { apiGet, type ApiResult } from "../core";
 import type {
+  DealHandoverView,
+  SalesHandover,
   NegotiationRound,
   TradeTermStandard,
   LeadDetail,
@@ -13,6 +15,7 @@ import type {
   OpportunityRow,
   LeadRow,
   Paginated,
+  TargetAccountRow,
   QuotationDetail,
   QuotationPrintView,
   QuotationRow,
@@ -27,6 +30,8 @@ export async function getLeads(options?: {
   status?: string;
   view?: "mine";
   campaign_id?: string;
+  /** CD-85 — only leads with no customer yet (Getter). */
+  new_customer?: boolean;
   page?: number;
   page_size?: number;
 }): Promise<ApiResult<Paginated<LeadRow>>> {
@@ -35,6 +40,7 @@ export async function getLeads(options?: {
   if (options?.status) params.set("status", options.status);
   if (options?.view) params.set("view", options.view);
   if (options?.campaign_id) params.set("campaign_id", options.campaign_id);
+  if (options?.new_customer) params.set("new_customer", "true");
   params.set("page", String(options?.page ?? 1));
   params.set("page_size", String(options?.page_size ?? 50));
   return apiGet(`leads?${params.toString()}`);
@@ -42,6 +48,25 @@ export async function getLeads(options?: {
 
 export async function getLead(id: string): Promise<ApiResult<LeadDetail>> {
   return apiGet(`leads/${id}`);
+}
+
+/** CD-85 — บริษัทเป้าหมาย (high → low, oldest first). */
+export async function getTargetAccounts(options?: {
+  search?: string;
+  status?: string;
+  priority?: string;
+  view?: "mine" | "unassigned";
+  page?: number;
+  page_size?: number;
+}): Promise<ApiResult<Paginated<TargetAccountRow>>> {
+  const params = new URLSearchParams();
+  if (options?.search) params.set("search", options.search);
+  if (options?.status) params.set("status", options.status);
+  if (options?.priority) params.set("priority", options.priority);
+  if (options?.view) params.set("view", options.view);
+  params.set("page", String(options?.page ?? 1));
+  params.set("page_size", String(options?.page_size ?? 50));
+  return apiGet(`target-accounts?${params.toString()}`);
 }
 
 export async function getOpportunities(options?: {
@@ -87,6 +112,30 @@ export async function getNegotiations(
   ApiResult<{ standards: TradeTermStandard[]; rounds: NegotiationRound[] }>
 > {
   return apiGet(`opportunities/${id}/negotiations`);
+}
+
+/** CD-84 — the deal's handover and the checklist its form shows. */
+export async function getDealHandover(
+  id: string,
+): Promise<ApiResult<DealHandoverView>> {
+  return apiGet(`opportunities/${id}/handover`);
+}
+
+/** CD-84 — the handover inbox: sent to my team, or sent by me. */
+export async function getHandovers(options?: {
+  box?: "incoming" | "sent";
+  status?: string;
+}): Promise<ApiResult<SalesHandover[]>> {
+  const params = new URLSearchParams();
+  if (options?.box) params.set("box", options.box);
+  if (options?.status) params.set("status", options.status);
+  return apiGet(`handovers?${params.toString()}`);
+}
+
+export async function getHandover(
+  id: string,
+): Promise<ApiResult<SalesHandover>> {
+  return apiGet(`handovers/${id}`);
 }
 
 export async function getLostReasons(): Promise<
@@ -162,6 +211,7 @@ export async function getSaleOrders(options?: {
 const salesApi = {
   getLeads,
   getLead,
+  getTargetAccounts,
   getOpportunities,
   getOpportunity,
   getLostReasons,

@@ -45,6 +45,8 @@ export interface BiDashboardConfig {
   metabase_dashboard_id: number;
   sort_order: number;
   active: boolean;
+  /** CD-92 — signed with the viewer's company as a locked `company` parameter. */
+  lock_company: boolean;
   /** Empty = ทั้งบริษัทเห็น */
   org_units: BiAudienceUnit[];
   updated_at: string;
@@ -63,6 +65,7 @@ export interface BiDashboardPayload {
   sort_order?: number;
   org_unit_ids?: string[];
   active?: boolean;
+  lock_company?: boolean;
 }
 
 /** Every dashboard of the active company, retired ones included. */
@@ -70,6 +73,57 @@ export async function listBiDashboards(): Promise<
   ClientResult<BiDashboardConfig[]>
 > {
   return adminApi<BiDashboardConfig[]>("bi/dashboards");
+}
+
+/** CD-91 — one Data Mart table and when it was last rebuilt. */
+export interface MartTableStatus {
+  table_name: string;
+  refreshed_at: string | null;
+  row_count: number | null;
+  duration_ms: number | null;
+}
+
+export interface MartStatus {
+  interval_ms: number;
+  tables: MartTableStatus[];
+}
+
+/** CD-91 — the Data Mart's last rebuild, per table. */
+export async function getMartStatus(): Promise<ClientResult<MartStatus>> {
+  return adminApi<MartStatus>("bi/mart");
+}
+
+/** CD-91 — rebuild the Data Mart now; answers the fresh status. */
+export async function refreshMart(): Promise<ClientResult<MartStatus>> {
+  return adminApi<MartStatus>("bi/mart/refresh", { method: "POST" });
+}
+
+/** CD-90 — one Data Lake table: its cursor, last run and running total. */
+export interface LakeTableStatus {
+  table_name: string;
+  module: string;
+  excluded_columns: string[];
+  watermark: string | null;
+  last_run_at: string | null;
+  last_rows: number | null;
+  total_rows: number;
+  last_error: string | null;
+}
+
+export interface LakeStatus {
+  configured: boolean;
+  interval_ms?: number;
+  tables: LakeTableStatus[];
+}
+
+/** CD-90 — the Data Lake feed, per table. */
+export async function getLakeStatus(): Promise<ClientResult<LakeStatus>> {
+  return adminApi<LakeStatus>("bi/lake");
+}
+
+/** CD-90 — send what changed to the Data Lake now; answers the fresh status. */
+export async function runLake(): Promise<ClientResult<LakeStatus>> {
+  return adminApi<LakeStatus>("bi/lake/run", { method: "POST" });
 }
 
 /** Org units of the active company, for the audience picker. */

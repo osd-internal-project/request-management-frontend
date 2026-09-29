@@ -3,14 +3,16 @@ import { OpportunityDetailView } from "@/components/crm/opportunities/opportunit
 import {
   getOpportunity,
   getOpportunityActivities,
+  getDealHandover,
   getNegotiations,
   getLostReasons,
   getQuotations,
 } from "@/lib/api/sales";
 import { getRequests, getRequestTypes } from "@/lib/api/requests";
 import { getCustomers } from "@/lib/api/customers";
+import { getOrgUnitShapes } from "@/lib/api/org-units";
 import { HOME_PATH } from "@/lib/routes";
-import { can, getSession } from "@/lib/session";
+import { can, canAny, getSession } from "@/lib/session";
 
 /**
  * หน้ารายละเอียดโอกาสการขาย — ขั้น มูลค่า ปิดแพ้ / เปิดใบสั่งขาย (= ปิดชนะ และ
@@ -51,6 +53,8 @@ export default async function OpportunityDetailPage({
     activitiesResult,
     typesResult,
     negotiationsResult,
+    handoverResult,
+    teamsResult,
   ] = await Promise.all([
     getLostReasons(),
     canReadRequests
@@ -73,6 +77,17 @@ export default async function OpportunityDetailPage({
       : Promise.resolve(null),
     // CD-79 — same `crm.sales.read`.
     getNegotiations(id),
+    // CD-84 — same `crm.sales.read`; only a won deal has one.
+    opportunityResult.data.stage === "won"
+      ? getDealHandover(id)
+      : Promise.resolve(null),
+    // CD-84 — the teams to hand over to, for whoever may send it
+    // (`/org-units` answers `user.read` or `request.create`).
+    canManage &&
+    opportunityResult.data.stage === "won" &&
+    canAny(session, ["user.read", "request.create"])
+      ? getOrgUnitShapes()
+      : Promise.resolve(null),
   ]);
   const contractCode = opportunityResult.data.contractRequestTypeCode ?? null;
   const contractTypeName =
@@ -98,6 +113,8 @@ export default async function OpportunityDetailPage({
       contractTypeName={contractTypeName}
       currentUserId={session?.user.id ?? null}
       negotiations={negotiationsResult.ok ? negotiationsResult.data : null}
+      handover={handoverResult?.ok ? handoverResult.data : null}
+      handoverTeams={teamsResult?.ok ? teamsResult.data : []}
       openSaleOrderOnLoad={action === "sale-order"}
     />
   );

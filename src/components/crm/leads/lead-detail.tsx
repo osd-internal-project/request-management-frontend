@@ -10,17 +10,26 @@ import {
   Button,
   Card,
   Collapse,
+  DatePicker,
   Descriptions,
+  Form,
+  Input,
+  InputNumber,
+  Modal,
   Space,
   Steps,
   Tabs,
   Tag,
   Tooltip,
 } from "antd";
+import dayjs, { type Dayjs } from "dayjs";
 import Text from "antd/es/typography/Text";
 import Title from "antd/es/typography/Title";
 import {
+  AimOutlined,
   BankOutlined,
+  CheckCircleFilled,
+  CloseCircleOutlined,
   EditOutlined,
   FileTextOutlined,
   MailOutlined,
@@ -102,6 +111,7 @@ export function LeadDetailView({
   const [disqualifying, setDisqualifying] = useState(false);
   const [converting, setConverting] = useState(false);
   const [logging, setLogging] = useState<LeadActivityType | null>(null);
+  const [discovering, setDiscovering] = useState(false);
 
   const open = isLeadOpen(lead.status);
   const editable = canManage && open;
@@ -194,6 +204,18 @@ export function LeadDetailView({
               <Link href={`${ROUTES.leads}?campaign_id=${lead.campaign.id}`}>
                 <Tag color="purple">
                   {messages.campaigns.leadField}: {lead.campaign.name}
+                </Tag>
+              </Link>
+            )}
+            {lead.targetAccount && (
+              <Link href={ROUTES.targetAccounts}>
+                <Tag color="geekblue" icon={<AimOutlined />}>
+                  {m.fromTarget} ·{" "}
+                  {
+                    messages.targetAccounts.priority[
+                      lead.targetAccount.priority
+                    ]
+                  }
                 </Tag>
               </Link>
             )}
@@ -356,6 +378,11 @@ export function LeadDetailView({
               label: md.tabs.details,
               children: (
                 <div className="space-y-4">
+                  <DiscoveryCard
+                    lead={lead}
+                    editable={editable}
+                    onEdit={() => setDiscovering(true)}
+                  />
                   <Collapse
                     size="small"
                     items={[
@@ -569,6 +596,34 @@ export function LeadDetailView({
             </Card>
           )}
 
+          <Card size="small" title={m.prospecting.title}>
+            {lead.contact_attempts ? (
+              <Descriptions size="small" column={1}>
+                <Descriptions.Item label={m.prospecting.attempts}>
+                  {lead.contact_attempts}
+                </Descriptions.Item>
+                <Descriptions.Item label={m.prospecting.lastContact}>
+                  {lead.last_contact_at
+                    ? formatWhen(lead.last_contact_at)
+                    : "—"}
+                </Descriptions.Item>
+                <Descriptions.Item label={m.prospecting.lastOutcome}>
+                  {lead.last_outcome ? (
+                    <Tag color={ma.outcomeColor[lead.last_outcome]}>
+                      {ma.outcome[lead.last_outcome]}
+                    </Tag>
+                  ) : (
+                    "—"
+                  )}
+                </Descriptions.Item>
+              </Descriptions>
+            ) : (
+              <Text type="secondary" className="text-xs">
+                {m.prospecting.none}
+              </Text>
+            )}
+          </Card>
+
           <Card
             size="small"
             title={ma.upcoming}
@@ -653,12 +708,227 @@ export function LeadDetailView({
         key={logging ? `log-${logging}` : "log-closed"}
         endpoint={`leads/${lead.id}/activities`}
         type={logging}
+        withOutcome
         onClose={() => setLogging(null)}
         onSaved={() => {
           setLogging(null);
           router.refresh();
         }}
       />
+      <DiscoveryModal
+        lead={discovering ? lead : null}
+        onClose={() => setDiscovering(false)}
+        onSaved={() => {
+          setDiscovering(false);
+          router.refresh();
+        }}
+      />
     </div>
+  );
+}
+
+const mdisc = m.discovery;
+
+/**
+ * CD-85 — what is known before a deal is opened. Warns when the company wants
+ * it complete; the gate itself is the workflow's (PO 10 ก.ย. 2569).
+ */
+function DiscoveryCard({
+  lead,
+  editable,
+  onEdit,
+}: {
+  lead: LeadDetail;
+  editable: boolean;
+  onEdit: () => void;
+}) {
+  const missing = new Set(lead.discovery_missing);
+  const value = (item: string): string => {
+    switch (item) {
+      case "need":
+        return dash(lead.discoveryNeed);
+      case "budget":
+        return (
+          [
+            lead.discoveryBudget === null
+              ? null
+              : `${formatAmount(lead.discoveryBudget)} THB`,
+            lead.discoveryBudgetNote,
+          ]
+            .filter(Boolean)
+            .join(" · ") || "—"
+        );
+      case "decision_maker":
+        return dash(lead.discoveryDecisionMaker);
+      default:
+        return lead.discoveryTimeframe
+          ? dayjs(lead.discoveryTimeframe).format("D MMM YYYY")
+          : "—";
+    }
+  };
+
+  return (
+    <Card
+      size="small"
+      title={
+        <Space size={6}>
+          {mdisc.title}
+          {missing.size === 0 ? (
+            <Tag color="green">{mdisc.complete}</Tag>
+          ) : (
+            <Tag color="orange">{mdisc.missing(missing.size)}</Tag>
+          )}
+        </Space>
+      }
+      extra={
+        editable ? (
+          <Button size="small" icon={<EditOutlined />} onClick={onEdit}>
+            {mdisc.edit}
+          </Button>
+        ) : null
+      }
+    >
+      {lead.discovery_required &&
+        missing.size > 0 &&
+        isLeadOpen(lead.status) && (
+          <Alert
+            type="warning"
+            showIcon
+            className="mb-3"
+            title={mdisc.requiredWarning}
+          />
+        )}
+      <Descriptions size="small" column={1} bordered>
+        {(["need", "budget", "decision_maker", "timeframe"] as const).map(
+          (item) => (
+            <Descriptions.Item
+              key={item}
+              label={
+                <Space size={4}>
+                  {missing.has(item) ? (
+                    <CloseCircleOutlined className="text-orange-500" />
+                  ) : (
+                    <CheckCircleFilled className="text-green-600" />
+                  )}
+                  {mdisc.item[item]}
+                </Space>
+              }
+            >
+              <span className="whitespace-pre-wrap">{value(item)}</span>
+            </Descriptions.Item>
+          ),
+        )}
+      </Descriptions>
+      <Text type="secondary" className="mt-2 block text-xs">
+        {mdisc.hint}
+      </Text>
+    </Card>
+  );
+}
+
+interface DiscoveryValues {
+  discovery_need?: string;
+  discovery_budget?: number | null;
+  discovery_budget_note?: string;
+  discovery_decision_maker?: string;
+  discovery_timeframe?: Dayjs | null;
+}
+
+function DiscoveryModal({
+  lead,
+  onClose,
+  onSaved,
+}: {
+  lead: LeadDetail | null;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const { message } = App.useApp();
+  const [form] = Form.useForm<DiscoveryValues>();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit() {
+    if (!lead) return;
+    const values = form.getFieldsValue();
+    setBusy(true);
+    setError(null);
+    const result = await appApi(`leads/${lead.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        discovery_need: values.discovery_need ?? "",
+        discovery_budget: values.discovery_budget ?? null,
+        discovery_budget_note: values.discovery_budget_note ?? "",
+        discovery_decision_maker: values.discovery_decision_maker ?? "",
+        discovery_timeframe: values.discovery_timeframe
+          ? values.discovery_timeframe.format("YYYY-MM-DD")
+          : null,
+      }),
+    });
+    setBusy(false);
+    if (!result.ok) {
+      setError(result.message);
+      return;
+    }
+    message.success(mdisc.saved);
+    onSaved();
+  }
+
+  return (
+    <Modal
+      open={lead !== null}
+      title={mdisc.title}
+      okText={mdisc.edit}
+      confirmLoading={busy}
+      onCancel={onClose}
+      onOk={() => void submit()}
+      mask={{ closable: false }}
+      destroyOnHidden
+    >
+      {error && <Alert type="error" showIcon title={error} className="mb-3" />}
+      {lead && (
+        <Form<DiscoveryValues>
+          form={form}
+          layout="vertical"
+          initialValues={{
+            discovery_need: lead.discoveryNeed ?? "",
+            discovery_budget:
+              lead.discoveryBudget === null
+                ? null
+                : Number(lead.discoveryBudget),
+            discovery_budget_note: lead.discoveryBudgetNote ?? "",
+            discovery_decision_maker: lead.discoveryDecisionMaker ?? "",
+            discovery_timeframe: lead.discoveryTimeframe
+              ? dayjs(lead.discoveryTimeframe)
+              : null,
+          }}
+        >
+          <Form.Item name="discovery_need" label={mdisc.item.need}>
+            <Input.TextArea rows={3} maxLength={4000} />
+          </Form.Item>
+          <div className="grid grid-cols-1 gap-x-3 md:grid-cols-2">
+            <Form.Item name="discovery_budget" label={mdisc.budgetAmount}>
+              <InputNumber<number> className="w-full" min={0} precision={2} />
+            </Form.Item>
+            <Form.Item name="discovery_budget_note" label={mdisc.budgetNote}>
+              <Input maxLength={500} />
+            </Form.Item>
+            <Form.Item
+              name="discovery_decision_maker"
+              label={mdisc.item.decision_maker}
+            >
+              <Input maxLength={255} />
+            </Form.Item>
+            <Form.Item name="discovery_timeframe" label={mdisc.item.timeframe}>
+              <DatePicker
+                className="w-full"
+                format="D MMM YYYY"
+                placeholder={mdisc.timeframePlaceholder}
+              />
+            </Form.Item>
+          </div>
+        </Form>
+      )}
+    </Modal>
   );
 }

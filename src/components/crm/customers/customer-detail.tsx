@@ -1,5 +1,6 @@
 "use client";
 
+import { CustomerAccountTab } from "@/components/crm/customers/customer-account-tab";
 import { CustomerContractsTab } from "@/components/crm/customers/customer-contracts-tab";
 import {
   CustomerKycTab,
@@ -38,6 +39,7 @@ import {
   saleOrderExpandable,
 } from "@/components/crm/sale-orders/sale-order-parts";
 import { appApi } from "@/lib/api/client";
+import { CustomerApprovalBanner } from "@/components/crm/customers/customer-approval-banner";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import type {
@@ -51,6 +53,7 @@ import type {
   RequestRow,
   SaleOrderRow,
   SegmentOption,
+  CustomerApprovalView,
 } from "@/lib/api/types";
 
 const m = messages.customers;
@@ -91,6 +94,8 @@ export function CustomerDetailView({
   customerOpportunities,
   customerQuotations,
   customerSaleOrders,
+  canManageSales = false,
+  approval = null,
 }: {
   customer: CustomerDetail;
   history: CustomerFieldChange[];
@@ -117,6 +122,10 @@ export function CustomerDetailView({
   customerQuotations: QuotationRow[] | null;
   /** null = viewer has no crm.sales.read. */
   customerSaleOrders: SaleOrderRow[] | null;
+  /** CD-86 — may open an expansion deal from the account tab. */
+  canManageSales?: boolean;
+  /** CD-62 — only fetched for a customer not yet approved. */
+  approval?: CustomerApprovalView | null;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -173,6 +182,10 @@ export function CustomerDetailView({
         />
       )}
 
+      {approval && (
+        <CustomerApprovalBanner customerId={customer.id} view={approval} />
+      )}
+
       <div className="flex items-start justify-between gap-3">
         <div>
           <Title level={4} className="mb-1!">
@@ -191,6 +204,16 @@ export function CustomerDetailView({
                 {customer.branchName ? ` · ${customer.branchName}` : ""}
               </Tag>
             )}
+            {customer.approvalStatus &&
+              customer.approvalStatus !== "approved" && (
+                <Tag
+                  color={
+                    customer.approvalStatus === "rejected" ? "red" : "orange"
+                  }
+                >
+                  {m.approval.tag[customer.approvalStatus]}
+                </Tag>
+              )}
             {customer.kycVerified ? (
               <Tag color="blue">{m.kycVerified}</Tag>
             ) : (
@@ -409,6 +432,22 @@ export function CustomerDetailView({
               />
             ),
           },
+          // CD-86 — Keeper: plan, health, reviews, what it buys
+          ...(isAlias
+            ? []
+            : [
+                {
+                  key: "account",
+                  label: m.detail.tabAccount,
+                  children: (
+                    <CustomerAccountTab
+                      customerId={customer.id}
+                      canManage={editable}
+                      canCreateDeal={canManageSales}
+                    />
+                  ),
+                },
+              ]),
           {
             key: "locations",
             label: `${m.detail.tabLocations} · ${customer.locations.length}`,

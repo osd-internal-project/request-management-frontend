@@ -454,6 +454,17 @@ export function ConvertLeadModal({
     >
       <Space direction="vertical" className="w-full">
         {error && <Alert type="error" showIcon title={error} />}
+        {lead && lead.discovery_missing?.length > 0 && (
+          <Alert
+            type="warning"
+            showIcon
+            title={m.discovery.convertWarning(
+              lead.discovery_missing
+                .map((item) => m.discovery.item[item])
+                .join(", "),
+            )}
+          />
+        )}
         <Text type="secondary" className="text-xs">
           {m.convertHint}
         </Text>

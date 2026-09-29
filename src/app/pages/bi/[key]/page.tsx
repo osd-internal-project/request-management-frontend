@@ -86,7 +86,6 @@ export default function BiDashboardPage() {
         title={dashboard.title}
         className="block w-full border-0"
         style={{ height: "calc(100vh - 220px)" }}
-        allowTransparency
       />
     </Card>
   );

@@ -74,6 +74,20 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     permissions: ["crm.customer.read"],
     group: messages.nav.crmGroup,
   },
+  /** CD-86 — Portfolio ลูกค้าเดิมของแกน Keeper: แผนบัญชี สุขภาพ รอบทบทวน. */
+  {
+    label: messages.nav.keeper,
+    href: ROUTES.keeper,
+    permissions: ["crm.customer.read"],
+    group: messages.nav.crmGroup,
+  },
+  /** CD-85 — บริษัทเป้าหมายของแกน Getter: เล็ง จัดลำดับ แล้วเริ่มเข้าหาเป็น Lead. */
+  {
+    label: messages.nav.targetAccounts,
+    href: ROUTES.targetAccounts,
+    permissions: ["crm.sales.read"],
+    group: messages.nav.crmGroup,
+  },
   {
     label: messages.nav.leads,
     href: ROUTES.leads,
@@ -84,6 +98,12 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     label: messages.nav.visitLog,
     href: ROUTES.visitLog,
     permissions: ["crm.sales.manage"],
+    group: messages.nav.crmGroup,
+  },
+  /** CD-84 — ทีมที่รับงานไม่จำเป็นต้องมีสิทธิ์ CRM; หน้าเองแสดงเฉพาะงานของทีม. */
+  {
+    label: messages.nav.handovers,
+    href: ROUTES.handovers,
     group: messages.nav.crmGroup,
   },
   {
@@ -133,6 +153,13 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     // request type it belongs to, reached from ประเภทคำขอ below.
     label: messages.nav.adminRequestTypes,
     href: ROUTES.adminRequestTypes,
+    permissions: ["admin.request-type.manage"],
+    group: messages.nav.adminGroup,
+  },
+  /** CD-66 — ลูกค้ายื่นคำขอเองผ่านแบบฟอร์มสาธารณะ / LINE / AI CARE. */
+  {
+    label: messages.nav.adminIntakeChannels,
+    href: ROUTES.adminIntakeChannels,
     permissions: ["admin.request-type.manage"],
     group: messages.nav.adminGroup,
   },

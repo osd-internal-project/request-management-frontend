@@ -1036,6 +1036,9 @@ export interface CustomerRow {
   kycRiskLevel?: KycRiskLevel | null;
   /** CD-61 — the KYC runs out on this day (review date or first document expiry). */
   kycExpiresOn?: string | null;
+  /** CD-62 — not approved = the customer and its sale orders wait before SAP. */
+  approvalStatus?: CustomerApprovalStatus;
+  approvalRequestId?: string | null;
   accountOwnerUserId: string | null;
   accountOwner: { id: string; displayName: string } | null;
   segments: {
@@ -1200,7 +1203,24 @@ export type LeadStatus =
   | "qualified"
   | "disqualified"
   | "converted";
-export type LeadActivityType = "call" | "email" | "meeting" | "task" | "note";
+export type LeadActivityType =
+  | "call"
+  | "email"
+  | "meeting"
+  | "task"
+  | "note"
+  // CD-85 — ช่องทางเข้าหา
+  | "visit"
+  | "line"
+  | "social";
+/** CD-85 — ผลการติดต่อหนึ่งครั้ง. */
+export type ActivityOutcome =
+  | "reached"
+  | "no_answer"
+  | "interested"
+  | "not_interested";
+/** CD-85 — สี่อย่างที่ต้องรู้ก่อนเปิดดีล. */
+export type DiscoveryItem = "need" | "budget" | "decision_maker" | "timeframe";
 export type OpportunityStage =
   "qualifying" | "proposing" | "negotiating" | "won" | "lost";
 
@@ -1237,6 +1257,17 @@ export interface LeadRow {
   ownerUserId: string;
   createdAt: string;
   updatedAt: string;
+  /** CD-85 Discovery. */
+  discoveryNeed: string | null;
+  discoveryBudget: string | number | null;
+  discoveryBudgetNote: string | null;
+  discoveryDecisionMaker: string | null;
+  discoveryTimeframe: string | null;
+  discovery_missing: DiscoveryItem[];
+  /** CD-85 Prospecting — completed contacts only. */
+  contact_attempts: number;
+  last_contact_at: string | null;
+  last_outcome: ActivityOutcome | null;
 }
 
 /**
@@ -1255,6 +1286,8 @@ export interface SalesActivity {
   createdAt: string;
   createdBy: string;
   createdByName: string;
+  /** CD-85 — lead activities only. */
+  outcome?: ActivityOutcome | null;
 }
 
 export interface LeadActivity extends SalesActivity {
@@ -1294,13 +1327,59 @@ export interface LeadDetail extends LeadRow {
   } | null;
   owner: { id: string; displayName: string };
   activities: LeadActivity[];
+  /** CD-85 — the target account this lead came from. */
+  targetAccount: {
+    id: string;
+    name: string;
+    priority: TargetAccountPriority;
+    status: TargetAccountStatus;
+  } | null;
+  /** CD-85 — the company wants Discovery done before a deal (the workflow decides). */
+  discovery_required: boolean;
 }
+
+/** CD-85 — บริษัทเป้าหมายของแกน Getter. */
+export type TargetAccountPriority = "high" | "medium" | "low";
+export type TargetAccountStatus =
+  | "targeting"
+  | "approaching"
+  | "converted"
+  | "dropped";
+
+export interface TargetAccountRow {
+  id: string;
+  name: string;
+  nameEn: string | null;
+  taxId: string | null;
+  industry: string | null;
+  companySize: string | null;
+  province: string | null;
+  website: string | null;
+  note: string | null;
+  priority: TargetAccountPriority;
+  status: TargetAccountStatus;
+  dropReason: string | null;
+  ownerUserId: string | null;
+  owner: { id: string; displayName: string } | null;
+  leadId: string | null;
+  lead: {
+    id: string;
+    name: string;
+    status: string;
+    convertedOpportunityId: string | null;
+  } | null;
+  createdAt: string;
+}
+
+/** CD-86 — ลูกค้าใหม่ / ขายเพิ่ม / ขายข้าม / ต่ออายุ. */
+export type DealType = "new_business" | "upsell" | "cross_sell" | "renewal";
 
 export interface OpportunityRow {
   id: string;
   opportunityCode: string;
   title: string;
   stage: OpportunityStage;
+  dealType?: DealType;
   amount: string | number | null;
   currency: string;
   probability: number | null;
@@ -1661,6 +1740,10 @@ export interface CrmConfig {
   kycReviewMonthsHigh?: number;
   kycReviewMonthsMedium?: number;
   kycReviewMonthsLow?: number;
+  /** CD-85 — ต้องทำ Discovery ครบก่อนเปิดดีล (workflow ตัดสิน, หน้าจอเตือน). */
+  discoveryRequired?: boolean;
+  /** CD-86 — ไม่ได้ติดต่อลูกค้าเดิมเกินกี่วันนับเป็นความเสี่ยง. */
+  healthNoContactDays?: number;
   /** CD-65 — ไม่มีใครอ่านแล้ว: ย้ายไปเป็นกติกา `opportunity.stale` (CD-53). */
   staleOpportunityDays: number;
   /** หัวกระดาษใบเสนอราคา — null = ไม่ได้ตั้ง. */
@@ -1675,6 +1758,10 @@ export interface CrmConfig {
   /** data URL (png/jpeg/webp). */
   letterheadLogo: string | null;
   quotationTerms: string | null;
+  /** CD-84 — the team a handover goes to by default. */
+  handoverOrgUnitId?: string | null;
+  /** CD-62 — approval request type per customer type. */
+  customerApprovalTypes?: Partial<Record<"corporate" | "individual" | "government", string>>;
 }
 
 /** CM-07 — one assignable value with its dimension, for pickers and filters. */
@@ -1775,4 +1862,198 @@ export interface QuotationPrintView {
   };
   /** false = draft / awaiting approval — the page watermarks it. */
   isFinal: boolean;
+}
+
+/** CD-84 — the three groups of the handover checklist. */
+export type HandoverCategory = "commercial" | "requirement" | "commitment";
+
+/** CD-84 — one line of the company's handover checklist (CRM settings). */
+export interface HandoverChecklistItem {
+  code: string;
+  category: HandoverCategory;
+  label: string;
+  requiresDetail: boolean;
+  active?: boolean;
+  sortOrder?: number;
+}
+
+/** CD-84 — a checklist line as the handover keeps it, with its answer. */
+export interface HandoverItem extends HandoverChecklistItem {
+  checked: boolean;
+  detail: string | null;
+}
+
+export type SalesHandoverStatus = "draft" | "submitted" | "accepted" | "returned";
+
+export interface HandoverHistoryEntry {
+  action: "submitted" | "accepted" | "returned";
+  at: string;
+  by: string;
+  byName: string;
+  round: number;
+  reason: string | null;
+}
+
+/** CD-84 — a won deal's handover to the next team. */
+export interface SalesHandover {
+  id: string;
+  opportunityId: string;
+  status: SalesHandoverStatus;
+  toOrgUnitId: string | null;
+  toOrgUnitName: string | null;
+  items: HandoverItem[];
+  note: string | null;
+  round: number;
+  submittedAt: string | null;
+  submittedByName: string | null;
+  decidedAt: string | null;
+  decidedByName: string | null;
+  returnReason: string | null;
+  history: HandoverHistoryEntry[];
+  updatedAt: string;
+  /** The viewer is in (or leads) the receiving team and it is waiting. */
+  canDecide: boolean;
+  opportunity: {
+    id: string;
+    opportunityCode: string;
+    title: string;
+    amount: string | number | null;
+    customerId: string | null;
+    customerName: string | null;
+    ownerUserId: string;
+    ownerName: string;
+  } | null;
+}
+
+/** CD-84 — `GET opportunities/:id/handover`. */
+export interface DealHandoverView {
+  dealWon: boolean;
+  editable: boolean;
+  defaultOrgUnitId: string | null;
+  items: HandoverItem[];
+  handover: SalesHandover | null;
+}
+
+/* -------------------------------------------------------------------------- */
+/* CD-86 Keeper — portfolio, account plan, health                              */
+/* -------------------------------------------------------------------------- */
+
+export type AccountTier = "a" | "b" | "c";
+export type HealthLevel = "green" | "amber" | "red";
+export type CustomerTouchType =
+  | "review"
+  | "call"
+  | "email"
+  | "meeting"
+  | "visit"
+  | "line"
+  | "social";
+
+export interface HealthSignal {
+  code:
+    | "case_breached"
+    | "case_serious"
+    | "invoice_overdue"
+    | "contract_ending"
+    | "renewal_lost"
+    | "low_satisfaction"
+    | "no_contact";
+  level: "amber" | "red";
+  values: Record<string, number | string>;
+}
+
+export interface AccountPlanSummary {
+  tier: AccountTier;
+  target_revenue: number | null;
+  review_every_months: number;
+  next_review_on: string | null;
+}
+
+export interface PortfolioRow {
+  id: string;
+  customer_code: string;
+  name_th: string;
+  branch_name: string | null;
+  status: string;
+  owner: { id: string; displayName: string } | null;
+  plan: AccountPlanSummary | null;
+  health: { level: HealthLevel; signals: HealthSignal[] };
+  last_contact_at: string | null;
+  last_satisfaction: number | null;
+  /** null = the viewer cannot read deals. */
+  open_deals: { count: number; amount: number; expansion: number } | null;
+  revenue_12m: number | null;
+}
+
+export interface Portfolio {
+  rows: PortfolioRow[];
+  truncated: boolean;
+  summary: {
+    accounts: number;
+    red: number;
+    amber: number;
+    green: number;
+    without_plan: number;
+    reviews_due: number;
+    no_expansion: number;
+  };
+}
+
+export interface CustomerAccount extends PortfolioRow {
+  plan: (AccountPlanSummary & { goals: string | null; updated_at: string }) | null;
+  touchpoints: {
+    id: string;
+    type: CustomerTouchType;
+    occurred_at: string;
+    summary: string;
+    satisfaction: number | null;
+    next_steps: string | null;
+    created_by: string;
+  }[];
+  /** null = the viewer cannot read sales. */
+  products:
+    | {
+        product_code: string | null;
+        description: string;
+        unit: string | null;
+        quantity: number;
+        amount: number;
+        last_ordered_on: string;
+        orders: number;
+      }[]
+    | null;
+  contracts: {
+    id: string;
+    contractNo: string;
+    title: string;
+    endOn: string;
+    value: string | number | null;
+    renewalOpportunityId: string | null;
+  }[];
+  open_deals_list:
+    | {
+        id: string;
+        opportunityCode: string;
+        title: string;
+        stage: OpportunityStage;
+        dealType: DealType;
+        amount: string | number | null;
+        expectedCloseAt: string | null;
+      }[]
+    | null;
+}
+
+/** CD-62 — the new-customer approval. */
+export type CustomerApprovalStatus = "approved" | "pending" | "rejected";
+
+export interface CustomerApprovalView {
+  status: CustomerApprovalStatus;
+  request: {
+    id: string;
+    requestNo: string | null;
+    status: string;
+    typeCode: string;
+  } | null;
+  type_code: string | null;
+  can_raise: boolean;
 }

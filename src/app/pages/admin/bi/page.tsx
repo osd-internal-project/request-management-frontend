@@ -1,7 +1,7 @@
 "use client";
 
 import { ExportOutlined, PlusOutlined } from "@ant-design/icons";
-import { Alert, App, Button, Card, Form, Input, InputNumber, Modal, Popconfirm, Space, Spin, Table, Tag } from "antd";
+import { Alert, App, Button, Card, Form, Input, InputNumber, Modal, Popconfirm, Space, Spin, Switch, Table, Tag } from "antd";
 import Paragraph from "antd/es/typography/Paragraph";
 import Text from "antd/es/typography/Text";
 import Title from "antd/es/typography/Title";
@@ -20,6 +20,8 @@ import {
 import { messages } from "@/lib/messages";
 import { SearchTreeSelect } from "@/components/ui/search-select";
 import { buildUnitTree } from "@/lib/org/org-tree";
+import { DataMartCard } from "@/components/admin/data-mart-card";
+import { DataLakeCard } from "@/components/admin/data-lake-card";
 
 /**
  * CD-92 v2 — the "ตั้งค่า Dashboard" admin screen.
@@ -37,6 +39,7 @@ interface FormValues {
   metabase_dashboard_id: number;
   sort_order?: number;
   org_unit_ids?: string[];
+  lock_company?: boolean;
 }
 
 export default function AdminBiPage() {
@@ -87,6 +90,7 @@ export default function AdminBiPage() {
         metabase_dashboard_id: undefined as unknown as number,
         sort_order: 0,
         org_unit_ids: [],
+        lock_company: false,
       });
     } else {
       form.setFieldsValue({
@@ -94,6 +98,7 @@ export default function AdminBiPage() {
         metabase_dashboard_id: target.metabase_dashboard_id,
         sort_order: target.sort_order,
         org_unit_ids: target.org_units.map((unit) => unit.id),
+        lock_company: target.lock_company,
       });
     }
   };
@@ -107,6 +112,7 @@ export default function AdminBiPage() {
       metabase_dashboard_id: values.metabase_dashboard_id,
       sort_order: values.sort_order ?? 0,
       org_unit_ids: values.org_unit_ids ?? [],
+      lock_company: values.lock_company ?? false,
     };
     const result =
       editing === "new" || editing === null
@@ -192,8 +198,16 @@ export default function AdminBiPage() {
             {
               title: messages.bi.columnTitle,
               dataIndex: "title",
-              render: (title: string, row) =>
-                row.active ? title : <Text type="secondary">{title}</Text>,
+              render: (title: string, row) => (
+                <span>
+                  {row.active ? title : <Text type="secondary">{title}</Text>}
+                  {row.lock_company && (
+                    <Tag color="purple" className="ml-2">
+                      {messages.bi.lockCompanyTag}
+                    </Tag>
+                  )}
+                </span>
+              ),
             },
             {
               title: messages.bi.columnMetabaseId,
@@ -258,6 +272,12 @@ export default function AdminBiPage() {
         />
       </Card>
 
+      {/* CD-91 */}
+      <DataMartCard />
+
+      {/* CD-90 */}
+      <DataLakeCard />
+
       {settingsUrl && (
         <Card title={messages.bi.settingsTitle}>
           <Paragraph type="secondary">{messages.bi.settingsBody}</Paragraph>
@@ -314,6 +334,15 @@ export default function AdminBiPage() {
           </Form.Item>
           <Form.Item name="sort_order" label={messages.bi.formSortOrder}>
             <InputNumber min={0} className="w-full" />
+          </Form.Item>
+          {/* CD-92 — the dashboard must declare a locked `company` parameter */}
+          <Form.Item
+            name="lock_company"
+            label={messages.bi.formLockCompany}
+            valuePropName="checked"
+            extra={messages.bi.formLockCompanyHint}
+          >
+            <Switch />
           </Form.Item>
         </Form>
       </Modal>

@@ -50,7 +50,13 @@ export function LeadList({
   total: number;
   page: number;
   pageSize: number;
-  filters: { search?: string; status?: string; mineOnly: boolean };
+  filters: {
+    search?: string;
+    status?: string;
+    mineOnly: boolean;
+    /** CD-85 — Getter: leads with no customer yet. */
+    newCustomer?: boolean;
+  };
   layout: LeadLayout;
   customers: CustomerRow[];
   canManage: boolean;
@@ -70,6 +76,7 @@ export function LeadList({
     if (merged.search) params.set("search", merged.search);
     if (merged.status) params.set("status", merged.status);
     if (merged.mineOnly) params.set("view", "mine");
+    if (merged.newCustomer) params.set("new_customer", "true");
     if (merged.layout === "board") params.set("layout", "board");
     if (next.page && next.page > 1) params.set("page", String(next.page));
     router.push(`${ROUTES.leads}?${params.toString()}`);
@@ -107,6 +114,14 @@ export function LeadList({
           onChange={(event) => applyFilters({ mineOnly: event.target.checked })}
         >
           {m.mineOnly}
+        </Checkbox>
+        <Checkbox
+          checked={filters.newCustomer}
+          onChange={(event) =>
+            applyFilters({ newCustomer: event.target.checked })
+          }
+        >
+          {m.newCustomerOnly}
         </Checkbox>
         <div className="grow" />
         <Segmented<LeadLayout>
@@ -197,6 +212,32 @@ export function LeadList({
                 [contactName, row.phone, row.email]
                   .filter(Boolean)
                   .join(" · ") || "—",
+            },
+            {
+              // CD-85 — how far the approach has gone
+              title: m.prospecting.title,
+              key: "prospecting",
+              width: 150,
+              render: (_: unknown, row: LeadRow) => (
+                <div className="text-xs">
+                  <div>{m.attempts(row.contact_attempts ?? 0)}</div>
+                  {row.last_contact_at && (
+                    <Text type="secondary" className="block text-xs">
+                      {m.lastContact(
+                        new Date(row.last_contact_at).toLocaleDateString(
+                          "th-TH",
+                        ),
+                      )}
+                    </Text>
+                  )}
+                  <Tag
+                    className="mt-0.5"
+                    color={row.discovery_missing?.length ? "orange" : "green"}
+                  >
+                    {m.discoveryShort(4 - (row.discovery_missing?.length ?? 4))}
+                  </Tag>
+                </div>
+              ),
             },
             {
               title: m.columns.source,

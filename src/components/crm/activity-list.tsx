@@ -15,7 +15,10 @@ import {
 } from "antd";
 import {
   CheckSquareOutlined,
+  CommentOutlined,
+  EnvironmentOutlined,
   FileTextOutlined,
+  GlobalOutlined,
   MailOutlined,
   PhoneOutlined,
   VideoCameraOutlined,
@@ -23,7 +26,11 @@ import {
 import dayjs, { type Dayjs } from "dayjs";
 import { appApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
-import type { LeadActivityType, SalesActivity } from "@/lib/api/types";
+import type {
+  ActivityOutcome,
+  LeadActivityType,
+  SalesActivity,
+} from "@/lib/api/types";
 
 /**
  * กิจกรรมของงานขาย — ใช้ร่วมระหว่าง Lead และโอกาสการขาย (CD-65). รูปข้อมูล
@@ -37,7 +44,20 @@ export const ACTIVITY_ICON: Record<LeadActivityType, React.ReactNode> = {
   meeting: <VideoCameraOutlined />,
   task: <CheckSquareOutlined />,
   note: <FileTextOutlined />,
+  visit: <EnvironmentOutlined />,
+  line: <CommentOutlined />,
+  social: <GlobalOutlined />,
 };
+
+/** CD-85 — the activity types that are an attempt to reach someone. */
+export const CONTACT_TYPES: LeadActivityType[] = [
+  "call",
+  "email",
+  "meeting",
+  "visit",
+  "line",
+  "social",
+];
 
 export function formatWhen(iso: string): string {
   return dayjs(iso).format("D MMM YY HH:mm");
@@ -98,6 +118,14 @@ export function ActivityList({
             <div className="min-w-0 grow text-xs">
               <div className={isDone ? "text-gray-400 line-through" : "font-medium"}>
                 <Tag className="mr-1!">{ma.type[activity.type]}</Tag>
+                {activity.outcome && (
+                  <Tag
+                    color={ma.outcomeColor[activity.outcome]}
+                    className="mr-1!"
+                  >
+                    {ma.outcome[activity.outcome]}
+                  </Tag>
+                )}
                 {activity.subject}
               </div>
               {!compact && activity.detail && (
@@ -135,6 +163,7 @@ interface ActivityFormValues {
   subject: string;
   detail?: string;
   due_at?: Dayjs | null;
+  outcome?: ActivityOutcome;
 }
 
 /** ลงกิจกรรม — เว้นกำหนด = ทำไปแล้ว, ใส่กำหนด = ต้องตามต่อ. */
@@ -143,6 +172,7 @@ export function ActivityModal({
   type,
   onClose,
   onSaved,
+  withOutcome,
 }: {
   /** e.g. `leads/<id>/activities` or `opportunities/<id>/activities`. */
   endpoint: string;
@@ -150,9 +180,16 @@ export function ActivityModal({
   type: LeadActivityType | null;
   onClose: () => void;
   onSaved: () => void;
+  /** CD-85 — leads record how a contact went (deals do not). */
+  withOutcome?: boolean;
 }) {
   const { message } = App.useApp();
   const [form] = Form.useForm<ActivityFormValues>();
+  const chosenType = Form.useWatch("type", form);
+  const chosenDue = Form.useWatch("due_at", form);
+  // A planned contact has no outcome yet; a task or a note never has one.
+  const outcomeApplies =
+    withOutcome && CONTACT_TYPES.includes(chosenType) && !chosenDue;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -173,6 +210,7 @@ export function ActivityModal({
         subject: values.subject.trim(),
         detail: values.detail?.trim() || undefined,
         due_at: values.due_at ? values.due_at.toISOString() : undefined,
+        outcome: outcomeApplies ? values.outcome || undefined : undefined,
       }),
     });
     setBusy(false);
@@ -227,6 +265,21 @@ export function ActivityModal({
             format="D MMM YYYY HH:mm"
           />
         </Form.Item>
+        {outcomeApplies && (
+          <Form.Item
+            name="outcome"
+            label={ma.form.outcome}
+            extra={ma.form.outcomeHint}
+          >
+            <Select
+              allowClear
+              options={Object.entries(ma.outcome).map(([value, label]) => ({
+                value,
+                label,
+              }))}
+            />
+          </Form.Item>
+        )}
       </Form>
     </Modal>
   );

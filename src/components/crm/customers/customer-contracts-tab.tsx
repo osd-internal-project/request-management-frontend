@@ -220,6 +220,12 @@ export function CustomerContractsTab({
                     render: (_: unknown, row: CustomerContract) =>
                       row.status === "active" ? (
                         <span className="flex gap-2 text-xs whitespace-nowrap">
+                          {/* CD-67 — a case raised against this contract */}
+                          <Link
+                            href={`${ROUTES.newRequest}?ref_type=contract&ref_id=${encodeURIComponent(row.contractNo)}`}
+                          >
+                            {m.openCase}
+                          </Link>
                           <a onClick={() => setEditing(row)}>{m.edit}</a>
                           <a onClick={() => void cancel(row)}>{m.cancel}</a>
                         </span>

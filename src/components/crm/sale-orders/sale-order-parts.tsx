@@ -28,8 +28,12 @@ export function SaleOrderErpTag({ row }: { row: SaleOrderRow }) {
     ? md.saleOrderErpCancelled
     : (md.saleOrderErpStatus[status] ?? status);
 
+  // A held order (`not_ready`, e.g. CD-62 waiting for the customer's
+  // approval) carries its reason, not an error.
   const hint = row.erpLastError
-    ? md.saleOrderErpLastError(row.erpLastError)
+    ? status === "not_ready"
+      ? row.erpLastError
+      : md.saleOrderErpLastError(row.erpLastError)
     : md.saleOrderErpHint[status];
 
   const tag = <Tag color={ERP_COLOR[status] ?? "default"}>{label}</Tag>;

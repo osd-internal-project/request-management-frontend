@@ -5,11 +5,13 @@ import Text from "antd/es/typography/Text";
 import { CrmAdmin } from "@/components/admin/crm-admin";
 import { apiGet } from "@/lib/api/core";
 import customers from "@/lib/api/customers";
+import { getOrgUnitShapes } from "@/lib/api/org-units";
 import { messages } from "@/lib/messages";
 import { HOME_PATH } from "@/lib/routes";
-import { can, getSession } from "@/lib/session";
+import { can, canAny, getSession } from "@/lib/session";
 import type {
   CrmConfig,
+  HandoverChecklistItem,
   KycWatchlistEntry,
   TradeTermStandard,
 } from "@/lib/api/types";
@@ -30,6 +32,8 @@ export default async function CrmAdminPage() {
     kycProductsResult,
     tradeTermsResult,
     kycWatchlistResult,
+    handoverItemsResult,
+    teamsResult,
   ] = await Promise.all([
     customers.getSegmentDimensions(),
     apiGet<CrmConfig>("/admin/crm/config"),
@@ -38,6 +42,11 @@ export default async function CrmAdminPage() {
     apiGet<TradeTermStandard[]>("/admin/crm/trade-terms"),
     // CD-61 — รายชื่อต้องห้าม.
     apiGet<KycWatchlistEntry[]>("/admin/crm/kyc-watchlist"),
+    // CD-84 — รายการตรวจก่อนส่งมอบงาน และทีมที่รับ.
+    apiGet<HandoverChecklistItem[]>("/admin/crm/handover-items"),
+    canAny(session, ["user.read", "request.create"])
+      ? getOrgUnitShapes()
+      : Promise.resolve(null),
   ]);
 
   const failed = !dimensionsResult.ok
@@ -71,6 +80,10 @@ export default async function CrmAdminPage() {
         kycProducts={kycProductsResult.ok ? kycProductsResult.data : []}
         tradeTerms={tradeTermsResult.ok ? tradeTermsResult.data : []}
         kycWatchlist={kycWatchlistResult.ok ? kycWatchlistResult.data : []}
+        handoverItems={
+          handoverItemsResult.ok ? handoverItemsResult.data : []
+        }
+        teams={teamsResult?.ok ? teamsResult.data : []}
         config={
           configResult.ok
             ? configResult.data

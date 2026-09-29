@@ -20,6 +20,8 @@ export default async function LeadsPage({
     page?: string;
     /** CD-71 — มาจากลิงก์ "ดู Lead" ในหน้าแคมเปญ. */
     campaign_id?: string;
+    /** CD-85 — Getter: เฉพาะลูกค้าใหม่. */
+    new_customer?: string;
   }>;
 }) {
   const session = await getSession();
@@ -37,6 +39,7 @@ export default async function LeadsPage({
       status: query.status,
       view: query.view === "mine" ? "mine" : undefined,
       campaign_id: query.campaign_id,
+      new_customer: query.new_customer === "true",
       page,
       page_size: pageSize,
     }),
@@ -66,6 +69,7 @@ export default async function LeadsPage({
           search: query.search,
           status: query.status,
           mineOnly: query.view === "mine",
+          newCustomer: query.new_customer === "true",
         }}
         layout={layout}
         customers={customersResult?.ok ? customersResult.data.data : []}

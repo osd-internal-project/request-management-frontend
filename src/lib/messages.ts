@@ -82,7 +82,10 @@ export const messages = {
     salesReport: "รายงานยอดขาย",
     salesTargets: "เป้าและพยากรณ์",
     campaigns: "แคมเปญ",
+    targetAccounts: "บริษัทเป้าหมาย",
+    keeper: "Portfolio ลูกค้าเดิม",
     visitLog: "บันทึกการเข้าพบ",
+    handovers: "งานส่งมอบ",
     adminGroup: "ผู้ดูแลระบบ",
     adminCrm: "ตั้งค่า CRM",
     adminApiKeys: "กุญแจ API",
@@ -96,6 +99,7 @@ export const messages = {
     adminNotificationLog: "บันทึกการแจ้งเตือน",
     adminNotificationTemplates: "ข้อความแจ้งเตือน",
     adminNotificationRules: "กติกาแจ้งเตือน",
+    adminIntakeChannels: "ช่องทางรับคำขอจากลูกค้า",
     biGroup: "แดชบอร์ดผู้บริหาร",
     adminBi: "ตั้งค่า Dashboard",
     openMenu: "เปิดเมนู",
@@ -404,6 +408,7 @@ export const messages = {
       "admin.integration.manage": "ออก/เพิกถอนกุญแจ API",
 
       "integration.request.create": "ยื่นคำขอแทนระบบภายนอก",
+      "integration.request.intake": "รับคำขอจากลูกค้า (แบบฟอร์มสาธารณะ/LINE/AI CARE)",
       "integration.approval.create": "สร้างเคสอนุมัติจากระบบภายนอก",
       "integration.crm.lead.read": "อ่าน Lead (workflow engine)",
       "integration.crm.lead.stage": "เลื่อนขั้น Lead (workflow engine)",
@@ -965,6 +970,207 @@ export const messages = {
   },
 
   /** CD-71 */
+  /** CD-86 — แกน Keeper: portfolio, แผนบัญชี, สุขภาพลูกค้า, รอบทบทวน. */
+  keeper: {
+    title: "Portfolio ลูกค้าเดิม",
+    subtitle:
+      "ลูกค้าที่ดูแล จัดลำดับด้วยแผนบัญชี ดูสุขภาพจากเคส การชำระเงิน สัญญา และการติดต่อ — แดงอยู่บนสุด",
+    mine: "ของฉัน",
+    team: "ทั้งทีม",
+    allTiers: "ระดับ: ทั้งหมด",
+    noPlanFilter: "ยังไม่มีแผน",
+    allHealth: "สุขภาพ: ทั้งหมด",
+    searchPlaceholder: "ค้นหารหัส / ชื่อลูกค้า",
+    truncated: "แสดง 300 บัญชีแรก — ใช้ตัวกรองให้แคบลง",
+    empty: "ไม่มีลูกค้าตามเงื่อนไขนี้",
+    tiles: {
+      red: "ต้องรีบดูแล",
+      amber: "เฝ้าระวัง",
+      green: "ปกติ",
+      reviewsDue: "ถึงรอบทบทวนใน 7 วัน",
+      withoutPlan: "ยังไม่มีแผนบัญชี",
+      noExpansion: "ไม่มีดีลขยาย",
+    },
+    columns: {
+      health: "สุขภาพ",
+      customer: "ลูกค้า",
+      tier: "ระดับ",
+      nextReview: "ทบทวนครั้งถัดไป",
+      lastContact: "ติดต่อล่าสุด",
+      deals: "ดีลที่เปิด",
+      revenue: "ยอดขาย 12 เดือน",
+      owner: "ผู้ดูแล",
+    },
+    tier: { a: "A", b: "B", c: "C" } as Record<string, string>,
+    tierColor: { a: "red", b: "gold", c: "default" } as Record<string, string>,
+    tierHint: "(A = ดูแลใกล้ชิดที่สุด)",
+    health: { green: "ปกติ", amber: "เฝ้าระวัง", red: "เสี่ยง" } as Record<
+      string,
+      string
+    >,
+    healthColor: { green: "green", amber: "orange", red: "red" } as Record<
+      string,
+      string
+    >,
+    signal: {
+      case_breached: (v: Record<string, number | string>) =>
+        `เคสเกิน SLA ${v.count} เคส`,
+      case_serious: (v: Record<string, number | string>) =>
+        `เคสร้ายแรงเปิดอยู่ ${v.count} เคส`,
+      invoice_overdue: (v: Record<string, number | string>) =>
+        `ใบแจ้งหนี้เลยกำหนด ${v.days}+ วัน`,
+      contract_ending: (v: Record<string, number | string>) =>
+        `สัญญาหมดใน ${v.days} วัน ยังไม่มีดีลต่ออายุ`,
+      renewal_lost: () => "ดีลต่ออายุสัญญาแพ้",
+      low_satisfaction: (v: Record<string, number | string>) =>
+        `ความพึงพอใจ ${v.score}/5`,
+      no_contact: (v: Record<string, number | string>) =>
+        v.never ? `ยังไม่เคยติดต่อ (${v.days} วัน)` : `ไม่ได้ติดต่อ ${v.days} วัน`,
+    } as Record<string, (v: Record<string, number | string>) => string>,
+    overdueReview: "เลยรอบ",
+    never: "ยังไม่เคย",
+    noPlan: "ยังไม่มีแผน",
+    expansion: (n: number) => `ดีลขยาย ${n}`,
+    noExpansionTag: "ไม่มีดีลขยาย",
+    openAccount: "เปิดแผนบัญชี",
+    account: {
+      healthTitle: "สุขภาพลูกค้า",
+      allGood: "ไม่มีสัญญาณความเสี่ยง",
+      healthNote:
+        "คำนวณจากเคส (เกิน SLA / ร้ายแรง) · ใบแจ้งหนี้เลยกำหนด · สัญญาใกล้หมด · ความพึงพอใจจากการทบทวนล่าสุด · ระยะเวลาที่ไม่ได้ติดต่อ — สัญญาณที่คุณไม่มีสิทธิ์ดูจะไม่ถูกนับ",
+      planTitle: "แผนบัญชี",
+      noPlan: "ยังไม่ได้วางแผนบัญชีสำหรับลูกค้ารายนี้",
+      createPlan: "วางแผนบัญชี",
+      editPlan: "แก้แผน",
+      tier: "ระดับ",
+      goals: "แผนเติบโต / เป้าหมาย",
+      targetRevenue: "เป้ายอดขายต่อปี (บาท)",
+      reviewEvery: "ทบทวนทุก (เดือน)",
+      nextReview: "ทบทวนครั้งถัดไป",
+      planSaved: "บันทึกแผนบัญชีแล้ว",
+      touchTitle: "การทบทวนและการติดต่อ",
+      logReview: "ลงผลการทบทวน",
+      logContact: "ลงการติดต่อ",
+      noTouches: "ยังไม่มีการทบทวนหรือการติดต่อ",
+      touchType: {
+        review: "ทบทวน",
+        call: "โทร",
+        email: "อีเมล",
+        meeting: "ประชุม",
+        visit: "เข้าพบ",
+        line: "LINE",
+        social: "โซเชียล",
+      } as Record<string, string>,
+      touchForm: {
+        type: "ประเภท",
+        summary: "สรุป",
+        summaryRequired: "ต้องสรุปสิ่งที่คุย",
+        occurredAt: "เมื่อ",
+        satisfaction: "ความพึงพอใจของลูกค้า (1–5)",
+        nextSteps: "สิ่งที่จะทำต่อ",
+        save: "บันทึก",
+        saved: "บันทึกแล้ว",
+        reviewNext: (on: string) => `บันทึกแล้ว — ทบทวนครั้งถัดไป ${on}`,
+      },
+      productsTitle: "สิ่งที่ลูกค้าซื้ออยู่ (24 เดือน)",
+      noProducts: "ยังไม่มีใบสั่งขายใน 24 เดือน",
+      productColumns: {
+        product: "สินค้า/บริการ",
+        quantity: "จำนวน",
+        amount: "ยอด",
+        last: "สั่งล่าสุด",
+      },
+      contractsTitle: "สัญญาที่มีผล",
+      dealsTitle: "ดีลที่เปิดอยู่",
+      noDeals: "ไม่มีดีลที่เปิดอยู่",
+      openExpansion: "เปิดดีลขยาย",
+      expansionTitle: "เปิดดีลขยาย (Upgrade / Upsell / Cross-sell)",
+      expansionName: "ชื่อดีล",
+      expansionNameRequired: "ต้องระบุชื่อดีล",
+      expansionAmount: "มูลค่าที่คาด (บาท)",
+      expansionCreated: "เปิดดีลแล้ว",
+      satisfaction: (n: number) => `พึงพอใจ ${n}/5`,
+      lastSatisfaction: "ความพึงพอใจล่าสุด",
+      revenue: "ยอดขาย 12 เดือน",
+      target: "เป้า",
+    },
+  },
+
+  /** CD-85 — บริษัทเป้าหมาย (Target Account) ของแกน Getter. */
+  targetAccounts: {
+    title: "บริษัทเป้าหมาย",
+    subtitle:
+      "รายชื่อบริษัทที่จะเปิดตลาด จัดลำดับก่อนหลังก่อนเริ่มติดต่อ — กด \"เริ่มเข้าหา\" แล้วงานเดินต่อบน Lead",
+    add: "เพิ่มบริษัทเป้าหมาย",
+    edit: "แก้ไข",
+    searchPlaceholder: "ค้นหาชื่อ / เลขภาษี",
+    allStatus: "สถานะ: ทั้งหมด",
+    allPriority: "ลำดับ: ทั้งหมด",
+    all: "ทั้งหมด",
+    mineOnly: "เฉพาะของฉัน",
+    unassigned: "ยังไม่มีคนรับ",
+    empty: "ยังไม่มีบริษัทเป้าหมาย",
+    columns: {
+      priority: "ลำดับ",
+      name: "บริษัท",
+      industry: "อุตสาหกรรม / จังหวัด",
+      owner: "ผู้รับผิดชอบ",
+      status: "สถานะ",
+      lead: "Lead",
+    },
+    priority: { high: "สูง", medium: "กลาง", low: "ต่ำ" } as Record<
+      string,
+      string
+    >,
+    priorityColor: { high: "red", medium: "gold", low: "default" } as Record<
+      string,
+      string
+    >,
+    status: {
+      targeting: "เล็งไว้",
+      approaching: "กำลังเข้าหา",
+      converted: "เปิดดีลแล้ว",
+      dropped: "ตัดออก",
+    } as Record<string, string>,
+    statusColor: {
+      targeting: "default",
+      approaching: "blue",
+      converted: "green",
+      dropped: "red",
+    } as Record<string, string>,
+    noOwner: "— ยังไม่มีคนรับ —",
+    approach: "เริ่มเข้าหา",
+    approachTitle: (name: string) => `เริ่มเข้าหา ${name}`,
+    approachHint:
+      "ระบบจะสร้าง Lead จากข้อมูลบริษัทนี้ (สถานะตั้งต้น) — ใส่ผู้ติดต่อได้ถ้ารู้แล้ว",
+    approached: "สร้าง Lead แล้ว",
+    openLead: "เปิด Lead",
+    drop: "ตัดออก",
+    dropTitle: "ตัดบริษัทเป้าหมายออก",
+    dropReason: "เหตุผลที่ตัดออก",
+    dropped: "ตัดออกแล้ว",
+    reopen: "นำกลับมาเล็ง",
+    reopened: "นำกลับมาแล้ว",
+    save: "บันทึก",
+    saved: "บันทึกแล้ว",
+    form: {
+      name: "ชื่อบริษัท",
+      nameRequired: "ต้องระบุชื่อบริษัท",
+      nameEn: "ชื่อ (ภาษาอังกฤษ)",
+      taxId: "เลขทะเบียนนิติบุคคล",
+      industry: "อุตสาหกรรม",
+      companySize: "ขนาด",
+      province: "จังหวัด",
+      website: "เว็บไซต์",
+      note: "ทำไมเล็งรายนี้ / ใครแนะนำ",
+      priority: "ลำดับความสำคัญ",
+      owner: "ผู้รับผิดชอบ",
+      contactName: "ผู้ติดต่อ",
+      phone: "โทรศัพท์",
+      email: "อีเมล",
+    },
+  },
+
   campaigns: {
     title: "แคมเปญ",
     subtitle: "ผูก Lead กับกิจกรรมการตลาด แล้ววัดผลถึงยอดขาย",
@@ -1677,6 +1883,77 @@ export const messages = {
     logAnother: "บันทึกอีกรายการ",
   },
 
+  /** CD-84 — ส่งมอบงานต่อจากฝ่ายขาย. */
+  handover: {
+    cardTitle: "ส่งมอบงานต่อ",
+    notWon: "ส่งมอบงานได้เมื่อโอกาสการขายชนะแล้ว (เปิดใบสั่งขายแล้ว)",
+    intro:
+      "ยืนยันทุกรายการก่อนส่งงานให้ทีมถัดไป — รายการที่มีเครื่องหมาย * ต้องกรอกรายละเอียด ไม่ครบส่งไม่ได้",
+    noItems: "ยังไม่ได้ตั้งรายการตรวจ — ผู้ดูแลตั้งได้ที่ ตั้งค่า CRM",
+    categories: {
+      commercial: "ข้อมูลการค้า",
+      requirement: "ความต้องการลูกค้า",
+      commitment: "สิ่งที่รับปากไว้",
+    } as Record<string, string>,
+    team: "ทีมที่รับงาน",
+    teamPlaceholder: "เลือกทีม",
+    detailPlaceholder: "รายละเอียด",
+    note: "หมายเหตุถึงทีมที่รับ",
+    saveDraft: "บันทึกร่าง",
+    submit: "ส่งมอบงาน",
+    submitted: "ส่งมอบงานแล้ว",
+    draftSaved: "บันทึกร่างแล้ว",
+    progress: (done: number, total: number) => `ครบ ${done}/${total} รายการ`,
+    status: {
+      draft: "ร่าง",
+      submitted: "รอทีมรับ",
+      accepted: "ทีมรับแล้ว",
+      returned: "ถูกตีกลับ",
+    } as Record<string, string>,
+    statusColor: {
+      draft: "default",
+      submitted: "gold",
+      accepted: "green",
+      returned: "orange",
+    } as Record<string, string>,
+    sentTo: (team: string, at: string, round: number) =>
+      `ส่งให้ ${team} เมื่อ ${at}` + (round > 1 ? ` (ครั้งที่ ${round})` : ""),
+    returnedBecause: (who: string, reason: string) =>
+      `${who} ตีกลับ: ${reason}`,
+    acceptedBy: (who: string, at: string) => `${who} รับงานเมื่อ ${at}`,
+    history: "ประวัติ",
+    historyAction: {
+      submitted: "ส่งมอบ",
+      accepted: "รับงาน",
+      returned: "ตีกลับ",
+    } as Record<string, string>,
+    // inbox
+    title: "งานส่งมอบ",
+    subtitle: "งานที่ฝ่ายขายส่งต่อมาให้ทีมของคุณ และงานที่คุณส่งไป",
+    boxIncoming: "ส่งถึงทีมของฉัน",
+    boxSent: "ที่ฉันส่ง",
+    allStatuses: "ทุกสถานะ",
+    empty: "ไม่มีงานส่งมอบ",
+    columns: {
+      deal: "โอกาสการขาย",
+      customer: "ลูกค้า",
+      team: "ทีมที่รับ",
+      owner: "ผู้ขาย",
+      status: "สถานะ",
+      updated: "อัปเดต",
+    },
+    open: "เปิด",
+    accept: "รับงาน",
+    accepted: "รับงานแล้ว",
+    returnWork: "ตีกลับ",
+    returnReason: "เหตุผลที่ตีกลับ (ฝ่ายขายจะเห็น)",
+    returnReasonRequired: "ต้องระบุเหตุผล",
+    cancel: "ยกเลิก",
+    returned: "ตีกลับแล้ว",
+    openDeal: "เปิดหน้าดีล",
+    amount: "มูลค่า",
+  },
+
   /** CD-54 — ถ้อยคำการแจ้งเตือนต่อเหตุการณ์. */
   notificationTemplates: {
     title: "ข้อความแจ้งเตือน",
@@ -1847,8 +2124,63 @@ export const messages = {
     formAudienceHelp:
       "ไม่เลือก = ทุกทีมในบริษัทเห็น • เลือกหน่วยงานระดับฝ่าย/บริษัท = ทีมย่อยทั้งหมดใต้หน่วยงานนั้นเห็นด้วย",
     formSortOrder: "ลำดับในเมนู",
+    formLockCompany: "กรองตามบริษัทของผู้ดู",
+    formLockCompanyHint:
+      "เปิดสำหรับแดชบอร์ดที่อ่าน Data Mart (เช่น ผู้บริหาร · ภาพรวมรายสัปดาห์) — ผู้ดูเห็นเฉพาะข้อมูลบริษัทที่เลือกอยู่และเปลี่ยนไม่ได้ · แดชบอร์ดใน Metabase ต้องมีตัวแปร company ที่ล็อกไว้ (ดู docs/metabase.md) ไม่งั้นจะเปิดไม่ขึ้น",
+    lockCompanyTag: "เฉพาะบริษัทผู้ดู",
     saved: "บันทึกแล้ว",
     deactivated: "ปิดใช้งานแดชบอร์ดแล้ว",
+
+    // CD-91 — Data Mart
+    martTitle: "Data Mart ยอดขายและคำขอค้าง",
+    martHint: (minutes: number) =>
+      minutes > 0
+        ? `แดชบอร์ดผู้บริหารอ่านข้อมูลที่เตรียมไว้ใน schema mart — ระบบสร้างใหม่ทุก ${minutes} นาที`
+        : "แดชบอร์ดผู้บริหารอ่านข้อมูลที่เตรียมไว้ใน schema mart — การสร้างอัตโนมัติปิดอยู่",
+    martRefresh: "ปรับปรุงตอนนี้",
+    martRefreshed: "ปรับปรุง Data Mart แล้ว",
+    martNever: "ยังไม่เคยสร้าง",
+    martColumns: {
+      table: "ตาราง",
+      rows: "จำนวนแถว",
+      refreshedAt: "สร้างล่าสุด",
+      duration: "ใช้เวลา (ms)",
+    },
+    martTables: {
+      fact_sales: "ยอดขาย (ใบสั่งขาย)",
+      fact_pipeline: "Pipeline ดีลที่เปิดอยู่",
+      sales_target_actual: "เป้า vs ยอดจริง",
+      open_requests: "คำขอค้าง",
+      request_backlog_daily: "คำขอค้างรายวัน (วันนี้)",
+    } as Record<string, string>,
+
+    // CD-90 — Data Lake
+    lakeTitle: "Data Lake (ข้อมูลดิบย้อนหลัง)",
+    lakeHint: (minutes: number) =>
+      (minutes > 0
+        ? `ระบบส่งแถวที่เปลี่ยนจากคำขอ CRM และงานขายลง database แยกทุก ${minutes} นาที (เก็บทุกเวอร์ชัน) และใบแจ้งหนี้ SAP วันละครั้ง`
+        : "การส่งอัตโนมัติปิดอยู่ — กดส่งข้อมูลตอนนี้เพื่อส่งแถวที่เปลี่ยน (เก็บทุกเวอร์ชัน)") +
+      " — ข้อมูลอ่อนไหว (เนื้อหาฟอร์ม ต้นทุน/margin เลขภาษี ข้อมูลติดต่อ) ไม่ถูกส่ง",
+    lakeNotConfigured:
+      "ยังไม่ได้ตั้งค่า Data Lake — ผู้ดูแลระบบต้องกำหนด LAKE_DATABASE_URL ใน .env ของ core-service",
+    lakeRun: "ส่งข้อมูลตอนนี้",
+    lakeRan: "ส่งข้อมูลลง Data Lake แล้ว",
+    lakeNever: "ยังไม่เคยส่ง",
+    lakeModules: {
+      request: "คำขอ",
+      crm: "CRM",
+      sales: "งานขาย",
+      reference: "ข้อมูลอ้างอิง",
+      sap: "SAP",
+    } as Record<string, string>,
+    lakeColumns: {
+      table: "ตาราง",
+      module: "โมดูล",
+      upTo: "ส่งถึง",
+      lastRun: "รอบล่าสุด",
+      total: "แถวสะสม",
+      excluded: "คอลัมน์ที่ไม่ส่ง",
+    },
   },
 
   /** หน้ากุญแจ API ของช่องทางภายนอก (`admin.integration.manage`). */
@@ -2146,6 +2478,40 @@ export const messages = {
     leads: {
       title: "Lead",
       scopeNote: "เห็นเฉพาะ Lead ของคุณและของทีม ตามสิทธิ์ที่ได้รับ",
+      /** CD-85 — แกน Getter. */
+      newCustomerOnly: "เฉพาะลูกค้าใหม่",
+      attempts: (n: number) => `ติดต่อ ${n} ครั้ง`,
+      lastContact: (when: string) => `ล่าสุด ${when}`,
+      discoveryShort: (done: number) => `Discovery ${done}/4`,
+      fromTarget: "จากบริษัทเป้าหมาย",
+      discovery: {
+        title: "Discovery — ก่อนเปิดโอกาสการขาย",
+        hint: "สิ่งที่ต้องรู้ก่อนเปิดดีล: ความต้องการ งบ ผู้ตัดสินใจ และกรอบเวลา",
+        edit: "บันทึก Discovery",
+        saved: "บันทึก Discovery แล้ว",
+        complete: "ครบแล้ว",
+        missing: (n: number) => `ขาด ${n} ข้อ`,
+        requiredWarning:
+          "บริษัทนี้ต้องการ Discovery ครบก่อนเปิดโอกาสการขาย — ขั้นตอนอนุมัติ/เลื่อนขั้นอาจไม่ให้ผ่านจนกว่าจะครบ",
+        convertWarning: (items: string) =>
+          `Discovery ยังไม่ครบ: ${items} — แปลงต่อได้ แต่ควรเก็บข้อมูลให้ครบก่อน`,
+        item: {
+          need: "ความต้องการ / Pain Point",
+          budget: "งบประมาณ",
+          decision_maker: "ผู้ตัดสินใจ",
+          timeframe: "กรอบเวลาตัดสินใจ",
+        } as Record<string, string>,
+        budgetNote: "หมายเหตุงบ (ใช้แทนตัวเลขได้)",
+        budgetAmount: "งบประมาณ (บาท)",
+        timeframePlaceholder: "คาดว่าจะตัดสินใจภายใน",
+      },
+      prospecting: {
+        title: "การเข้าหา",
+        attempts: "จำนวนครั้งที่ติดต่อ",
+        lastContact: "ติดต่อล่าสุด",
+        lastOutcome: "ผลล่าสุด",
+        none: "ยังไม่เคยติดต่อ",
+      },
       newLead: "เพิ่ม Lead",
       searchPlaceholder: "ค้นหา ชื่อ / ผู้ติดต่อ / โทร / อีเมล",
       filterStatus: "สถานะ: ทั้งหมด",
@@ -2299,6 +2665,22 @@ export const messages = {
             meeting: "นัดหมาย",
             task: "งาน",
             note: "บันทึก",
+            visit: "เข้าพบ",
+            line: "LINE",
+            social: "โซเชียล",
+          } as Record<string, string>,
+          /** CD-85 — ผลการติดต่อ. */
+          outcome: {
+            reached: "ติดต่อได้",
+            no_answer: "ติดต่อไม่ได้",
+            interested: "สนใจ",
+            not_interested: "ไม่สนใจ",
+          } as Record<string, string>,
+          outcomeColor: {
+            reached: "blue",
+            no_answer: "orange",
+            interested: "green",
+            not_interested: "red",
           } as Record<string, string>,
           form: {
             title: "ลงกิจกรรม",
@@ -2307,6 +2689,8 @@ export const messages = {
             subjectRequired: "ต้องระบุหัวข้อ",
             detail: "รายละเอียด",
             dueAt: "กำหนด (เว้นว่าง = ทำไปแล้ว)",
+            outcome: "ผลการติดต่อ",
+            outcomeHint: "ใส่เมื่อติดต่อไปแล้ว — ใช้นับจำนวนครั้งที่เข้าหา",
             save: "บันทึก",
             saved: "บันทึกกิจกรรมแล้ว",
           },
@@ -2409,6 +2793,21 @@ export const messages = {
         won: "green",
         lost: "red",
       } as Record<string, string>,
+      /** CD-86 — ชนิดของดีล. */
+      dealType: {
+        new_business: "ลูกค้าใหม่",
+        upsell: "ขายเพิ่ม (Upgrade/Upsell)",
+        cross_sell: "ขายข้าม (Cross-sell)",
+        renewal: "ต่ออายุ",
+      } as Record<string, string>,
+      dealTypeColor: {
+        new_business: "default",
+        upsell: "cyan",
+        cross_sell: "purple",
+        renewal: "geekblue",
+      } as Record<string, string>,
+      dealTypeLabel: "ชนิดดีล",
+      dealTypeNeedsCustomer: "ขายเพิ่ม/ขายข้ามต้องเลือกลูกค้าในทะเบียน",
       columns: {
         code: "เลขโอกาสการขาย",
         title: "โอกาสการขาย",
@@ -2834,6 +3233,22 @@ export const messages = {
     } as Record<string, string>,
     kycVerified: "ยืนยันตัวตนแล้ว (KYC)",
     kycNotVerified: "ยังไม่ผ่าน KYC",
+    /* CD-62 */
+    approval: {
+      tag: {
+        pending: "รออนุมัติเปิดลูกค้า",
+        rejected: "ไม่อนุมัติเปิดลูกค้า",
+      } as Record<string, string>,
+      pendingTitle: "ลูกค้าใหม่รออนุมัติ — ยังไม่ส่งลูกค้าและใบสั่งขายเข้า SAP",
+      rejectedTitle: "ไม่อนุมัติเปิดลูกค้า — ลูกค้าและใบสั่งขายยังไม่ถูกส่งเข้า SAP",
+      draftHint:
+        "เปิดคำขอ แนบเอกสารที่ประเภทลูกค้านี้บังคับ แล้วกดยื่น — อนุมัติแล้วระบบส่งเข้า SAP ให้เอง",
+      inFlightHint: (status: string) => `คำขออนุมัติอยู่ในสถานะ: ${status}`,
+      noRequestHint: "ยังไม่มีคำขออนุมัติ — กดยื่นขออนุมัติเพื่อสร้างร่างคำขอ",
+      openRequest: (no: string | null) => (no ? `เปิดคำขอ ${no}` : "เปิดร่างคำขอ"),
+      raise: "ยื่นขออนุมัติ",
+      raised: "สร้างร่างคำขออนุมัติแล้ว — แนบเอกสารแล้วยื่น",
+    },
     /* CD-70 */
     contracts: {
       hint: "ระบบเปิดโอกาสต่ออายุให้อัตโนมัติ 90 วันก่อนสิ้นสุด และเตือนผู้รับผิดชอบที่ 60 และ 30 วัน",
@@ -2844,6 +3259,7 @@ export const messages = {
       saved: "บันทึกสัญญาแล้ว",
       edit: "แก้ไข",
       cancel: "ยกเลิกสัญญา",
+      openCase: "เปิดเคส",
       empty: "ยังไม่มีสัญญาในทะเบียน",
       requestsTitle: "คำขอสัญญาถึงฝ่ายกฎหมาย",
       openRenewal: "เปิดโอกาสต่ออายุ",
@@ -3136,6 +3552,7 @@ export const messages = {
       futureTabNote: (phase: string) => `แท็บนี้ ${phase}`,
       /** CD-89 — แท็บการเงิน: ใบแจ้งหนี้และการรับชำระจาก SAP */
       tabFinancials: "การเงิน",
+      tabAccount: "แผนบัญชี",
       invoices: {
         source: {
           mock: "รอเชื่อม SAP จริง — ระบบยังใช้ตัวเชื่อมจำลอง จึงไม่แสดงตัวเลข",
@@ -3307,6 +3724,25 @@ export const messages = {
       tradeTermStandard: "ค่ามาตรฐาน",
       tradeTermAdd: "เพิ่มเงื่อนไข",
       tradeTermSave: "บันทึกเงื่อนไขมาตรฐาน",
+      /* CD-62 */
+      sectionCustomerApproval: "อนุมัติเปิดลูกค้าใหม่",
+      customerApprovalHint:
+        "เลือกประเภทคำขอที่ใช้อนุมัติลูกค้าใหม่ต่อประเภทลูกค้า (เอกสารบังคับตั้งที่ประเภทคำขอ) — ลูกค้าใหม่ของประเภทที่เลือกจะยังไม่ส่งเข้า SAP (ทั้งลูกค้าและใบสั่งขาย) จนกว่าคำขอได้รับอนุมัติ · ไม่เลือก = ไม่ต้องอนุมัติ · ลูกค้าที่มีอยู่แล้วถือว่าอนุมัติแล้ว",
+      customerApprovalNone: "ไม่ต้องอนุมัติ",
+      customerApprovalSave: "บันทึก",
+      /* CD-84 */
+      sectionHandover: "ส่งมอบงานต่อจากฝ่ายขาย",
+      handoverHint:
+        "รายการที่ผู้ขายต้องยืนยันก่อนส่งงานให้ทีมถัดไป — ติ๊ก \"ต้องกรอกรายละเอียด\" ถ้าต้องการคำตอบไม่ใช่แค่ติ๊ก · ลบออก = ปิดใช้ (งานที่ส่งไปแล้วเก็บรายการ ณ วันส่ง)",
+      handoverTeam: "ทีมที่รับงานโดยปริยาย",
+      handoverTeamNone: "ไม่กำหนด (ผู้ขายเลือกเอง)",
+      handoverCode: "รหัส",
+      handoverCategory: "หมวด",
+      handoverLabel: "รายการ",
+      handoverRequiresDetail: "ต้องกรอกรายละเอียด",
+      handoverAdd: "เพิ่มรายการ",
+      handoverSave: "บันทึกรายการตรวจ",
+      handoverTeamSave: "บันทึกทีม",
       /* CD-81 */
       /* CD-61 */
       sectionKyc: "KYC และรายชื่อต้องห้าม",
@@ -3367,9 +3803,123 @@ export const messages = {
       sectionFollowUp: "การติดตามโอกาสการขาย",
       staleMoved: "เกณฑ์แจ้งเตือนดีลเงียบย้ายไปรวมกับกติกาแจ้งเตือนอื่นแล้ว —",
       staleMovedLink: "ตั้งที่หน้ากติกาแจ้งเตือน",
+      discoveryRequired: "ต้องทำ Discovery ครบก่อนเปิดโอกาสการขายจาก Lead",
+      healthNoContactDays: "ไม่ได้ติดต่อลูกค้าเดิมเกิน (วัน) = เฝ้าระวัง",
+      healthNoContactHint:
+        "สุขภาพลูกค้าในแกน Keeper: เกินจำนวนนี้ = เฝ้าระวัง, เกินสองเท่า = เสี่ยง · 0 = ไม่ใช้สัญญาณนี้",
+      discoveryRequiredHint:
+        "หน้า Lead จะเตือนเมื่อยังไม่ครบ · การบังคับจริงอยู่ที่ขั้นตอน workflow ของ Lead (lwf-0001) ซึ่งอ่านค่านี้",
       save: "บันทึกการตั้งค่า",
       saved: "บันทึกแล้ว",
     },
+  },
+
+  /** CD-66 — ช่องทางรับคำขอจากลูกค้า (ผู้ดูแล). */
+  intakeChannels: {
+    title: "ช่องทางรับคำขอจากลูกค้า",
+    subtitle: (company: string) =>
+      `ให้ลูกค้าของ ${company} ส่งคำขอเองผ่านแบบฟอร์มสาธารณะ LINE หรือ AI CARE — คำขอเข้าระบบเหมือนพนักงานยื่น โดยมีผู้ยื่นแทนที่ตั้งไว้`,
+    channel: {
+      web_form: "แบบฟอร์มสาธารณะ",
+      line: "LINE Official Account",
+      ai_care: "AI CARE",
+    } as Record<string, string>,
+    channelHint: {
+      web_form:
+        "ลิงก์สาธารณะที่ส่งให้ลูกค้าได้ทันที — ใครมีลิงก์ก็ส่งคำขอได้ มีจำกัดจำนวนครั้งต่อเครือข่าย",
+      line: "ตัวเชื่อม webhook — ต้องตั้ง LINE_CHANNEL_SECRET และ LINE_CHANNEL_ACCESS_TOKEN ของบริษัทที่ external-service ก่อน (docs/customer-intake.md)",
+      ai_care:
+        "ตัวเชื่อมสำหรับระบบ AI CARE — เรียกด้วยกุญแจ API ที่มีสิทธิ์ integration.request.intake",
+    } as Record<string, string>,
+    enabled: "เปิดรับคำขอ",
+    disabled: "ปิดอยู่",
+    notConfigured: "ยังไม่ได้ตั้งค่า",
+    requester: "ผู้ยื่นแทน",
+    requesterHint:
+      "คำขอทุกใบต้องมีผู้ยื่น — ใช้ผู้ใช้คนนี้ ส่วนข้อมูลลูกค้าเก็บไว้เป็นผู้ติดต่อบนคำขอ",
+    requesterRequired: "เลือกผู้ยื่นแทน",
+    types: "ประเภทคำขอที่เปิดรับ",
+    typesRequired: "เลือกอย่างน้อยหนึ่งประเภท",
+    formTitle: "หัวข้อแบบฟอร์ม",
+    formTitlePlaceholder: "เช่น แจ้งปัญหา / ขอใช้บริการ",
+    intro: "คำอธิบายบนแบบฟอร์ม",
+    link: "ลิงก์แบบฟอร์ม",
+    linkAfterSave: "บันทึกแล้วจะได้ลิงก์",
+    copy: "คัดลอก",
+    copied: "คัดลอกลิงก์แล้ว",
+    open: "เปิดดู",
+    newLink: "ออกลิงก์ใหม่",
+    newLinkConfirm:
+      "ลิงก์เดิมจะใช้ไม่ได้ทันทีหลังบันทึก — ลูกค้าที่ถือลิงก์เดิมต้องได้ลิงก์ใหม่",
+    newLinkPending: "จะออกลิงก์ใหม่เมื่อบันทึก",
+    save: "บันทึก",
+    saved: "บันทึกแล้ว",
+    updatedAt: (at: string) =>
+      `แก้ล่าสุด ${new Date(at).toLocaleString("th-TH")}`,
+  },
+
+  /** CD-66 — หน้าสาธารณะที่ลูกค้าเห็น (ไม่ต้อง login). */
+  publicForm: {
+    pageTitle: "ส่งคำขอ",
+    defaultTitle: "ส่งคำขอถึงเรา",
+    notFound: "ไม่พบแบบฟอร์มนี้ หรือปิดรับแล้ว",
+    notFoundHint: "กรุณาติดต่อผู้ที่ส่งลิงก์นี้ให้ท่าน",
+    type: "เรื่องที่ต้องการ",
+    typePlaceholder: "เลือกเรื่อง",
+    needsStaff:
+      "เรื่องนี้ต้องแนบเอกสารหรืออ้างอิงเอกสารเดิม — กรุณาติดต่อเจ้าหน้าที่โดยตรง",
+    details: "รายละเอียด",
+    contact: "ข้อมูลติดต่อกลับ",
+    contactName: "ชื่อผู้ติดต่อ",
+    contactEmail: "อีเมล",
+    contactPhone: "เบอร์โทร",
+    contactCompany: "บริษัท/หน่วยงาน",
+    contactTaxId: "เลขประจำตัวผู้เสียภาษี (ถ้ามี)",
+    taxIdInvalid: "เลขประจำตัวผู้เสียภาษีต้องมี 13 หลัก",
+    emailInvalid: "รูปแบบอีเมลไม่ถูกต้อง",
+    contactRequired: "กรอกอีเมลหรือเบอร์โทรอย่างน้อยหนึ่งช่อง",
+    required: "จำเป็นต้องกรอก",
+    yes: "ใช่",
+    no: "ไม่ใช่",
+    submit: "ส่งคำขอ",
+    removeRow: "ลบแถว",
+    privacy:
+      "ข้อมูลที่กรอกใช้เพื่อดำเนินการคำขอนี้และติดต่อกลับเท่านั้น",
+    tooMany: "ส่งคำขอบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่",
+    notReady: "ช่องทางนี้ยังไม่พร้อมใช้งาน",
+    failed: "ระบบขัดข้อง กรุณาลองใหม่อีกครั้ง",
+    unreachable: "ติดต่อระบบไม่ได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง",
+    sentTitle: "ได้รับคำขอแล้ว",
+    sentNo: (no: string) => `เลขที่คำขอ ${no}`,
+    sentNoPending: "เจ้าหน้าที่จะแจ้งเลขที่คำขอให้ทราบ",
+    sentHint:
+      "เก็บลิงก์ติดตามสถานะไว้ — ใครมีลิงก์นี้ก็ดูสถานะได้ จึงไม่ควรส่งต่อ",
+    statusLink: "ติดตามสถานะ",
+    another: "ส่งคำขออีกเรื่อง",
+    statusTitle: "สถานะคำขอ",
+    statusNotFound: "ไม่พบคำขอจากลิงก์นี้",
+    requestNo: "เลขที่คำขอ",
+    requestType: "เรื่อง",
+    company: "ถึง",
+    currentStatus: "สถานะ",
+    submittedAt: "ส่งเมื่อ",
+    dueAt: "กำหนดเสร็จ",
+    completedAt: "เสร็จเมื่อ",
+    updatedAt: "อัปเดตล่าสุด",
+    pendingNo: "รอออกเลข",
+    status: {
+      draft: "ร่าง",
+      submitted: "รับเรื่องแล้ว",
+      pending_approval: "รออนุมัติ",
+      approved: "อนุมัติแล้ว",
+      in_progress: "กำลังดำเนินการ",
+      completed: "ดำเนินการเสร็จ",
+      closed: "ปิดเรื่องแล้ว",
+      rejected: "ไม่อนุมัติ",
+      cancelled: "ยกเลิก",
+      returned: "ขอข้อมูลเพิ่ม",
+      on_hold: "พักไว้ชั่วคราว",
+    } as Record<string, string>,
   },
 } as const;
 

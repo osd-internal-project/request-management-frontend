@@ -29,6 +29,13 @@ export const RECONNECT_PATH = "/login/reconnect";
 export const LOGIN_PREFIX = "/login";
 
 /**
+ * CD-66 — customers' pages: the public request form and its status link.
+ * They carry no session by design; the proxy leaves this prefix alone and the
+ * pages reach the backend with a server-side API key (`lib/public`).
+ */
+export const PUBLIC_FORM_PREFIX = "/f";
+
+/**
  * Clears the session cookies and ends the Keycloak session.
  *
  * Also the only safe destination when a session cannot be resolved — see the
@@ -80,8 +87,12 @@ export const ROUTES = {
   crmDashboard: `${HOME_PATH}/crm`,
   /** CD-71 — แคมเปญ */
   campaigns: `${HOME_PATH}/campaigns`,
+  targetAccounts: `${HOME_PATH}/target-accounts`,
+  keeper: `${HOME_PATH}/keeper`,
   /** CD-75 — บันทึกการเข้าพบจากมือถือ */
   visitLog: `${HOME_PATH}/visit`,
+  /** CD-84 งานส่งมอบ — กล่องของทีมที่รับ และที่ผู้ขายส่งไป; `?id=` เปิดใบนั้น. */
+  handovers: `${HOME_PATH}/handovers`,
   /** CD-82 — เป้าและพยากรณ์ */
   salesTargets: `${HOME_PATH}/sales-targets`,
   /** CD-83 — รายงานยอดขาย */
@@ -136,4 +147,9 @@ export const ROUTES = {
   adminErpSync: `${HOME_PATH}/admin/erp-sync`,
   /** REQ-02 — รูปแบบเลขรันของทุกชนิดเอกสาร. */
   adminRunNumbers: `${HOME_PATH}/admin/run-numbers`,
+  /** CD-66 — ช่องทางรับคำขอจากลูกค้า (web form / LINE / AI CARE). */
+  adminIntakeChannels: `${HOME_PATH}/admin/intake-channels`,
+  /** CD-66 — the public pages: no session, outside the proxy's gate. */
+  publicForm: (slug: string) => `${PUBLIC_FORM_PREFIX}/${slug}`,
+  publicStatus: (token: string) => `${PUBLIC_FORM_PREFIX}/status/${token}`,
 } as const;

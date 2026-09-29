@@ -72,5 +72,6 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  // `f/` — CD-66's public request form and status pages: customers, no session.
+  matcher: ["/((?!api|f/|_next/static|_next/image|favicon.ico).*)"],
 };

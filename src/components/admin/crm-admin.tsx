@@ -12,6 +12,8 @@ import {
   InputNumber,
   Modal,
   Popconfirm,
+  Select,
+  Checkbox,
   Space,
   Switch,
   Table,
@@ -23,8 +25,12 @@ import { adminApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import { ProductPicker } from "@/components/crm/quotations/product-picker";
+import { SearchSelect } from "@/components/ui/search-select";
 import type {
   CrmConfig,
+  HandoverCategory,
+  HandoverChecklistItem,
+  OrgUnitShape,
   KycProductRule,
   SegmentDimension,
   SegmentValue,
@@ -44,6 +50,8 @@ export function CrmAdmin({
   kycProducts,
   tradeTerms = [],
   kycWatchlist = [],
+  handoverItems = [],
+  teams = [],
 }: {
   dimensions: SegmentDimension[];
   config: CrmConfig;
@@ -52,6 +60,10 @@ export function CrmAdmin({
   tradeTerms?: TradeTermStandard[];
   /** CD-61 — the company's prohibited list (active entries). */
   kycWatchlist?: KycWatchlistEntry[];
+  /** CD-84 — the handover checklist, inactive included. */
+  handoverItems?: HandoverChecklistItem[];
+  /** CD-84 — teams for the default handover receiver. */
+  teams?: OrgUnitShape[];
 }) {
   const router = useRouter();
   const { message } = App.useApp();
@@ -81,7 +93,14 @@ export function CrmAdmin({
       <SegmentSection dimensions={dimensions} onCall={call} />
       <KycProductSection rows={kycProducts} onCall={call} />
       <ConfigSection config={config} onCall={call} />
+      <CustomerApprovalSection config={config} onCall={call} />
       <TradeTermsSection terms={tradeTerms} onCall={call} />
+      <HandoverSection
+        config={config}
+        items={handoverItems}
+        teams={teams}
+        onCall={call}
+      />
       <KycSection config={config} entries={kycWatchlist} onCall={call} />
       <LetterheadSettings config={config} onCall={call} />
     </div>
@@ -321,6 +340,12 @@ function ConfigSection({
   const [contractType, setContractType] = useState(
     config.contractRequestTypeCode ?? "",
   );
+  const [discoveryRequired, setDiscoveryRequired] = useState(
+    config.discoveryRequired ?? false,
+  );
+  const [noContactDays, setNoContactDays] = useState(
+    config.healthNoContactDays ?? 60,
+  );
   const [busy, setBusy] = useState(false);
 
   async function save() {
@@ -333,6 +358,8 @@ function ConfigSection({
       quotation_validity_days: validityDays,
       vat_pct: vat,
       quotation_approval_type_code: approvalType || undefined,
+      discovery_required: discoveryRequired,
+      health_no_contact_days: noContactDays,
     });
     setBusy(false);
   }
@@ -423,6 +450,32 @@ function ConfigSection({
       <Text type="secondary" className="mt-2 block text-xs">
         {m.staleMoved}{" "}
         <Link href={ROUTES.adminNotificationRules}>{m.staleMovedLink}</Link>
+      </Text>
+      {/* CD-85 — Discovery ก่อนเปิดดีล: workflow ตัดสิน หน้าจอเตือน */}
+      <div className="mt-3 flex items-center gap-2">
+        <Switch
+          size="small"
+          checked={discoveryRequired}
+          onChange={setDiscoveryRequired}
+        />
+        <Text className="text-xs">{m.discoveryRequired}</Text>
+      </div>
+      <Text type="secondary" className="mt-1 block text-xs">
+        {m.discoveryRequiredHint}
+      </Text>
+      {/* CD-86 — สุขภาพลูกค้าเดิม: ไม่ได้ติดต่อนานเกินไป */}
+      <div className="mt-3 max-w-xs">
+        <Text className="mb-1 block text-xs">{m.healthNoContactDays}</Text>
+        <InputNumber
+          min={0}
+          max={365}
+          value={noContactDays}
+          onChange={(value) => setNoContactDays(value ?? 60)}
+          className="w-full"
+        />
+      </div>
+      <Text type="secondary" className="mt-1 block text-xs">
+        {m.healthNoContactHint}
       </Text>
 
       {/* CD-82 — ปรับเป้าของงวดที่เริ่มแล้วผ่านคำขออนุมัติ */}
@@ -666,6 +719,230 @@ function TradeTermsSection({
           onClick={() => void save()}
         >
           {m.tradeTermSave}
+        </Button>
+      </Space>
+    </Card>
+  );
+}
+
+const CUSTOMER_TYPES = ["corporate", "individual", "government"] as const;
+
+/**
+ * CD-62 — which request type approves a new customer, per customer type (the
+ * type holds the required documents). Empty = that type needs no approval.
+ */
+function CustomerApprovalSection({
+  config,
+  onCall,
+}: {
+  config: CrmConfig;
+  onCall: (path: string, method: string, body?: unknown) => Promise<boolean>;
+}) {
+  const [codes, setCodes] = useState<Record<string, string>>(() =>
+    Object.fromEntries(
+      CUSTOMER_TYPES.map((type) => [
+        type,
+        config.customerApprovalTypes?.[type] ?? "",
+      ]),
+    ),
+  );
+  const [busy, setBusy] = useState(false);
+
+  async function save() {
+    setBusy(true);
+    await onCall("config", "PATCH", { customer_approval_types: codes });
+    setBusy(false);
+  }
+
+  return (
+    <Card size="small" title={m.sectionCustomerApproval}>
+      <Text type="secondary" className="mb-3 block text-xs">
+        {m.customerApprovalHint}
+      </Text>
+      <div className="flex flex-wrap gap-4">
+        {CUSTOMER_TYPES.map((type) => (
+          <div key={type} style={{ width: 200 }}>
+            <Text className="mb-1 block text-xs">
+              {messages.customers.type[type]}
+            </Text>
+            <Input
+              value={codes[type]}
+              maxLength={20}
+              allowClear
+              placeholder={m.customerApprovalNone}
+              onChange={(e) =>
+                setCodes((current) => ({
+                  ...current,
+                  [type]: e.target.value.toUpperCase(),
+                }))
+              }
+            />
+          </div>
+        ))}
+      </div>
+      <Button
+        type="primary"
+        size="small"
+        className="mt-3"
+        loading={busy}
+        onClick={() => void save()}
+      >
+        {m.customerApprovalSave}
+      </Button>
+    </Card>
+  );
+}
+
+/**
+ * CD-84 — what a salesperson confirms before handing a won deal on, and the
+ * team it goes to unless they pick another. A line removed here is
+ * deactivated on the server: handovers already sent keep their own copy.
+ */
+function HandoverSection({
+  config,
+  items,
+  teams,
+  onCall,
+}: {
+  config: CrmConfig;
+  items: HandoverChecklistItem[];
+  teams: OrgUnitShape[];
+  onCall: (path: string, method: string, body?: unknown) => Promise<boolean>;
+}) {
+  const [rows, setRows] = useState(
+    items
+      .filter((item) => item.active !== false)
+      .map((item) => ({
+        code: item.code,
+        category: item.category,
+        label: item.label,
+        requiresDetail: item.requiresDetail,
+      })),
+  );
+  const [team, setTeam] = useState<string | undefined>(
+    config.handoverOrgUnitId ?? undefined,
+  );
+  const [busy, setBusy] = useState(false);
+  const categories = messages.handover.categories;
+
+  function update(index: number, patch: Partial<(typeof rows)[number]>) {
+    setRows((list) =>
+      list.map((row, i) => (i === index ? { ...row, ...patch } : row)),
+    );
+  }
+
+  async function save() {
+    setBusy(true);
+    await onCall("handover-items", "PUT", {
+      items: rows
+        .filter((row) => row.code.trim())
+        .map((row) => ({
+          code: row.code.trim(),
+          category: row.category,
+          label: row.label.trim(),
+          requires_detail: row.requiresDetail,
+        })),
+    });
+    setBusy(false);
+  }
+
+  return (
+    <Card size="small" title={m.sectionHandover}>
+      <Text type="secondary" className="mb-3 block text-xs">
+        {m.handoverHint}
+      </Text>
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <Text>{m.handoverTeam}</Text>
+        <SearchSelect
+          style={{ minWidth: 260 }}
+          allowClear
+          placeholder={m.handoverTeamNone}
+          value={team}
+          onChange={setTeam}
+          options={teams
+            .filter((unit) => unit.active || unit.id === team)
+            .map((unit) => ({ value: unit.id, label: unit.name }))}
+        />
+        <Button
+          size="small"
+          onClick={() =>
+            void onCall("config", "PATCH", { handover_org_unit_id: team ?? "" })
+          }
+        >
+          {m.handoverTeamSave}
+        </Button>
+      </div>
+      <div className="space-y-2">
+        {rows.map((row, index) => (
+          <div key={index} className="flex flex-wrap items-center gap-2">
+            <Input
+              style={{ width: 150 }}
+              placeholder={m.handoverCode}
+              maxLength={40}
+              value={row.code}
+              onChange={(e) =>
+                update(index, { code: e.target.value.toUpperCase() })
+              }
+            />
+            <Select<HandoverCategory>
+              style={{ width: 170 }}
+              value={row.category}
+              onChange={(category) => update(index, { category })}
+              options={(
+                ["commercial", "requirement", "commitment"] as const
+              ).map((value) => ({ value, label: categories[value] }))}
+            />
+            <Input
+              style={{ width: 360 }}
+              placeholder={m.handoverLabel}
+              maxLength={300}
+              value={row.label}
+              onChange={(e) => update(index, { label: e.target.value })}
+            />
+            <Checkbox
+              checked={row.requiresDetail}
+              onChange={(e) =>
+                update(index, { requiresDetail: e.target.checked })
+              }
+            >
+              {m.handoverRequiresDetail}
+            </Checkbox>
+            <Button
+              type="text"
+              danger
+              onClick={() =>
+                setRows((list) => list.filter((_, i) => i !== index))
+              }
+            >
+              ✕
+            </Button>
+          </div>
+        ))}
+      </div>
+      <Space className="mt-3">
+        <Button
+          size="small"
+          onClick={() =>
+            setRows((list) => [
+              ...list,
+              {
+                code: "",
+                category: "commercial",
+                label: "",
+                requiresDetail: false,
+              },
+            ])
+          }
+        >
+          {m.handoverAdd}
+        </Button>
+        <Button
+          type="primary"
+          size="small"
+          loading={busy}
+          onClick={() => void save()}
+        >
+          {m.handoverSave}
         </Button>
       </Space>
     </Card>
