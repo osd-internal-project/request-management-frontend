@@ -82,6 +82,7 @@ export const messages = {
     salesReport: "รายงานยอดขาย",
     salesTargets: "เป้าและพยากรณ์",
     campaigns: "แคมเปญ",
+    visitLog: "บันทึกการเข้าพบ",
     adminGroup: "ผู้ดูแลระบบ",
     adminCrm: "ตั้งค่า CRM",
     adminApiKeys: "กุญแจ API",
@@ -1593,6 +1594,46 @@ export const messages = {
     historyChainChanged: (level: string) => `ปรับสายอนุมัติ ${level}`,
     historyNoChange: "ไม่เปลี่ยนสายอนุมัติ",
   },
+  /** CD-75 — บันทึกการเข้าพบจากมือถือ. */
+  visitLog: {
+    title: "บันทึกการเข้าพบ",
+    subtitle: "บันทึกทันทีหลังออกจากที่ลูกค้า — สรุปการประชุม รูป และนัดติดตาม",
+    deal: "โอกาสการขาย",
+    dealPlaceholder: "ค้นหาดีลของคุณ",
+    pickDeal: "เลือกโอกาสการขายก่อน",
+    noDeals: "คุณยังไม่มีโอกาสการขายที่เปิดอยู่",
+    what: "ทำอะไร",
+    types: {
+      meeting: "เข้าพบ/ประชุม",
+      call: "โทร",
+      note: "บันทึก",
+    } as Record<string, string>,
+    subject: "หัวข้อ",
+    defaultSubject: {
+      meeting: "เข้าพบลูกค้า",
+      call: "โทรคุยกับลูกค้า",
+      note: "บันทึกเพิ่มเติม",
+      email: "อีเมล",
+      task: "งาน",
+    } as Record<string, string>,
+    summary: "สรุปการประชุม",
+    summaryPlaceholder: "คุยเรื่องอะไร ลูกค้าต้องการอะไร ตกลงอะไรกันไว้",
+    photos: "รูป",
+    takePhoto: (count: number) =>
+      count ? `ถ่าย/เลือกรูปเพิ่ม (${count}/10)` : "ถ่ายรูป / เลือกรูป",
+    removePhoto: "เอารูปออก",
+    followUp: "นัดติดตามครั้งถัดไป (ถ้ามี)",
+    followUpDate: "วันที่นัด",
+    defaultFollowUp: "ติดตามลูกค้า",
+    save: "บันทึก",
+    saved: "บันทึกการเข้าพบแล้ว",
+    photosFailed: (count: number, reason: string) =>
+      `แนบรูปไม่สำเร็จ ${count} รูป (${reason}) — แนบเพิ่มได้ที่หน้าดีล`,
+    followUpFailed: (reason: string) => `ตั้งนัดติดตามไม่สำเร็จ: ${reason}`,
+    openDeal: "เปิดหน้าดีล",
+    logAnother: "บันทึกอีกรายการ",
+  },
+
   /** CD-54 — ถ้อยคำการแจ้งเตือนต่อเหตุการณ์. */
   notificationTemplates: {
     title: "ข้อความแจ้งเตือน",
@@ -2431,6 +2472,15 @@ export const messages = {
         fromLead: (name: string) => `มาจาก Lead: ${name}`,
         tabRequests: "คำขอที่อ้างโอกาสการขายนี้",
         raiseRequest: "ยื่นคำขอ",
+        /* CD-75 — รูปจากการเข้าพบ. */
+        photos: {
+          add: "แนบรูป",
+          uploaded: "แนบรูปแล้ว",
+          uploadFailed: (count: number, reason: string) =>
+            `แนบรูปไม่สำเร็จ ${count} รูป — ${reason}`,
+          remove: "ลบรูป",
+          removeConfirm: "ลบรูปนี้?",
+        },
         /* CD-79 — การต่อรองเงื่อนไขการค้า. */
         negotiations: {
           title: "การต่อรองเงื่อนไข",

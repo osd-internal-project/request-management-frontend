@@ -11,6 +11,7 @@ import {
   formatWhen,
   splitActivities,
 } from "@/components/crm/activity-list";
+import { ActivityPhotos } from "@/components/crm/opportunities/activity-photos";
 import { appApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
 import type {
@@ -34,10 +35,13 @@ export function OpportunityActivitiesCard({
   opportunity,
   activities,
   canManage,
+  currentUserId = null,
 }: {
   opportunity: OpportunityDetail;
   activities: OpportunityActivity[];
   canManage: boolean;
+  /** CD-75 — so a person sees the remove control on their own photos only. */
+  currentUserId?: string | null;
 }) {
   const router = useRouter();
   const { message } = App.useApp();
@@ -47,6 +51,18 @@ export function OpportunityActivitiesCard({
   const closed = opportunity.stage === "won" || opportunity.stage === "lost";
   const editable = canManage && !closed;
   const { pending, done } = splitActivities(activities);
+
+  // CD-75 — photos under each activity; a desktop picks files, a phone
+  // opens its camera.
+  const photosOf = (activity: SalesActivity) => (
+    <ActivityPhotos
+      opportunityId={opportunity.id}
+      activityId={activity.id}
+      photos={(activity as OpportunityActivity).photos ?? []}
+      editable={editable}
+      currentUserId={currentUserId}
+    />
+  );
 
   async function toggle(activity: SalesActivity, completed: boolean) {
     setError(null);
@@ -123,6 +139,7 @@ export function OpportunityActivitiesCard({
         editable={editable}
         onToggle={toggle}
         emptyText={md.noPending}
+        renderExtra={photosOf}
       />
 
       {done.length > 0 && (
@@ -140,6 +157,7 @@ export function OpportunityActivitiesCard({
                   editable={editable}
                   onToggle={toggle}
                   emptyText={md.noActivities}
+                  renderExtra={photosOf}
                 />
               ),
             },

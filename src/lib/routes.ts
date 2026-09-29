@@ -80,6 +80,8 @@ export const ROUTES = {
   crmDashboard: `${HOME_PATH}/crm`,
   /** CD-71 — แคมเปญ */
   campaigns: `${HOME_PATH}/campaigns`,
+  /** CD-75 — บันทึกการเข้าพบจากมือถือ */
+  visitLog: `${HOME_PATH}/visit`,
   /** CD-82 — เป้าและพยากรณ์ */
   salesTargets: `${HOME_PATH}/sales-targets`,
   /** CD-83 — รายงานยอดขาย */

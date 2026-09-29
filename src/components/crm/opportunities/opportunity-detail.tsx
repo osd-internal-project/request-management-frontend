@@ -74,6 +74,7 @@ export function OpportunityDetailView({
   quotations,
   activities,
   canManage,
+  currentUserId = null,
   negotiations = null,
   contractTypeName = null,
   openSaleOrderOnLoad = false,
@@ -89,6 +90,8 @@ export function OpportunityDetailView({
   /** CD-65 กิจกรรมและนัดติดตาม — ใหม่สุดก่อน. */
   activities: OpportunityActivity[];
   canManage: boolean;
+  /** CD-75 — the viewer, so they can remove their own visit photos. */
+  currentUserId?: string | null;
   /** CD-79 — null = could not be read (the card is hidden). */
   negotiations?: {
     standards: TradeTermStandard[];
@@ -387,7 +390,7 @@ export function OpportunityDetailView({
                   {customer.branchName ? ` · ${customer.branchName}` : ""}
                 </Link>
               ) : (
-                <Space direction="vertical" size={0}>
+                <Space orientation="vertical" size={0}>
                   <OpportunityParty row={opportunity} />
                   {opportunity.prospectTaxId && (
                     <Text type="secondary" className="text-xs">
@@ -445,6 +448,7 @@ export function OpportunityDetailView({
         opportunity={opportunity}
         activities={activities}
         canManage={canManage}
+        currentUserId={currentUserId}
       />
 
       {negotiations && (
@@ -673,7 +677,7 @@ export function OpportunityDetailView({
         destroyOnHidden
         width={soQuotationId ? undefined : 900}
       >
-        <Space direction="vertical" className="w-full">
+        <Space orientation="vertical" className="w-full">
           <Text type="secondary" className="text-xs">
             {md.openSaleOrderHint}
           </Text>
@@ -686,7 +690,7 @@ export function OpportunityDetailView({
             />
           ) : (
             <Card size="small" title={md.customerToCreate}>
-              <Space direction="vertical" className="w-full">
+              <Space orientation="vertical" className="w-full">
                 <Text type="secondary" className="text-xs">
                   {md.customerToCreateHint}
                 </Text>

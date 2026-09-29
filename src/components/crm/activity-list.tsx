@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import {
   Alert,
   App,
@@ -62,12 +62,15 @@ export function ActivityList({
   onToggle,
   emptyText,
   compact,
+  renderExtra,
 }: {
   activities: SalesActivity[];
   editable: boolean;
   onToggle: (activity: SalesActivity, completed: boolean) => Promise<void>;
   emptyText: string;
   compact?: boolean;
+  /** CD-75 — what a caller hangs under each activity (the deal's photos). */
+  renderExtra?: (activity: SalesActivity) => ReactNode;
 }) {
   if (!activities.length) {
     return <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={emptyText} />;
@@ -118,6 +121,7 @@ export function ActivityList({
                 )}
                 {ma.by(activity.createdByName, formatWhen(activity.createdAt))}
               </div>
+              {!compact && renderExtra?.(activity)}
             </div>
           </div>
         );

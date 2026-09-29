@@ -96,6 +96,7 @@ export default async function OpportunityDetailPage({
       activities={activitiesResult.ok ? activitiesResult.data : []}
       canManage={canManage}
       contractTypeName={contractTypeName}
+      currentUserId={session?.user.id ?? null}
       negotiations={negotiationsResult.ok ? negotiationsResult.data : null}
       openSaleOrderOnLoad={action === "sale-order"}
     />

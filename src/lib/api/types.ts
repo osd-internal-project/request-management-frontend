@@ -1136,9 +1136,21 @@ export interface LeadActivity extends SalesActivity {
   leadId: string;
 }
 
+/** CD-75 — one visit photo on a deal's activity (the bytes come separately). */
+export interface ActivityPhoto {
+  id: string;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  uploadedBy: string;
+  uploadedAt: string;
+}
+
 /** CD-65 — `GET /opportunities/:id/activities`, รูปเดียวกับกิจกรรมของ Lead. */
 export interface OpportunityActivity extends SalesActivity {
   opportunityId: string;
+  /** CD-75 — photos taken at the visit. */
+  photos?: ActivityPhoto[];
 }
 
 /** `GET /leads/:id` — หน้ารายละเอียด Lead. */
