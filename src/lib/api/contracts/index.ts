@@ -189,3 +189,37 @@ export function getContractObligations(
 export function getMyObligations(): Promise<ApiResult<MyObligation[]>> {
   return apiGet("/contract-obligations/mine");
 }
+
+/** CD-164 — one installment of the billing schedule. */
+export interface ContractInstallment {
+  id: string;
+  seq: number;
+  kind: "deposit" | "progress" | "final" | "retention";
+  label: string;
+  amount: number;
+  sharePct: number | null;
+  dueOn: string | null;
+  dueNote: string | null;
+  milestone: string | null;
+  guaranteeType: "bank_guarantee" | "cheque" | "cash" | null;
+  guaranteeAmount: number | null;
+  guaranteeRef: string | null;
+  guaranteeExpiresOn: string | null;
+}
+
+/** CD-164 — the schedule, its total and how far it is from the value. */
+export interface ContractInstallmentsView {
+  contractValue: number | null;
+  currency: string;
+  total: number;
+  /** + over, − short; null when the contract has no value. */
+  difference: number | null;
+  balanced: boolean;
+  installments: ContractInstallment[];
+}
+
+export function getContractInstallments(
+  id: string,
+): Promise<ApiResult<ContractInstallmentsView>> {
+  return apiGet(`/contracts/${encodeURIComponent(id)}/installments`);
+}

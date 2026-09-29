@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { ContractDetailView } from "@/components/legal/contract-detail";
 import {
   getContract,
+  getContractInstallments,
   getContractObligations,
   getContractTerms,
 } from "@/lib/api/contracts";
@@ -21,12 +22,14 @@ export default async function ContractPage({ params }: Params) {
 
   const { id } = await params;
   const canManage = can(session, "legal.contract.manage");
-  const [result, terms, obligations, users] = await Promise.all([
+  const [result, terms, obligations, installments, users] = await Promise.all([
     getContract(id),
     // CD-153..156 — same `legal.contract.read`
     getContractTerms(id),
     // CD-163 — same `legal.contract.read`
     getContractObligations(id),
+    // CD-164 — same `legal.contract.read`
+    getContractInstallments(id),
     // the access list picker — Legal only
     canManage && can(session, "user.read")
       ? getAllDirectoryUsers()
@@ -39,6 +42,7 @@ export default async function ContractPage({ params }: Params) {
       contract={result.data}
       terms={terms.ok ? terms.data : null}
       obligations={obligations.ok ? obligations.data : null}
+      installments={installments.ok ? installments.data : null}
       currentUserId={session?.user.id ?? null}
       people={(users?.ok ? users.data : []).map((user) => ({
         id: user.id,

@@ -28,10 +28,12 @@ import { formatAmount } from "@/components/crm/opportunities/opportunity-list";
 import { ContractForm } from "@/components/legal/contract-form";
 import { ContractTermsCard } from "@/components/legal/contract-terms-card";
 import { ContractObligationsCard } from "@/components/legal/contract-obligations-card";
+import { ContractInstallmentsCard } from "@/components/legal/contract-installments-card";
 import { SearchSelect } from "@/components/ui/search-select";
 import { appApi } from "@/lib/api/client";
 import type {
   ContractDetail,
+  ContractInstallmentsView,
   ContractObligation,
   ContractTermsView,
 } from "@/lib/api/contracts";
@@ -58,6 +60,7 @@ export function ContractDetailView({
   contract,
   terms,
   obligations,
+  installments,
   currentUserId,
   people,
 }: {
@@ -66,6 +69,8 @@ export function ContractDetailView({
   readonly terms: ContractTermsView | null;
   /** CD-163 — null = could not load. */
   readonly obligations: ContractObligation[] | null;
+  /** CD-164 — null = could not load. */
+  readonly installments: ContractInstallmentsView | null;
   readonly currentUserId: string | null;
   /** The company's users, for the access list (Legal only). */
   readonly people: { id: string; name: string }[];
@@ -313,6 +318,14 @@ export function ContractDetailView({
         <ContractTermsCard
           contractId={contract.id}
           view={terms}
+          canManage={canManage}
+        />
+      )}
+
+      {installments && (
+        <ContractInstallmentsCard
+          contractId={contract.id}
+          view={installments}
           canManage={canManage}
         />
       )}
