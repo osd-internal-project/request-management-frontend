@@ -301,9 +301,6 @@ function V2StepBody({
                 <Text strong className="block">
                   {t.kinds[kind].label}
                 </Text>
-                <Text type="secondary" className="block text-xs">
-                  {t.kinds[kind].hint}
-                </Text>
               </span>
             </button>
           ))}
