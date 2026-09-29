@@ -5,6 +5,7 @@ import { Button, Card, Empty, Table, Tag } from "antd";
 import Text from "antd/es/typography/Text";
 import dayjs from "dayjs";
 import type { RequestRow } from "@/lib/api/types";
+import type { DealSolution } from "@/lib/api/presales";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 
@@ -17,6 +18,8 @@ export interface RequestCardLabels {
   readonly empty: string;
   readonly cannotRaise: string;
   readonly draftNo: string;
+  /** CD-132 — heading of the design column, when `designs` is given. */
+  readonly design?: string;
   readonly columns: {
     readonly no: string;
     readonly stage: string;
@@ -52,6 +55,7 @@ export function ContractCard({
   typeName,
   requests,
   labels: m = contractLabels,
+  designs,
 }: {
   readonly opportunityCode: string;
   readonly typeCode: string;
@@ -60,6 +64,8 @@ export function ContractCard({
   readonly requests: RequestRow[];
   /** CD-130 — the same card for the deal's solution requests. */
   readonly labels?: RequestCardLabels;
+  /** CD-132 — the Solution Pre-Sales designed from each request, by request id. */
+  readonly designs?: Record<string, DealSolution>;
 }) {
   const raiseHref = `${ROUTES.newRequest}?type=${encodeURIComponent(typeCode)}&ref_type=opportunity&ref_id=${encodeURIComponent(opportunityCode)}`;
 
@@ -108,6 +114,27 @@ export function ContractCard({
               render: (_: unknown, row) =>
                 row.assignee?.displayName ?? row.receiver?.displayName ?? "—",
             },
+            ...(designs
+              ? [
+                  {
+                    title: m.design,
+                    key: "design",
+                    render: (_: unknown, row: RequestRow) => {
+                      const design = designs[row.id];
+                      if (!design?.latest) return "—";
+                      return (
+                        <Link href={ROUTES.solutionDetail(design.id)}>
+                          {`v${design.latest.versionNo} · ${
+                            messages.presales.versionStatus[
+                              design.latest.status
+                            ] ?? design.latest.status
+                          }`}
+                        </Link>
+                      );
+                    },
+                  },
+                ]
+              : []),
             {
               title: m.columns.raised,
               dataIndex: "createdAt",

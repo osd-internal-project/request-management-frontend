@@ -356,6 +356,7 @@ export const messages = {
       request: "REQUEST",
       approvalReport: "APPROVAL · REPORT · NOTIFICATION",
       crm: "CRM",
+      presales: "PRE-SALES",
       adminAudit: "ADMIN · AUDIT",
       integration: "INTEGRATION",
       other: "อื่น ๆ",
@@ -396,6 +397,9 @@ export const messages = {
       "crm.sales.read": "ดู Lead และโอกาสการขาย",
       "crm.sales.read.all": "ดูงานขายทั้งบริษัท",
       "crm.sales.manage": "สร้าง/แก้/ปิดดีล",
+
+      "presales.solution.read": "ดู Solution ทุกดีล",
+      "presales.solution.manage": "ออกแบบ Solution",
 
       "admin.role.manage": "จัดการ role และสิทธิ์",
       "admin.org.manage": "จัดการผังองค์กร",
@@ -1981,6 +1985,72 @@ export const messages = {
   },
 
   /** CD-53 — กติกาแจ้งเตือนจากเหตุการณ์ ต่อบริษัท. */
+  /** CD-132 — ออกแบบ Solution (Pre-Sales) */
+  presales: {
+    title: "ออกแบบ Solution",
+    deal: "โอกาสการขาย",
+    request: "คำขอ",
+    brief: "โจทย์จากฝ่ายขาย",
+    briefEmpty: "คำขอไม่มีรายละเอียดโจทย์",
+    briefFields: {
+      requirement: "ความต้องการ",
+      scope: "ขอบเขต",
+      site: "ไซต์",
+      timeline: "กำหนดเวลา",
+      decision_maker: "ผู้ตัดสินใจ",
+      budget_range: "กรอบงบประมาณ",
+      constraints: "ข้อจำกัด",
+      competitors: "คู่แข่ง",
+      needs_demo: "ต้องการสาธิต",
+    } as Record<string, string>,
+    version: (no: number) => `เวอร์ชัน ${no}`,
+    versionStatus: {
+      draft: "ร่าง",
+      locked: "ยืนยันแล้ว",
+      superseded: "ถูกแทนแล้ว",
+    } as Record<string, string>,
+    changeNote: "เหตุที่แก้",
+    readOnly: "ดูอย่างเดียว — แก้ได้เฉพาะทีม Pre-Sales",
+    lockedHint: "เวอร์ชันนี้ยืนยันแล้ว แก้ไม่ได้ — ถ้าต้องเปลี่ยนให้เปิดเวอร์ชันใหม่",
+    solutionTitle: "ชื่อ Solution",
+    summary: "สรุปทางออก",
+    summaryPlaceholder: "ทางออกที่เสนอในไม่กี่บรรทัด",
+    design: "รายละเอียดการออกแบบ",
+    designPlaceholder: "สถาปัตยกรรม อุปกรณ์ วงจร การติดตั้ง …",
+    assumptions: "สมมติฐานการออกแบบ",
+    assumptionsHint: "ทุกข้อจะติดไปกับข้อเสนอและสัญญา",
+    assumptionsEmpty: "ยังไม่มีสมมติฐาน",
+    addAssumption: "เพิ่มสมมติฐาน",
+    assumptionCategory: "หมวด",
+    assumptionText: "สมมติฐาน",
+    categories: {
+      technical: "ทางเทคนิค",
+      customer: "สิ่งที่ต้องพึ่งพาลูกค้า",
+      third_party: "สิ่งที่ต้องพึ่งพาบุคคลที่สาม",
+      commercial: "เชิงพาณิชย์",
+    } as Record<string, string>,
+    files: "ไฟล์แบบ",
+    filesEmpty: "ยังไม่มีไฟล์",
+    upload: "แนบไฟล์ (≤ 25 MB)",
+    removeFile: "เอาออก",
+    save: "บันทึกร่าง",
+    saved: "บันทึกร่างแล้ว",
+    lock: "ยืนยันเวอร์ชันนี้",
+    lockConfirm:
+      "ยืนยันแล้วจะแก้เวอร์ชันนี้ไม่ได้อีก — ถ้าต้องเปลี่ยนต้องเปิดเวอร์ชันใหม่ ยืนยันไหม?",
+    locked: "ยืนยันเวอร์ชันแล้ว",
+    unsaved: "มีการแก้ที่ยังไม่บันทึก — บันทึกร่างก่อนยืนยัน",
+    newVersion: "เปิดเวอร์ชันใหม่",
+    newVersionNote: "ทำไมต้องแก้ (เห็นในประวัติเวอร์ชัน)",
+    newVersionOk: "เปิดเวอร์ชัน",
+    history: "ประวัติเวอร์ชัน",
+    lockedAt: "ยืนยันเมื่อ",
+    start: "เริ่มออกแบบ Solution",
+    open: (no: number) => `เปิด Solution (เวอร์ชัน ${no})`,
+    startHint: "คำขอนี้คือโจทย์ Solution — เริ่มออกแบบได้หลังรับเรื่อง",
+    cardTitle: "Solution",
+  },
+
   notificationRules: {
     title: "กติกาแจ้งเตือน",
     subtitle: (company: string) =>
@@ -3075,6 +3145,7 @@ export const messages = {
         /** CD-130 — ขอ Solution และประเมินต้นทุน (Sales → Pre-Sales) */
         solutions: {
           title: "Solution (Pre-Sales)",
+          design: "แบบ Solution",
           raise: "ขอ Solution และประเมินต้นทุน",
           empty:
             "ยังไม่ได้ขอ Solution — ต้องกรอกความต้องการ ขอบเขต ไซต์ กำหนดเวลา ผู้ตัดสินใจ และกรอบงบประมาณให้ครบจึงยื่นได้",

@@ -93,6 +93,8 @@ export const ROUTES = {
   visitLog: `${HOME_PATH}/visit`,
   /** CD-84 งานส่งมอบ — กล่องของทีมที่รับ และที่ผู้ขายส่งไป; `?id=` เปิดใบนั้น. */
   handovers: `${HOME_PATH}/handovers`,
+  /** CD-132 — ออกแบบ Solution; `?v=` เปิดเวอร์ชันนั้น. */
+  solutionDetail: (id: string) => `${HOME_PATH}/solutions/${id}`,
   /** CD-82 — เป้าและพยากรณ์ */
   salesTargets: `${HOME_PATH}/sales-targets`,
   /** CD-83 — รายงานยอดขาย */

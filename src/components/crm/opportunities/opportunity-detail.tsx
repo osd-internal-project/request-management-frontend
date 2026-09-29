@@ -43,6 +43,7 @@ import {
   saleOrderExpandable,
 } from "@/components/crm/sale-orders/sale-order-parts";
 import { appApi } from "@/lib/api/client";
+import type { DealSolution } from "@/lib/api/presales";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import type {
@@ -84,6 +85,7 @@ export function OpportunityDetailView({
   phoneNumbers = null,
   contractTypeName = null,
   solutionTypeName = null,
+  solutions = [],
   handover = null,
   handoverTeams = [],
   openSaleOrderOnLoad = false,
@@ -112,6 +114,8 @@ export function OpportunityDetailView({
   contractTypeName?: string | null;
   /** CD-130 — name of the solution type when the viewer may raise it. */
   solutionTypeName?: string | null;
+  /** CD-132 — the Solutions Pre-Sales designed for this deal. */
+  solutions?: DealSolution[];
   /** CD-84 — null = could not be read (the card is hidden). */
   handover?: DealHandoverView | null;
   /** CD-84 — teams the salesperson may hand over to. */
@@ -498,6 +502,9 @@ export function OpportunityDetailView({
           typeCode={opportunity.solutionRequestTypeCode}
           typeName={editable ? solutionTypeName : null}
           labels={md.solutions}
+          designs={Object.fromEntries(
+            solutions.map((solution) => [solution.requestId, solution]),
+          )}
           requests={relatedRequests.filter(
             (row) => row.typeCode === opportunity.solutionRequestTypeCode,
           )}

@@ -10,6 +10,7 @@ import {
   getQuotations,
 } from "@/lib/api/sales";
 import { getRequests, getRequestTypes } from "@/lib/api/requests";
+import { getDealSolutions } from "@/lib/api/presales";
 import { getCustomers } from "@/lib/api/customers";
 import { getOrgUnitShapes } from "@/lib/api/org-units";
 import { HOME_PATH } from "@/lib/routes";
@@ -57,6 +58,7 @@ export default async function OpportunityDetailPage({
     phoneResult,
     handoverResult,
     teamsResult,
+    solutionsResult,
   ] = await Promise.all([
     getLostReasons(),
     canReadRequests
@@ -95,6 +97,10 @@ export default async function OpportunityDetailPage({
     canAny(session, ["user.read", "request.create"])
       ? getOrgUnitShapes()
       : Promise.resolve(null),
+    // CD-132 — same `crm.sales.read`; only a deal that asks for solutions.
+    opportunityResult.data.solutionRequestTypeCode
+      ? getDealSolutions(id)
+      : Promise.resolve(null),
   ]);
   const contractCode = opportunityResult.data.contractRequestTypeCode ?? null;
   const contractTypeName =
@@ -124,6 +130,7 @@ export default async function OpportunityDetailPage({
       canManage={canManage}
       contractTypeName={contractTypeName}
       solutionTypeName={solutionTypeName}
+      solutions={solutionsResult?.ok ? solutionsResult.data : []}
       currentUserId={session?.user.id ?? null}
       negotiations={negotiationsResult.ok ? negotiationsResult.data : null}
       phoneNumbers={phoneResult.ok ? phoneResult.data : null}

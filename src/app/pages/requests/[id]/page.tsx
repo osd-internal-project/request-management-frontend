@@ -27,7 +27,9 @@ import { RequestStepper } from "@/components/requests/request-stepper";
 import { CurrentStepCard } from "@/components/requests/current-step-card";
 import { DueBadge } from "@/components/requests/due-badge";
 import { ResponseClock, SeverityTag } from "@/components/requests/severity";
-import { getSession } from "@/lib/session";
+import { can, getSession } from "@/lib/session";
+import { getSolutionForRequest } from "@/lib/api/presales";
+import { SolutionStartCard } from "@/components/presales/solution-start-card";
 import { messages } from "@/lib/messages";
 import { STATUS_COLOR } from "@/components/requests/status";
 
@@ -129,6 +131,10 @@ export default async function RequestDetailPage({
     getSession(),
     getRequestTree(id),
   ]);
+  // CD-132 — Pre-Sales starts (or reopens) the Solution from its request.
+  const solutionResult = can(session, "presales.solution.manage")
+    ? await getSolutionForRequest(id)
+    : null;
 
   if (!result.ok) {
     return (
@@ -253,6 +259,10 @@ export default async function RequestDetailPage({
         }}
         session={session}
       />
+
+      {solutionResult?.ok && (
+        <SolutionStartCard view={{ ...solutionResult.data, requestId: id }} />
+      )}
 
       {checklist.length > 0 && (
         <SubRequestChecklist
