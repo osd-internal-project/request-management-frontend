@@ -19,6 +19,7 @@ import {
   HandoverHistory,
   HandoverStatusTag,
 } from "./handover-parts";
+import { TechnicalPackage } from "./technical-package";
 
 const m = messages.handover;
 
@@ -145,6 +146,18 @@ export function HandoverCard({
                 formatWhen(handover.submittedAt),
                 handover.round,
               )}
+            />
+          )}
+          {/* CD-144 — the technical package: required when the deal has a Solution */}
+          {view.technicalMissing && (
+            <Alert type="warning" showIcon title={m.technical.missing} />
+          )}
+          {view.technical && (
+            <TechnicalPackage
+              pkg={view.technical}
+              handoverId={view.editable ? null : (handover?.id ?? null)}
+              note={view.editable ? m.technical.preview : undefined}
+              showSolutionLink
             />
           )}
           {handover?.status === "accepted" && (

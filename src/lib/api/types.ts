@@ -1934,6 +1934,30 @@ export interface HandoverHistoryEntry {
 }
 
 /** CD-84 — a won deal's handover to the next team. */
+/** CD-144 — the approved Solution version a handover carries, read whole. */
+export interface HandoverTechnicalPackage {
+  solutionId: string;
+  title: string;
+  versionId: string;
+  versionNo: number;
+  approvedAt: string | null;
+  summary: string;
+  design: string;
+  inScope: string[];
+  outOfScope: string[];
+  deliverables: { title: string; description: string; criteria: string[] }[];
+  assumptions: { category: string; text: string }[];
+  requirements: {
+    seq: number;
+    kind: string;
+    text: string;
+    assessment: string;
+    note: string;
+    customerAnswer: string | null;
+  }[];
+  files: { id: string; fileName: string; mimeType: string; sizeBytes: number }[];
+}
+
 export interface SalesHandover {
   id: string;
   opportunityId: string;
@@ -1962,6 +1986,8 @@ export interface SalesHandover {
     ownerUserId: string;
     ownerName: string;
   } | null;
+  /** CD-144 — on a single handover: the technical package it carries. */
+  technical?: HandoverTechnicalPackage | null;
 }
 
 /** CD-84 — `GET opportunities/:id/handover`. */
@@ -1971,6 +1997,10 @@ export interface DealHandoverView {
   defaultOrgUnitId: string | null;
   items: HandoverItem[];
   handover: SalesHandover | null;
+  /** CD-144 — attached once sent; before that, what would go with it. */
+  technical: HandoverTechnicalPackage | null;
+  /** CD-144 — the deal has a Solution but no approved version: cannot be sent. */
+  technicalMissing: boolean;
 }
 
 /* -------------------------------------------------------------------------- */

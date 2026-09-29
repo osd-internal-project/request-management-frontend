@@ -1895,6 +1895,26 @@ export const messages = {
 
   /** CD-84 — ส่งมอบงานต่อจากฝ่ายขาย. */
   handover: {
+    /** CD-144 — ชุดเอกสารเทคนิคของ Solution ที่อนุมัติแล้ว */
+    technical: {
+      title: (title: string, version: number) =>
+        `ชุดเอกสารเทคนิค · ${title} เวอร์ชัน ${version} (อนุมัติแล้ว)`,
+      preview: "จะแนบไปกับงานส่งมอบนี้",
+      missing:
+        "ดีลนี้มี Solution แต่ยังไม่มีเวอร์ชันที่อนุมัติ — ขออนุมัติ Solution ก่อนจึงส่งมอบได้",
+      summary: "สรุปทางออก",
+      design: "รายละเอียดการออกแบบ",
+      inScope: "งานในขอบเขต",
+      outOfScope: "งานนอกขอบเขต",
+      deliverables: "รายการส่งมอบและเกณฑ์ตรวจรับ",
+      criterion: "ตรวจรับ",
+      assumptions: "สมมติฐานการออกแบบ",
+      requirements: "ผลวิเคราะห์ความต้องการ",
+      customerAnswer: "ลูกค้าตอบ",
+      files: "ไฟล์แบบ",
+      none: "—",
+      openSolution: "เปิดหน้า Solution",
+    },
     cardTitle: "ส่งมอบงานต่อ",
     notWon: "ส่งมอบงานได้เมื่อโอกาสการขายชนะแล้ว (เปิดใบสั่งขายแล้ว)",
     intro:

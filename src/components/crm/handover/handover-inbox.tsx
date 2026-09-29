@@ -20,6 +20,7 @@ import Text from "antd/es/typography/Text";
 import { formatAmount } from "@/components/crm/opportunities/opportunity-list";
 import { appApi } from "@/lib/api/client";
 import type { SalesHandover } from "@/lib/api/types";
+import { TechnicalPackage } from "./technical-package";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import {
@@ -240,6 +241,10 @@ export function HandoverInbox({
               />
             )}
             <HandoverChecklistView items={opened.items} />
+            {/* CD-144 — the approved Solution the team receives with it */}
+            {opened.technical && (
+              <TechnicalPackage pkg={opened.technical} handoverId={opened.id} />
+            )}
             {opened.note && (
               <Text className="block whitespace-pre-wrap">{opened.note}</Text>
             )}
