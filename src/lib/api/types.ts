@@ -1368,11 +1368,15 @@ export interface TargetAccountRow {
   createdAt: string;
 }
 
+/** CD-86 — ลูกค้าใหม่ / ขายเพิ่ม / ขายข้าม / ต่ออายุ. */
+export type DealType = "new_business" | "upsell" | "cross_sell" | "renewal";
+
 export interface OpportunityRow {
   id: string;
   opportunityCode: string;
   title: string;
   stage: OpportunityStage;
+  dealType?: DealType;
   amount: string | number | null;
   currency: string;
   probability: number | null;
@@ -1735,6 +1739,8 @@ export interface CrmConfig {
   kycReviewMonthsLow?: number;
   /** CD-85 — ต้องทำ Discovery ครบก่อนเปิดดีล (workflow ตัดสิน, หน้าจอเตือน). */
   discoveryRequired?: boolean;
+  /** CD-86 — ไม่ได้ติดต่อลูกค้าเดิมเกินกี่วันนับเป็นความเสี่ยง. */
+  healthNoContactDays?: number;
   /** CD-65 — ไม่มีใครอ่านแล้ว: ย้ายไปเป็นกติกา `opportunity.stale` (CD-53). */
   staleOpportunityDays: number;
   /** หัวกระดาษใบเสนอราคา — null = ไม่ได้ตั้ง. */
@@ -1922,3 +1928,113 @@ export interface DealHandoverView {
   items: HandoverItem[];
   handover: SalesHandover | null;
 }
+
+/* -------------------------------------------------------------------------- */
+/* CD-86 Keeper — portfolio, account plan, health                              */
+/* -------------------------------------------------------------------------- */
+
+export type AccountTier = "a" | "b" | "c";
+export type HealthLevel = "green" | "amber" | "red";
+export type CustomerTouchType =
+  | "review"
+  | "call"
+  | "email"
+  | "meeting"
+  | "visit"
+  | "line"
+  | "social";
+
+export interface HealthSignal {
+  code:
+    | "case_breached"
+    | "case_serious"
+    | "invoice_overdue"
+    | "contract_ending"
+    | "renewal_lost"
+    | "low_satisfaction"
+    | "no_contact";
+  level: "amber" | "red";
+  values: Record<string, number | string>;
+}
+
+export interface AccountPlanSummary {
+  tier: AccountTier;
+  target_revenue: number | null;
+  review_every_months: number;
+  next_review_on: string | null;
+}
+
+export interface PortfolioRow {
+  id: string;
+  customer_code: string;
+  name_th: string;
+  branch_name: string | null;
+  status: string;
+  owner: { id: string; displayName: string } | null;
+  plan: AccountPlanSummary | null;
+  health: { level: HealthLevel; signals: HealthSignal[] };
+  last_contact_at: string | null;
+  last_satisfaction: number | null;
+  /** null = the viewer cannot read deals. */
+  open_deals: { count: number; amount: number; expansion: number } | null;
+  revenue_12m: number | null;
+}
+
+export interface Portfolio {
+  rows: PortfolioRow[];
+  truncated: boolean;
+  summary: {
+    accounts: number;
+    red: number;
+    amber: number;
+    green: number;
+    without_plan: number;
+    reviews_due: number;
+    no_expansion: number;
+  };
+}
+
+export interface CustomerAccount extends PortfolioRow {
+  plan: (AccountPlanSummary & { goals: string | null; updated_at: string }) | null;
+  touchpoints: {
+    id: string;
+    type: CustomerTouchType;
+    occurred_at: string;
+    summary: string;
+    satisfaction: number | null;
+    next_steps: string | null;
+    created_by: string;
+  }[];
+  /** null = the viewer cannot read sales. */
+  products:
+    | {
+        product_code: string | null;
+        description: string;
+        unit: string | null;
+        quantity: number;
+        amount: number;
+        last_ordered_on: string;
+        orders: number;
+      }[]
+    | null;
+  contracts: {
+    id: string;
+    contractNo: string;
+    title: string;
+    endOn: string;
+    value: string | number | null;
+    renewalOpportunityId: string | null;
+  }[];
+  open_deals_list:
+    | {
+        id: string;
+        opportunityCode: string;
+        title: string;
+        stage: OpportunityStage;
+        dealType: DealType;
+        amount: string | number | null;
+        expectedCloseAt: string | null;
+      }[]
+    | null;
+}
+

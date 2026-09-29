@@ -342,6 +342,9 @@ function ConfigSection({
   const [discoveryRequired, setDiscoveryRequired] = useState(
     config.discoveryRequired ?? false,
   );
+  const [noContactDays, setNoContactDays] = useState(
+    config.healthNoContactDays ?? 60,
+  );
   const [busy, setBusy] = useState(false);
 
   async function save() {
@@ -355,6 +358,7 @@ function ConfigSection({
       vat_pct: vat,
       quotation_approval_type_code: approvalType || undefined,
       discovery_required: discoveryRequired,
+      health_no_contact_days: noContactDays,
     });
     setBusy(false);
   }
@@ -457,6 +461,20 @@ function ConfigSection({
       </div>
       <Text type="secondary" className="mt-1 block text-xs">
         {m.discoveryRequiredHint}
+      </Text>
+      {/* CD-86 — สุขภาพลูกค้าเดิม: ไม่ได้ติดต่อนานเกินไป */}
+      <div className="mt-3 max-w-xs">
+        <Text className="mb-1 block text-xs">{m.healthNoContactDays}</Text>
+        <InputNumber
+          min={0}
+          max={365}
+          value={noContactDays}
+          onChange={(value) => setNoContactDays(value ?? 60)}
+          className="w-full"
+        />
+      </div>
+      <Text type="secondary" className="mt-1 block text-xs">
+        {m.healthNoContactHint}
       </Text>
 
       {/* CD-82 — ปรับเป้าของงวดที่เริ่มแล้วผ่านคำขออนุมัติ */}

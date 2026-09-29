@@ -83,6 +83,7 @@ export const messages = {
     salesTargets: "เป้าและพยากรณ์",
     campaigns: "แคมเปญ",
     targetAccounts: "บริษัทเป้าหมาย",
+    keeper: "Portfolio ลูกค้าเดิม",
     visitLog: "บันทึกการเข้าพบ",
     handovers: "งานส่งมอบ",
     adminGroup: "ผู้ดูแลระบบ",
@@ -967,6 +968,132 @@ export const messages = {
   },
 
   /** CD-71 */
+  /** CD-86 — แกน Keeper: portfolio, แผนบัญชี, สุขภาพลูกค้า, รอบทบทวน. */
+  keeper: {
+    title: "Portfolio ลูกค้าเดิม",
+    subtitle:
+      "ลูกค้าที่ดูแล จัดลำดับด้วยแผนบัญชี ดูสุขภาพจากเคส การชำระเงิน สัญญา และการติดต่อ — แดงอยู่บนสุด",
+    mine: "ของฉัน",
+    team: "ทั้งทีม",
+    allTiers: "ระดับ: ทั้งหมด",
+    noPlanFilter: "ยังไม่มีแผน",
+    allHealth: "สุขภาพ: ทั้งหมด",
+    searchPlaceholder: "ค้นหารหัส / ชื่อลูกค้า",
+    truncated: "แสดง 300 บัญชีแรก — ใช้ตัวกรองให้แคบลง",
+    empty: "ไม่มีลูกค้าตามเงื่อนไขนี้",
+    tiles: {
+      red: "ต้องรีบดูแล",
+      amber: "เฝ้าระวัง",
+      green: "ปกติ",
+      reviewsDue: "ถึงรอบทบทวนใน 7 วัน",
+      withoutPlan: "ยังไม่มีแผนบัญชี",
+      noExpansion: "ไม่มีดีลขยาย",
+    },
+    columns: {
+      health: "สุขภาพ",
+      customer: "ลูกค้า",
+      tier: "ระดับ",
+      nextReview: "ทบทวนครั้งถัดไป",
+      lastContact: "ติดต่อล่าสุด",
+      deals: "ดีลที่เปิด",
+      revenue: "ยอดขาย 12 เดือน",
+      owner: "ผู้ดูแล",
+    },
+    tier: { a: "A", b: "B", c: "C" } as Record<string, string>,
+    tierColor: { a: "red", b: "gold", c: "default" } as Record<string, string>,
+    tierHint: "(A = ดูแลใกล้ชิดที่สุด)",
+    health: { green: "ปกติ", amber: "เฝ้าระวัง", red: "เสี่ยง" } as Record<
+      string,
+      string
+    >,
+    healthColor: { green: "green", amber: "orange", red: "red" } as Record<
+      string,
+      string
+    >,
+    signal: {
+      case_breached: (v: Record<string, number | string>) =>
+        `เคสเกิน SLA ${v.count} เคส`,
+      case_serious: (v: Record<string, number | string>) =>
+        `เคสร้ายแรงเปิดอยู่ ${v.count} เคส`,
+      invoice_overdue: (v: Record<string, number | string>) =>
+        `ใบแจ้งหนี้เลยกำหนด ${v.days}+ วัน`,
+      contract_ending: (v: Record<string, number | string>) =>
+        `สัญญาหมดใน ${v.days} วัน ยังไม่มีดีลต่ออายุ`,
+      renewal_lost: () => "ดีลต่ออายุสัญญาแพ้",
+      low_satisfaction: (v: Record<string, number | string>) =>
+        `ความพึงพอใจ ${v.score}/5`,
+      no_contact: (v: Record<string, number | string>) =>
+        v.never ? `ยังไม่เคยติดต่อ (${v.days} วัน)` : `ไม่ได้ติดต่อ ${v.days} วัน`,
+    } as Record<string, (v: Record<string, number | string>) => string>,
+    overdueReview: "เลยรอบ",
+    never: "ยังไม่เคย",
+    noPlan: "ยังไม่มีแผน",
+    expansion: (n: number) => `ดีลขยาย ${n}`,
+    noExpansionTag: "ไม่มีดีลขยาย",
+    openAccount: "เปิดแผนบัญชี",
+    account: {
+      healthTitle: "สุขภาพลูกค้า",
+      allGood: "ไม่มีสัญญาณความเสี่ยง",
+      healthNote:
+        "คำนวณจากเคส (เกิน SLA / ร้ายแรง) · ใบแจ้งหนี้เลยกำหนด · สัญญาใกล้หมด · ความพึงพอใจจากการทบทวนล่าสุด · ระยะเวลาที่ไม่ได้ติดต่อ — สัญญาณที่คุณไม่มีสิทธิ์ดูจะไม่ถูกนับ",
+      planTitle: "แผนบัญชี",
+      noPlan: "ยังไม่ได้วางแผนบัญชีสำหรับลูกค้ารายนี้",
+      createPlan: "วางแผนบัญชี",
+      editPlan: "แก้แผน",
+      tier: "ระดับ",
+      goals: "แผนเติบโต / เป้าหมาย",
+      targetRevenue: "เป้ายอดขายต่อปี (บาท)",
+      reviewEvery: "ทบทวนทุก (เดือน)",
+      nextReview: "ทบทวนครั้งถัดไป",
+      planSaved: "บันทึกแผนบัญชีแล้ว",
+      touchTitle: "การทบทวนและการติดต่อ",
+      logReview: "ลงผลการทบทวน",
+      logContact: "ลงการติดต่อ",
+      noTouches: "ยังไม่มีการทบทวนหรือการติดต่อ",
+      touchType: {
+        review: "ทบทวน",
+        call: "โทร",
+        email: "อีเมล",
+        meeting: "ประชุม",
+        visit: "เข้าพบ",
+        line: "LINE",
+        social: "โซเชียล",
+      } as Record<string, string>,
+      touchForm: {
+        type: "ประเภท",
+        summary: "สรุป",
+        summaryRequired: "ต้องสรุปสิ่งที่คุย",
+        occurredAt: "เมื่อ",
+        satisfaction: "ความพึงพอใจของลูกค้า (1–5)",
+        nextSteps: "สิ่งที่จะทำต่อ",
+        save: "บันทึก",
+        saved: "บันทึกแล้ว",
+        reviewNext: (on: string) => `บันทึกแล้ว — ทบทวนครั้งถัดไป ${on}`,
+      },
+      productsTitle: "สิ่งที่ลูกค้าซื้ออยู่ (24 เดือน)",
+      noProducts: "ยังไม่มีใบสั่งขายใน 24 เดือน",
+      productColumns: {
+        product: "สินค้า/บริการ",
+        quantity: "จำนวน",
+        amount: "ยอด",
+        last: "สั่งล่าสุด",
+      },
+      contractsTitle: "สัญญาที่มีผล",
+      dealsTitle: "ดีลที่เปิดอยู่",
+      noDeals: "ไม่มีดีลที่เปิดอยู่",
+      openExpansion: "เปิดดีลขยาย",
+      expansionTitle: "เปิดดีลขยาย (Upgrade / Upsell / Cross-sell)",
+      expansionName: "ชื่อดีล",
+      expansionNameRequired: "ต้องระบุชื่อดีล",
+      expansionAmount: "มูลค่าที่คาด (บาท)",
+      expansionCreated: "เปิดดีลแล้ว",
+      satisfaction: (n: number) => `พึงพอใจ ${n}/5`,
+      lastSatisfaction: "ความพึงพอใจล่าสุด",
+      revenue: "ยอดขาย 12 เดือน",
+      target: "เป้า",
+    },
+  },
+
   /** CD-85 — บริษัทเป้าหมาย (Target Account) ของแกน Getter. */
   targetAccounts: {
     title: "บริษัทเป้าหมาย",
@@ -2650,6 +2777,21 @@ export const messages = {
         won: "green",
         lost: "red",
       } as Record<string, string>,
+      /** CD-86 — ชนิดของดีล. */
+      dealType: {
+        new_business: "ลูกค้าใหม่",
+        upsell: "ขายเพิ่ม (Upgrade/Upsell)",
+        cross_sell: "ขายข้าม (Cross-sell)",
+        renewal: "ต่ออายุ",
+      } as Record<string, string>,
+      dealTypeColor: {
+        new_business: "default",
+        upsell: "cyan",
+        cross_sell: "purple",
+        renewal: "geekblue",
+      } as Record<string, string>,
+      dealTypeLabel: "ชนิดดีล",
+      dealTypeNeedsCustomer: "ขายเพิ่ม/ขายข้ามต้องเลือกลูกค้าในทะเบียน",
       columns: {
         code: "เลขโอกาสการขาย",
         title: "โอกาสการขาย",
@@ -3377,6 +3519,7 @@ export const messages = {
       futureTabNote: (phase: string) => `แท็บนี้ ${phase}`,
       /** CD-89 — แท็บการเงิน: ใบแจ้งหนี้และการรับชำระจาก SAP */
       tabFinancials: "การเงิน",
+      tabAccount: "แผนบัญชี",
       invoices: {
         source: {
           mock: "รอเชื่อม SAP จริง — ระบบยังใช้ตัวเชื่อมจำลอง จึงไม่แสดงตัวเลข",
@@ -3622,6 +3765,9 @@ export const messages = {
       staleMoved: "เกณฑ์แจ้งเตือนดีลเงียบย้ายไปรวมกับกติกาแจ้งเตือนอื่นแล้ว —",
       staleMovedLink: "ตั้งที่หน้ากติกาแจ้งเตือน",
       discoveryRequired: "ต้องทำ Discovery ครบก่อนเปิดโอกาสการขายจาก Lead",
+      healthNoContactDays: "ไม่ได้ติดต่อลูกค้าเดิมเกิน (วัน) = เฝ้าระวัง",
+      healthNoContactHint:
+        "สุขภาพลูกค้าในแกน Keeper: เกินจำนวนนี้ = เฝ้าระวัง, เกินสองเท่า = เสี่ยง · 0 = ไม่ใช้สัญญาณนี้",
       discoveryRequiredHint:
         "หน้า Lead จะเตือนเมื่อยังไม่ครบ · การบังคับจริงอยู่ที่ขั้นตอน workflow ของ Lead (lwf-0001) ซึ่งอ่านค่านี้",
       save: "บันทึกการตั้งค่า",

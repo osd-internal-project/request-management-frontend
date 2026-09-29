@@ -14,6 +14,7 @@ import {
   Modal,
   Pagination,
   Segmented,
+  Select,
   Space,
   Table,
   Tag,
@@ -31,6 +32,7 @@ import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import type {
   CustomerRow,
+  DealType,
   OpportunityLostReason,
   OpportunityRow,
 } from "@/lib/api/types";
@@ -128,6 +130,8 @@ export function OpportunityList({
   const [amount, setAmount] = useState<number | null>(null);
   const [expectedClose, setExpectedClose] = useState<string | null>(null);
   const [productCodes, setProductCodes] = useState<string[]>([]);
+  // CD-86 — a prospect's deal is always new business
+  const [dealType, setDealType] = useState<DealType>("new_business");
 
   const partyReady =
     partyMode === "existing"
@@ -185,6 +189,7 @@ export function OpportunityList({
         body: JSON.stringify({
           ...party,
           title: title.trim(),
+          deal_type: partyMode === "existing" ? dealType : undefined,
           amount: amount ?? undefined,
           expected_close_at: expectedClose ?? undefined,
           product_codes: productCodes.length ? productCodes : undefined,
@@ -405,18 +410,30 @@ export function OpportunityList({
           />
 
           {partyMode === "existing" ? (
-            <SearchSelect
-              className="w-full"
-              placeholder={m.form.customer}
-              value={customerId}
-              onChange={(value) => setCustomerId(value as string)}
-              options={customers.map((customer) => ({
-                value: customer.id,
-                label: `${customer.customerCode} · ${customer.nameTh}${
-                  customer.branchName ? ` (${customer.branchName})` : ""
-                }`,
-              }))}
-            />
+            <>
+              <SearchSelect
+                className="w-full"
+                placeholder={m.form.customer}
+                value={customerId}
+                onChange={(value) => setCustomerId(value as string)}
+                options={customers.map((customer) => ({
+                  value: customer.id,
+                  label: `${customer.customerCode} · ${customer.nameTh}${
+                    customer.branchName ? ` (${customer.branchName})` : ""
+                  }`,
+                }))}
+              />
+              <Select<DealType>
+                className="w-full"
+                value={dealType}
+                onChange={setDealType}
+                prefix={m.dealTypeLabel}
+                options={Object.entries(m.dealType).map(([value, label]) => ({
+                  value: value as DealType,
+                  label,
+                }))}
+              />
+            </>
           ) : (
             <>
               <Input

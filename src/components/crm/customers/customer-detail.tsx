@@ -1,5 +1,6 @@
 "use client";
 
+import { CustomerAccountTab } from "@/components/crm/customers/customer-account-tab";
 import { CustomerContractsTab } from "@/components/crm/customers/customer-contracts-tab";
 import {
   CustomerKycTab,
@@ -91,6 +92,7 @@ export function CustomerDetailView({
   customerOpportunities,
   customerQuotations,
   customerSaleOrders,
+  canManageSales = false,
 }: {
   customer: CustomerDetail;
   history: CustomerFieldChange[];
@@ -117,6 +119,8 @@ export function CustomerDetailView({
   customerQuotations: QuotationRow[] | null;
   /** null = viewer has no crm.sales.read. */
   customerSaleOrders: SaleOrderRow[] | null;
+  /** CD-86 — may open an expansion deal from the account tab. */
+  canManageSales?: boolean;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -409,6 +413,22 @@ export function CustomerDetailView({
               />
             ),
           },
+          // CD-86 — Keeper: plan, health, reviews, what it buys
+          ...(isAlias
+            ? []
+            : [
+                {
+                  key: "account",
+                  label: m.detail.tabAccount,
+                  children: (
+                    <CustomerAccountTab
+                      customerId={customer.id}
+                      canManage={editable}
+                      canCreateDeal={canManageSales}
+                    />
+                  ),
+                },
+              ]),
           {
             key: "locations",
             label: `${m.detail.tabLocations} · ${customer.locations.length}`,

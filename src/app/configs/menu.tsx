@@ -74,6 +74,13 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     permissions: ["crm.customer.read"],
     group: messages.nav.crmGroup,
   },
+  /** CD-86 — Portfolio ลูกค้าเดิมของแกน Keeper: แผนบัญชี สุขภาพ รอบทบทวน. */
+  {
+    label: messages.nav.keeper,
+    href: ROUTES.keeper,
+    permissions: ["crm.customer.read"],
+    group: messages.nav.crmGroup,
+  },
   /** CD-85 — บริษัทเป้าหมายของแกน Getter: เล็ง จัดลำดับ แล้วเริ่มเข้าหาเป็น Lead. */
   {
     label: messages.nav.targetAccounts,

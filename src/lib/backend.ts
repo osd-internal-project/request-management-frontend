@@ -68,6 +68,7 @@ export const CORE_SERVICE_PREFIXES = [
   "/sales-targets",
   "/campaigns",
   "/target-accounts",
+  "/keeper",
   "/products",
   "/notifications",
   "/requests",

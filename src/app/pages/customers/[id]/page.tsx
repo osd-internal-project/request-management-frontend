@@ -94,6 +94,7 @@ export default async function CustomerDetailPage({
       customerSaleOrders={
         saleOrdersResult?.ok ? saleOrdersResult.data.data : canReadSales ? [] : null
       }
+      canManageSales={can(session, "crm.sales.manage")}
     />
   );
 }

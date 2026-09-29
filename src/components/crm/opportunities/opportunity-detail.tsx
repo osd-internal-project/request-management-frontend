@@ -340,6 +340,11 @@ export function OpportunityDetailView({
             <Tag color={m.stageColor[opportunity.stage]}>
               {m.stage[opportunity.stage] ?? opportunity.stage}
             </Tag>
+            {opportunity.dealType && opportunity.dealType !== "new_business" && (
+              <Tag color={m.dealTypeColor[opportunity.dealType]}>
+                {m.dealType[opportunity.dealType]}
+              </Tag>
+            )}
             {opportunity.fromLead && (
               <Text type="secondary" className="text-xs">
                 {md.fromLead(opportunity.fromLead.name)}
