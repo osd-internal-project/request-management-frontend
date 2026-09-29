@@ -29,6 +29,7 @@ import type {
   SegmentDimension,
   SegmentValue,
   TradeTermStandard,
+  KycWatchlistEntry,
 } from "@/lib/api/types";
 
 const m = messages.customers.admin;
@@ -42,12 +43,15 @@ export function CrmAdmin({
   config,
   kycProducts,
   tradeTerms = [],
+  kycWatchlist = [],
 }: {
   dimensions: SegmentDimension[];
   config: CrmConfig;
   kycProducts: KycProductRule[];
   /** CD-79 — every standard term, inactive included. */
   tradeTerms?: TradeTermStandard[];
+  /** CD-61 — the company's prohibited list (active entries). */
+  kycWatchlist?: KycWatchlistEntry[];
 }) {
   const router = useRouter();
   const { message } = App.useApp();
@@ -78,6 +82,7 @@ export function CrmAdmin({
       <KycProductSection rows={kycProducts} onCall={call} />
       <ConfigSection config={config} onCall={call} />
       <TradeTermsSection terms={tradeTerms} onCall={call} />
+      <KycSection config={config} entries={kycWatchlist} onCall={call} />
       <LetterheadSettings config={config} onCall={call} />
     </div>
   );
@@ -238,7 +243,7 @@ function SegmentSection({
         onOk={() => void saveDimension()}
         destroyOnHidden
       >
-        <Space direction="vertical" className="w-full">
+        <Space orientation="vertical" className="w-full">
           <Input
             placeholder={m.dimensionCode}
             value={newDimension?.code}
@@ -273,7 +278,7 @@ function SegmentSection({
         onOk={() => void saveValue()}
         destroyOnHidden
       >
-        <Space direction="vertical" className="w-full">
+        <Space orientation="vertical" className="w-full">
           <Input
             placeholder={m.valueCode}
             value={newValue?.code}
@@ -505,7 +510,7 @@ function KycProductSection({
 
   return (
     <Card size="small" title={m.sectionKycProducts}>
-      <Space direction="vertical" size={10} className="w-full">
+      <Space orientation="vertical" size={10} className="w-full">
         <Text type="secondary" className="text-xs">
           {m.kycProductsHint}
         </Text>
@@ -674,6 +679,175 @@ function TradeTermsSection({
           {m.tradeTermSave}
         </Button>
       </Space>
+    </Card>
+  );
+}
+
+/**
+ * CD-61 — how long a KYC holds by risk, and the prohibited list screened at
+ * every KYC. Entries are added by pasting lines (one per company) and removed
+ * by deactivation — a KYC record keeps the entry it matched.
+ */
+function KycSection({
+  config,
+  entries,
+  onCall,
+}: {
+  config: CrmConfig;
+  entries: KycWatchlistEntry[];
+  onCall: (path: string, method: string, body?: unknown) => Promise<boolean>;
+}) {
+  const [months, setMonths] = useState({
+    high: config.kycReviewMonthsHigh ?? 12,
+    medium: config.kycReviewMonthsMedium ?? 24,
+    low: config.kycReviewMonthsLow ?? 36,
+  });
+  const [pasted, setPasted] = useState("");
+  const [lineError, setLineError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function saveMonths() {
+    setBusy(true);
+    await onCall("config", "PATCH", {
+      kyc_review_months_high: months.high,
+      kyc_review_months_medium: months.medium,
+      kyc_review_months_low: months.low,
+    });
+    setBusy(false);
+  }
+
+  async function addPasted() {
+    const lines = pasted
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
+    const parsed: {
+      name: string;
+      tax_id?: string;
+      reason: string;
+      source?: string;
+    }[] = [];
+    for (const [index, line] of lines.entries()) {
+      const [name, taxId, reason, source] = line
+        .split("|")
+        .map((part) => part.trim());
+      if (!name || !reason) {
+        setLineError(m.watchlistBadLine(index + 1));
+        return;
+      }
+      parsed.push({
+        name,
+        ...(taxId ? { tax_id: taxId } : {}),
+        reason,
+        ...(source ? { source } : {}),
+      });
+    }
+    if (!parsed.length) return;
+    setLineError(null);
+    setBusy(true);
+    const done = await onCall("kyc-watchlist", "POST", { entries: parsed });
+    setBusy(false);
+    if (done) setPasted("");
+  }
+
+  return (
+    <Card size="small" title={m.sectionKyc}>
+      <Text strong className="block">
+        {m.kycReviewMonths}
+      </Text>
+      <Space wrap className="mt-2">
+        {(["high", "medium", "low"] as const).map((level) => (
+          <span key={level} className="flex items-center gap-1">
+            <Text className="text-xs">
+              {messages.customers.kyc.riskLevels[level]}
+            </Text>
+            <InputNumber
+              min={1}
+              max={120}
+              value={months[level]}
+              onChange={(value) =>
+                setMonths((current) => ({
+                  ...current,
+                  [level]: value ?? current[level],
+                }))
+              }
+            />
+          </span>
+        ))}
+        <Button size="small" loading={busy} onClick={() => void saveMonths()}>
+          {m.kycSaveMonths}
+        </Button>
+      </Space>
+      <Text type="secondary" className="mt-1 mb-4 block text-xs">
+        {m.kycReviewHint}
+      </Text>
+
+      <Text strong className="block">
+        {m.watchlistTitle} · {entries.length}
+      </Text>
+      <Text type="secondary" className="mb-2 block text-xs">
+        {m.watchlistHint}
+      </Text>
+      {entries.length ? (
+        <Table<KycWatchlistEntry>
+          rowKey="id"
+          size="small"
+          pagination={{ pageSize: 20, hideOnSinglePage: true }}
+          dataSource={entries}
+          columns={[
+            { title: m.watchlistColumns.name, dataIndex: "name" },
+            {
+              title: m.watchlistColumns.taxId,
+              dataIndex: "taxId",
+              render: (v: string | null) => v ?? "—",
+            },
+            { title: m.watchlistColumns.reason, dataIndex: "reason" },
+            {
+              title: m.watchlistColumns.source,
+              dataIndex: "source",
+              render: (v: string | null) => v ?? "—",
+            },
+            {
+              key: "actions",
+              render: (_: unknown, row) => (
+                <Popconfirm
+                  title={m.watchlistDeactivate}
+                  onConfirm={() =>
+                    void onCall(`kyc-watchlist/${row.id}/deactivate`, "PATCH")
+                  }
+                >
+                  <a>{m.watchlistDeactivate}</a>
+                </Popconfirm>
+              ),
+            },
+          ]}
+        />
+      ) : (
+        <Text type="secondary" className="block text-xs">
+          {m.watchlistEmpty}
+        </Text>
+      )}
+
+      <Text className="mt-3 mb-1 block text-xs">{m.watchlistPaste}</Text>
+      {lineError && (
+        <Alert type="error" showIcon title={lineError} className="mb-2" />
+      )}
+      <Input.TextArea
+        rows={3}
+        value={pasted}
+        placeholder={m.watchlistPastePlaceholder}
+        onChange={(event) => setPasted(event.target.value)}
+      />
+      <Button
+        className="mt-2"
+        type="primary"
+        size="small"
+        loading={busy}
+        disabled={!pasted.trim()}
+        onClick={() => void addPasted()}
+      >
+        {m.watchlistAdd}
+      </Button>
     </Card>
   );
 }

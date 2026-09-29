@@ -1,5 +1,10 @@
 "use client";
 
+import { CustomerContractsTab } from "@/components/crm/customers/customer-contracts-tab";
+import {
+  CustomerKycTab,
+  RISK_COLOR,
+} from "@/components/crm/customers/customer-kyc-tab";
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -119,6 +124,12 @@ export function CustomerDetailView({
   const [error, setError] = useState<string | null>(null);
 
   const isAlias = Boolean(customer.mergedIntoCustomerId);
+  // CD-61 — within 30 days of running out: offer the review.
+  const kycDueSoon = Boolean(
+    customer.kycVerified &&
+    customer.kycExpiresOn &&
+    dayjs(customer.kycExpiresOn).diff(dayjs(), "day") <= 30,
+  );
   // CD-68 — the contracts and cases tabs are views of the same request rows.
   const contractRows = (relatedRequests ?? []).filter(
     (row) => row.typeCode === contractRequestTypeCode,
@@ -185,16 +196,32 @@ export function CustomerDetailView({
             ) : (
               <Tag>{m.kycNotVerified}</Tag>
             )}
+            {/* CD-61 — risk and how long the verification holds */}
+            {customer.kycVerified && customer.kycRiskLevel && (
+              <Tag color={RISK_COLOR[customer.kycRiskLevel]}>
+                {m.kycRiskTag(m.kyc.riskLevels[customer.kycRiskLevel])}
+              </Tag>
+            )}
+            {customer.kycVerified && customer.kycExpiresOn && (
+              <Tag color={kycDueSoon ? "orange" : undefined}>
+                {m.kycValidUntil(
+                  dayjs(customer.kycExpiresOn).format("DD/MM/YYYY"),
+                )}
+              </Tag>
+            )}
           </Space>
         </div>
         <Space>
-          {relatedRequests !== null && !customer.kycVerified && (
-            <Link
-              href={`${ROUTES.newRequest}?type=KYC&ref_type=customer&ref_id=${customer.id}`}
-            >
-              <Button>{m.detail.raiseKyc}</Button>
-            </Link>
-          )}
+          {relatedRequests !== null &&
+            (!customer.kycVerified || kycDueSoon) && (
+              <Link
+                href={`${ROUTES.newRequest}?type=KYC&ref_type=customer&ref_id=${customer.id}`}
+              >
+                <Button danger={kycDueSoon}>
+                  {kycDueSoon ? m.kycReviewDue : m.detail.raiseKyc}
+                </Button>
+              </Link>
+            )}
           {relatedRequests !== null && (
             <Link
               href={`${ROUTES.newRequest}?ref_type=customer&ref_id=${customer.id}`}
@@ -455,16 +482,22 @@ export function CustomerDetailView({
                 },
               ]
             : []),
-          // CD-68 — contracts: requests of the type Legal takes (CD-81/CD-79).
-          ...(relatedRequests !== null && contractRequestTypeCode
-            ? [
-                {
-                  key: "contracts",
-                  label: `${m.detail.futureTabs.contracts.label} · ${contractRows.length}`,
-                  children: <RelatedRequestsTab rows={contractRows} />,
-                },
-              ]
-            : []),
+          // CD-70 — the contract register, with the contract requests sent to
+          // Legal (CD-68/CD-81) underneath when the viewer reads requests.
+          {
+            key: "contracts",
+            label: m.detail.futureTabs.contracts.label,
+            children: (
+              <CustomerContractsTab
+                customerId={customer.id}
+                editable={editable}
+              >
+                {relatedRequests !== null && contractRequestTypeCode ? (
+                  <RelatedRequestsTab rows={contractRows} />
+                ) : null}
+              </CustomerContractsTab>
+            ),
+          },
           // CD-68 — cases: requests submitted with a severity (CD-67).
           ...(relatedRequests !== null
             ? [
@@ -485,6 +518,12 @@ export function CustomerDetailView({
             label: m.detail.tabTimeline,
             children: <TimelineTab timeline={timeline} />,
           },
+          // CD-61 — KYC: risk, validity, live screening, every verification
+          {
+            key: "kyc",
+            label: m.kyc.tab,
+            children: <CustomerKycTab customerId={customer.id} />,
+          },
           /* C360-01 — โครงหน้าครบตั้งแต่แรก: แท็บที่ยังไม่มา เปิดแล้วบอกว่า
              มากับโมดูลไหน ไม่ fetch อะไร (C360-04) */
           // CD-89 — แท็บการเงินอยู่ใต้สิทธิ์เดียวกับการ์ดยอดค้างชำระ (C360-04)
@@ -502,11 +541,7 @@ export function CustomerDetailView({
               ([key]) =>
                 !(key === "opportunities" && customerOpportunities !== null) &&
                 !(key === "quotations" && customerQuotations !== null) &&
-                !(
-                  key === "contracts" &&
-                  relatedRequests !== null &&
-                  contractRequestTypeCode
-                ) &&
+                key !== "contracts" &&
                 !(key === "cases" && relatedRequests !== null) &&
                 key !== "financials",
             )
@@ -589,7 +624,7 @@ function LifecycleButtons({
         onOk={() => void confirm()}
         destroyOnHidden
       >
-        <Space direction="vertical" className="w-full">
+        <Space orientation="vertical" className="w-full">
           {dialog === "deactivate" && (
             <Text type="secondary" className="text-xs">
               {m.detail.deactivateHint}
@@ -808,7 +843,7 @@ function ContactsTab({
         destroyOnHidden
       >
         {editing && (
-          <Space direction="vertical" className="w-full">
+          <Space orientation="vertical" className="w-full">
             <Input
               placeholder={m.form.contactName}
               value={editing.name}
@@ -1038,7 +1073,7 @@ function LocationsTab({
         destroyOnHidden
       >
         {editing && (
-          <Space direction="vertical" className="w-full">
+          <Space orientation="vertical" className="w-full">
             <Input
               placeholder={m.form.locationName}
               value={editing.name}
@@ -1455,7 +1490,7 @@ function SegmentsTab({
   }
 
   return (
-    <Space direction="vertical" className="w-full max-w-xl">
+    <Space orientation="vertical" className="w-full max-w-xl">
       <SearchSelect
         mode="multiple"
         allowClear
