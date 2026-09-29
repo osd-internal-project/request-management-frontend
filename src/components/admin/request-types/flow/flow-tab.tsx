@@ -5,7 +5,11 @@ import { Alert, App, Button, Drawer, Dropdown, Empty, Grid, Spin, Tag } from "an
 import Paragraph from "antd/es/typography/Paragraph";
 import Text from "antd/es/typography/Text";
 import { HistoryOutlined } from "@ant-design/icons";
-import { getRequestFlows, publishRequestFlow } from "@/lib/api/client-requests";
+import {
+  getRequestFlows,
+  getSuggestedFlow,
+  publishRequestFlow,
+} from "@/lib/api/client-requests";
 import type { ClientResult } from "@/lib/api/client";
 import type {
   DirectoryUser,
@@ -17,11 +21,13 @@ import { rowsFromSchema } from "../schema-rows";
 import {
   addStep,
   conditionFields,
+  draftFromSuggested,
   draftFromVersion,
   draftToPayload,
   moveStep,
   removeStep,
   updateStep,
+  v2Warnings,
   type FlowDraft,
   type StepDraft,
 } from "./flow-draft";
@@ -46,11 +52,12 @@ export function FlowTab({
   readonly people: readonly DirectoryUser[];
   readonly matrix: MatrixContext;
 }) {
-  const { message } = App.useApp();
+  const { message, modal } = App.useApp();
   const screens = Grid.useBreakpoint();
   const [versions, setVersions] = useState<RequestFlowVersion[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [draft, setDraft] = useState<FlowDraft>({ steps: [] });
+  const [draft, setDraft] = useState<FlowDraft>(() => draftFromVersion(null));
+  const [suggesting, setSuggesting] = useState(false);
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [publishing, setPublishing] = useState(false);
@@ -112,6 +119,28 @@ export function FlowTab({
     select(next.steps[next.steps.length - 1].code);
   }
 
+  /** Replaces the draft with the type's current settings restated as a v2 flow. */
+  async function suggest() {
+    setSuggesting(true);
+    const result = await getSuggestedFlow(type.code, matrix.companyId);
+    setSuggesting(false);
+    if (!result.ok) {
+      void message.error(`${t.suggestFailed}: ${result.message}`);
+      return;
+    }
+    const next = draftFromSuggested(result.data);
+    setDraft(next);
+    setSelectedCode(next.steps[0]?.code ?? null);
+  }
+
+  function convertToV2() {
+    void modal.confirm({
+      title: t.convertV2Confirm,
+      content: t.convertV2Body,
+      onOk: suggest,
+    });
+  }
+
   function remove(code: string) {
     setDraft((current) => removeStep(current, code));
     if (selectedCode === code) setSelectedCode(null);
@@ -144,8 +173,13 @@ export function FlowTab({
     );
   }
 
+  const warnings = v2Warnings(draft);
+  const nameOf = (code: string) =>
+    draft.steps.find((step) => step.code === code)?.name ?? code;
+
   const editor = selected ? (
     <StepEditor
+      schemaVersion={draft.schemaVersion}
       typeCode={type.code}
       step={selected}
       steps={draft.steps}
@@ -174,7 +208,7 @@ export function FlowTab({
   return (
     <div className="space-y-4">
       <Paragraph type="secondary" className="mb-0!">
-        {t.intro}
+        {draft.schemaVersion === 2 ? t.introV2 : t.intro}
       </Paragraph>
       {loadError && <Alert type="error" showIcon title={loadError} />}
 
@@ -204,6 +238,23 @@ export function FlowTab({
             </Button>
           </Dropdown>
         )}
+        {draft.schemaVersion === 1 && (
+          <>
+            <Tag className="m-0!">{t.v1Badge}</Tag>
+            <Button size="small" loading={suggesting} onClick={convertToV2}>
+              {t.convertV2}
+            </Button>
+          </>
+        )}
+        {draft.schemaVersion === 2 && draft.steps.length === 0 && (
+          <Button
+            size="small"
+            loading={suggesting}
+            onClick={() => void suggest()}
+          >
+            {t.suggest}
+          </Button>
+        )}
         <span className="flex-1" />
         {dirty && (
           <>
@@ -226,6 +277,26 @@ export function FlowTab({
           {t.publish(nextVersion)}
         </Button>
       </div>
+
+      {warnings.length > 0 && (
+        <Alert
+          type="warning"
+          showIcon
+          title={
+            <ul className="m-0 list-disc pl-4">
+              {warnings.map((warning) => (
+                <li key={`${warning.kind}-${warning.code}`}>
+                  {warning.kind === "first"
+                    ? t.warnFirst(nameOf(warning.code))
+                    : warning.kind === "last"
+                      ? t.warnLast(nameOf(warning.code))
+                      : t.warnReturnTo(nameOf(warning.code))}
+                </li>
+              ))}
+            </ul>
+          }
+        />
+      )}
 
       {isDesktop && (
         <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">

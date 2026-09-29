@@ -202,6 +202,14 @@ export default async function RequestDetailPage({
   const currentFlowStep =
     flowSteps.find((step) => step.code === request.currentStepCode) ?? null;
   const flowMoves = request.flow_moves ?? null;
+  const isFlowV2 = flowMoves?.schema_version === 2;
+  // v2: the step's holder acts on it; a requester step after the first is shown here too.
+  const holdsStep = isFlowV2 ? flowMoves?.holder_user_id === viewerId : showReceiverForm;
+  const showStepCard =
+    ["in_progress", "pending_approval"].includes(request.status) ||
+    (isFlowV2 &&
+      (request.status === "approved" ||
+        (request.status === "returned" && currentFlowStep?.code !== flowSteps[0]?.code)));
 
   const directChildren = tree.descendants.filter(
     (node) => node.parentRequestId === request.id,
@@ -302,7 +310,7 @@ export default async function RequestDetailPage({
         <div className="space-y-2 max-lg:contents [&>*]:max-lg:order-4">
           {currentFlowStep &&
             flowMoves &&
-            ["in_progress", "pending_approval"].includes(request.status) && (
+            showStepCard && (
               <div className="max-lg:order-1!">
                 <CurrentStepCard
                   requestId={request.id}
@@ -315,7 +323,9 @@ export default async function RequestDetailPage({
                   )}
                   requiresApproval={flowMoves.requires_approval}
                   isLast={flowMoves.is_last}
-                  canEdit={showReceiverForm}
+                  canEdit={holdsStep}
+                  requiredDocs={currentFlowStep.requiredDocs}
+                  attachments={attachments}
                 />
               </div>
             )}

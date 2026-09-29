@@ -113,7 +113,7 @@ function fileSize(bytes: number): string {
 }
 
 /** A per-document file picker; `busy` while its own upload is in flight. */
-function FilePickButton({
+export function FilePickButton({
   busy,
   disabled,
   className,

@@ -8,42 +8,32 @@ import {
   Card,
   Empty,
   Form,
-  Input,
-  InputNumber,
   Modal,
-  Radio,
-  Segmented,
-  Select,
   Table,
   Popconfirm,
   Tag,
 } from "antd";
-import type { FormInstance } from "antd";
 import Text from "antd/es/typography/Text";
 import Paragraph from "antd/es/typography/Paragraph";
 import { adminApi } from "@/lib/api/client";
 import {
-  FLOW_CONDITION_OPS,
   type ApprovalMatrixVersion,
-  type FlowCondition,
   type MatrixLevel,
-  type MatrixLevelOptions,
   type OrgUnitNode,
   type RequestType,
 } from "@/lib/api/types";
 import { messages } from "@/lib/messages";
-import {
-  SearchSelect,
-  SearchTreeSelect,
-} from "@/components/ui/search-select";
 import { buildUnitTree, type UnitTreeNode } from "@/lib/org/org-tree";
+import {
+  DEFAULT_LEVELS,
+  LevelFields,
+  levelPayload,
+  type LevelFormValues,
+} from "./approval-levels-fields";
 
 export type { ApprovalMatrixVersion } from "@/lib/api/types";
 
-
 /** The Thai titles §16 prints in the ladder, not the storage codes. */
-
-
 
 /**
  * The subject a request type's after-work ladder is stored under.
@@ -59,9 +49,6 @@ export type { ApprovalMatrixVersion } from "@/lib/api/types";
 export function subjectOf(type: RequestType): string {
   return `request:${type.code}`;
 }
-
-
-
 
 function thaiDate(iso: string): string {
   return new Date(iso).toLocaleDateString("th-TH", {
@@ -499,223 +486,6 @@ function MatrixVersionTable({
   );
 }
 
-/**
- * One level of the ladder being authored.
- *
- * A `Segmented` first, because the two shapes ask for completely different
- * things and showing both at once reads as one form with half its fields
- * greyed out. Watching the field rather than holding local state keeps the
- * switch and the value that gets submitted the same thing.
- */
-function LevelFields({
-  name,
-  form,
-  unitTree,
-  conditionFields,
-  onRemove,
-}: {
-  name: number;
-  form: FormInstance;
-  unitTree: UnitTreeNode[];
-  /** Fields a condition may name; empty hides the condition controls. */
-  conditionFields: readonly { value: string; label: string }[];
-  onRemove: () => void;
-}) {
-  const condition = Form.useWatch(["levels", name, "condition"], form) as
-    | FlowCondition
-    | undefined;
-  const type = Form.useWatch(["levels", name, "type"], form) as
-    | "supervisor"
-    | "org"
-    | undefined;
-
-  const chosenUnits = (Form.useWatch(["levels", name, "orgUnitIds"], form) ??
-    []) as string[];
-
-  const [people, setPeople] = useState<
-    { value: string; label: string }[]
-  >([]);
-
-  /**
-   * The people under the chosen groups, so "pick from this group" means the
-   * whole subtree — a department's people sit in the positions under it, not
-   * in the department itself.
-   */
-  async function loadPeople(unitIds: string[]) {
-    const results = await Promise.all(
-      unitIds.map((unitId) =>
-        adminApi<{ id: string; displayName: string; username: string }[]>(
-          `org-units/${unitId}/members/recursive`,
-        ),
-      ),
-    );
-
-    const found = new Map<string, { value: string; label: string }>();
-    for (const result of results) {
-      if (!result.ok) continue;
-      for (const person of result.data) {
-        found.set(person.id, {
-          value: person.id,
-          label: `${person.displayName} · ${person.username}`,
-        });
-      }
-    }
-
-    setPeople([...found.values()]);
-
-    // People picked under groups that are no longer chosen would still approve; drop them.
-    const picked = (form.getFieldValue(["levels", name, "userIds"]) ?? []) as string[];
-    form.setFieldValue(
-      ["levels", name, "userIds"],
-      picked.filter((userId) => found.has(userId)),
-    );
-  }
-
-  return (
-    <Card size="small" className="mb-3!">
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <Form.Item name={[name, "type"]} noStyle>
-          <Segmented
-            options={[
-              {
-                value: "supervisor",
-                label: messages.matrix.levelSupervisor,
-              },
-              { value: "org", label: messages.matrix.levelOrg },
-            ]}
-          />
-        </Form.Item>
-        <Button type="link" danger onClick={onRemove}>
-          {messages.requestForm.remove}
-        </Button>
-      </div>
-
-      {type === "org" ? (
-        <>
-          <Form.Item
-            name={[name, "orgUnitIds"]}
-            label={messages.matrix.levelGroups}
-            rules={[{ required: true }]}
-          >
-            <SearchTreeSelect
-              multiple
-              allowClear
-              treeDefaultExpandAll
-              treeData={unitTree}
-              onChange={(next: string[]) => void loadPeople(next)}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name={[name, "userIds"]}
-            label={messages.matrix.levelPeople}
-            extra={messages.matrix.levelPeopleHint}
-          >
-            <SearchSelect
-              mode="multiple"
-              allowClear
-              disabled={!chosenUnits.length}
-              options={people}
-            />
-          </Form.Item>
-        </>
-      ) : (
-        <Form.Item
-          name={[name, "up"]}
-          label={messages.matrix.levelUp}
-          extra={messages.matrix.levelUpHint}
-          rules={[{ required: true }]}
-        >
-          <SearchSelect
-            options={[1, 2, 3, 4].map((up) => ({
-              value: up,
-              label: messages.matrix.supervisorLevel[up],
-            }))}
-          />
-        </Form.Item>
-      )}
-
-      <div className="grid gap-x-4 md:grid-cols-3">
-        <Form.Item name={[name, "mode"]} label={messages.matrix.levelMode} initialValue="any">
-          <Radio.Group
-            options={[
-              { value: "any", label: messages.matrix.modeAny },
-              { value: "all", label: messages.matrix.modeAll },
-            ]}
-          />
-        </Form.Item>
-        <Form.Item
-          name={[name, "noteRequired"]}
-          label={messages.matrix.levelNote}
-          initialValue="always"
-        >
-          <Select
-            options={[
-              { value: "always", label: messages.matrix.noteAlways },
-              { value: "reject_or_return", label: messages.matrix.noteRejectOnly },
-            ]}
-          />
-        </Form.Item>
-        <Form.Item
-          name={[name, "slaHours"]}
-          label={messages.matrix.levelSla}
-          extra={messages.matrix.levelSlaHint}
-        >
-          <InputNumber min={1} className="w-full" />
-        </Form.Item>
-      </div>
-
-      {conditionFields.length > 0 && (
-        <div className="space-y-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="font-medium">{messages.matrix.levelCondition}</span>
-            {condition ? (
-              <>
-                <Form.Item name={[name, "condition", "field"]} noStyle rules={[{ required: true }]}>
-                  <Select className="min-w-36" options={[...conditionFields]} />
-                </Form.Item>
-                <Form.Item name={[name, "condition", "op"]} noStyle>
-                  <Select
-                    className="min-w-32"
-                    options={FLOW_CONDITION_OPS.map((op) => ({
-                      value: op,
-                      label: messages.requestTypes.flow.ops[op],
-                    }))}
-                  />
-                </Form.Item>
-                <Form.Item name={[name, "condition", "value"]} noStyle rules={[{ required: true }]}>
-                  <Input className="w-36" />
-                </Form.Item>
-              </>
-            ) : (
-              <span className="text-black/45">{messages.matrix.conditionAlways}</span>
-            )}
-            <Button
-              type="link"
-              size="small"
-              onClick={() =>
-                form.setFieldValue(
-                  ["levels", name, "condition"],
-                  condition
-                    ? undefined
-                    : { field: conditionFields[0]?.value, op: "gt", value: "" },
-                )
-              }
-            >
-              {condition ? messages.matrix.removeCondition : messages.matrix.addCondition}
-            </Button>
-          </div>
-          {condition && (
-            <span className="block text-xs text-black/45">{messages.matrix.conditionHint}</span>
-          )}
-        </div>
-      )}
-    </Card>
-  );
-}
-
-const DEFAULT_LEVELS: MatrixLevel[] = [{ type: "supervisor", up: 1 }];
-
 function PublishDialog({
   open,
   live,
@@ -743,12 +513,7 @@ function PublishDialog({
 
   async function submit() {
     const values = (await form.validateFields()) as {
-      levels: (MatrixLevelOptions & {
-        type: "supervisor" | "org";
-        up?: number;
-        orgUnitIds?: string[];
-        userIds?: string[];
-      })[];
+      levels: LevelFormValues[];
     };
 
     setSaving(true);
@@ -762,16 +527,7 @@ function PublishDialog({
         // Only the fields the chosen shape uses. Sending an `up` on an `org`
         // level would be stored and then never read, which is how a ladder
         // starts describing something it does not do.
-        levels: values.levels.map((level) => ({
-          ...(level.type === "supervisor"
-            ? { type: "supervisor", up: level.up ?? 1 }
-            : {
-                type: "org",
-                orgUnitIds: level.orgUnitIds ?? [],
-                userIds: level.userIds ?? [],
-              }),
-          ...levelOptionsOf(level),
-        })),
+        levels: values.levels.map(levelPayload),
       }),
     });
 
@@ -843,38 +599,4 @@ function PublishDialog({
       </Form>
     </Modal>
   );
-}
-
-/** Only options that differ from the default, so an unchanged ladder publishes as before. */
-function levelOptionsOf(level: MatrixLevelOptions): MatrixLevelOptions {
-  const condition = level.condition?.field
-    ? {
-        ...level.condition,
-        value:
-          level.condition.op === "in"
-            ? textOf(level.condition.value)
-                .split(",")
-                .map((part) => part.trim())
-                .filter(Boolean)
-            : numberOrText(level.condition.value),
-      }
-    : undefined;
-
-  return {
-    ...(level.mode === "all" ? { mode: "all" as const } : {}),
-    ...(level.noteRequired === "reject_or_return"
-      ? { noteRequired: "reject_or_return" as const }
-      : {}),
-    ...(typeof level.slaHours === "number" ? { slaHours: level.slaHours } : {}),
-    ...(condition ? { condition } : {}),
-  };
-}
-
-function textOf(value: unknown): string {
-  return typeof value === "string" || typeof value === "number" ? String(value) : "";
-}
-
-function numberOrText(value: unknown): unknown {
-  const text = textOf(value).trim();
-  return text !== "" && !Number.isNaN(Number(text)) ? Number(text) : text;
 }

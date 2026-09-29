@@ -411,6 +411,22 @@ export type FlowAssigneeRule =
   | { type: "requester" }
   | { type: "user"; userId: string };
 
+/** v2: the status a step sits under; who holds it follows from it. */
+export type FlowStepScope =
+  | "draft"
+  | "returned"
+  | "submitted"
+  | "in_progress"
+  | "pending_approval"
+  | "approved";
+
+/** v2: who receives a `submitted` or `in_progress` step on entry. */
+export type FlowReceiverRule =
+  | { type: "keep" }
+  | { type: "receiver" }
+  | { type: "user"; userId: string }
+  | { type: "step"; stepCode: string };
+
 export interface RequestFlowStep {
   code: string;
   name: string;
@@ -420,6 +436,12 @@ export interface RequestFlowStep {
   requiresApproval: boolean;
   assigneeRule: FlowAssigneeRule | null;
   slaHours: number | null;
+  /** v2 only; v1 steps all sit under `in_progress`. */
+  scopeStatus?: FlowStepScope;
+  approvalLevels?: MatrixLevel[] | null;
+  returnToStepCode?: string | null;
+  requiredDocs?: RequiredDoc[];
+  receiverRule?: FlowReceiverRule | null;
 }
 
 export interface RequestFlowTransition {
@@ -430,12 +452,31 @@ export interface RequestFlowTransition {
   backward: boolean;
 }
 
+/** A step as `GET :code/flows/suggested` returns it (the publish body's shape). */
+export interface SuggestedStep {
+  code: string;
+  name: string;
+  scope_status: FlowStepScope;
+  form_schema?: Record<string, unknown>;
+  required_docs?: RequiredDoc[];
+  sub_request_types?: SubRequestTypeRule[];
+  approval_levels?: MatrixLevel[];
+  return_to_step?: string;
+}
+
+export interface SuggestedFlow {
+  steps: SuggestedStep[];
+  transitions: { from_step: string; to_step: string }[];
+}
+
 /** One published, immutable version of a type's step flow. */
 export interface RequestFlowVersion {
   id: string;
   version: number;
   publishedAt: string;
   publishedBy: string | null;
+  /** 1: steps inside in_progress; 2: steps cover the whole path. */
+  schemaVersion?: number;
   steps: RequestFlowStep[];
   transitions: RequestFlowTransition[];
 }
@@ -451,6 +492,11 @@ export interface RequestStepRun {
 
 /** The detail endpoint's answer to "where can the work go from here". */
 export interface FlowMoves {
+  schema_version?: number;
+  /** v2: the current step's status scope; null on v1. */
+  scope?: FlowStepScope | null;
+  /** v2: who acts on the current step; null while it awaits approval. */
+  holder_user_id?: string | null;
   current: string;
   forward: string | null;
   backward: string[];
@@ -668,7 +714,14 @@ export interface RequestDetail extends Omit<
     version: number;
     steps: Pick<
       RequestFlowStep,
-      "code" | "name" | "sortOrder" | "formSchema" | "subRequestTypes" | "requiresApproval"
+      | "code"
+      | "name"
+      | "sortOrder"
+      | "formSchema"
+      | "subRequestTypes"
+      | "requiresApproval"
+      | "scopeStatus"
+      | "requiredDocs"
     >[];
   } | null;
   stepRuns?: RequestStepRun[];
@@ -832,6 +885,8 @@ export interface MatrixTier {
  */
 /** Per-level rules; absent keys keep the default (any / always / no condition). */
 export interface MatrixLevelOptions {
+  /** Flow v2 approval steps: whose chart a `supervisor` level climbs. */
+  chartOf?: "requester" | "worker";
   mode?: "any" | "all";
   noteRequired?: "always" | "reject_or_return";
   condition?: FlowCondition;

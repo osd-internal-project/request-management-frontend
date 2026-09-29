@@ -126,8 +126,11 @@ export function RequestActions({
       : undefined;
   const stepName = (code: string) => request.stepNames?.[code] ?? code;
 
+  const isV2 = moves?.schema_version === 2;
+
   if (offered.has("advance") && moves) {
-    if (moves.forward) {
+    // v2: a `submitted` step goes forward by "รับเรื่อง"; `advance` only sends it back.
+    if (moves.forward && !(isV2 && moves.scope === "submitted")) {
       const target = moves.forward;
       actions.push(
         <Button
@@ -141,6 +144,24 @@ export function RequestActions({
           {moves.requires_approval
             ? messages.requestDetail.flow.advanceForApproval(stepName(target))
             : messages.requestDetail.flow.advance(stepName(target))}
+        </Button>,
+      );
+    }
+    if (isV2 && moves.is_last && !moves.forward) {
+      actions.push(
+        <Button
+          key="confirm-close"
+          type="primary"
+          loading={busy === "advance"}
+          onClick={() =>
+            void modal.confirm({
+              title: messages.requestDetail.flow.confirmCloseTitle,
+              content: messages.requestDetail.flow.confirmCloseBody,
+              onOk: () => run("advance", () => advanceRequest(request.id, "END")),
+            })
+          }
+        >
+          {messages.requestDetail.flow.confirmClose}
         </Button>,
       );
     }

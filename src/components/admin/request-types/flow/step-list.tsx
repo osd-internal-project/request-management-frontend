@@ -6,14 +6,31 @@ import {
   ApartmentOutlined,
   ArrowDownOutlined,
   ArrowUpOutlined,
+  CheckCircleOutlined,
   DeleteOutlined,
+  EditOutlined,
+  FileTextOutlined,
   FormOutlined,
+  InboxOutlined,
   SafetyOutlined,
+  ToolOutlined,
 } from "@ant-design/icons";
+import type { ReactNode } from "react";
+import type { FlowStepScope } from "@/lib/api/types";
 import { messages } from "@/lib/messages";
 import type { FlowDraft, StepDraft } from "./flow-draft";
 
 const t = messages.requestTypes.flow;
+
+/** One colour and icon per v2 step type, so the list reads as a path of roles. */
+const KIND_TAG: Record<FlowStepScope, { color: string; icon: ReactNode }> = {
+  draft: { color: "blue", icon: <EditOutlined /> },
+  returned: { color: "blue", icon: <EditOutlined /> },
+  pending_approval: { color: "gold", icon: <SafetyOutlined /> },
+  submitted: { color: "cyan", icon: <InboxOutlined /> },
+  in_progress: { color: "geekblue", icon: <ToolOutlined /> },
+  approved: { color: "green", icon: <CheckCircleOutlined /> },
+};
 
 /** The steps in order, each with what it carries and where it leads. */
 export function StepList({
@@ -38,9 +55,11 @@ export function StepList({
 
   return (
     <div className="space-y-2">
-      <Text type="secondary" className="block text-xs">
-        {t.start}
-      </Text>
+      {draft.schemaVersion === 1 && (
+        <Text type="secondary" className="block text-xs">
+          {t.start}
+        </Text>
+      )}
 
       {draft.steps.length === 0 && (
         <Text type="secondary" className="block py-4 text-center">
@@ -74,7 +93,11 @@ export function StepList({
               <Text type="secondary" className="font-mono text-xs">
                 {step.code}
               </Text>
-              <StepBadges step={step} />
+              <StepBadges
+                step={step}
+                v2={draft.schemaVersion === 2}
+                nameOf={nameOf}
+              />
             </div>
             <span
               className="flex shrink-0 items-center"
@@ -115,9 +138,11 @@ export function StepList({
         {t.addStep}
       </Button>
 
-      <Text type="secondary" className="block text-xs">
-        {t.end}
-      </Text>
+      {draft.schemaVersion === 1 && (
+        <Text type="secondary" className="block text-xs">
+          {t.end}
+        </Text>
+      )}
     </div>
   );
 }
@@ -144,6 +169,11 @@ export function StepStrip({
             onClick={() => onSelect(step.code)}
           >
             {index + 1}. {step.name}
+            {draft.schemaVersion === 2 && (
+              <Text type="secondary" className="text-xs">
+                · {t.kinds[step.kind].label}
+              </Text>
+            )}
           </Button>
         </span>
       ))}
@@ -154,7 +184,46 @@ export function StepStrip({
   );
 }
 
-function StepBadges({ step }: { readonly step: StepDraft }) {
+function StepBadges({
+  step,
+  v2,
+  nameOf,
+}: {
+  readonly step: StepDraft;
+  readonly v2: boolean;
+  readonly nameOf: (code: string) => string;
+}) {
+  if (v2) {
+    const kind = KIND_TAG[step.kind];
+    return (
+      <span className="mt-1 flex flex-wrap gap-1">
+        <Tag className="m-0!" color={kind.color} icon={kind.icon}>
+          {t.kinds[step.kind].label}
+          {step.kind === "pending_approval" &&
+            ` · ${t.approvalSummary(step.approvalLevels.length)}`}
+        </Tag>
+        {step.kind === "pending_approval" && step.returnTo && (
+          <Tag className="m-0!">{t.backTo(nameOf(step.returnTo))}</Tag>
+        )}
+        {step.rows.length > 0 && (
+          <Tag className="m-0!" icon={<FormOutlined />}>
+            {t.badgeForm}
+          </Tag>
+        )}
+        {step.requiredDocs.length > 0 && (
+          <Tag className="m-0!" icon={<FileTextOutlined />}>
+            {t.badgeDocs}
+          </Tag>
+        )}
+        {step.subRequests.length > 0 && (
+          <Tag className="m-0!" icon={<ApartmentOutlined />}>
+            {t.badgeSubRequests}
+          </Tag>
+        )}
+      </span>
+    );
+  }
+
   return (
     <span className="mt-1 flex flex-wrap gap-1">
       {step.requiresApproval && (

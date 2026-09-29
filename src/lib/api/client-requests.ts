@@ -7,6 +7,7 @@
  */
 import { adminApi, appApi, type ClientResult } from "./client";
 import type {
+  SuggestedFlow,
   ChainPreview,
   RequestComment,
   RequestAttachment,
@@ -304,6 +305,16 @@ export function getRequestFlows(
 ): Promise<ClientResult<RequestFlowVersion[]>> {
   return adminApi<RequestFlowVersion[]>(
     `request-types/${code}/flows?company_id=${encodeURIComponent(companyId)}`,
+  );
+}
+
+/** A v2 draft restated from the type's current settings; writes nothing. */
+export function getSuggestedFlow(
+  code: string,
+  companyId: string,
+): Promise<ClientResult<SuggestedFlow>> {
+  return adminApi<SuggestedFlow>(
+    `request-types/${code}/flows/suggested?company_id=${encodeURIComponent(companyId)}`,
   );
 }
 
