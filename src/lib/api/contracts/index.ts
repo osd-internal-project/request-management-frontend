@@ -74,3 +74,54 @@ export function getContracts(
 export function getContract(id: string): Promise<ApiResult<ContractDetail>> {
   return apiGet(`/contracts/${encodeURIComponent(id)}`);
 }
+
+/** CD-153..156 — a contract's terms and what follows from them. */
+export interface ContractTermsView {
+  contractValue: number | null;
+  recorded: boolean;
+  liability: {
+    unlimited: boolean;
+    capAmount: number | null;
+    note: string | null;
+    approval: {
+      state:
+        | "not_needed"
+        | "missing"
+        | "draft"
+        | "pending"
+        | "approved"
+        | "rejected";
+      request: { id: string; requestNo: string | null; status: string } | null;
+      error: string | null;
+    };
+  };
+  penalty: {
+    ratePct: number | null;
+    period: string | null;
+    basis: string | null;
+    basisNote: string | null;
+    capPct: number | null;
+    capAmount: number | null;
+    ceiling: number | null;
+  };
+  warranty: {
+    months: number | null;
+    scope: string | null;
+    exclusions: string | null;
+    acceptedOn: string | null;
+    period: { startsOn: string; endsOn: string } | null;
+  };
+  termination: {
+    noticeDays: number | null;
+    conditions: string | null;
+    consequences: string | null;
+    steps: string[];
+  };
+  updatedAt: string | null;
+}
+
+export function getContractTerms(
+  id: string,
+): Promise<ApiResult<ContractTermsView>> {
+  return apiGet(`/contracts/${encodeURIComponent(id)}/terms`);
+}

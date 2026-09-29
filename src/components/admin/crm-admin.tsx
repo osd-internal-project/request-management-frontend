@@ -340,6 +340,9 @@ function ConfigSection({
   const [contractType, setContractType] = useState(
     config.contractRequestTypeCode ?? "",
   );
+  const [liabilityType, setLiabilityType] = useState(
+    config.liabilityApprovalRequestTypeCode ?? "",
+  );
   const [solutionType, setSolutionType] = useState(
     config.solutionRequestTypeCode ?? "",
   );
@@ -356,6 +359,7 @@ function ConfigSection({
     await onCall("config", "PATCH", {
       target_approval_type_code: targetType,
       contract_request_type_code: contractType,
+      liability_approval_request_type_code: liabilityType,
       solution_request_type_code: solutionType,
       dedup_threshold: threshold,
       min_margin_pct: minMargin,
@@ -514,6 +518,21 @@ function ConfigSection({
       </div>
       <Text type="secondary" className="mt-2 block text-xs">
         {m.contractHint}
+      </Text>
+      {/* CD-153 — อนุมัติเพดานความรับผิดเกินมูลค่าสัญญา (ส่งผู้บริหาร) */}
+      <div className="mt-3 max-w-xs">
+        <Text className="mb-1 block text-xs">
+          {m.liabilityApprovalRequestTypeCode}
+        </Text>
+        <Input
+          value={liabilityType}
+          maxLength={20}
+          allowClear
+          onChange={(e) => setLiabilityType(e.target.value.toUpperCase())}
+        />
+      </div>
+      <Text type="secondary" className="mt-2 block text-xs">
+        {m.liabilityApprovalHint}
       </Text>
 
       {/* CD-130 — ประเภทคำขอ Solution (Sales → Pre-Sales) */}

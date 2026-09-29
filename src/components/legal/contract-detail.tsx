@@ -26,9 +26,10 @@ import Text from "antd/es/typography/Text";
 import dayjs from "dayjs";
 import { formatAmount } from "@/components/crm/opportunities/opportunity-list";
 import { ContractForm } from "@/components/legal/contract-form";
+import { ContractTermsCard } from "@/components/legal/contract-terms-card";
 import { SearchSelect } from "@/components/ui/search-select";
 import { appApi } from "@/lib/api/client";
-import type { ContractDetail } from "@/lib/api/contracts";
+import type { ContractDetail, ContractTermsView } from "@/lib/api/contracts";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 
@@ -50,9 +51,12 @@ const sizeOf = (bytes: number) =>
  */
 export function ContractDetailView({
   contract,
+  terms,
   people,
 }: {
   readonly contract: ContractDetail;
+  /** CD-153..156 — null = could not load. */
+  readonly terms: ContractTermsView | null;
   /** The company's users, for the access list (Legal only). */
   readonly people: { id: string; name: string }[];
 }) {
@@ -226,6 +230,14 @@ export function ContractDetailView({
           ]}
         />
       </Card>
+
+      {terms && (
+        <ContractTermsCard
+          contractId={contract.id}
+          view={terms}
+          canManage={canManage}
+        />
+      )}
 
       <Card
         size="small"

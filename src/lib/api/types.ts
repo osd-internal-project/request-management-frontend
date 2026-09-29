@@ -1766,6 +1766,8 @@ export interface CrmConfig {
   targetApprovalTypeCode?: string | null;
   /** CD-81 — ประเภทคำขอที่ฝ่ายกฎหมายรับทำสัญญา; null = ไม่แสดงการ์ดสัญญา. */
   contractRequestTypeCode?: string | null;
+  /** CD-153 — ประเภทคำขออนุมัติเพดานความรับผิดเกินมูลค่าสัญญา. */
+  liabilityApprovalRequestTypeCode?: string | null;
   /** CD-130 — the type Pre-Sales takes solution requests on. */
   solutionRequestTypeCode?: string | null;
   /** CD-61 — KYC ใช้ได้กี่เดือนก่อนต้องทบทวน ตามความเสี่ยง. */
