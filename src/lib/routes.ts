@@ -152,6 +152,8 @@ export const ROUTES = {
   /** CD-161 — คลังสัญญา (ฝ่ายกฎหมาย). */
   contracts: `${HOME_PATH}/contracts`,
   contractDetail: (id: string) => `${HOME_PATH}/contracts/${id}`,
+  /** CD-163 — ข้อผูกพันตามสัญญาที่ฉันรับผิดชอบ. */
+  obligations: `${HOME_PATH}/obligations`,
   /** CD-66 — ช่องทางรับคำขอจากลูกค้า (web form / LINE / AI CARE). */
   adminIntakeChannels: `${HOME_PATH}/admin/intake-channels`,
   /** CD-66 — the public pages: no session, outside the proxy's gate. */

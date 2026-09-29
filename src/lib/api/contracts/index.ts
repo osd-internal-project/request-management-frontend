@@ -139,3 +139,43 @@ export function getContractTerms(
 ): Promise<ApiResult<ContractTermsView>> {
   return apiGet(`/contracts/${encodeURIComponent(id)}/terms`);
 }
+
+/** CD-163 — one obligation drawn from a contract. */
+export interface ContractObligation {
+  id: string;
+  contractId: string;
+  title: string;
+  detail: string | null;
+  clause: string | null;
+  ownerUserId: string;
+  ownerName?: string;
+  dueOn: string | null;
+  status: "open" | "done" | "waived";
+  doneAt: string | null;
+  doneBy: string | null;
+  doneByName?: string | null;
+  doneNote: string | null;
+  createdAt: string;
+}
+
+/** "Mine" also names the contract, and whether I may open it. */
+export interface MyObligation extends ContractObligation {
+  contract: {
+    id: string;
+    contractNo: string;
+    title: string;
+    counterpartyName: string | null;
+    customer: { nameTh: string } | null;
+  };
+  contractOpenable: boolean;
+}
+
+export function getContractObligations(
+  id: string,
+): Promise<ApiResult<ContractObligation[]>> {
+  return apiGet(`/contracts/${encodeURIComponent(id)}/obligations`);
+}
+
+export function getMyObligations(): Promise<ApiResult<MyObligation[]>> {
+  return apiGet("/contract-obligations/mine");
+}

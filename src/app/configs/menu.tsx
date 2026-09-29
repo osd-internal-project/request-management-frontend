@@ -22,6 +22,13 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     permissions: ["request.read"],
     group: messages.nav.requestGroup,
   },
+  /** CD-163 — obligations handed to me from contracts (anyone may hold one). */
+  {
+    label: messages.nav.obligations,
+    href: ROUTES.obligations,
+    permissions: ["notification.read"],
+    group: messages.nav.requestGroup,
+  },
   {
     label: messages.nav.newRequest,
     href: ROUTES.newRequest,

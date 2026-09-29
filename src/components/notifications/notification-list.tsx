@@ -23,6 +23,8 @@ export function notificationHref(notification: AppNotification): string | null {
       return ROUTES.opportunityDetail(notification.resourceId);
     case "approval_case":
       return ROUTES.myWork;
+    case "contract_obligation":
+      return ROUTES.obligations;
     case "customer_contract":
       return ROUTES.contractDetail(notification.resourceId);
     case "sales_handover":

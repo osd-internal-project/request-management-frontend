@@ -27,9 +27,14 @@ import dayjs from "dayjs";
 import { formatAmount } from "@/components/crm/opportunities/opportunity-list";
 import { ContractForm } from "@/components/legal/contract-form";
 import { ContractTermsCard } from "@/components/legal/contract-terms-card";
+import { ContractObligationsCard } from "@/components/legal/contract-obligations-card";
 import { SearchSelect } from "@/components/ui/search-select";
 import { appApi } from "@/lib/api/client";
-import type { ContractDetail, ContractTermsView } from "@/lib/api/contracts";
+import type {
+  ContractDetail,
+  ContractObligation,
+  ContractTermsView,
+} from "@/lib/api/contracts";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 
@@ -52,11 +57,16 @@ const sizeOf = (bytes: number) =>
 export function ContractDetailView({
   contract,
   terms,
+  obligations,
+  currentUserId,
   people,
 }: {
   readonly contract: ContractDetail;
   /** CD-153..156 — null = could not load. */
   readonly terms: ContractTermsView | null;
+  /** CD-163 — null = could not load. */
+  readonly obligations: ContractObligation[] | null;
+  readonly currentUserId: string | null;
   /** The company's users, for the access list (Legal only). */
   readonly people: { id: string; name: string }[];
 }) {
@@ -304,6 +314,16 @@ export function ContractDetailView({
           contractId={contract.id}
           view={terms}
           canManage={canManage}
+        />
+      )}
+
+      {obligations && (
+        <ContractObligationsCard
+          contractId={contract.id}
+          rows={obligations}
+          people={people}
+          canManage={canManage}
+          currentUserId={currentUserId}
         />
       )}
 

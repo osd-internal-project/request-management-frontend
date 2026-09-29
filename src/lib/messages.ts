@@ -67,6 +67,7 @@ export const messages = {
     /** H2.1 — the group heading above the request screens. */
     requestGroup: "Request",
     myWork: "งานค้างของฉัน",
+    obligations: "ข้อผูกพันของฉัน",
     newRequest: "ยื่นคำขอใหม่",
     allWork: "งานทั้งหมด",
     bottleneckReport: "รายงานคอขวด",
@@ -4205,6 +4206,48 @@ export const messages = {
       noSubContracts: "ยังไม่มีสัญญาที่อ้างอิงข้อตกลงนี้",
       subContractsHint:
         "แก้รายละเอียด ข้อกำหนด หรือไฟล์ของข้อตกลงหลัก ระบบแจ้งผู้รับผิดชอบสัญญาย่อยที่ยังมีผลทุกฉบับ",
+    },
+    /** CD-163 — ติดตามข้อผูกพัน. */
+    obligations: {
+      title: "ข้อผูกพันตามสัญญา",
+      add: "เพิ่มข้อผูกพัน",
+      edit: "แก้ไข",
+      empty: "ยังไม่ได้แตกข้อผูกพันจากสัญญานี้",
+      hint: "แตกสิ่งที่สัญญาผูกพันเราไว้เป็นรายการที่มีผู้รับผิดชอบและกำหนด — ผู้รับผิดชอบได้รับแจ้ง เตือนก่อนถึงกำหนด และทำเครื่องหมายว่าทำแล้วเองได้",
+      formTitle: "ข้อผูกพัน",
+      itemTitle: "ต้องทำอะไร",
+      detail: "รายละเอียด",
+      clause: "อ้างอิงข้อในสัญญา",
+      clausePlaceholder: "เช่น ข้อ 7.2",
+      owner: "ผู้รับผิดชอบ",
+      dueOn: "กำหนด",
+      required: "ต้องระบุสิ่งที่ต้องทำและผู้รับผิดชอบ",
+      saved: "บันทึกข้อผูกพันแล้ว",
+      done: "ทำแล้ว",
+      doneTitle: (title: string) => `บันทึกว่าทำแล้ว: ${title}`,
+      doneNote: "บันทึก (ถ้ามี)",
+      marked: "บันทึกว่าทำแล้ว",
+      waive: "ยกเว้น",
+      waiveConfirm: "ยกเว้นข้อผูกพันนี้? ผู้รับผิดชอบจะไม่ได้รับการเตือนอีก",
+      reopen: "เปิดใหม่",
+      status: {
+        open: "ต้องทำ",
+        done: "ทำแล้ว",
+        waived: "ยกเว้น",
+      } as Record<string, string>,
+      statusColor: {
+        open: "blue",
+        done: "green",
+        waived: "default",
+      } as Record<string, string>,
+      overdue: "เลยกำหนด",
+      noDue: "ไม่มีกำหนด",
+      doneBy: (name: string, at: string) => `${name} · ${at}`,
+      mineTitle: "ข้อผูกพันของฉัน",
+      mineSubtitle:
+        "สิ่งที่สัญญาของบริษัทผูกพันไว้และมอบให้คุณรับผิดชอบ — ทำแล้วกด \"ทำแล้ว\" ระบบจะหยุดเตือน",
+      mineEmpty: "ไม่มีข้อผูกพันที่ต้องทำ",
+      contract: "สัญญา",
     },
     /** CD-153..156 — ข้อกำหนดของสัญญา. */
     terms: {
