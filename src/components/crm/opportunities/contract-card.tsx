@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Button, Card, Empty, Table, Tag } from "antd";
+import { Button, Card, Empty, Space, Table, Tag } from "antd";
 import Text from "antd/es/typography/Text";
 import dayjs from "dayjs";
 import type { RequestRow } from "@/lib/api/types";
@@ -123,13 +123,22 @@ export function ContractCard({
                       const design = designs[row.id];
                       if (!design?.latest) return "—";
                       return (
-                        <Link href={ROUTES.solutionDetail(design.id)}>
-                          {`v${design.latest.versionNo} · ${
-                            messages.presales.versionStatus[
-                              design.latest.status
-                            ] ?? design.latest.status
-                          }`}
-                        </Link>
+                        <Space size={4} wrap>
+                          <Link href={ROUTES.solutionDetail(design.id)}>
+                            {`v${design.latest.versionNo} · ${
+                              messages.presales.versionStatus[
+                                design.latest.status
+                              ] ?? design.latest.status
+                            }`}
+                          </Link>
+                          {design.waiting_customer > 0 && (
+                            <Tag color="orange">
+                              {messages.presales.analysis.waitingOnDeal(
+                                design.waiting_customer,
+                              )}
+                            </Tag>
+                          )}
+                        </Space>
                       );
                     },
                   },

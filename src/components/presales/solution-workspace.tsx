@@ -35,6 +35,7 @@ import type {
 } from "@/lib/api/presales";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
+import { RequirementsCard } from "./requirements-card";
 
 const mp = messages.presales;
 
@@ -320,6 +321,8 @@ export function SolutionWorkspace({ solution }: { solution: SolutionDetail }) {
           </Space>
         </Card>
       </div>
+
+      <RequirementsCard solution={solution} />
 
       <Card
         size="small"

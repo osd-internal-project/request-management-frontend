@@ -2053,6 +2053,46 @@ export const messages = {
     open: (no: number) => `เปิด Solution (เวอร์ชัน ${no})`,
     startHint: "คำขอนี้คือโจทย์ Solution — เริ่มออกแบบได้หลังรับเรื่อง",
     cardTitle: "Solution",
+
+    /** CD-131 — วิเคราะห์ความต้องการ */
+    analysis: {
+      title: "วิเคราะห์ความต้องการ",
+      hint: "แยกความต้องการเชิงธุรกิจกับเชิงเทคนิค แล้วประเมินทีละข้อ — ยืนยันเวอร์ชันไม่ได้ถ้ายังมีข้อที่ยังไม่ประเมินหรือยังรอลูกค้าตอบ",
+      empty: "ยังไม่มีความต้องการ",
+      add: "เพิ่มความต้องการ",
+      addOk: "เพิ่ม",
+      kind: "ประเภท",
+      text: "ความต้องการ",
+      assessment: "ผลประเมิน",
+      note: "หมายเหตุ / คำถามถึงลูกค้า",
+      answer: "คำตอบของลูกค้า",
+      edit: "แก้ไข / ประเมิน",
+      save: "บันทึก",
+      remove: "เอาออก",
+      removeConfirm: "เอาความต้องการข้อนี้ออก?",
+      recordAnswer: "บันทึกคำตอบลูกค้า",
+      answerOk: "บันทึกคำตอบ",
+      notePlaceholder: {
+        feasible: "วิธีที่จะทำ (ไม่บังคับ)",
+        not_feasible: "เหตุผลที่ทำไม่ได้ (บังคับ)",
+        needs_info: "สิ่งที่ต้องถามลูกค้า (บังคับ)",
+        unassessed: "",
+      } as Record<string, string>,
+      kinds: {
+        business: "เชิงธุรกิจ",
+        technical: "เชิงเทคนิค",
+      } as Record<string, string>,
+      assessments: {
+        unassessed: "ยังไม่ประเมิน",
+        feasible: "ทำได้",
+        not_feasible: "ทำไม่ได้",
+        needs_info: "ต้องขอข้อมูลลูกค้า",
+      } as Record<string, string>,
+      waitingAnswer: "รอลูกค้าตอบ",
+      summary: (feasible: number, notFeasible: number, waiting: number, unassessed: number) =>
+        `ทำได้ ${feasible} · ทำไม่ได้ ${notFeasible} · รอลูกค้าตอบ ${waiting} · ยังไม่ประเมิน ${unassessed}`,
+      waitingOnDeal: (count: number) => `รอลูกค้าตอบ ${count} ข้อ`,
+    },
   },
 
   notificationRules: {

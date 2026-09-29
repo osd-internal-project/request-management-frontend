@@ -31,6 +31,33 @@ export interface SolutionVersionSummary {
   createdAt: string;
 }
 
+export type RequirementKind = "business" | "technical";
+export type RequirementAssessment =
+  "unassessed" | "feasible" | "not_feasible" | "needs_info";
+
+/** CD-131 — one analysed requirement. */
+export interface SolutionRequirement {
+  id: string;
+  seq: number;
+  kind: RequirementKind;
+  text: string;
+  assessment: RequirementAssessment;
+  /** The reason, or the question to the customer when `needs_info`. */
+  note: string;
+  customerAnswer: string | null;
+  answeredAt: string | null;
+  answeredBy: string | null;
+}
+
+export interface RequirementCounts {
+  total: number;
+  unassessed: number;
+  feasible: number;
+  not_feasible: number;
+  needs_info: number;
+  waiting_customer: number;
+}
+
 export interface SolutionDetail {
   id: string;
   companyId: string;
@@ -39,6 +66,10 @@ export interface SolutionDetail {
   title: string;
   currentVersionNo: number;
   can_manage: boolean;
+  /** CD-131 — may record the customer's answers (Pre-Sales or the deal's sales). */
+  can_answer: boolean;
+  requirements: SolutionRequirement[];
+  requirement_counts: RequirementCounts;
   deal: {
     id: string;
     opportunityCode: string;
@@ -73,6 +104,8 @@ export interface DealSolution {
   currentVersionNo: number;
   updatedAt: string;
   latest: { versionNo: number; status: SolutionVersionStatus } | null;
+  /** CD-131 — questions the customer has not answered yet. */
+  waiting_customer: number;
 }
 
 export async function getSolution(
