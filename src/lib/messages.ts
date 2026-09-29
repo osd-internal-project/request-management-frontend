@@ -83,6 +83,7 @@ export const messages = {
     salesTargets: "เป้าและพยากรณ์",
     campaigns: "แคมเปญ",
     visitLog: "บันทึกการเข้าพบ",
+    handovers: "งานส่งมอบ",
     adminGroup: "ผู้ดูแลระบบ",
     adminCrm: "ตั้งค่า CRM",
     adminApiKeys: "กุญแจ API",
@@ -1693,6 +1694,77 @@ export const messages = {
     followUpFailed: (reason: string) => `ตั้งนัดติดตามไม่สำเร็จ: ${reason}`,
     openDeal: "เปิดหน้าดีล",
     logAnother: "บันทึกอีกรายการ",
+  },
+
+  /** CD-84 — ส่งมอบงานต่อจากฝ่ายขาย. */
+  handover: {
+    cardTitle: "ส่งมอบงานต่อ",
+    notWon: "ส่งมอบงานได้เมื่อโอกาสการขายชนะแล้ว (เปิดใบสั่งขายแล้ว)",
+    intro:
+      "ยืนยันทุกรายการก่อนส่งงานให้ทีมถัดไป — รายการที่มีเครื่องหมาย * ต้องกรอกรายละเอียด ไม่ครบส่งไม่ได้",
+    noItems: "ยังไม่ได้ตั้งรายการตรวจ — ผู้ดูแลตั้งได้ที่ ตั้งค่า CRM",
+    categories: {
+      commercial: "ข้อมูลการค้า",
+      requirement: "ความต้องการลูกค้า",
+      commitment: "สิ่งที่รับปากไว้",
+    } as Record<string, string>,
+    team: "ทีมที่รับงาน",
+    teamPlaceholder: "เลือกทีม",
+    detailPlaceholder: "รายละเอียด",
+    note: "หมายเหตุถึงทีมที่รับ",
+    saveDraft: "บันทึกร่าง",
+    submit: "ส่งมอบงาน",
+    submitted: "ส่งมอบงานแล้ว",
+    draftSaved: "บันทึกร่างแล้ว",
+    progress: (done: number, total: number) => `ครบ ${done}/${total} รายการ`,
+    status: {
+      draft: "ร่าง",
+      submitted: "รอทีมรับ",
+      accepted: "ทีมรับแล้ว",
+      returned: "ถูกตีกลับ",
+    } as Record<string, string>,
+    statusColor: {
+      draft: "default",
+      submitted: "gold",
+      accepted: "green",
+      returned: "orange",
+    } as Record<string, string>,
+    sentTo: (team: string, at: string, round: number) =>
+      `ส่งให้ ${team} เมื่อ ${at}` + (round > 1 ? ` (ครั้งที่ ${round})` : ""),
+    returnedBecause: (who: string, reason: string) =>
+      `${who} ตีกลับ: ${reason}`,
+    acceptedBy: (who: string, at: string) => `${who} รับงานเมื่อ ${at}`,
+    history: "ประวัติ",
+    historyAction: {
+      submitted: "ส่งมอบ",
+      accepted: "รับงาน",
+      returned: "ตีกลับ",
+    } as Record<string, string>,
+    // inbox
+    title: "งานส่งมอบ",
+    subtitle: "งานที่ฝ่ายขายส่งต่อมาให้ทีมของคุณ และงานที่คุณส่งไป",
+    boxIncoming: "ส่งถึงทีมของฉัน",
+    boxSent: "ที่ฉันส่ง",
+    allStatuses: "ทุกสถานะ",
+    empty: "ไม่มีงานส่งมอบ",
+    columns: {
+      deal: "โอกาสการขาย",
+      customer: "ลูกค้า",
+      team: "ทีมที่รับ",
+      owner: "ผู้ขาย",
+      status: "สถานะ",
+      updated: "อัปเดต",
+    },
+    open: "เปิด",
+    accept: "รับงาน",
+    accepted: "รับงานแล้ว",
+    returnWork: "ตีกลับ",
+    returnReason: "เหตุผลที่ตีกลับ (ฝ่ายขายจะเห็น)",
+    returnReasonRequired: "ต้องระบุเหตุผล",
+    cancel: "ยกเลิก",
+    returned: "ตีกลับแล้ว",
+    openDeal: "เปิดหน้าดีล",
+    amount: "มูลค่า",
   },
 
   /** CD-54 — ถ้อยคำการแจ้งเตือนต่อเหตุการณ์. */
@@ -3325,6 +3397,19 @@ export const messages = {
       tradeTermStandard: "ค่ามาตรฐาน",
       tradeTermAdd: "เพิ่มเงื่อนไข",
       tradeTermSave: "บันทึกเงื่อนไขมาตรฐาน",
+      /* CD-84 */
+      sectionHandover: "ส่งมอบงานต่อจากฝ่ายขาย",
+      handoverHint:
+        "รายการที่ผู้ขายต้องยืนยันก่อนส่งงานให้ทีมถัดไป — ติ๊ก \"ต้องกรอกรายละเอียด\" ถ้าต้องการคำตอบไม่ใช่แค่ติ๊ก · ลบออก = ปิดใช้ (งานที่ส่งไปแล้วเก็บรายการ ณ วันส่ง)",
+      handoverTeam: "ทีมที่รับงานโดยปริยาย",
+      handoverTeamNone: "ไม่กำหนด (ผู้ขายเลือกเอง)",
+      handoverCode: "รหัส",
+      handoverCategory: "หมวด",
+      handoverLabel: "รายการ",
+      handoverRequiresDetail: "ต้องกรอกรายละเอียด",
+      handoverAdd: "เพิ่มรายการ",
+      handoverSave: "บันทึกรายการตรวจ",
+      handoverTeamSave: "บันทึกทีม",
       /* CD-81 */
       /* CD-61 */
       sectionKyc: "KYC และรายชื่อต้องห้าม",

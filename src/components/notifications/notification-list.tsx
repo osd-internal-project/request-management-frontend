@@ -23,6 +23,8 @@ export function notificationHref(notification: AppNotification): string | null {
       return ROUTES.opportunityDetail(notification.resourceId);
     case "approval_case":
       return ROUTES.myWork;
+    case "sales_handover":
+      return `${ROUTES.handovers}?id=${notification.resourceId}`;
     default:
       return null;
   }

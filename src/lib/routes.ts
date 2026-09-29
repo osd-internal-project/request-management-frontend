@@ -82,6 +82,8 @@ export const ROUTES = {
   campaigns: `${HOME_PATH}/campaigns`,
   /** CD-75 — บันทึกการเข้าพบจากมือถือ */
   visitLog: `${HOME_PATH}/visit`,
+  /** CD-84 งานส่งมอบ — กล่องของทีมที่รับ และที่ผู้ขายส่งไป; `?id=` เปิดใบนั้น. */
+  handovers: `${HOME_PATH}/handovers`,
   /** CD-82 — เป้าและพยากรณ์ */
   salesTargets: `${HOME_PATH}/sales-targets`,
   /** CD-83 — รายงานยอดขาย */

@@ -86,6 +86,12 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     permissions: ["crm.sales.manage"],
     group: messages.nav.crmGroup,
   },
+  /** CD-84 — ทีมที่รับงานไม่จำเป็นต้องมีสิทธิ์ CRM; หน้าเองแสดงเฉพาะงานของทีม. */
+  {
+    label: messages.nav.handovers,
+    href: ROUTES.handovers,
+    group: messages.nav.crmGroup,
+  },
   {
     label: messages.nav.opportunities,
     href: ROUTES.opportunities,

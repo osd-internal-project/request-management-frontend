@@ -1,6 +1,7 @@
 "use client";
 
 import { ContractCard } from "@/components/crm/opportunities/contract-card";
+import { HandoverCard } from "@/components/crm/handover/handover-card";
 import { NegotiationCard } from "@/components/crm/opportunities/negotiation-card";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -44,6 +45,8 @@ import { appApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import type {
+  DealHandoverView,
+  OrgUnitShape,
   NegotiationRound,
   TradeTermStandard,
   CustomerRow,
@@ -77,6 +80,8 @@ export function OpportunityDetailView({
   currentUserId = null,
   negotiations = null,
   contractTypeName = null,
+  handover = null,
+  handoverTeams = [],
   openSaleOrderOnLoad = false,
 }: {
   opportunity: OpportunityDetail;
@@ -99,6 +104,10 @@ export function OpportunityDetailView({
   } | null;
   /** CD-81 — name of the contract type when the viewer may raise it. */
   contractTypeName?: string | null;
+  /** CD-84 — null = could not be read (the card is hidden). */
+  handover?: DealHandoverView | null;
+  /** CD-84 — teams the salesperson may hand over to. */
+  handoverTeams?: OrgUnitShape[];
   /** มาจากกระดานการ์ด (ลากไป "ชนะ") — เปิดกล่องเปิดใบสั่งขายให้ทันที. */
   openSaleOrderOnLoad?: boolean;
 }) {
@@ -597,6 +606,16 @@ export function OpportunityDetailView({
           <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={md.noSaleOrders} />
         )}
       </Card>
+
+      {/* CD-84 — ส่งมอบงานต่อ, once the deal is won. */}
+      {handover && opportunity.stage === "won" && (
+        <HandoverCard
+          opportunityId={opportunity.id}
+          view={handover}
+          teams={handoverTeams}
+          canManage={canManage}
+        />
+      )}
 
       {/* CD-81 — the deal's contract requests, followed from here. */}
       {relatedRequests !== null && opportunity.contractRequestTypeCode && (

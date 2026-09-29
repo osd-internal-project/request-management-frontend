@@ -4,6 +4,8 @@
  */
 import { apiGet, type ApiResult } from "../core";
 import type {
+  DealHandoverView,
+  SalesHandover,
   NegotiationRound,
   TradeTermStandard,
   LeadDetail,
@@ -87,6 +89,30 @@ export async function getNegotiations(
   ApiResult<{ standards: TradeTermStandard[]; rounds: NegotiationRound[] }>
 > {
   return apiGet(`opportunities/${id}/negotiations`);
+}
+
+/** CD-84 — the deal's handover and the checklist its form shows. */
+export async function getDealHandover(
+  id: string,
+): Promise<ApiResult<DealHandoverView>> {
+  return apiGet(`opportunities/${id}/handover`);
+}
+
+/** CD-84 — the handover inbox: sent to my team, or sent by me. */
+export async function getHandovers(options?: {
+  box?: "incoming" | "sent";
+  status?: string;
+}): Promise<ApiResult<SalesHandover[]>> {
+  const params = new URLSearchParams();
+  if (options?.box) params.set("box", options.box);
+  if (options?.status) params.set("status", options.status);
+  return apiGet(`handovers?${params.toString()}`);
+}
+
+export async function getHandover(
+  id: string,
+): Promise<ApiResult<SalesHandover>> {
+  return apiGet(`handovers/${id}`);
 }
 
 export async function getLostReasons(): Promise<

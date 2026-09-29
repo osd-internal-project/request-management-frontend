@@ -1675,6 +1675,8 @@ export interface CrmConfig {
   /** data URL (png/jpeg/webp). */
   letterheadLogo: string | null;
   quotationTerms: string | null;
+  /** CD-84 — the team a handover goes to by default. */
+  handoverOrgUnitId?: string | null;
 }
 
 /** CM-07 — one assignable value with its dimension, for pickers and filters. */
@@ -1775,4 +1777,74 @@ export interface QuotationPrintView {
   };
   /** false = draft / awaiting approval — the page watermarks it. */
   isFinal: boolean;
+}
+
+/** CD-84 — the three groups of the handover checklist. */
+export type HandoverCategory = "commercial" | "requirement" | "commitment";
+
+/** CD-84 — one line of the company's handover checklist (CRM settings). */
+export interface HandoverChecklistItem {
+  code: string;
+  category: HandoverCategory;
+  label: string;
+  requiresDetail: boolean;
+  active?: boolean;
+  sortOrder?: number;
+}
+
+/** CD-84 — a checklist line as the handover keeps it, with its answer. */
+export interface HandoverItem extends HandoverChecklistItem {
+  checked: boolean;
+  detail: string | null;
+}
+
+export type SalesHandoverStatus = "draft" | "submitted" | "accepted" | "returned";
+
+export interface HandoverHistoryEntry {
+  action: "submitted" | "accepted" | "returned";
+  at: string;
+  by: string;
+  byName: string;
+  round: number;
+  reason: string | null;
+}
+
+/** CD-84 — a won deal's handover to the next team. */
+export interface SalesHandover {
+  id: string;
+  opportunityId: string;
+  status: SalesHandoverStatus;
+  toOrgUnitId: string | null;
+  toOrgUnitName: string | null;
+  items: HandoverItem[];
+  note: string | null;
+  round: number;
+  submittedAt: string | null;
+  submittedByName: string | null;
+  decidedAt: string | null;
+  decidedByName: string | null;
+  returnReason: string | null;
+  history: HandoverHistoryEntry[];
+  updatedAt: string;
+  /** The viewer is in (or leads) the receiving team and it is waiting. */
+  canDecide: boolean;
+  opportunity: {
+    id: string;
+    opportunityCode: string;
+    title: string;
+    amount: string | number | null;
+    customerId: string | null;
+    customerName: string | null;
+    ownerUserId: string;
+    ownerName: string;
+  } | null;
+}
+
+/** CD-84 — `GET opportunities/:id/handover`. */
+export interface DealHandoverView {
+  dealWon: boolean;
+  editable: boolean;
+  defaultOrgUnitId: string | null;
+  items: HandoverItem[];
+  handover: SalesHandover | null;
 }
