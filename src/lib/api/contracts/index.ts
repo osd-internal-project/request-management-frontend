@@ -21,6 +21,12 @@ export interface ContractRow {
   counterpartyName: string | null;
   counterpartyTaxId: string | null;
   ownerUserId: string;
+  /** CD-148 */
+  ndaScope: string | null;
+  ndaDirection: "mutual" | "disclosing" | "receiving" | null;
+  /** CD-149 — the MSA this contract is made under. */
+  masterContractId: string | null;
+  master: { id: string; contractNo: string; title: string } | null;
   customer: { id: string; customerCode: string; nameTh: string } | null;
   _count: { documents: number };
 }
@@ -47,6 +53,14 @@ export interface ContractDetail extends ContractRow {
   ownerName: string | null;
   documents: ContractDocument[];
   access: { userId: string; displayName: string; grantedAt: string }[];
+  /** CD-149 — contracts made under this MSA (the viewer may see). */
+  subContracts: {
+    id: string;
+    contractNo: string;
+    title: string;
+    status: ContractStatus;
+    endOn: string;
+  }[];
   canManage: boolean;
 }
 

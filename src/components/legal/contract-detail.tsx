@@ -197,6 +197,39 @@ export function ContractDetailView({
               label: md.owner,
               children: contract.ownerName ?? "—",
             },
+            ...(contract.master
+              ? [
+                  {
+                    key: "master",
+                    label: md.master,
+                    children: (
+                      <Link href={ROUTES.contractDetail(contract.master.id)}>
+                        {contract.master.contractNo} · {contract.master.title}
+                      </Link>
+                    ),
+                  },
+                ]
+              : []),
+            ...(contract.kind === "nda"
+              ? [
+                  {
+                    key: "ndaDirection",
+                    label: md.ndaDirection,
+                    children: contract.ndaDirection
+                      ? m.ndaDirection[contract.ndaDirection]
+                      : "—",
+                  },
+                  {
+                    key: "ndaScope",
+                    label: md.ndaScope,
+                    children: (
+                      <span className="whitespace-pre-line">
+                        {contract.ndaScope ?? "—"}
+                      </span>
+                    ),
+                  },
+                ]
+              : []),
             ...(contract.renewalOpportunityId
               ? [
                   {
@@ -230,6 +263,41 @@ export function ContractDetailView({
           ]}
         />
       </Card>
+
+      {contract.kind === "msa" && (
+        <Card
+          size="small"
+          title={`${md.subContractsTitle} · ${contract.subContracts.length}`}
+        >
+          <Text type="secondary" className="mb-2 block text-xs">
+            {md.subContractsHint}
+          </Text>
+          {contract.subContracts.length ? (
+            <div className="divide-y">
+              {contract.subContracts.map((sub) => (
+                <div
+                  key={sub.id}
+                  className="flex flex-wrap items-center justify-between gap-2 py-1.5"
+                >
+                  <Link href={ROUTES.contractDetail(sub.id)}>
+                    {sub.contractNo} · {sub.title}
+                  </Link>
+                  <span>
+                    <Tag color={m.statusColor[sub.status]}>
+                      {m.status[sub.status]}
+                    </Tag>
+                    <Text type="secondary" className="text-xs">
+                      {dayjs(sub.endOn).format("D MMM YYYY")}
+                    </Text>
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <Text type="secondary">{md.noSubContracts}</Text>
+          )}
+        </Card>
+      )}
 
       {terms && (
         <ContractTermsCard

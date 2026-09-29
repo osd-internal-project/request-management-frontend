@@ -23,6 +23,8 @@ export function notificationHref(notification: AppNotification): string | null {
       return ROUTES.opportunityDetail(notification.resourceId);
     case "approval_case":
       return ROUTES.myWork;
+    case "customer_contract":
+      return ROUTES.contractDetail(notification.resourceId);
     case "sales_handover":
       return `${ROUTES.handovers}?id=${notification.resourceId}`;
     default:
@@ -32,7 +34,9 @@ export function notificationHref(notification: AppNotification): string | null {
 
 export function formatNotificationTime(iso: string): string {
   const at = dayjs(iso);
-  return at.isSame(dayjs(), "day") ? at.format("HH:mm") : at.format("D MMM YY HH:mm");
+  return at.isSame(dayjs(), "day")
+    ? at.format("HH:mm")
+    : at.format("D MMM YY HH:mm");
 }
 
 /**
@@ -51,7 +55,9 @@ export function NotificationList({
   compact?: boolean;
 }) {
   if (!notifications.length) {
-    return <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={emptyText} />;
+    return (
+      <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={emptyText} />
+    );
   }
 
   return (

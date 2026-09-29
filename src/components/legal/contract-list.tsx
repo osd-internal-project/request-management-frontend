@@ -152,6 +152,11 @@ export function ContractList({
                   </Tag>
                 )}
                 <Text className="block text-xs">{row.title}</Text>
+                {row.master && (
+                  <Text type="secondary" className="block text-xs">
+                    {m.underMaster(row.master.contractNo)}
+                  </Text>
+                )}
               </div>
             ),
           },

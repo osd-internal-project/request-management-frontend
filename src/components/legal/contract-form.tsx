@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Alert,
@@ -34,6 +34,9 @@ interface Draft {
   value: number | null;
   note: string;
   status: "active" | "cancelled";
+  ndaScope: string;
+  ndaDirection?: string;
+  masterId?: string;
 }
 
 function draftOf(contract?: ContractDetail): Draft {
@@ -53,6 +56,9 @@ function draftOf(contract?: ContractDetail): Draft {
         : Number(contract.value),
     note: contract?.note ?? "",
     status: contract?.status === "cancelled" ? "cancelled" : "active",
+    ndaScope: contract?.ndaScope ?? "",
+    ndaDirection: contract?.ndaDirection ?? undefined,
+    masterId: contract?.masterContractId ?? undefined,
   };
 }
 
@@ -86,6 +92,45 @@ export function ContractForm({
       : [],
   );
   const [busy, setBusy] = useState(false);
+  // CD-149 — the MSAs a contract may be made under (the server checks the party)
+  const [masters, setMasters] = useState<{ value: string; label: string }[]>(
+    contract?.master
+      ? [
+          {
+            value: contract.master.id,
+            label: `${contract.master.contractNo} · ${contract.master.title}`,
+          },
+        ]
+      : [],
+  );
+  useEffect(() => {
+    if (!open) return;
+    let live = true;
+    void appApi<{
+      data: {
+        id: string;
+        contractNo: string;
+        title: string;
+        customer: { nameTh: string } | null;
+        counterpartyName: string | null;
+      }[];
+    }>("contracts?kind=msa&page_size=100").then((result) => {
+      if (!live || !result.ok) return;
+      setMasters(
+        result.data.data
+          .filter((row) => row.id !== contract?.id)
+          .map((row) => ({
+            value: row.id,
+            label: `${row.contractNo} · ${row.title} — ${
+              row.customer?.nameTh ?? row.counterpartyName ?? ""
+            }`,
+          })),
+      );
+    });
+    return () => {
+      live = false;
+    };
+  }, [open, contract?.id]);
   const [error, setError] = useState<string | null>(null);
   const set = (next: Partial<Draft>) =>
     setDraft((current) => ({ ...current, ...next }));
@@ -134,6 +179,9 @@ export function ContractForm({
       end_on: draft.endOn,
       value: draft.value,
       note: draft.note,
+      nda_scope: draft.kind === "nda" ? draft.ndaScope : null,
+      nda_direction: draft.kind === "nda" ? (draft.ndaDirection ?? null) : null,
+      master_contract_id: draft.kind === "msa" ? "" : (draft.masterId ?? ""),
       ...(contract ? { status: draft.status } : {}),
     };
     const result = await appApi<{ id: string }>(
@@ -284,6 +332,50 @@ export function ContractForm({
             onChange={(value) => set({ value: value ?? null })}
           />
         </div>
+        {draft.kind === "nda" && (
+          <>
+            <div className="sm:col-span-2">
+              {label(f.ndaScope)}
+              <Input.TextArea
+                rows={2}
+                maxLength={2000}
+                placeholder={f.ndaScopePlaceholder}
+                value={draft.ndaScope}
+                onChange={(event) => set({ ndaScope: event.target.value })}
+              />
+            </div>
+            <div>
+              {label(f.ndaDirection)}
+              <Select
+                className="w-full"
+                allowClear
+                value={draft.ndaDirection}
+                onChange={(ndaDirection?: string) => set({ ndaDirection })}
+                options={Object.entries(m.ndaDirection).map(
+                  ([value, text]) => ({ value, label: text }),
+                )}
+              />
+            </div>
+          </>
+        )}
+        {draft.kind !== "msa" && (
+          <div className="sm:col-span-2">
+            {label(f.master)}
+            <Select
+              className="w-full"
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              placeholder={f.masterPlaceholder}
+              value={draft.masterId}
+              onChange={(masterId?: string) => set({ masterId })}
+              options={masters}
+            />
+            <span className="mt-1 block text-xs text-gray-500">
+              {f.masterHint}
+            </span>
+          </div>
+        )}
         {contract && (
           <div>
             {label(f.status)}

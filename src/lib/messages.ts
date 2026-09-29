@@ -4147,7 +4147,19 @@ export const messages = {
       required: "จำเป็นต้องกรอก",
       save: "บันทึก",
       saved: "บันทึกแล้ว",
+      ndaScope: "ข้อมูลที่คุ้มครอง",
+      ndaScopePlaceholder: "เช่น แบบระบบ ราคา ข้อมูลลูกค้า",
+      ndaDirection: "ทิศทางการเปิดเผยข้อมูล",
+      master: "อ้างอิงข้อตกลงหลัก (MSA)",
+      masterPlaceholder: "ไม่อ้างอิง",
+      masterHint: "ข้อตกลงหลักต้องเป็นคู่สัญญาเดียวกัน — แก้ข้อตกลงหลักแล้วผู้รับผิดชอบสัญญานี้จะได้รับแจ้ง",
     },
+    ndaDirection: {
+      mutual: "เปิดเผยทั้งสองฝ่าย",
+      disclosing: "เราเป็นผู้เปิดเผย",
+      receiving: "เราเป็นผู้รับข้อมูล",
+    } as Record<string, string>,
+    underMaster: (no: string) => `ภายใต้ ${no}`,
     detail: {
       back: "กลับไปคลังสัญญา",
       edit: "แก้ไข",
@@ -4186,6 +4198,13 @@ export const messages = {
       accessSave: "บันทึกการเข้าถึง",
       accessSaved: "บันทึกการเข้าถึงแล้ว",
       notConfidential: "สัญญาทั่วไป — ผู้มีสิทธิ์ดูคลังสัญญาเห็นได้ทุกคน",
+      master: "ข้อตกลงหลัก (MSA)",
+      ndaScope: "ข้อมูลที่คุ้มครอง",
+      ndaDirection: "ทิศทาง",
+      subContractsTitle: "สัญญาย่อยภายใต้ข้อตกลงนี้",
+      noSubContracts: "ยังไม่มีสัญญาที่อ้างอิงข้อตกลงนี้",
+      subContractsHint:
+        "แก้รายละเอียด ข้อกำหนด หรือไฟล์ของข้อตกลงหลัก ระบบแจ้งผู้รับผิดชอบสัญญาย่อยที่ยังมีผลทุกฉบับ",
     },
     /** CD-153..156 — ข้อกำหนดของสัญญา. */
     terms: {
