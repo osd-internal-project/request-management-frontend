@@ -6,6 +6,7 @@ import Text from "antd/es/typography/Text";
 import dayjs from "dayjs";
 import type { RequestRow } from "@/lib/api/types";
 import type { DealSolution } from "@/lib/api/presales";
+import { APPROVAL_COLOR } from "@/components/presales/solution-workspace";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 
@@ -131,6 +132,17 @@ export function ContractCard({
                               ] ?? design.latest.status
                             }`}
                           </Link>
+                          {design.latest.status !== "draft" && (
+                            <Tag
+                              color={
+                                APPROVAL_COLOR[design.latest.approvalStatus]
+                              }
+                            >
+                              {messages.presales.approval.statuses[
+                                design.latest.approvalStatus
+                              ] ?? design.latest.approvalStatus}
+                            </Tag>
+                          )}
                           {design.waiting_customer > 0 && (
                             <Tag color="orange">
                               {messages.presales.analysis.waitingOnDeal(

@@ -30,9 +30,14 @@ export interface SolutionFile {
   uploadedAt: string;
 }
 
+/** CD-143 — where a version stands with its approval. */
+export type SolutionApprovalStatus =
+  "none" | "pending" | "approved" | "rejected" | "cancelled";
+
 export interface SolutionVersionSummary {
   versionNo: number;
   status: SolutionVersionStatus;
+  approvalStatus: SolutionApprovalStatus;
   changeNote: string | null;
   lockedAt: string | null;
   createdAt: string;
@@ -86,6 +91,12 @@ export interface SolutionDetail {
   request: { id: string; requestNo: string | null; status: string } | null;
   /** The "ขอ Solution" form as Sales filled it in. */
   brief: Record<string, string>;
+  /** CD-143 — may this version be sent for approval (blocker = why not). */
+  approval: {
+    configured: boolean;
+    blocker: string | null;
+    request: { id: string; requestNo: string | null; status: string } | null;
+  };
   versions: SolutionVersionSummary[];
   version: SolutionVersionSummary & {
     id: string;
@@ -96,6 +107,8 @@ export interface SolutionDetail {
     outOfScope: string[];
     deliverables: SolutionDeliverable[];
     lockedBy: string | null;
+    approvalRequestId: string | null;
+    approvedAt: string | null;
     updatedAt: string;
     files: SolutionFile[];
   };
@@ -113,7 +126,11 @@ export interface DealSolution {
   requestId: string;
   currentVersionNo: number;
   updatedAt: string;
-  latest: { versionNo: number; status: SolutionVersionStatus } | null;
+  latest: {
+    versionNo: number;
+    status: SolutionVersionStatus;
+    approvalStatus: SolutionApprovalStatus;
+  } | null;
   /** CD-131 — questions the customer has not answered yet. */
   waiting_customer: number;
 }

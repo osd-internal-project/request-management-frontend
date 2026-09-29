@@ -346,6 +346,9 @@ function ConfigSection({
   const [solutionType, setSolutionType] = useState(
     config.solutionRequestTypeCode ?? "",
   );
+  const [solutionApprovalType, setSolutionApprovalType] = useState(
+    config.solutionApprovalTypeCode ?? "",
+  );
   const [discoveryRequired, setDiscoveryRequired] = useState(
     config.discoveryRequired ?? false,
   );
@@ -361,6 +364,7 @@ function ConfigSection({
       contract_request_type_code: contractType,
       liability_approval_request_type_code: liabilityType,
       solution_request_type_code: solutionType,
+      solution_approval_type_code: solutionApprovalType,
       dedup_threshold: threshold,
       min_margin_pct: minMargin,
       quotation_validity_days: validityDays,
@@ -550,6 +554,21 @@ function ConfigSection({
       </div>
       <Text type="secondary" className="mt-2 block text-xs">
         {m.solutionHint}
+      </Text>
+      {/* CD-143 — ประเภทคำขออนุมัติ Solution */}
+      <div className="mt-3 max-w-xs">
+        <Text className="mb-1 block text-xs">{m.solutionApprovalTypeCode}</Text>
+        <Input
+          value={solutionApprovalType}
+          maxLength={20}
+          allowClear
+          onChange={(e) =>
+            setSolutionApprovalType(e.target.value.toUpperCase())
+          }
+        />
+      </div>
+      <Text type="secondary" className="mt-2 block text-xs">
+        {m.solutionApprovalHint}
       </Text>
 
       <Button

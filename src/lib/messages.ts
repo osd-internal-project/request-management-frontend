@@ -2077,6 +2077,26 @@ export const messages = {
       remove: "เอาออก",
     },
 
+    /** CD-143 — อนุมัติ Solution */
+    approval: {
+      label: "การอนุมัติ",
+      statuses: {
+        none: "ยังไม่ขออนุมัติ",
+        pending: "รออนุมัติ",
+        approved: "อนุมัติแล้ว",
+        rejected: "ไม่อนุมัติ",
+        cancelled: "ยกเลิกคำขอ",
+      } as Record<string, string>,
+      request: "ขออนุมัติ Solution",
+      requestHint:
+        "จะสร้างร่างคำขอ “ขออนุมัติ Solution” พร้อมสรุป ขอบเขตงาน และสมมติฐานของเวอร์ชันนี้ — แนบเอกสารเพิ่มแล้วกดยื่นที่หน้าคำขอ",
+      requestOk: "สร้างร่างคำขอ",
+      openRequest: (no: string) => `เปิดคำขอ ${no}`,
+      draftRequest: "ร่าง",
+      approvedHint: "เวอร์ชันนี้อนุมัติแล้ว — เสนอลูกค้าได้ · ถ้าต้องแก้ให้เปิดเวอร์ชันใหม่แล้วขออนุมัติใหม่",
+      notConfigured: "ยังไม่ได้ตั้งประเภทคำขอ “ขออนุมัติ Solution” ในตั้งค่า CRM",
+    },
+
     /** CD-131 — วิเคราะห์ความต้องการ */
     analysis: {
       title: "วิเคราะห์ความต้องการ",
@@ -4028,6 +4048,10 @@ export const messages = {
       solutionRequestTypeCode: "ประเภทคำขอ \"ขอ Solution และประเมินต้นทุน\"",
       solutionHint:
         "หน้าดีลจะมีการ์ด “Solution” พร้อมปุ่มขอ Solution ด้วยประเภทนี้ — ช่องบังคับของฟอร์มประเภทนี้คือรายการตรวจความครบก่อนยื่น (แก้ได้ที่หน้าประเภทคำขอ) · เว้นว่าง = ไม่แสดงการ์ด",
+      /* CD-143 */
+      solutionApprovalTypeCode: "ประเภทคำขอ \"ขออนุมัติ Solution\"",
+      solutionApprovalHint:
+        "หน้า Solution จะมีปุ่มขออนุมัติบนเวอร์ชันที่ยืนยันแล้ว — ผู้อนุมัติคือตารางอำนาจอนุมัติของประเภทนี้ · เว้นว่าง = ไม่แสดงปุ่ม",
       contractRequestTypeCode: "ประเภทคำขอที่ฝ่ายกฎหมายรับทำ/แก้สัญญา",
       liabilityApprovalRequestTypeCode:
         "ประเภทคำขออนุมัติเพดานความรับผิดเกินมูลค่าสัญญา",

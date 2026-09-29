@@ -1770,6 +1770,8 @@ export interface CrmConfig {
   liabilityApprovalRequestTypeCode?: string | null;
   /** CD-130 — the type Pre-Sales takes solution requests on. */
   solutionRequestTypeCode?: string | null;
+  /** CD-143 — the type a Solution version is sent for approval on. */
+  solutionApprovalTypeCode?: string | null;
   /** CD-61 — KYC ใช้ได้กี่เดือนก่อนต้องทบทวน ตามความเสี่ยง. */
   kycReviewMonthsHigh?: number;
   kycReviewMonthsMedium?: number;

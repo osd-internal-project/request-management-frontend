@@ -46,6 +46,15 @@ const STATUS_COLOR: Record<string, string> = {
   superseded: "default",
 };
 
+/** CD-143 — the approval tag on a version. */
+export const APPROVAL_COLOR: Record<string, string> = {
+  none: "default",
+  pending: "gold",
+  approved: "green",
+  rejected: "red",
+  cancelled: "default",
+};
+
 const CATEGORIES = Object.keys(mp.categories) as AssumptionCategory[];
 
 function fileSize(bytes: number): string {
@@ -153,6 +162,21 @@ export function SolutionWorkspace({ solution }: { solution: SolutionDetail }) {
     router.refresh();
   }
 
+  async function requestApproval() {
+    setBusy(true);
+    const result = await appApi<{ request_id: string }>(
+      `${versionPath}/approval`,
+      { method: "POST" },
+    );
+    setBusy(false);
+    if (!result.ok) {
+      void message.error(result.message);
+      return;
+    }
+    // The draft opens for documents and submit — the request page's own flow.
+    router.push(ROUTES.requestDetail(result.data.request_id));
+  }
+
   async function upload(files: FileList | null) {
     const file = files?.[0];
     if (!file) return;
@@ -241,6 +265,32 @@ export function SolutionWorkspace({ solution }: { solution: SolutionDetail }) {
               </Popconfirm>
             </>
           )}
+          {solution.approval.request && (
+            <Link href={ROUTES.requestDetail(solution.approval.request.id)}>
+              <Button>
+                {mp.approval.openRequest(
+                  solution.approval.request.requestNo ??
+                    mp.approval.draftRequest,
+                )}
+              </Button>
+            </Link>
+          )}
+          {solution.can_manage &&
+            solution.approval.configured &&
+            !solution.approval.blocker && (
+              <Popconfirm
+                title={mp.approval.request}
+                description={
+                  <div style={{ maxWidth: 320 }}>{mp.approval.requestHint}</div>
+                }
+                okText={mp.approval.requestOk}
+                onConfirm={() => void requestApproval()}
+              >
+                <Button type="primary" loading={busy}>
+                  {mp.approval.request}
+                </Button>
+              </Popconfirm>
+            )}
           {solution.can_manage &&
             version.status !== "draft" &&
             version.versionNo === solution.currentVersionNo && (
@@ -251,6 +301,14 @@ export function SolutionWorkspace({ solution }: { solution: SolutionDetail }) {
         </Space>
       </div>
 
+      {version.approvalStatus === "approved" && (
+        <Alert type="success" showIcon title={mp.approval.approvedHint} />
+      )}
+      {solution.can_manage &&
+        version.status === "locked" &&
+        !solution.approval.configured && (
+          <Alert type="info" showIcon title={mp.approval.notConfigured} />
+        )}
       {!solution.can_manage && (
         <Alert type="info" showIcon title={mp.readOnly} />
       )}
@@ -287,6 +345,12 @@ export function SolutionWorkspace({ solution }: { solution: SolutionDetail }) {
               <Tag color={STATUS_COLOR[version.status]}>
                 {mp.versionStatus[version.status] ?? version.status}
               </Tag>
+              {version.status !== "draft" && (
+                <Tag color={APPROVAL_COLOR[version.approvalStatus]}>
+                  {mp.approval.statuses[version.approvalStatus] ??
+                    version.approvalStatus}
+                </Tag>
+              )}
             </Space>
           }
         >
@@ -548,6 +612,18 @@ export function SolutionWorkspace({ solution }: { solution: SolutionDetail }) {
               title: mp.changeNote,
               dataIndex: "changeNote",
               render: (note: string | null) => note ?? "—",
+            },
+            {
+              title: mp.approval.label,
+              dataIndex: "approvalStatus",
+              render: (status: string, row) =>
+                row.status === "draft" ? (
+                  "—"
+                ) : (
+                  <Tag color={APPROVAL_COLOR[status]}>
+                    {mp.approval.statuses[status] ?? status}
+                  </Tag>
+                ),
             },
             {
               title: mp.lockedAt,
