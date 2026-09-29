@@ -6,6 +6,7 @@ import {
   getContractObligations,
   getContractRisk,
   getContractTerms,
+  getDraftForRequest,
 } from "@/lib/api/contracts";
 import { getAllDirectoryUsers } from "@/lib/api/users";
 import { HOME_PATH } from "@/lib/routes";
@@ -40,6 +41,10 @@ export default async function ContractPage({ params }: Params) {
       : Promise.resolve(null),
   ]);
   if (!result.ok) notFound();
+  // CD-146 — the draft it was written from, when it came from a request
+  const draft = result.data.requestId
+    ? await getDraftForRequest(result.data.requestId)
+    : null;
 
   return (
     <ContractDetailView
@@ -48,6 +53,7 @@ export default async function ContractPage({ params }: Params) {
       obligations={obligations.ok ? obligations.data : null}
       installments={installments.ok ? installments.data : null}
       risk={risk.ok ? risk.data : null}
+      draft={draft?.ok && draft.data.draft ? draft.data : null}
       currentUserId={session?.user.id ?? null}
       people={(users?.ok ? users.data : []).map((user) => ({
         id: user.id,

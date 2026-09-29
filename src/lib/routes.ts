@@ -152,6 +152,10 @@ export const ROUTES = {
   /** CD-161 — คลังสัญญา (ฝ่ายกฎหมาย). */
   contracts: `${HOME_PATH}/contracts`,
   contractDetail: (id: string) => `${HOME_PATH}/contracts/${id}`,
+  /** CD-146 — แม่แบบสัญญา และร่างสัญญา (ฉบับล่าสุด หรือฉบับที่ระบุ). */
+  contractTemplates: `${HOME_PATH}/contracts/templates`,
+  contractDraft: (id: string, version?: number) =>
+    `${HOME_PATH}/contracts/drafts/${id}${version ? `?version=${version}` : ""}`,
   /** CD-163 — ข้อผูกพันตามสัญญาที่ฉันรับผิดชอบ. */
   obligations: `${HOME_PATH}/obligations`,
   /** CD-66 — ช่องทางรับคำขอจากลูกค้า (web form / LINE / AI CARE). */

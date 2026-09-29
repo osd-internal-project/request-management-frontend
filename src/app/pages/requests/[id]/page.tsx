@@ -30,6 +30,8 @@ import { ResponseClock, SeverityTag } from "@/components/requests/severity";
 import { can, getSession } from "@/lib/session";
 import { getSolutionForRequest } from "@/lib/api/presales";
 import { SolutionStartCard } from "@/components/presales/solution-start-card";
+import { getDraftForRequest } from "@/lib/api/contracts";
+import { ContractDraftCard } from "@/components/legal/contract-draft-card";
 import { messages } from "@/lib/messages";
 import { STATUS_COLOR } from "@/components/requests/status";
 
@@ -134,6 +136,10 @@ export default async function RequestDetailPage({
   // CD-132 — Pre-Sales starts (or reopens) the Solution from its request.
   const solutionResult = can(session, "presales.solution.manage")
     ? await getSolutionForRequest(id)
+    : null;
+  // CD-146 — Legal drafts the contract on a contract request.
+  const draftResult = can(session, "legal.contract.read")
+    ? await getDraftForRequest(id)
     : null;
 
   if (!result.ok) {
@@ -262,6 +268,14 @@ export default async function RequestDetailPage({
 
       {solutionResult?.ok && (
         <SolutionStartCard view={{ ...solutionResult.data, requestId: id }} />
+      )}
+
+      {draftResult?.ok && (
+        <ContractDraftCard
+          requestId={id}
+          view={draftResult.data}
+          canManage={can(session, "legal.contract.manage")}
+        />
       )}
 
       {checklist.length > 0 && (

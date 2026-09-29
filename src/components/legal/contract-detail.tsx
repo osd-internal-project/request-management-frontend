@@ -30,6 +30,7 @@ import { ContractTermsCard } from "@/components/legal/contract-terms-card";
 import { ContractObligationsCard } from "@/components/legal/contract-obligations-card";
 import { ContractInstallmentsCard } from "@/components/legal/contract-installments-card";
 import { ContractRiskCard } from "@/components/legal/contract-risk-card";
+import { ContractDraftCard } from "@/components/legal/contract-draft-card";
 import { SearchSelect } from "@/components/ui/search-select";
 import { appApi } from "@/lib/api/client";
 import type {
@@ -38,6 +39,7 @@ import type {
   ContractObligation,
   ContractRiskView,
   ContractTermsView,
+  DraftForRequest,
 } from "@/lib/api/contracts";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
@@ -64,6 +66,7 @@ export function ContractDetailView({
   obligations,
   installments,
   risk,
+  draft,
   currentUserId,
   people,
 }: {
@@ -76,6 +79,8 @@ export function ContractDetailView({
   readonly installments: ContractInstallmentsView | null;
   /** CD-158 — null = could not load. */
   readonly risk: ContractRiskView | null;
+  /** CD-146 — the draft it was written from; null = none. */
+  readonly draft: DraftForRequest | null;
   readonly currentUserId: string | null;
   /** The company's users, for the access list (Legal only). */
   readonly people: { id: string; name: string }[];
@@ -317,6 +322,14 @@ export function ContractDetailView({
             <Text type="secondary">{md.noSubContracts}</Text>
           )}
         </Card>
+      )}
+
+      {draft && contract.requestId && (
+        <ContractDraftCard
+          requestId={contract.requestId}
+          view={draft}
+          canManage={false}
+        />
       )}
 
       {risk && (

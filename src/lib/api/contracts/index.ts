@@ -255,3 +255,100 @@ export function getContractRisk(
 ): Promise<ApiResult<ContractRiskView>> {
   return apiGet(`/contracts/${encodeURIComponent(id)}/risk`);
 }
+
+/** CD-146 — one clause of a template or a draft. */
+export interface ContractClause {
+  key: string;
+  heading: string;
+  body: string;
+}
+
+/** CD-146 — a contract template. */
+export interface ContractTemplate {
+  id: string;
+  code: string;
+  name: string;
+  kind: "standard" | "nda" | "msa" | "other";
+  active: boolean;
+  clauses: ContractClause[];
+  updatedAt: string;
+}
+
+export interface TemplateVariables {
+  variables: { name: string; label: string }[];
+  termPattern: string;
+}
+
+/** CD-146 — the draft card on a contract request. */
+export interface DraftForRequest {
+  eligible: boolean;
+  editable?: boolean;
+  draft: {
+    id: string;
+    template: { id: string; code: string; name: string };
+    latestVersionNo: number;
+    missing: string[];
+    versions: {
+      versionNo: number;
+      note: string | null;
+      createdAt: string;
+      createdBy: string;
+      createdByName: string;
+    }[];
+  } | null;
+  templates: ContractTemplate[];
+}
+
+export type ClauseMark = "template" | "edited" | "added";
+
+/** CD-146 — one version of a draft, each clause marked against the template. */
+export interface ContractDraftView {
+  id: string;
+  request: { id: string; requestNo: string | null; status: string };
+  template: { id: string; code: string; name: string };
+  editable: boolean;
+  latestVersionNo: number;
+  missing: string[];
+  version: {
+    versionNo: number;
+    note: string | null;
+    createdAt: string;
+    createdBy: string;
+    createdByName: string;
+  };
+  clauses: (ContractClause & {
+    mark: ClauseMark;
+    templateBody: string | null;
+  })[];
+  removed: ContractClause[];
+  counts: { edited: number; added: number; removed: number };
+}
+
+export function getContractTemplates(
+  includeInactive = false,
+): Promise<ApiResult<ContractTemplate[]>> {
+  return apiGet(
+    `/contract-templates${includeInactive ? "?include_inactive=true" : ""}`,
+  );
+}
+
+export function getTemplateVariables(): Promise<ApiResult<TemplateVariables>> {
+  return apiGet("/contract-templates/variables");
+}
+
+export function getDraftForRequest(
+  requestId: string,
+): Promise<ApiResult<DraftForRequest>> {
+  return apiGet(
+    `/contract-drafts/by-request/${encodeURIComponent(requestId)}`,
+  );
+}
+
+export function getContractDraft(
+  id: string,
+  version?: number,
+): Promise<ApiResult<ContractDraftView>> {
+  return apiGet(
+    `/contract-drafts/${encodeURIComponent(id)}${version ? `?version=${version}` : ""}`,
+  );
+}

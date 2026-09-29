@@ -162,6 +162,13 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     permissions: ["legal.contract.read"],
     group: messages.nav.legalGroup,
   },
+  /** CD-146 — แม่แบบสัญญา: ข้อสัญญาพร้อมตัวแปรที่เติมจากดีลตอนเริ่มร่าง. */
+  {
+    label: messages.nav.contractTemplates,
+    href: ROUTES.contractTemplates,
+    permissions: ["legal.contract.read"],
+    group: messages.nav.legalGroup,
+  },
   {
     // ตารางอำนาจอนุมัติ (A1) has no entry of its own: it is two tabs of the
     // request type it belongs to, reached from ประเภทคำขอ below.
