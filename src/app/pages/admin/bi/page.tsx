@@ -20,6 +20,7 @@ import {
 import { messages } from "@/lib/messages";
 import { SearchTreeSelect } from "@/components/ui/search-select";
 import { buildUnitTree } from "@/lib/org/org-tree";
+import { DataMartCard } from "@/components/admin/data-mart-card";
 
 /**
  * CD-92 v2 — the "ตั้งค่า Dashboard" admin screen.
@@ -257,6 +258,9 @@ export default function AdminBiPage() {
           ]}
         />
       </Card>
+
+      {/* CD-91 */}
+      <DataMartCard />
 
       {settingsUrl && (
         <Card title={messages.bi.settingsTitle}>

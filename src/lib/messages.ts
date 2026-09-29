@@ -2015,6 +2015,29 @@ export const messages = {
     formSortOrder: "ลำดับในเมนู",
     saved: "บันทึกแล้ว",
     deactivated: "ปิดใช้งานแดชบอร์ดแล้ว",
+
+    // CD-91 — Data Mart
+    martTitle: "Data Mart ยอดขายและคำขอค้าง",
+    martHint: (minutes: number) =>
+      minutes > 0
+        ? `แดชบอร์ดผู้บริหารอ่านข้อมูลที่เตรียมไว้ใน schema mart — ระบบสร้างใหม่ทุก ${minutes} นาที`
+        : "แดชบอร์ดผู้บริหารอ่านข้อมูลที่เตรียมไว้ใน schema mart — การสร้างอัตโนมัติปิดอยู่",
+    martRefresh: "ปรับปรุงตอนนี้",
+    martRefreshed: "ปรับปรุง Data Mart แล้ว",
+    martNever: "ยังไม่เคยสร้าง",
+    martColumns: {
+      table: "ตาราง",
+      rows: "จำนวนแถว",
+      refreshedAt: "สร้างล่าสุด",
+      duration: "ใช้เวลา (ms)",
+    },
+    martTables: {
+      fact_sales: "ยอดขาย (ใบสั่งขาย)",
+      fact_pipeline: "Pipeline ดีลที่เปิดอยู่",
+      sales_target_actual: "เป้า vs ยอดจริง",
+      open_requests: "คำขอค้าง",
+      request_backlog_daily: "คำขอค้างรายวัน (วันนี้)",
+    } as Record<string, string>,
   },
 
   /** หน้ากุญแจ API ของช่องทางภายนอก (`admin.integration.manage`). */

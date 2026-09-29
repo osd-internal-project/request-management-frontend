@@ -72,6 +72,29 @@ export async function listBiDashboards(): Promise<
   return adminApi<BiDashboardConfig[]>("bi/dashboards");
 }
 
+/** CD-91 — one Data Mart table and when it was last rebuilt. */
+export interface MartTableStatus {
+  table_name: string;
+  refreshed_at: string | null;
+  row_count: number | null;
+  duration_ms: number | null;
+}
+
+export interface MartStatus {
+  interval_ms: number;
+  tables: MartTableStatus[];
+}
+
+/** CD-91 — the Data Mart's last rebuild, per table. */
+export async function getMartStatus(): Promise<ClientResult<MartStatus>> {
+  return adminApi<MartStatus>("bi/mart");
+}
+
+/** CD-91 — rebuild the Data Mart now; answers the fresh status. */
+export async function refreshMart(): Promise<ClientResult<MartStatus>> {
+  return adminApi<MartStatus>("bi/mart/refresh", { method: "POST" });
+}
+
 /** Org units of the active company, for the audience picker. */
 export async function listBiOrgUnits(): Promise<
   ClientResult<BiOrgUnitOption[]>
