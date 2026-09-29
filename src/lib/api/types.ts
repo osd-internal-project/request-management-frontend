@@ -1036,6 +1036,9 @@ export interface CustomerRow {
   kycRiskLevel?: KycRiskLevel | null;
   /** CD-61 — the KYC runs out on this day (review date or first document expiry). */
   kycExpiresOn?: string | null;
+  /** CD-62 — not approved = the customer and its sale orders wait before SAP. */
+  approvalStatus?: CustomerApprovalStatus;
+  approvalRequestId?: string | null;
   accountOwnerUserId: string | null;
   accountOwner: { id: string; displayName: string } | null;
   segments: {
@@ -1757,6 +1760,8 @@ export interface CrmConfig {
   quotationTerms: string | null;
   /** CD-84 — the team a handover goes to by default. */
   handoverOrgUnitId?: string | null;
+  /** CD-62 — approval request type per customer type. */
+  customerApprovalTypes?: Partial<Record<"corporate" | "individual" | "government", string>>;
 }
 
 /** CM-07 — one assignable value with its dimension, for pickers and filters. */
@@ -2038,3 +2043,17 @@ export interface CustomerAccount extends PortfolioRow {
     | null;
 }
 
+/** CD-62 — the new-customer approval. */
+export type CustomerApprovalStatus = "approved" | "pending" | "rejected";
+
+export interface CustomerApprovalView {
+  status: CustomerApprovalStatus;
+  request: {
+    id: string;
+    requestNo: string | null;
+    status: string;
+    typeCode: string;
+  } | null;
+  type_code: string | null;
+  can_raise: boolean;
+}

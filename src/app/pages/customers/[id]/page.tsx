@@ -69,9 +69,28 @@ export default async function CustomerDetailPage({
   // same, not an error page that admits the row exists.
   if (!detailResult.ok) notFound();
 
+  // CD-62 — only a customer still waiting (or refused) has anything to show;
+  // same `crm.customer.read` this page already requires.
+  const approvalResult =
+    detailResult.data.approvalStatus &&
+    detailResult.data.approvalStatus !== "approved"
+      ? await customers.getCustomerApproval(id)
+      : null;
+
   return (
     <CustomerDetailView
       customer={detailResult.data}
+      approval={
+        approvalResult?.ok
+          ? {
+              ...approvalResult.data,
+              // raising it makes a request as this viewer
+              can_raise:
+                approvalResult.data.can_raise &&
+                can(session, "request.create"),
+            }
+          : null
+      }
       history={historyResult.ok ? historyResult.data : []}
       timeline={timelineResult.ok ? timelineResult.data : []}
       segmentOptions={optionsResult.ok ? optionsResult.data : []}

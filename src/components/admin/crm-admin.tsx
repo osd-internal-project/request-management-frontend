@@ -93,6 +93,7 @@ export function CrmAdmin({
       <SegmentSection dimensions={dimensions} onCall={call} />
       <KycProductSection rows={kycProducts} onCall={call} />
       <ConfigSection config={config} onCall={call} />
+      <CustomerApprovalSection config={config} onCall={call} />
       <TradeTermsSection terms={tradeTerms} onCall={call} />
       <HandoverSection
         config={config}
@@ -720,6 +721,74 @@ function TradeTermsSection({
           {m.tradeTermSave}
         </Button>
       </Space>
+    </Card>
+  );
+}
+
+const CUSTOMER_TYPES = ["corporate", "individual", "government"] as const;
+
+/**
+ * CD-62 — which request type approves a new customer, per customer type (the
+ * type holds the required documents). Empty = that type needs no approval.
+ */
+function CustomerApprovalSection({
+  config,
+  onCall,
+}: {
+  config: CrmConfig;
+  onCall: (path: string, method: string, body?: unknown) => Promise<boolean>;
+}) {
+  const [codes, setCodes] = useState<Record<string, string>>(() =>
+    Object.fromEntries(
+      CUSTOMER_TYPES.map((type) => [
+        type,
+        config.customerApprovalTypes?.[type] ?? "",
+      ]),
+    ),
+  );
+  const [busy, setBusy] = useState(false);
+
+  async function save() {
+    setBusy(true);
+    await onCall("config", "PATCH", { customer_approval_types: codes });
+    setBusy(false);
+  }
+
+  return (
+    <Card size="small" title={m.sectionCustomerApproval}>
+      <Text type="secondary" className="mb-3 block text-xs">
+        {m.customerApprovalHint}
+      </Text>
+      <div className="flex flex-wrap gap-4">
+        {CUSTOMER_TYPES.map((type) => (
+          <div key={type} style={{ width: 200 }}>
+            <Text className="mb-1 block text-xs">
+              {messages.customers.type[type]}
+            </Text>
+            <Input
+              value={codes[type]}
+              maxLength={20}
+              allowClear
+              placeholder={m.customerApprovalNone}
+              onChange={(e) =>
+                setCodes((current) => ({
+                  ...current,
+                  [type]: e.target.value.toUpperCase(),
+                }))
+              }
+            />
+          </div>
+        ))}
+      </div>
+      <Button
+        type="primary"
+        size="small"
+        className="mt-3"
+        loading={busy}
+        onClick={() => void save()}
+      >
+        {m.customerApprovalSave}
+      </Button>
     </Card>
   );
 }

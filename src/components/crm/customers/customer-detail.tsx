@@ -39,6 +39,7 @@ import {
   saleOrderExpandable,
 } from "@/components/crm/sale-orders/sale-order-parts";
 import { appApi } from "@/lib/api/client";
+import { CustomerApprovalBanner } from "@/components/crm/customers/customer-approval-banner";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import type {
@@ -52,6 +53,7 @@ import type {
   RequestRow,
   SaleOrderRow,
   SegmentOption,
+  CustomerApprovalView,
 } from "@/lib/api/types";
 
 const m = messages.customers;
@@ -93,6 +95,7 @@ export function CustomerDetailView({
   customerQuotations,
   customerSaleOrders,
   canManageSales = false,
+  approval = null,
 }: {
   customer: CustomerDetail;
   history: CustomerFieldChange[];
@@ -121,6 +124,8 @@ export function CustomerDetailView({
   customerSaleOrders: SaleOrderRow[] | null;
   /** CD-86 — may open an expansion deal from the account tab. */
   canManageSales?: boolean;
+  /** CD-62 — only fetched for a customer not yet approved. */
+  approval?: CustomerApprovalView | null;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -177,6 +182,10 @@ export function CustomerDetailView({
         />
       )}
 
+      {approval && (
+        <CustomerApprovalBanner customerId={customer.id} view={approval} />
+      )}
+
       <div className="flex items-start justify-between gap-3">
         <div>
           <Title level={4} className="mb-1!">
@@ -195,6 +204,16 @@ export function CustomerDetailView({
                 {customer.branchName ? ` · ${customer.branchName}` : ""}
               </Tag>
             )}
+            {customer.approvalStatus &&
+              customer.approvalStatus !== "approved" && (
+                <Tag
+                  color={
+                    customer.approvalStatus === "rejected" ? "red" : "orange"
+                  }
+                >
+                  {m.approval.tag[customer.approvalStatus]}
+                </Tag>
+              )}
             {customer.kycVerified ? (
               <Tag color="blue">{m.kycVerified}</Tag>
             ) : (
