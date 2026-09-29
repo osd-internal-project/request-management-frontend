@@ -1965,6 +1965,15 @@ export interface HandoverTechnicalPackage {
     note: string;
     customerAnswer: string | null;
   }[];
+  /** CD-140 — the technical Q&A with the customer. */
+  clarifications: {
+    seq: number;
+    question: string;
+    answer: string | null;
+    respondent: string | null;
+    answeredOn: string | null;
+    affectsScope: boolean;
+  }[];
   files: { id: string; fileName: string; mimeType: string; sizeBytes: number }[];
 }
 

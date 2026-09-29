@@ -195,6 +195,33 @@ export function TechnicalPackage({
                   ),
                 },
                 {
+                  key: "clarifications",
+                  label: mp.clarifications.title,
+                  children: pkg.clarifications.length ? (
+                    <ol className="m-0 pl-5">
+                      {pkg.clarifications.map((item) => (
+                        <li key={item.seq}>
+                          {item.question}
+                          <div className="text-xs">
+                            {item.answer
+                              ? `${mp.clarifications.answer}: ${item.answer}${
+                                  item.respondent ? ` (${item.respondent})` : ""
+                                }`
+                              : mp.clarifications.awaiting}
+                            {item.affectsScope && (
+                              <Tag className="ml-1">
+                                {mp.clarifications.scope}
+                              </Tag>
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                    </ol>
+                  ) : (
+                    <Text type="secondary">{mt.none}</Text>
+                  ),
+                },
+                {
                   key: "files",
                   label: mt.files,
                   children: pkg.files.length ? (

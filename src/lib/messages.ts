@@ -2139,6 +2139,43 @@ export const messages = {
       notConfigured: "ยังไม่ได้ตั้งประเภทคำขอ “ขออนุมัติ Solution” ในตั้งค่า CRM",
     },
 
+    /** CD-140 — ชี้แจงประเด็นเทคนิค */
+    clarifications: {
+      title: "ชี้แจงประเด็นเทคนิค",
+      hint: "คำถาม-คำตอบทางเทคนิคกับลูกค้าเป็นรายข้อ — คำตอบที่กระทบขอบเขตต้องแก้ SOW ในเวอร์ชันใหม่ (หรือร่าง) แล้วปิดด้วยเลขเวอร์ชันนั้น ก่อนขออนุมัติ",
+      summary: (awaiting: number, scopeOpen: number) =>
+        `รอคำตอบ ${awaiting} · รอแก้ SOW ${scopeOpen}`,
+      empty: "ยังไม่มีคำถาม",
+      ask: "เพิ่มคำถาม",
+      questionPlaceholder: "คำถามทางเทคนิคถึงลูกค้า",
+      askedOn: "วันที่ถาม",
+      question: "คำถาม",
+      answer: "คำตอบ",
+      respondent: "ผู้ตอบ (ชื่อ · ตำแหน่ง)",
+      answeredOn: "วันที่ตอบ",
+      affectsScope: "คำตอบนี้กระทบขอบเขตงาน (ต้องแก้ SOW)",
+      scope: "ขอบเขต",
+      scopeOpen: "รอแก้ SOW",
+      scopeResolved: (no: number) => `แก้ใน v${no}`,
+      awaiting: "รอคำตอบ",
+      recordAnswer: "บันทึกคำตอบ",
+      editQuestion: "แก้คำถาม",
+      resolve: "แก้ SOW แล้ว",
+      resolveTitle: "ปิดข้อที่กระทบขอบเขต",
+      resolveHint: "เลือกเวอร์ชันที่ SOW สะท้อนคำตอบนี้แล้ว — ร่างที่กำลังแก้ หรือเวอร์ชันที่ยืนยันหลังได้คำตอบ",
+      resolveOk: "ปิดข้อนี้",
+      remove: "เอาออก",
+      removeConfirm: "เอาคำถามข้อนี้ออก?",
+      save: "บันทึก",
+      onDeal: (awaiting: number, scopeOpen: number) =>
+        [
+          awaiting ? `รอคำตอบเทคนิค ${awaiting}` : "",
+          scopeOpen ? `รอแก้ SOW ${scopeOpen}` : "",
+        ]
+          .filter(Boolean)
+          .join(" · "),
+    },
+
     /** CD-131 — วิเคราะห์ความต้องการ */
     analysis: {
       title: "วิเคราะห์ความต้องการ",

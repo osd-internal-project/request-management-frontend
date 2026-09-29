@@ -146,6 +146,15 @@ export function ContractCard({
                               ] ?? design.latest.approvalStatus}
                             </Tag>
                           )}
+                          {(design.clarification_counts.awaiting_answer > 0 ||
+                            design.clarification_counts.scope_open > 0) && (
+                            <Tag color="orange">
+                              {messages.presales.clarifications.onDeal(
+                                design.clarification_counts.awaiting_answer,
+                                design.clarification_counts.scope_open,
+                              )}
+                            </Tag>
+                          )}
                           {design.waiting_customer > 0 && (
                             <Tag color="orange">
                               {messages.presales.analysis.waitingOnDeal(

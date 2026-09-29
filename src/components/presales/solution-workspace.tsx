@@ -38,6 +38,7 @@ import { ROUTES } from "@/lib/routes";
 import { RequirementsCard } from "./requirements-card";
 import { ScopeOfWorkCard, type ScopeOfWork } from "./scope-of-work-card";
 import { FeasibilityCard } from "./feasibility-card";
+import { ClarificationsCard } from "./clarifications-card";
 
 const mp = messages.presales;
 
@@ -330,6 +331,15 @@ export function SolutionWorkspace({ solution }: { solution: SolutionDetail }) {
         </Space>
       </div>
 
+      {/* Why the approval button is not there — e.g. an open scope change (CD-140). */}
+      {solution.can_manage &&
+        solution.approval.configured &&
+        solution.approval.blocker &&
+        version.status === "locked" &&
+        version.versionNo === solution.currentVersionNo &&
+        !["pending", "approved"].includes(version.approvalStatus) && (
+          <Alert type="warning" showIcon title={solution.approval.blocker} />
+        )}
       {version.approvalStatus === "approved" && (
         <Alert type="success" showIcon title={mp.approval.approvedHint} />
       )}
@@ -457,6 +467,8 @@ export function SolutionWorkspace({ solution }: { solution: SolutionDetail }) {
       />
 
       <RequirementsCard solution={solution} />
+
+      <ClarificationsCard solution={solution} />
 
       <Card
         size="small"

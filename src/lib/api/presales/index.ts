@@ -78,6 +78,29 @@ export interface RequirementCounts {
   waiting_customer: number;
 }
 
+/** CD-140 — one technical question to the customer, and its answer. */
+export interface SolutionClarification {
+  id: string;
+  seq: number;
+  question: string;
+  askedOn: string;
+  askedBy: string;
+  answer: string | null;
+  respondent: string | null;
+  answeredOn: string | null;
+  answerRecordedAt: string | null;
+  answeredOnVersionNo: number | null;
+  affectsScope: boolean;
+  scopeResolvedVersionNo: number | null;
+  scopeResolvedAt: string | null;
+}
+
+export interface ClarificationCounts {
+  total: number;
+  awaiting_answer: number;
+  scope_open: number;
+}
+
 export interface SolutionDetail {
   id: string;
   companyId: string;
@@ -90,6 +113,8 @@ export interface SolutionDetail {
   can_answer: boolean;
   requirements: SolutionRequirement[];
   requirement_counts: RequirementCounts;
+  clarifications: SolutionClarification[];
+  clarification_counts: ClarificationCounts;
   deal: {
     id: string;
     opportunityCode: string;
@@ -143,6 +168,8 @@ export interface DealSolution {
   } | null;
   /** CD-131 — questions the customer has not answered yet. */
   waiting_customer: number;
+  /** CD-140 — open technical questions, and answers the SOW must follow. */
+  clarification_counts: ClarificationCounts;
 }
 
 export async function getSolution(
