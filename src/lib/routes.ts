@@ -118,6 +118,9 @@ export const ROUTES = {
   quotationDetail: (id: string) => `${HOME_PATH}/quotations/${id}`,
   /** ฉบับพิมพ์ A4 — นอก app shell, พิมพ์ / บันทึก PDF จากเบราว์เซอร์. */
   quotationPrint: (id: string) => `/print/quotations/${id}`,
+  /** CD-137 — technical proposal of an approved Solution version. */
+  solutionProposalPrint: (id: string, versionNo: number) =>
+    `/print/solutions/${id}/${versionNo}`,
   /** หน้ารายละเอียดลูกค้า — จะโตเป็นมุมมอง 360° (C360). */
   customerDetail: (id: string) => `${HOME_PATH}/customers/${id}`,
   customerEdit: (id: string) => `${HOME_PATH}/customers/${id}/edit`,

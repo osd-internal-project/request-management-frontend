@@ -427,3 +427,57 @@ export async function getContractAssumptions(
     `opportunities/${encodeURIComponent(dealRef)}/contract-assumptions`,
   );
 }
+
+/** CD-137 — the technical proposal of an approved version; no cost at all. */
+export interface SolutionProposalView {
+  letterhead: {
+    nameTh: string;
+    nameEn: string | null;
+    taxId: string | null;
+    branch: string | null;
+    address: string | null;
+    phone: string | null;
+    email: string | null;
+    website: string | null;
+    logo: string | null;
+  };
+  solution: { id: string; title: string };
+  deal: {
+    opportunityCode: string;
+    title: string;
+    partyName: string | null;
+    customerCode: string | null;
+    contactName: string | null;
+  } | null;
+  version: {
+    versionNo: number;
+    approvedAt: string | null;
+    lockedAt: string | null;
+    superseded: boolean;
+    summary: string;
+    design: string;
+    inScope: string[];
+    outOfScope: string[];
+    deliverables: SolutionDeliverable[];
+  };
+  boq: {
+    lineNo: number;
+    kind: BoqKind;
+    kindLabel: string;
+    productCode: string;
+    name: string;
+    description: string;
+    model: string;
+    quantity: number;
+    unit: string;
+  }[];
+  assumptions: (SolutionAssumption & { categoryLabel: string })[];
+  dependencies: (SolutionAssumption & { categoryLabel: string })[];
+}
+
+export async function getSolutionProposal(
+  id: string,
+  versionNo: number,
+): Promise<ApiResult<SolutionProposalView>> {
+  return apiGet(`presales/solutions/${id}/versions/${versionNo}/proposal`);
+}

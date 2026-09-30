@@ -22,6 +22,7 @@ import {
   DeleteOutlined,
   LockOutlined,
   PlusOutlined,
+  PrinterOutlined,
   UploadOutlined,
 } from "@ant-design/icons";
 import Title from "antd/es/typography/Title";
@@ -319,6 +320,17 @@ export function SolutionWorkspace({ solution }: { solution: SolutionDetail }) {
                 </Button>
               </Popconfirm>
             </>
+          )}
+          {/* CD-137 — the customer's copy, from an approved version only. */}
+          {version.approvalStatus === "approved" && (
+            <Link
+              href={ROUTES.solutionProposalPrint(solution.id, version.versionNo)}
+              target="_blank"
+            >
+              <Button icon={<PrinterOutlined />}>
+                {messages.solutionProposal.open}
+              </Button>
+            </Link>
           )}
           {solution.approval.request && (
             <Link href={ROUTES.requestDetail(solution.approval.request.id)}>
