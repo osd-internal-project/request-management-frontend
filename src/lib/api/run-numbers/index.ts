@@ -10,7 +10,8 @@ export type RunNumberDocType =
   | "CUSTOMER"
   | "OPPORTUNITY"
   | "SALE_ORDER"
-  | "QUOTATION";
+  | "QUOTATION"
+  | "PROJECT";
 
 export type RunNumberReset = "none" | "yearly" | "monthly" | "daily";
 

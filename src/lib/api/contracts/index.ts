@@ -62,6 +62,13 @@ export interface ContractDetail extends ContractRow {
     endOn: string;
   }[];
   canManage: boolean;
+  /** CD-175 — every party signed: by e-sign, or Legal's record of paper. */
+  signedOn: string | null;
+  signedVia: "esign" | "manual" | null;
+  signedDocumentId: string | null;
+  signedRecordedBy: string | null;
+  /** CD-175 — the project opened from it. */
+  project: { id: string; projectNo: string; name: string } | null;
 }
 
 export interface ContractFilters {

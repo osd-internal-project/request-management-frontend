@@ -27,20 +27,20 @@ export default async function ContractPage({ params }: Params) {
   const canManage = can(session, "legal.contract.manage");
   const [result, terms, obligations, installments, risk, users] =
     await Promise.all([
-    getContract(id),
-    // CD-153..156 — same `legal.contract.read`
-    getContractTerms(id),
-    // CD-163 — same `legal.contract.read`
-    getContractObligations(id),
-    // CD-164 — same `legal.contract.read`
-    getContractInstallments(id),
-    // CD-158 — same `legal.contract.read`
-    getContractRisk(id),
-    // the access list picker — Legal only
-    canManage && can(session, "user.read")
-      ? getAllDirectoryUsers()
-      : Promise.resolve(null),
-  ]);
+      getContract(id),
+      // CD-153..156 — same `legal.contract.read`
+      getContractTerms(id),
+      // CD-163 — same `legal.contract.read`
+      getContractObligations(id),
+      // CD-164 — same `legal.contract.read`
+      getContractInstallments(id),
+      // CD-158 — same `legal.contract.read`
+      getContractRisk(id),
+      // the access list picker — Legal only
+      canManage && can(session, "user.read")
+        ? getAllDirectoryUsers()
+        : Promise.resolve(null),
+    ]);
   if (!result.ok) notFound();
   // CD-146 — the draft it was written from, when it came from a request
   // CD-14 — its signings; the layouts only for who may send
@@ -67,6 +67,7 @@ export default async function ContractPage({ params }: Params) {
         canSend,
       }}
       currentUserId={session?.user.id ?? null}
+      canOpenProject={can(session, "pm.project.manage")}
       people={(users?.ok ? users.data : []).map((user) => ({
         id: user.id,
         name: user.displayName,

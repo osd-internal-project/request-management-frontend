@@ -32,6 +32,7 @@ import { ContractInstallmentsCard } from "@/components/legal/contract-installmen
 import { ContractRiskCard } from "@/components/legal/contract-risk-card";
 import { ContractDraftCard } from "@/components/legal/contract-draft-card";
 import { ContractEsignCard } from "@/components/esign/contract-esign-card";
+import { ContractSignedCard } from "@/components/legal/contract-signed-card";
 import type { EsignEnvelope, EsignLayout } from "@/lib/api/esign";
 import { SearchSelect } from "@/components/ui/search-select";
 import { appApi } from "@/lib/api/client";
@@ -72,6 +73,7 @@ export function ContractDetailView({
   esign,
   currentUserId,
   people,
+  canOpenProject,
 }: {
   readonly contract: ContractDetail;
   /** CD-153..156 — null = could not load. */
@@ -93,6 +95,8 @@ export function ContractDetailView({
   readonly currentUserId: string | null;
   /** The company's users, for the access list (Legal only). */
   readonly people: { id: string; name: string }[];
+  /** CD-175 — may open a project from it (`pm.project.manage`). */
+  readonly canOpenProject: boolean;
 }) {
   const router = useRouter();
   const { message } = App.useApp();
@@ -340,6 +344,8 @@ export function ContractDetailView({
           canManage={false}
         />
       )}
+
+      <ContractSignedCard contract={contract} canOpenProject={canOpenProject} />
 
       <ContractEsignCard
         contractId={contract.id}

@@ -170,6 +170,14 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     group: messages.nav.presalesGroup,
   },
 
+  /** CD-175 — โครงการ: ทั้งบริษัท (pm.project.read) หรือที่ฉันอยู่ในทีม. */
+  {
+    label: messages.nav.projects,
+    href: ROUTES.projects,
+    permissions: ["notification.read"],
+    group: messages.nav.pmGroup,
+  },
+
   /** CD-161 — คลังสัญญา: สัญญาทุกฉบับของบริษัท (ลูกค้า NDA MSA คู่สัญญาอื่น). */
   {
     label: messages.nav.contracts,

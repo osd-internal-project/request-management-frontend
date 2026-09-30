@@ -156,6 +156,11 @@ export const ROUTES = {
   adminErpSync: `${HOME_PATH}/admin/erp-sync`,
   /** REQ-02 — รูปแบบเลขรันของทุกชนิดเอกสาร. */
   adminRunNumbers: `${HOME_PATH}/admin/run-numbers`,
+  /** CD-18 PM — โครงการ. */
+  projects: `${HOME_PATH}/projects`,
+  projectOpen: (contractId?: string) =>
+    `${HOME_PATH}/projects/open${contractId ? `?contract=${contractId}` : ""}`,
+  projectDetail: (id: string) => `${HOME_PATH}/projects/${id}`,
   /** CD-161 — คลังสัญญา (ฝ่ายกฎหมาย). */
   contracts: `${HOME_PATH}/contracts`,
   contractDetail: (id: string) => `${HOME_PATH}/contracts/${id}`,

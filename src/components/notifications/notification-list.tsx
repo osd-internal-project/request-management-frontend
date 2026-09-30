@@ -32,6 +32,9 @@ export function notificationHref(notification: AppNotification): string | null {
       return ROUTES.contracts;
     case "customer_contract":
       return ROUTES.contractDetail(notification.resourceId);
+    // CD-175 — put on a project
+    case "project":
+      return ROUTES.projectDetail(notification.resourceId);
     case "sales_handover":
       return `${ROUTES.handovers}?id=${notification.resourceId}`;
     default:
