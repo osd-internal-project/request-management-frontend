@@ -18,14 +18,8 @@ interface Draft {
 }
 
 /**
- * ROLE-03 — Keycloak client role (`request-form`) → system role, for one company.
- *
- * No mockup exists for this tab. What it has to communicate above all is the
- * delay: nothing here changes the rights of anyone already signed in. Mapped
- * grants are rewritten wholesale at the next login (which is also what makes
- * revoking in Keycloak work), so an admin who edits this table and watches a
- * colleague's screen will see nothing happen, and would reasonably conclude
- * the save failed.
+ * ROLE-03 — Keycloak role → system role table, kept for reference only.
+ * Keycloak is login only: the backend never applies these mappings.
  */
 export function KeycloakMappingAdmin({
   mappings: initial,
@@ -143,6 +137,12 @@ export function KeycloakMappingAdmin({
       }
     >
       <Space orientation="vertical" size="middle" className="flex">
+        <Alert
+          type="warning"
+          showIcon
+          title={messages.keycloakMapping.disabledNote}
+        />
+
         <Paragraph type="secondary" className="mb-0! text-xs">
           {messages.keycloakMapping.subtitle}
         </Paragraph>

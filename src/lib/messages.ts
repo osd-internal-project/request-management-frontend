@@ -509,6 +509,8 @@ export const messages = {
     syncMissing: (names: string) =>
       `ไม่พบใน Keycloak แล้ว: ${names} — ยังไม่ลบให้ ตรวจสอบก่อนว่าตั้งใจถอดออกจริง`,
     title: "Keycloak Mapping",
+    disabledNote:
+      "ปิดใช้งาน — Keycloak ใช้สำหรับ login เท่านั้น การ map ในหน้านี้ไม่มีผลกับสิทธิ์ สิทธิ์ทั้งหมดต้องผูกมือ",
     subtitle:
       "จับคู่ role ใน Keycloak กับ role ในระบบ ต่อบริษัท — ระบบประเมินใหม่ทุกครั้งที่ล็อกอินหรือ refresh token (ROLE-03)",
     columns: {
