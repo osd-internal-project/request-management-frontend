@@ -146,6 +146,18 @@ export function ContractCard({
                               ] ?? design.latest.approvalStatus}
                             </Tag>
                           )}
+                          {design.risk_counts.open_high > 0 && (
+                            <Tag
+                              color={
+                                design.risk_counts.needs_plan ? "red" : "orange"
+                              }
+                            >
+                              {messages.presales.risks.onDeal(
+                                design.risk_counts.open_high,
+                                design.risk_counts.needs_plan,
+                              )}
+                            </Tag>
+                          )}
                           {(design.clarification_counts.awaiting_answer > 0 ||
                             design.clarification_counts.scope_open > 0) && (
                             <Tag color="orange">

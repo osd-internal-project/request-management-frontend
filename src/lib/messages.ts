@@ -2140,6 +2140,53 @@ export const messages = {
       notConfigured: "ยังไม่ได้ตั้งประเภทคำขอ “ขออนุมัติ Solution” ในตั้งค่า CRM",
     },
 
+    /** CD-141 — ความเสี่ยงทางเทคนิค */
+    risks: {
+      title: "ความเสี่ยงทางเทคนิค",
+      hint: "โอกาสเกิด × ผลกระทบ (1–5) = คะแนน → ระดับ · ความเสี่ยงระดับสูง/วิกฤติที่ยังเปิดต้องมีผู้รับผิดชอบและแนวทางลดก่อนขออนุมัติ · ทะเบียนนี้ส่งต่อเป็นความเสี่ยงของโครงการเมื่อส่งมอบงาน",
+      summary: (open: number, openHigh: number, needsPlan: number) =>
+        `เปิด ${open} · สูง/วิกฤติ ${openHigh} · ยังไม่มีแผน ${needsPlan}`,
+      empty: "ยังไม่มีความเสี่ยง",
+      add: "เพิ่มความเสี่ยง",
+      edit: "แก้ไข",
+      remove: "เอาออก",
+      removeConfirm: "เอาความเสี่ยงข้อนี้ออก?",
+      save: "บันทึก",
+      risk: "ความเสี่ยง",
+      titlePlaceholder: "เช่น อุปกรณ์ขาดตลาด ส่งไม่ทันกำหนด",
+      description: "รายละเอียด",
+      likelihood: "โอกาสเกิด",
+      impact: "ผลกระทบ",
+      score: "คะแนน",
+      owner: "ผู้รับผิดชอบ",
+      mitigation: "แนวทางลดความเสี่ยง",
+      status: "สถานะ",
+      needsPlan: "ต้องมีผู้รับผิดชอบและแนวทางลด",
+      scale: {
+        1: "1 · น้อยมาก",
+        2: "2 · น้อย",
+        3: "3 · ปานกลาง",
+        4: "4 · สูง",
+        5: "5 · สูงมาก",
+      } as Record<number, string>,
+      levels: {
+        low: "ต่ำ",
+        medium: "ปานกลาง",
+        high: "สูง",
+        critical: "วิกฤติ",
+      } as Record<string, string>,
+      statuses: {
+        open: "เปิด",
+        mitigated: "ลดแล้ว",
+        accepted: "ยอมรับ",
+        closed: "ปิด",
+      } as Record<string, string>,
+      onDeal: (openHigh: number, needsPlan: number) =>
+        needsPlan
+          ? `ความเสี่ยงสูงยังไม่มีแผน ${needsPlan}`
+          : `ความเสี่ยงสูง ${openHigh}`,
+    },
+
     /** CD-140 — ชี้แจงประเด็นเทคนิค */
     clarifications: {
       title: "ชี้แจงประเด็นเทคนิค",

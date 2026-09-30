@@ -195,6 +195,40 @@ export function TechnicalPackage({
                   ),
                 },
                 {
+                  key: "risks",
+                  label: mp.risks.title,
+                  children: pkg.risks.length ? (
+                    <ol className="m-0 pl-5">
+                      {pkg.risks.map((risk) => (
+                        <li key={risk.seq}>
+                          <Tag>
+                            {mp.risks.levels[risk.level] ?? risk.level} ·{" "}
+                            {risk.score}
+                          </Tag>
+                          {risk.title}{" "}
+                          <Text type="secondary" className="text-xs">
+                            ({mp.risks.statuses[risk.status] ?? risk.status})
+                          </Text>
+                          {(risk.mitigation || risk.owner) && (
+                            <div className="text-xs">
+                              {[
+                                risk.mitigation &&
+                                  `${mp.risks.mitigation}: ${risk.mitigation}`,
+                                risk.owner &&
+                                  `${mp.risks.owner}: ${risk.owner}`,
+                              ]
+                                .filter(Boolean)
+                                .join(" · ")}
+                            </div>
+                          )}
+                        </li>
+                      ))}
+                    </ol>
+                  ) : (
+                    <Text type="secondary">{mt.none}</Text>
+                  ),
+                },
+                {
                   key: "clarifications",
                   label: mp.clarifications.title,
                   children: pkg.clarifications.length ? (

@@ -1965,6 +1965,19 @@ export interface HandoverTechnicalPackage {
     note: string;
     customerAnswer: string | null;
   }[];
+  /** CD-141 — the project's risks, highest score first. */
+  risks: {
+    seq: number;
+    title: string;
+    description: string;
+    likelihood: number;
+    impact: number;
+    owner: string;
+    mitigation: string;
+    status: string;
+    score: number;
+    level: string;
+  }[];
   /** CD-140 — the technical Q&A with the customer. */
   clarifications: {
     seq: number;
