@@ -195,6 +195,25 @@ export function TechnicalPackage({
                   ),
                 },
                 {
+                  key: "boq",
+                  label: mp.boq.title,
+                  children: pkg.boq.length ? (
+                    <ol className="m-0 pl-5">
+                      {pkg.boq.map((line, index) => (
+                        <li key={index}>
+                          <Tag>{mp.boq.kinds[line.kind] ?? line.kind}</Tag>
+                          {line.productCode && `${line.productCode} · `}
+                          {line.name}
+                          {line.model && ` · ${line.model}`} × {line.quantity}{" "}
+                          {line.unit}
+                        </li>
+                      ))}
+                    </ol>
+                  ) : (
+                    <Text type="secondary">{mt.none}</Text>
+                  ),
+                },
+                {
                   key: "tor",
                   label: mp.tor.title,
                   children: pkg.tor ? (

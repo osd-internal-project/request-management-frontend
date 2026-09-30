@@ -1971,6 +1971,17 @@ export interface HandoverTechnicalPackage {
     note: string;
     customerAnswer: string | null;
   }[];
+  /** CD-135 — the BOQ the project delivers against. */
+  boq: {
+    kind: string;
+    productCode: string;
+    name: string;
+    description: string;
+    model: string;
+    quantity: number;
+    unit: string;
+    refUnitCost: number | null;
+  }[];
   /** CD-138 — the TOR, and how each clause was answered. */
   tor: {
     facts: {

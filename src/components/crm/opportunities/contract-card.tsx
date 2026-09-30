@@ -146,6 +146,13 @@ export function ContractCard({
                               ] ?? design.latest.approvalStatus}
                             </Tag>
                           )}
+                          {design.pricing_ready_version !== null && (
+                            <Tag color="green">
+                              {messages.presales.boq.pricingReady(
+                                design.pricing_ready_version,
+                              )}
+                            </Tag>
+                          )}
                           {design.tor_counts.mandatory_gaps > 0 && (
                             <Tag color="red">
                               {messages.presales.tor.onDeal(

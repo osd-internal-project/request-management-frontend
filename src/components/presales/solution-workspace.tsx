@@ -29,6 +29,7 @@ import Text from "antd/es/typography/Text";
 import dayjs from "dayjs";
 import { appApi } from "@/lib/api/client";
 import type {
+  BoqLine,
   AssumptionCategory,
   SolutionAssumption,
   SolutionDetail,
@@ -38,6 +39,7 @@ import { ROUTES } from "@/lib/routes";
 import { RequirementsCard } from "./requirements-card";
 import { ScopeOfWorkCard, type ScopeOfWork } from "./scope-of-work-card";
 import { FeasibilityCard } from "./feasibility-card";
+import { BoqCard } from "./boq-card";
 import { ClarificationsCard } from "./clarifications-card";
 import { RisksCard } from "./risks-card";
 import { DemosCard } from "./demos-card";
@@ -97,6 +99,7 @@ export function SolutionWorkspace({ solution }: { solution: SolutionDetail }) {
     outOfScope: version.outOfScope,
     deliverables: version.deliverables,
   });
+  const [boq, setBoq] = useState<BoqLine[]>(version.boq);
   const [feasibility, setFeasibility] = useState({
     verdict: version.feasibility,
     note: version.feasibilityNote,
@@ -113,6 +116,7 @@ export function SolutionWorkspace({ solution }: { solution: SolutionDetail }) {
       JSON.stringify(assumptions) !== JSON.stringify(version.assumptions) ||
       feasibility.verdict !== version.feasibility ||
       feasibility.note !== version.feasibilityNote ||
+      JSON.stringify(boq) !== JSON.stringify(version.boq) ||
       JSON.stringify(sow) !==
         JSON.stringify({
           inScope: version.inScope,
@@ -125,6 +129,7 @@ export function SolutionWorkspace({ solution }: { solution: SolutionDetail }) {
       design,
       assumptions,
       sow,
+      boq,
       feasibility,
       solution.title,
       version,
@@ -170,6 +175,16 @@ export function SolutionWorkspace({ solution }: { solution: SolutionDetail }) {
             in_scope: sow.inScope,
             out_of_scope: sow.outOfScope,
             deliverables: sow.deliverables,
+            boq: boq.map((line) => ({
+              kind: line.kind,
+              product_code: line.productCode,
+              name: line.name,
+              description: line.description,
+              model: line.model,
+              quantity: line.quantity,
+              unit: line.unit,
+              ref_unit_cost: line.refUnitCost,
+            })),
           }),
         }),
       mp.saved,
@@ -236,7 +251,13 @@ export function SolutionWorkspace({ solution }: { solution: SolutionDetail }) {
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <Title level={4} className="mb-0!">
-            {mp.title} · {solution.title}
+            {mp.title} · {solution.title}{" "}
+            {/* CD-135 — handoff 3: an approved version, its BOQ fully coded. */}
+            {solution.pricing_ready && (
+              <Tag color="green">
+                {mp.boq.pricingReady(solution.pricing_ready.versionNo)}
+              </Tag>
+            )}
           </Title>
           <Space size="small" wrap className="text-xs">
             {solution.deal && (
@@ -453,6 +474,12 @@ export function SolutionWorkspace({ solution }: { solution: SolutionDetail }) {
         note={editable ? feasibility.note : version.feasibilityNote}
         editable={editable}
         onChange={(verdict, note) => setFeasibility({ verdict, note })}
+      />
+
+      <BoqCard
+        lines={editable ? boq : version.boq}
+        editable={editable}
+        onChange={setBoq}
       />
 
       <ScopeOfWorkCard

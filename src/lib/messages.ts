@@ -2142,6 +2142,34 @@ export const messages = {
       notConfigured: "ยังไม่ได้ตั้งประเภทคำขอ “ขออนุมัติ Solution” ในตั้งค่า CRM",
     },
 
+    /** CD-135 — BOQ / BOM */
+    boq: {
+      title: "BOQ / BOM",
+      hint: "อุปกรณ์ วัสดุ ซอฟต์แวร์ และงานบริการ พร้อมรหัสสินค้าจาก SAP — ล็อกไปพร้อมเวอร์ชัน · ยืนยันได้เมื่อทุกบรรทัดมีรหัสสินค้าที่ยังขายอยู่ (จุดส่งต่อที่ 3 → Pricing) · บรรทัดที่ไม่มีต้นทุนอ้างอิงถูกทำเครื่องหมาย",
+      summary: (noCode: number, noCost: number, total: string) =>
+        `ไม่มีรหัส ${noCode} · ไม่มีต้นทุนอ้างอิง ${noCost} · รวมต้นทุนอ้างอิง ${total}`,
+      empty: "ยังไม่มีรายการ",
+      add: "เพิ่มบรรทัด",
+      remove: "เอาออก",
+      kind: "ประเภท",
+      kinds: {
+        equipment: "อุปกรณ์",
+        material: "วัสดุ",
+        software: "ซอฟต์แวร์",
+        service: "งานบริการ",
+      } as Record<string, string>,
+      productCode: "รหัสสินค้า (SAP)",
+      noCode: "ไม่มีรหัส",
+      name: "รายการ",
+      description: "รายละเอียด (ไม่บังคับ)",
+      model: "รุ่น / เวอร์ชัน",
+      quantity: "จำนวน",
+      unit: "หน่วย",
+      refUnitCost: "ต้นทุนอ้างอิง/หน่วย",
+      noCost: "ยังไม่มีต้นทุน",
+      pricingReady: (no: number) => `พร้อมส่ง Pricing (v${no})`,
+    },
+
     /** CD-138 — TOR / RFP */
     tor: {
       title: "TOR / RFP",

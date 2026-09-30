@@ -224,6 +224,27 @@ export interface TorCounts {
   unanswered: number;
 }
 
+/** CD-135 — one BOQ line, SAP code and all. */
+export type BoqKind = "equipment" | "material" | "software" | "service";
+
+export interface BoqLine {
+  kind: BoqKind;
+  productCode: string;
+  name: string;
+  description: string;
+  model: string;
+  quantity: number;
+  unit: string;
+  refUnitCost: number | null;
+}
+
+export interface BoqSummary {
+  lines: number;
+  missing_code: number;
+  missing_cost: number;
+  ref_total: number;
+}
+
 export interface SolutionDetail {
   id: string;
   companyId: string;
@@ -244,6 +265,10 @@ export interface SolutionDetail {
   /** CD-139 — oldest first. */
   demos: SolutionDemo[];
   demo_counts: DemoCounts;
+  /** CD-135 — the BOQ of the version shown. */
+  boq_summary: BoqSummary;
+  /** CD-135 — handoff 3: the newest approved version, if any. */
+  pricing_ready: { versionNo: number } | null;
   /** CD-138 — the TOR and its clauses. */
   tor: SolutionTor;
   tor_counts: TorCounts;
@@ -273,6 +298,8 @@ export interface SolutionDetail {
     deliverables: SolutionDeliverable[];
     feasibility: FeasibilityVerdict;
     feasibilityNote: string;
+    /** CD-135 — locked with the version. */
+    boq: BoqLine[];
     lockedBy: string | null;
     approvalRequestId: string | null;
     approvedAt: string | null;
@@ -308,6 +335,8 @@ export interface DealSolution {
   demo_counts: DemoCounts;
   /** CD-138 — mandatory TOR clauses still open. */
   tor_counts: TorCounts;
+  /** CD-135 — handoff 3: the newest approved version, if any. */
+  pricing_ready_version: number | null;
 }
 
 export async function getSolution(
