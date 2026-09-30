@@ -68,6 +68,7 @@ export function ContractEsignCard({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [links, setLinks] = useState<EsignEnvelope["links"] | null>(null);
+  const [linksTitle, setLinksTitle] = useState<string>(m.links);
   const layout = useMemo(
     () => layouts.find((one) => one.id === layoutId),
     [layouts, layoutId],
@@ -120,8 +121,60 @@ export function ContractEsignCard({
     }
     message.success(m.created);
     setOpen(false);
+    setLinksTitle(m.links);
     setLinks(sent.data.links ?? []);
     router.refresh();
+  }
+
+  async function extend(id: string) {
+    let days = 7;
+    Modal.confirm({
+      title: m.extend,
+      content: (
+        <label className="text-xs">
+          {m.extendDays}
+          <InputNumber
+            className="w-full!"
+            min={1}
+            max={90}
+            defaultValue={7}
+            onChange={(value) => {
+              days = Number(value ?? 7);
+            }}
+          />
+        </label>
+      ),
+      onOk: async () => {
+        const result = await appApi(`esign/envelopes/${id}/extend`, {
+          method: "POST",
+          body: JSON.stringify({ days }),
+        });
+        if (!result.ok) message.error(result.message);
+        else {
+          message.success(m.extended);
+          router.refresh();
+        }
+      },
+    });
+  }
+
+  function reissue(id: string, signerId: string) {
+    Modal.confirm({
+      title: m.reissue,
+      content: m.reissueConfirm,
+      onOk: async () => {
+        const result = await appApi<{ signerId: string; name: string; link: string }>(
+          `esign/envelopes/${id}/signers/${signerId}/link`,
+          { method: "POST", body: "{}" },
+        );
+        if (!result.ok) message.error(result.message);
+        else {
+          setLinksTitle(m.reissued);
+          setLinks([result.data]);
+          router.refresh();
+        }
+      },
+    });
   }
 
   async function cancel(id: string) {
@@ -211,6 +264,12 @@ export function ContractEsignCard({
                     </a>
                   )}
                   {canSend &&
+                    (envelope.status === "sent" || envelope.status === "expired") && (
+                      <Button size="small" onClick={() => void extend(envelope.id)}>
+                        {m.extend}
+                      </Button>
+                    )}
+                  {canSend &&
                     (envelope.status === "sent" || envelope.status === "draft") && (
                       <Button size="small" danger onClick={() => void cancel(envelope.id)}>
                         {m.cancel}
@@ -238,6 +297,18 @@ export function ContractEsignCard({
                         {m.signedAt(at(signer.signedAt))}
                       </Text>
                     )}
+                    {canSend &&
+                      envelope.status === "sent" &&
+                      signer.kind === "external" &&
+                      signer.status === "pending" && (
+                        <Button
+                          size="small"
+                          type="link"
+                          onClick={() => reissue(envelope.id, signer.id)}
+                        >
+                          {m.reissue}
+                        </Button>
+                      )}
                     {signer.declinedReason && (
                       <Text type="danger" className="text-xs">
                         {signer.declinedReason}
@@ -420,7 +491,7 @@ export function ContractEsignCard({
         footer={null}
         onCancel={() => setLinks(null)}
       >
-        <Text className="mb-2 block text-sm">{m.links}</Text>
+        <Text className="mb-2 block text-sm">{linksTitle}</Text>
         {(links ?? []).map((link) => (
           <div key={link.signerId} className="mb-2">
             <Text strong className="block">
