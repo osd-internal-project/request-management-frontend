@@ -28,6 +28,7 @@ import type {
 } from "@/lib/api/presales";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
+import { PartnerPicker } from "./partner-picker";
 
 const mc = messages.presales.cost;
 
@@ -590,20 +591,16 @@ export function CostCard({ solution }: { solution: SolutionDetail }) {
         {quote && (
           <Space orientation="vertical" className="w-full">
             <div className="grid gap-2 md:grid-cols-2">
-              <Input
-                value={quote.vendorName}
-                maxLength={300}
-                placeholder={mc.vendorName}
-                onChange={(event) =>
-                  setQuote({ ...quote, vendorName: event.target.value })
-                }
-              />
-              <Input
-                value={quote.vendorCode}
-                maxLength={60}
-                placeholder={mc.vendorCode}
-                onChange={(event) =>
-                  setQuote({ ...quote, vendorCode: event.target.value })
+              {/* CD-142 — the vendor comes from SAP's supplier list. */}
+              <PartnerPicker
+                code={quote.vendorCode}
+                name={quote.vendorName}
+                onChange={(vendor) =>
+                  setQuote({
+                    ...quote,
+                    vendorCode: vendor.code,
+                    vendorName: vendor.name,
+                  })
                 }
               />
               <Input

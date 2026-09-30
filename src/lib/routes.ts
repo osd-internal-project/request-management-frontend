@@ -118,6 +118,10 @@ export const ROUTES = {
   quotationDetail: (id: string) => `${HOME_PATH}/quotations/${id}`,
   /** ฉบับพิมพ์ A4 — นอก app shell, พิมพ์ / บันทึก PDF จากเบราว์เซอร์. */
   quotationPrint: (id: string) => `/print/quotations/${id}`,
+  /** CD-142 — SAP's suppliers with the technical profile Pre-Sales keeps. */
+  partners: `${HOME_PATH}/partners`,
+  partnerDetail: (code: string) =>
+    `${HOME_PATH}/partners/${encodeURIComponent(code)}`,
   /** CD-137 — technical proposal of an approved Solution version. */
   solutionProposalPrint: (id: string, versionNo: number) =>
     `/print/solutions/${id}/${versionNo}`,

@@ -162,6 +162,14 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     group: messages.nav.crmGroup,
   },
 
+  /** CD-142 — คู่ค้า: ผู้ขายจาก SAP + ข้อมูลทางเทคนิคที่ Pre-Sales เก็บ. */
+  {
+    label: messages.nav.partners,
+    href: ROUTES.partners,
+    permissions: ["presales.solution.read", "presales.solution.manage"],
+    group: messages.nav.presalesGroup,
+  },
+
   /** CD-161 — คลังสัญญา: สัญญาทุกฉบับของบริษัท (ลูกค้า NDA MSA คู่สัญญาอื่น). */
   {
     label: messages.nav.contracts,

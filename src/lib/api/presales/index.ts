@@ -481,3 +481,96 @@ export async function getSolutionProposal(
 ): Promise<ApiResult<SolutionProposalView>> {
   return apiGet(`presales/solutions/${id}/versions/${versionNo}/proposal`);
 }
+
+// --- CD-142 ข้อมูลคู่ค้า ---------------------------------------------------------
+
+export type ExpiryState = "expired" | "expiring" | "valid" | "none";
+export type PartnerFileCategory =
+  "certificate" | "datasheet" | "catalog" | "other";
+
+export interface PartnerBrand {
+  brand: string;
+  level: string;
+  /** YYYY-MM-DD, "" = no expiry. */
+  expiresOn: string;
+}
+
+export interface PartnerCertification {
+  name: string;
+  holders: number;
+  expiresOn: string;
+}
+
+export interface PartnerContact {
+  name: string;
+  role: string;
+  phone: string;
+  email: string;
+}
+
+export interface PartnerListItem {
+  code: string;
+  name: string;
+  taxId: string | null;
+  /** null when SAP could not be reached. */
+  active: boolean | null;
+  has_profile: boolean;
+  brands: PartnerBrand[];
+  certification_count: number;
+  expiry: { expired: number; expiring: number };
+}
+
+export interface PartnerList {
+  sap_available: boolean;
+  total: number;
+  items: PartnerListItem[];
+}
+
+export interface SapVendor {
+  code: string;
+  name: string;
+  taxId: string | null;
+  phone: string | null;
+  email: string | null;
+  currency: string | null;
+  paymentTerms: string | null;
+  active: boolean;
+}
+
+export interface PartnerDetail {
+  code: string;
+  sap_available: boolean;
+  vendor: SapVendor | null;
+  name: string;
+  can_manage: boolean;
+  profile: {
+    exists: boolean;
+    summary: string;
+    brands: (PartnerBrand & { expiry: ExpiryState })[];
+    certifications: (PartnerCertification & { expiry: ExpiryState })[];
+    contacts: PartnerContact[];
+    updatedAt: string | null;
+    updatedBy: string | null;
+  };
+  files: {
+    id: string;
+    category: PartnerFileCategory;
+    fileName: string;
+    mimeType: string;
+    sizeBytes: number;
+    uploadedBy: string;
+    uploadedAt: string;
+  }[];
+}
+
+export async function getPartners(q?: string): Promise<ApiResult<PartnerList>> {
+  return apiGet(
+    q ? `presales/partners?q=${encodeURIComponent(q)}` : "presales/partners",
+  );
+}
+
+export async function getPartner(
+  code: string,
+): Promise<ApiResult<PartnerDetail>> {
+  return apiGet(`presales/partners/${encodeURIComponent(code)}`);
+}
