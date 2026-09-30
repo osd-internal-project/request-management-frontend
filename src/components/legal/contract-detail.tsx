@@ -334,7 +334,7 @@ export function ContractDetailView({
 
       {risk && (
         <ContractRiskCard
-          contractId={contract.id}
+          basePath={`contracts/${contract.id}`}
           view={risk}
           canManage={canManage}
         />

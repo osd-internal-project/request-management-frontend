@@ -428,3 +428,42 @@ export function compareDraftVersions(
     `/contract-drafts/${encodeURIComponent(id)}/compare?from=${from}&to=${to}`,
   );
 }
+
+/** CD-159 — the approval of a draft version. */
+export interface DraftApproval {
+  typeConfigured: boolean;
+  latestVersionNo: number;
+  /** Why it cannot be asked yet. */
+  blockers: string[];
+  canRequest: boolean;
+  approvedVersionNo: number | null;
+  current: {
+    id: string;
+    versionNo: number;
+    riskLevel: string | null;
+    state: "not_needed" | "missing" | "draft" | "pending" | "approved" | "rejected";
+    request: { id: string; requestNo: string | null; status: string } | null;
+    error: string | null;
+    requestedAt: string;
+    requestedByName: string;
+  } | null;
+  voided: {
+    id: string;
+    versionNo: number;
+    requestId: string | null;
+    voidedAt: string;
+    voidReason: string | null;
+  }[];
+}
+
+export function getDraftRisk(
+  id: string,
+): Promise<ApiResult<ContractRiskView>> {
+  return apiGet(`/contract-drafts/${encodeURIComponent(id)}/risk`);
+}
+
+export function getDraftApproval(
+  id: string,
+): Promise<ApiResult<DraftApproval>> {
+  return apiGet(`/contract-drafts/${encodeURIComponent(id)}/approval`);
+}

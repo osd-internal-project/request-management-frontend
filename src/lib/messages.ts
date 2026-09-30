@@ -4187,6 +4187,9 @@ export const messages = {
       liabilityApprovalHint:
         "เมื่อบันทึกข้อกำหนดสัญญาที่เพดานความรับผิดสูงกว่ามูลค่าสัญญา (หรือไม่จำกัด) ระบบสร้างและยื่นคำขอประเภทนี้ถึงผู้บริหารให้อัตโนมัติ · ว่าง = ยังไม่ส่ง",
       legalRiskOpinionTypeCode: "ประเภทคำขอความเห็นความเสี่ยงทางกฎหมาย",
+      contractApprovalTypeCode: "ประเภทคำขออนุมัติสัญญา",
+      contractApprovalHint:
+        "หน้าร่างสัญญามีปุ่มขออนุมัติฉบับล่าสุดด้วยประเภทนี้ · form มี contract_value (มูลค่า) และ risk_level (low/medium/high/critical) — ตั้งเงื่อนไขในตารางอำนาจอนุมัติเพื่อกำหนดเส้นทางตามมูลค่าและระดับความเสี่ยง · แก้ร่างหลังขออนุมัติ = การอนุมัติเป็นโมฆะ",
       legalRiskOpinionHint:
         "เมื่อฝ่ายกฎหมายประเมินสัญญาว่าความเสี่ยงสูง/วิกฤต หรือมีประเด็นที่ต้องเสนอผู้บริหาร ระบบสร้างและยื่นคำขอประเภทนี้ให้อัตโนมัติ — สัญญายังลงนามไม่ได้จนกว่าผู้บริหารเห็นชอบ · ว่าง = ยังไม่ส่ง",
       contractHint:
@@ -4549,6 +4552,38 @@ export const messages = {
       opened: "เปิดรอบตรวจแล้ว",
       closed: "ปิดรอบตรวจแล้ว",
       commentCount: (n: number) => `${n} ความเห็น`,
+    },
+    /** CD-159 — อนุมัติสัญญา. */
+    approval: {
+      title: "อนุมัติสัญญา",
+      hint: "ขออนุมัติร่างฉบับล่าสุด — ตารางอำนาจอนุมัติกำหนดผู้อนุมัติตามมูลค่าและระดับความเสี่ยง · แก้ร่างหลังขออนุมัติ การอนุมัติเป็นโมฆะ",
+      request: (n: number) => `ขออนุมัติฉบับที่ ${n}`,
+      requestAgain: (n: number) => `ขออนุมัติฉบับที่ ${n} ใหม่`,
+      requested: "ส่งขออนุมัติแล้ว",
+      blockers: "ยังขออนุมัติไม่ได้",
+      notConfigured: "ยังไม่ได้ตั้งประเภทคำขออนุมัติสัญญาในหน้าตั้งค่า CRM",
+      state: {
+        missing: "ยังไม่ได้ส่งอนุมัติ",
+        draft: "ร่างคำขอ — ยังไม่ได้ยื่น",
+        pending: "รออนุมัติ",
+        approved: "อนุมัติแล้ว",
+        rejected: "ไม่อนุมัติ",
+      } as Record<string, string>,
+      stateColor: {
+        missing: "red",
+        draft: "orange",
+        pending: "orange",
+        approved: "green",
+        rejected: "red",
+      } as Record<string, string>,
+      version: (n: number) => `ฉบับที่ ${n}`,
+      risk: (level: string) => `ความเสี่ยง: ${level}`,
+      requestedBy: (name: string, at: string) => `ขอโดย ${name} · ${at}`,
+      openRequest: "เปิดคำขอ",
+      voidedTitle: "การอนุมัติที่เป็นโมฆะ",
+      voided: (n: number, reason: string) => `ฉบับที่ ${n} — ${reason}`,
+      approvedTag: (n: number) => `อนุมัติแล้ว (ฉบับที่ ${n})`,
+      riskTitle: "ประเมินความเสี่ยงของร่าง",
     },
     /** CD-158 — ประเมินความเสี่ยงกฎหมาย. */
     risk: {

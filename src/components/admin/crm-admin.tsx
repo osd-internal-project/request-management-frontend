@@ -346,6 +346,9 @@ function ConfigSection({
   const [riskOpinionType, setRiskOpinionType] = useState(
     config.legalRiskOpinionTypeCode ?? "",
   );
+  const [contractApprovalType, setContractApprovalType] = useState(
+    config.contractApprovalTypeCode ?? "",
+  );
   const [solutionType, setSolutionType] = useState(
     config.solutionRequestTypeCode ?? "",
   );
@@ -367,6 +370,7 @@ function ConfigSection({
       contract_request_type_code: contractType,
       liability_approval_request_type_code: liabilityType,
       legal_risk_opinion_type_code: riskOpinionType,
+      contract_approval_type_code: contractApprovalType,
       solution_request_type_code: solutionType,
       solution_approval_type_code: solutionApprovalType,
       dedup_threshold: threshold,
@@ -556,6 +560,23 @@ function ConfigSection({
       </div>
       <Text type="secondary" className="mt-2 block text-xs">
         {m.legalRiskOpinionHint}
+      </Text>
+      {/* CD-159 — อนุมัติสัญญา (ตารางอำนาจอนุมัติกำหนดเส้นทางตามมูลค่า/ความเสี่ยง) */}
+      <div className="mt-3 max-w-xs">
+        <Text className="mb-1 block text-xs">
+          {m.contractApprovalTypeCode}
+        </Text>
+        <Input
+          value={contractApprovalType}
+          maxLength={20}
+          allowClear
+          onChange={(e) =>
+            setContractApprovalType(e.target.value.toUpperCase())
+          }
+        />
+      </div>
+      <Text type="secondary" className="mt-2 block text-xs">
+        {m.contractApprovalHint}
       </Text>
 
       {/* CD-130 — ประเภทคำขอ Solution (Sales → Pre-Sales) */}

@@ -47,11 +47,12 @@ const blankIssue = (): RiskIssue => ({
  * whether the contract may be signed as far as risk goes.
  */
 export function ContractRiskCard({
-  contractId,
+  basePath,
   view,
   canManage,
 }: {
-  readonly contractId: string;
+  /** `contracts/<id>` — or, for a draft (CD-159), `contract-drafts/<id>`. */
+  readonly basePath: string;
   readonly view: ContractRiskView;
   readonly canManage: boolean;
 }) {
@@ -79,7 +80,7 @@ export function ContractRiskCard({
     if (!draft) return;
     setBusy(true);
     setError(null);
-    const result = await appApi(`contracts/${contractId}/risk`, {
+    const result = await appApi(`${basePath}/risk`, {
       method: "PUT",
       body: JSON.stringify({
         level: draft.level,
@@ -104,7 +105,7 @@ export function ContractRiskCard({
   }
 
   async function askAgain() {
-    const result = await appApi(`contracts/${contractId}/risk/opinion`, {
+    const result = await appApi(`${basePath}/risk/opinion`, {
       method: "POST",
     });
     if (!result.ok) {
