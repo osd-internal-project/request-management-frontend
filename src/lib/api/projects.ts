@@ -248,3 +248,38 @@ export function getProjectMilestones(
 ): Promise<ApiResult<ProjectMilestonesView>> {
   return apiGet(`/projects/${encodeURIComponent(id)}/milestones`);
 }
+
+/** CD-177 — one task of the plan, with the dates worked out for it. */
+export interface PlanTaskView {
+  id: string;
+  parentId: string | null;
+  seq: number;
+  wbs: string;
+  title: string;
+  description: string | null;
+  ownerUserId: string | null;
+  ownerName: string | null;
+  durationDays: number;
+  summary: boolean;
+  milestone: { id: string; title: string; status: string } | null;
+  start: string | null;
+  finish: string | null;
+  floatDays: number | null;
+  critical: boolean;
+  predecessors: { taskId: string; wbs: string; lagDays: number }[];
+}
+
+export interface ProjectPlanView {
+  canEdit: boolean;
+  projectStart: string;
+  finish: string | null;
+  problems: string[];
+  milestones: { id: string; title: string }[];
+  tasks: PlanTaskView[];
+}
+
+export function getProjectPlan(
+  id: string,
+): Promise<ApiResult<ProjectPlanView>> {
+  return apiGet(`/projects/${encodeURIComponent(id)}/plan`);
+}
