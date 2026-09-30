@@ -15,6 +15,8 @@ export interface EsignLayoutField {
     | "top-left"
     | "top-right";
   order: number;
+  /** CD-172 — signs for the company: only someone on the register. */
+  authority?: boolean;
 }
 
 export interface EsignLayout {
@@ -79,6 +81,8 @@ export interface EsignSignerView {
   turn: { may: boolean; waitingFor: number };
   originalName: string;
   verifyCode: string | null;
+  /** CD-172 — why this signer may not sign (not on the register, over the limit). */
+  authorityProblem?: string | null;
   /** Public link only. */
   channels?: { channel: "email" | "sms"; to: string }[];
   verified?: boolean;
@@ -114,4 +118,23 @@ export function getContractSignings(
   contractId: string,
 ): Promise<ApiResult<EsignEnvelope[]>> {
   return apiGet(`/contracts/${encodeURIComponent(contractId)}/esign`);
+}
+
+/** CD-172 — one entry of the signing authority register. */
+export interface EsignAuthority {
+  id: string;
+  userId: string;
+  name: string;
+  title: string;
+  limitAmount: number | null;
+  docTypes: string[];
+  validFrom: string | null;
+  validTo: string | null;
+  active: boolean;
+  note: string | null;
+  updatedAt: string;
+}
+
+export function getEsignAuthorities(): Promise<ApiResult<EsignAuthority[]>> {
+  return apiGet("/esign/authorities");
 }

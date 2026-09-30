@@ -70,6 +70,13 @@ export function SignPanel({
         />
       ) : (
         <>
+          {view.authorityProblem && (
+            <Alert
+              type="error"
+              showIcon
+              title={m.noAuthority(view.authorityProblem)}
+            />
+          )}
           {!view.turn.may && (
             <Alert type="info" showIcon title={m.notYourTurn(view.turn.waitingFor)} />
           )}
@@ -107,7 +114,7 @@ export function SignPanel({
               <Button
                 type="primary"
                 loading={busy}
-                disabled={!view.turn.may}
+                disabled={!view.turn.may || Boolean(view.authorityProblem)}
                 onClick={() => void sign()}
               >
                 {m.sign}

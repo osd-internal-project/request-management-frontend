@@ -7,6 +7,7 @@ import {
   App,
   Button,
   Card,
+  Checkbox,
   Empty,
   Input,
   InputNumber,
@@ -29,6 +30,7 @@ interface FieldDraft {
   pageNumber: number;
   position: EsignLayoutField["position"];
   order: number;
+  authority: boolean;
 }
 
 interface Draft {
@@ -46,6 +48,7 @@ const blankField = (order: number): FieldDraft => ({
   pageNumber: 1,
   position: order % 2 ? "bottom-left" : "bottom-right",
   order,
+  authority: false,
 });
 
 const pageLabel = (page: EsignLayoutField["page"]) =>
@@ -102,6 +105,7 @@ export function EsignLayoutsAdmin({
             page: field.page === "number" ? String(field.pageNumber) : field.page,
             position: field.position,
             order: field.order,
+            authority: field.authority,
           })),
         }),
       },
@@ -173,6 +177,7 @@ export function EsignLayoutsAdmin({
                       pageNumber: typeof field.page === "number" ? field.page : 1,
                       position: field.position,
                       order: field.order,
+                      authority: Boolean(field.authority),
                     })),
                   });
                 }}
@@ -184,6 +189,7 @@ export function EsignLayoutsAdmin({
             {layout.fields.map((field) => (
               <div key={field.key} className="text-sm">
                 <span className="font-medium">{field.label}</span>{" "}
+                {field.authority && <Tag color="gold">{m.authority}</Tag>}
                 <Text type="secondary" className="text-xs">
                   {m.describe(
                     pageLabel(field.page),
@@ -330,6 +336,18 @@ export function EsignLayoutsAdmin({
                       patch(index, { order: Number(value ?? 1) })
                     }
                   />
+                </label>
+                <label
+                  className="flex items-center gap-1 text-xs sm:col-span-12"
+                  title={m.authorityHint}
+                >
+                  <Checkbox
+                    checked={field.authority}
+                    onChange={(event) =>
+                      patch(index, { authority: event.target.checked })
+                    }
+                  />
+                  {m.authority}
                 </label>
                 <Button
                   danger

@@ -156,6 +156,7 @@ export const ROUTES = {
   contractTemplates: `${HOME_PATH}/contracts/templates`,
   /** CD-14 — ลงนามอิเล็กทรอนิกส์. */
   esignLayouts: `${HOME_PATH}/esign/layouts`,
+  esignAuthorities: `${HOME_PATH}/esign/authorities`,
   esignMine: `${HOME_PATH}/esign`,
   esignSign: (signerId: string) => `${HOME_PATH}/esign/sign/${signerId}`,
   contractDraft: (id: string, version?: number, compare?: number) => {

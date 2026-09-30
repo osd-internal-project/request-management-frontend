@@ -176,6 +176,13 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     permissions: ["esign.manage"],
     group: messages.nav.legalGroup,
   },
+  /** CD-172 — who may sign for the company, up to what amount. */
+  {
+    label: messages.nav.esignAuthorities,
+    href: ROUTES.esignAuthorities,
+    permissions: ["esign.manage"],
+    group: messages.nav.legalGroup,
+  },
   /** CD-146 — แม่แบบสัญญา: ข้อสัญญาพร้อมตัวแปรที่เติมจากดีลตอนเริ่มร่าง. */
   {
     label: messages.nav.contractTemplates,
