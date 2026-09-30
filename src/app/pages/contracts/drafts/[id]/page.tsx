@@ -3,12 +3,14 @@ import { ContractDraftEditor } from "@/components/legal/contract-draft-editor";
 import { ContractReviewPanel } from "@/components/legal/contract-review-panel";
 import { ContractRiskCard } from "@/components/legal/contract-risk-card";
 import { ContractApprovalCard } from "@/components/legal/contract-approval-card";
+import { ContractScopeCheckCard } from "@/components/legal/contract-scope-check-card";
 import {
   compareDraftVersions,
   getContractDraft,
   getDraftApproval,
   getDraftReviews,
   getDraftRisk,
+  getScopeCheck,
 } from "@/lib/api/contracts";
 import { HOME_PATH } from "@/lib/routes";
 import { can, getSession } from "@/lib/session";
@@ -40,7 +42,7 @@ export default async function ContractDraftPage({
 
   // CD-147 — the review rounds, the version asked to compare with, and the
   // clauses of the open round's version (what a comment can point at)
-  const [reviews, comparison, risk, approval] = await Promise.all([
+  const [reviews, comparison, risk, approval, scope] = await Promise.all([
     getDraftReviews(id),
     Number.isInteger(against) && against > 0
       ? compareDraftVersions(id, against, view.version.versionNo)
@@ -48,6 +50,8 @@ export default async function ContractDraftPage({
     // CD-159 — risk on the draft, and the approval of a version
     getDraftRisk(id),
     getDraftApproval(id),
+    // CD-150 — the scope of work against the latest version
+    getScopeCheck(id),
   ]);
   const openRound = reviews.ok
     ? reviews.data.rounds.find((round) => round.status === "open")
@@ -69,6 +73,15 @@ export default async function ContractDraftPage({
         <ContractApprovalCard
           draftId={id}
           view={approval.data}
+          canManage={canManage}
+        />
+      )}
+      {scope.ok && (
+        <ContractScopeCheckCard
+          // a new version starts its verdicts afresh
+          key={scope.data.versionNo}
+          draftId={id}
+          view={scope.data}
           canManage={canManage}
         />
       )}

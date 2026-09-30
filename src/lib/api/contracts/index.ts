@@ -500,3 +500,32 @@ export function getContractRequestPackage(
     `/contract-requests/${encodeURIComponent(requestId)}/package`,
   );
 }
+
+/** CD-150 — one scope item against the contract's text. */
+export interface ScopeCheckItem {
+  key: string;
+  kind: "in_scope" | "out_of_scope" | "deliverable" | "criterion";
+  text: string;
+  parent?: string;
+  found: boolean;
+  verdict: "match" | "mismatch" | null;
+  note: string | null;
+}
+
+/** CD-150 — the scope check of the draft's latest version. */
+export interface ScopeCheckView {
+  applicable: boolean;
+  editable: boolean;
+  versionNo: number;
+  solution?: { id: string; title: string | null; versionNo: number | null };
+  status: "consistent" | "inconsistent" | null;
+  checked: { at: string; byName: string } | null;
+  lastCheckedVersionNo: number | null;
+  items: ScopeCheckItem[];
+}
+
+export function getScopeCheck(
+  id: string,
+): Promise<ApiResult<ScopeCheckView>> {
+  return apiGet(`/contract-drafts/${encodeURIComponent(id)}/scope-check`);
+}

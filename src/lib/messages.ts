@@ -4706,6 +4706,37 @@ export const messages = {
       deliverables: "รายการส่งมอบและเกณฑ์ตรวจรับ",
       assumptions: "สมมติฐานและสิ่งที่ต้องพึ่งพา",
     },
+    /** CD-150 — ตรวจขอบเขตงาน. */
+    scopeCheck: {
+      title: "ตรวจขอบเขตงาน",
+      hint: "เทียบขอบเขตงานที่แนบคำขอ (จาก Solution ที่อนุมัติ) กับร่างฉบับล่าสุด — รายการที่ไม่พบในสัญญาต้องตัดสินว่าตรง (ใช้ถ้อยคำอื่น) หรือไม่สอดคล้อง · ไม่สอดคล้องขออนุมัติสัญญาไม่ได้",
+      notApplicable: "คำขอนี้ไม่มีขอบเขตงานจาก Solution ที่อนุมัติ — ไม่ต้องตรวจ",
+      version: (n: number) => `ร่างฉบับที่ ${n}`,
+      earlier: (n: number) => `ตรวจล่าสุดที่ฉบับที่ ${n} — ฉบับนี้ต้องตรวจใหม่`,
+      status: {
+        consistent: "สอดคล้อง",
+        inconsistent: "ไม่สอดคล้อง",
+      } as Record<string, string>,
+      statusColor: {
+        consistent: "green",
+        inconsistent: "red",
+      } as Record<string, string>,
+      unchecked: "ยังไม่ได้ตรวจ",
+      checkedBy: (name: string, at: string) => `ตรวจโดย ${name} · ${at}`,
+      kinds: {
+        in_scope: "ในขอบเขต",
+        out_of_scope: "นอกขอบเขต",
+        deliverable: "ส่งมอบ",
+        criterion: "เกณฑ์ตรวจรับ",
+      } as Record<string, string>,
+      found: "พบในสัญญา",
+      notFound: "ไม่พบในสัญญา",
+      match: "ตรง",
+      mismatch: "ไม่สอดคล้อง",
+      notePlaceholder: "ตรง: อยู่ข้อไหน/ถ้อยคำใด · ไม่สอดคล้อง: ต่างกันอย่างไร",
+      save: (n: number) => `บันทึกผลตรวจฉบับที่ ${n}`,
+      saved: "บันทึกผลตรวจขอบเขตงานแล้ว",
+    },
     /** CD-158 — ประเมินความเสี่ยงกฎหมาย. */
     risk: {
       title: "ประเมินความเสี่ยงกฎหมาย",
