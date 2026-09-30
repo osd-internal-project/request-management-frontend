@@ -9,6 +9,7 @@ import {
   getDraftForRequest,
 } from "@/lib/api/contracts";
 import { getAllDirectoryUsers } from "@/lib/api/users";
+import { getContractSignings, getEsignLayouts } from "@/lib/api/esign";
 import { HOME_PATH } from "@/lib/routes";
 import { can, getSession } from "@/lib/session";
 
@@ -42,6 +43,12 @@ export default async function ContractPage({ params }: Params) {
   ]);
   if (!result.ok) notFound();
   // CD-146 — the draft it was written from, when it came from a request
+  // CD-14 — its signings; the layouts only for who may send
+  const canSend = can(session, "esign.manage");
+  const [signings, layouts] = await Promise.all([
+    getContractSignings(id),
+    canSend ? getEsignLayouts() : Promise.resolve(null),
+  ]);
   const draft = result.data.requestId
     ? await getDraftForRequest(result.data.requestId)
     : null;
@@ -54,6 +61,11 @@ export default async function ContractPage({ params }: Params) {
       installments={installments.ok ? installments.data : null}
       risk={risk.ok ? risk.data : null}
       draft={draft?.ok && draft.data.draft ? draft.data : null}
+      esign={{
+        envelopes: signings.ok ? signings.data : [],
+        layouts: layouts?.ok ? layouts.data : [],
+        canSend,
+      }}
       currentUserId={session?.user.id ?? null}
       people={(users?.ok ? users.data : []).map((user) => ({
         id: user.id,

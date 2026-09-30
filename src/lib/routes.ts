@@ -154,6 +154,10 @@ export const ROUTES = {
   contractDetail: (id: string) => `${HOME_PATH}/contracts/${id}`,
   /** CD-146 — แม่แบบสัญญา และร่างสัญญา (ฉบับล่าสุด หรือฉบับที่ระบุ). */
   contractTemplates: `${HOME_PATH}/contracts/templates`,
+  /** CD-14 — ลงนามอิเล็กทรอนิกส์. */
+  esignLayouts: `${HOME_PATH}/esign/layouts`,
+  esignMine: `${HOME_PATH}/esign`,
+  esignSign: (signerId: string) => `${HOME_PATH}/esign/sign/${signerId}`,
   contractDraft: (id: string, version?: number, compare?: number) => {
     const query = new URLSearchParams();
     if (version) query.set("version", String(version));

@@ -29,6 +29,13 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     permissions: ["notification.read"],
     group: messages.nav.requestGroup,
   },
+  /** CD-14 — documents I am asked to sign (anyone may be a signer). */
+  {
+    label: messages.nav.esignMine,
+    href: ROUTES.esignMine,
+    permissions: ["notification.read"],
+    group: messages.nav.requestGroup,
+  },
   {
     label: messages.nav.newRequest,
     href: ROUTES.newRequest,
@@ -160,6 +167,13 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     label: messages.nav.contracts,
     href: ROUTES.contracts,
     permissions: ["legal.contract.read"],
+    group: messages.nav.legalGroup,
+  },
+  /** CD-165 — แม่แบบช่องลงนาม: ใครลงนาม หน้าใด ตำแหน่งใด ลำดับใด. */
+  {
+    label: messages.nav.esignLayouts,
+    href: ROUTES.esignLayouts,
+    permissions: ["esign.manage"],
     group: messages.nav.legalGroup,
   },
   /** CD-146 — แม่แบบสัญญา: ข้อสัญญาพร้อมตัวแปรที่เติมจากดีลตอนเริ่มร่าง. */

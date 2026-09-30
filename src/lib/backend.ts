@@ -67,6 +67,7 @@ export const CORE_SERVICE_PREFIXES = [
   "/contract-reviews",
   "/contract-review-comments",
   "/contract-requests",
+  "/esign",
   "/leads",
   "/opportunities",
   "/quotations",

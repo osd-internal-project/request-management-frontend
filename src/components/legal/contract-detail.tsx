@@ -31,6 +31,8 @@ import { ContractObligationsCard } from "@/components/legal/contract-obligations
 import { ContractInstallmentsCard } from "@/components/legal/contract-installments-card";
 import { ContractRiskCard } from "@/components/legal/contract-risk-card";
 import { ContractDraftCard } from "@/components/legal/contract-draft-card";
+import { ContractEsignCard } from "@/components/esign/contract-esign-card";
+import type { EsignEnvelope, EsignLayout } from "@/lib/api/esign";
 import { SearchSelect } from "@/components/ui/search-select";
 import { appApi } from "@/lib/api/client";
 import type {
@@ -67,6 +69,7 @@ export function ContractDetailView({
   installments,
   risk,
   draft,
+  esign,
   currentUserId,
   people,
 }: {
@@ -81,6 +84,12 @@ export function ContractDetailView({
   readonly risk: ContractRiskView | null;
   /** CD-146 — the draft it was written from; null = none. */
   readonly draft: DraftForRequest | null;
+  /** CD-14 — its signings, and the layouts for who may send. */
+  readonly esign: {
+    envelopes: EsignEnvelope[];
+    layouts: EsignLayout[];
+    canSend: boolean;
+  };
   readonly currentUserId: string | null;
   /** The company's users, for the access list (Legal only). */
   readonly people: { id: string; name: string }[];
@@ -331,6 +340,15 @@ export function ContractDetailView({
           canManage={false}
         />
       )}
+
+      <ContractEsignCard
+        contractId={contract.id}
+        envelopes={esign.envelopes}
+        documents={contract.documents}
+        layouts={esign.layouts}
+        people={people}
+        canSend={esign.canSend}
+      />
 
       {risk && (
         <ContractRiskCard
