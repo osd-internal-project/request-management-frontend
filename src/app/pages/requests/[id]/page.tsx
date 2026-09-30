@@ -30,8 +30,12 @@ import { ResponseClock, SeverityTag } from "@/components/requests/severity";
 import { can, getSession } from "@/lib/session";
 import { getSolutionForRequest } from "@/lib/api/presales";
 import { SolutionStartCard } from "@/components/presales/solution-start-card";
-import { getDraftForRequest } from "@/lib/api/contracts";
+import {
+  getContractRequestPackage,
+  getDraftForRequest,
+} from "@/lib/api/contracts";
 import { ContractDraftCard } from "@/components/legal/contract-draft-card";
+import { ContractRequestPackageCard } from "@/components/legal/contract-request-package-card";
 import { messages } from "@/lib/messages";
 import { STATUS_COLOR } from "@/components/requests/status";
 
@@ -138,9 +142,13 @@ export default async function RequestDetailPage({
     ? await getSolutionForRequest(id)
     : null;
   // CD-146 — Legal drafts the contract on a contract request.
-  const draftResult = can(session, "legal.contract.read")
-    ? await getDraftForRequest(id)
-    : null;
+  const [draftResult, packageResult] = can(session, "legal.contract.read")
+    ? await Promise.all([
+        getDraftForRequest(id),
+        // CD-145 — the deal's terms and scope, attached on submit
+        getContractRequestPackage(id),
+      ])
+    : [null, null];
 
   if (!result.ok) {
     return (
@@ -268,6 +276,14 @@ export default async function RequestDetailPage({
 
       {solutionResult?.ok && (
         <SolutionStartCard view={{ ...solutionResult.data, requestId: id }} />
+      )}
+
+      {packageResult?.ok && (
+        <ContractRequestPackageCard
+          requestId={id}
+          view={packageResult.data}
+          canManage={can(session, "legal.contract.manage")}
+        />
       )}
 
       {draftResult?.ok && (

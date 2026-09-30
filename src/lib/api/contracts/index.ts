@@ -467,3 +467,36 @@ export function getDraftApproval(
 ): Promise<ApiResult<DraftApproval>> {
   return apiGet(`/contract-drafts/${encodeURIComponent(id)}/approval`);
 }
+
+/** CD-145 — what a contract request brought from its deal. */
+export interface ContractRequestPackage {
+  eligible: boolean;
+  editable: boolean;
+  package: {
+    capturedAt: string;
+    capturedOnSubmit: boolean;
+    negotiationRoundNo: number | null;
+    tradeTerms: {
+      code: string | null;
+      name: string;
+      agreed: string;
+      standard: string | null;
+      nonStandard: boolean;
+      note: string | null;
+    }[];
+    solution: { id: string; title: string | null; versionNo: number | null } | null;
+    inScope: string[];
+    outOfScope: string[];
+    deliverables: { title: string; description?: string; criteria?: string[] }[];
+    assumptionsText: string | null;
+    missing: string[];
+  } | null;
+}
+
+export function getContractRequestPackage(
+  requestId: string,
+): Promise<ApiResult<ContractRequestPackage>> {
+  return apiGet(
+    `/contract-requests/${encodeURIComponent(requestId)}/package`,
+  );
+}
