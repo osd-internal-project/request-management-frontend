@@ -352,3 +352,79 @@ export function getContractDraft(
     `/contract-drafts/${encodeURIComponent(id)}${version ? `?version=${version}` : ""}`,
   );
 }
+
+/** CD-147 — a piece of a clause's text diff. */
+export interface DiffOp {
+  type: "same" | "add" | "del";
+  text: string;
+}
+
+/** CD-147 — two versions side by side, clause by clause. */
+export interface DraftComparison {
+  from: number;
+  to: number;
+  clauses: {
+    key: string;
+    heading: string;
+    change: "same" | "changed" | "added" | "removed";
+    moved: boolean;
+    headingBefore: string | null;
+    diff: DiffOp[];
+  }[];
+  counts: { changed: number; added: number; removed: number };
+}
+
+/** CD-147 — a reviewer's comment on a clause and the drafter's answer. */
+export interface ReviewComment {
+  id: string;
+  roundId: string;
+  clauseKey: string;
+  clauseHeading: string;
+  body: string;
+  createdBy: string;
+  createdByName: string | null;
+  createdAt: string;
+  status: "open" | "resolved" | "declined";
+  response: string | null;
+  respondedByName: string | null;
+  respondedAt: string | null;
+  resolvedInVersion: number | null;
+  /** The clause changed since the version under review. */
+  changedSince: boolean;
+}
+
+export interface ReviewRound {
+  id: string;
+  roundNo: number;
+  versionNo: number;
+  note: string | null;
+  status: "open" | "closed";
+  openedByName: string | null;
+  openedAt: string;
+  closedByName: string | null;
+  closedAt: string | null;
+  closedVersionNo: number | null;
+  openCount: number;
+  comments: ReviewComment[];
+}
+
+export interface DraftReviews {
+  latestVersionNo: number;
+  rounds: ReviewRound[];
+}
+
+export function getDraftReviews(
+  id: string,
+): Promise<ApiResult<DraftReviews>> {
+  return apiGet(`/contract-drafts/${encodeURIComponent(id)}/reviews`);
+}
+
+export function compareDraftVersions(
+  id: string,
+  from: number,
+  to: number,
+): Promise<ApiResult<DraftComparison>> {
+  return apiGet(
+    `/contract-drafts/${encodeURIComponent(id)}/compare?from=${from}&to=${to}`,
+  );
+}

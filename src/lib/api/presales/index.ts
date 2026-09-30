@@ -101,6 +101,31 @@ export interface ClarificationCounts {
   scope_open: number;
 }
 
+/** CD-141 — one technical risk; score = likelihood × impact. */
+export type RiskStatus = "open" | "mitigated" | "accepted" | "closed";
+export type RiskLevel = "low" | "medium" | "high" | "critical";
+
+export interface SolutionRisk {
+  id: string;
+  seq: number;
+  title: string;
+  description: string;
+  likelihood: number;
+  impact: number;
+  owner: string;
+  mitigation: string;
+  status: RiskStatus;
+  score: number;
+  level: RiskLevel;
+}
+
+export interface RiskCounts {
+  total: number;
+  open: number;
+  open_high: number;
+  needs_plan: number;
+}
+
 export interface SolutionDetail {
   id: string;
   companyId: string;
@@ -115,6 +140,9 @@ export interface SolutionDetail {
   requirement_counts: RequirementCounts;
   clarifications: SolutionClarification[];
   clarification_counts: ClarificationCounts;
+  /** CD-141 — highest score first. */
+  risks: SolutionRisk[];
+  risk_counts: RiskCounts;
   deal: {
     id: string;
     opportunityCode: string;
@@ -170,6 +198,8 @@ export interface DealSolution {
   waiting_customer: number;
   /** CD-140 — open technical questions, and answers the SOW must follow. */
   clarification_counts: ClarificationCounts;
+  /** CD-141 — open high/critical risks, and those without a plan. */
+  risk_counts: RiskCounts;
 }
 
 export async function getSolution(

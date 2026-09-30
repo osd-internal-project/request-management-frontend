@@ -154,8 +154,13 @@ export const ROUTES = {
   contractDetail: (id: string) => `${HOME_PATH}/contracts/${id}`,
   /** CD-146 — แม่แบบสัญญา และร่างสัญญา (ฉบับล่าสุด หรือฉบับที่ระบุ). */
   contractTemplates: `${HOME_PATH}/contracts/templates`,
-  contractDraft: (id: string, version?: number) =>
-    `${HOME_PATH}/contracts/drafts/${id}${version ? `?version=${version}` : ""}`,
+  contractDraft: (id: string, version?: number, compare?: number) => {
+    const query = new URLSearchParams();
+    if (version) query.set("version", String(version));
+    if (compare) query.set("compare", String(compare));
+    const search = query.toString();
+    return `${HOME_PATH}/contracts/drafts/${id}${search ? `?${search}` : ""}`;
+  },
   /** CD-163 — ข้อผูกพันตามสัญญาที่ฉันรับผิดชอบ. */
   obligations: `${HOME_PATH}/obligations`,
   /** CD-66 — ช่องทางรับคำขอจากลูกค้า (web form / LINE / AI CARE). */

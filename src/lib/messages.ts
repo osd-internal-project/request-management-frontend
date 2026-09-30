@@ -2142,6 +2142,53 @@ export const messages = {
       notConfigured: "ยังไม่ได้ตั้งประเภทคำขอ “ขออนุมัติ Solution” ในตั้งค่า CRM",
     },
 
+    /** CD-141 — ความเสี่ยงทางเทคนิค */
+    risks: {
+      title: "ความเสี่ยงทางเทคนิค",
+      hint: "โอกาสเกิด × ผลกระทบ (1–5) = คะแนน → ระดับ · ความเสี่ยงระดับสูง/วิกฤติที่ยังเปิดต้องมีผู้รับผิดชอบและแนวทางลดก่อนขออนุมัติ · ทะเบียนนี้ส่งต่อเป็นความเสี่ยงของโครงการเมื่อส่งมอบงาน",
+      summary: (open: number, openHigh: number, needsPlan: number) =>
+        `เปิด ${open} · สูง/วิกฤติ ${openHigh} · ยังไม่มีแผน ${needsPlan}`,
+      empty: "ยังไม่มีความเสี่ยง",
+      add: "เพิ่มความเสี่ยง",
+      edit: "แก้ไข",
+      remove: "เอาออก",
+      removeConfirm: "เอาความเสี่ยงข้อนี้ออก?",
+      save: "บันทึก",
+      risk: "ความเสี่ยง",
+      titlePlaceholder: "เช่น อุปกรณ์ขาดตลาด ส่งไม่ทันกำหนด",
+      description: "รายละเอียด",
+      likelihood: "โอกาสเกิด",
+      impact: "ผลกระทบ",
+      score: "คะแนน",
+      owner: "ผู้รับผิดชอบ",
+      mitigation: "แนวทางลดความเสี่ยง",
+      status: "สถานะ",
+      needsPlan: "ต้องมีผู้รับผิดชอบและแนวทางลด",
+      scale: {
+        1: "1 · น้อยมาก",
+        2: "2 · น้อย",
+        3: "3 · ปานกลาง",
+        4: "4 · สูง",
+        5: "5 · สูงมาก",
+      } as Record<number, string>,
+      levels: {
+        low: "ต่ำ",
+        medium: "ปานกลาง",
+        high: "สูง",
+        critical: "วิกฤติ",
+      } as Record<string, string>,
+      statuses: {
+        open: "เปิด",
+        mitigated: "ลดแล้ว",
+        accepted: "ยอมรับ",
+        closed: "ปิด",
+      } as Record<string, string>,
+      onDeal: (openHigh: number, needsPlan: number) =>
+        needsPlan
+          ? `ความเสี่ยงสูงยังไม่มีแผน ${needsPlan}`
+          : `ความเสี่ยงสูง ${openHigh}`,
+    },
+
     /** CD-140 — ชี้แจงประเด็นเทคนิค */
     clarifications: {
       title: "ชี้แจงประเด็นเทคนิค",
@@ -4432,6 +4479,76 @@ export const messages = {
       cancel: "ยกเลิก",
       saved: (n: number) => `บันทึกเป็นฉบับที่ ${n} แล้ว`,
       contractLink: "ร่างสัญญาที่ใช้ทำฉบับนี้",
+    },
+    /** CD-147 — ตรวจสัญญา. */
+    review: {
+      compareWith: "เทียบกับฉบับ",
+      noCompare: "ไม่เทียบ",
+      compareTitle: (from: number, to: number) =>
+        `เปรียบเทียบฉบับที่ ${from} → ฉบับที่ ${to}`,
+      compareCounts: (changed: number, added: number, removed: number) =>
+        `แก้ ${changed} · เพิ่ม ${added} · ตัดออก ${removed} ข้อ`,
+      change: {
+        same: "ไม่เปลี่ยน",
+        changed: "แก้",
+        added: "เพิ่ม",
+        removed: "ตัดออก",
+      } as Record<string, string>,
+      changeColor: {
+        same: "default",
+        changed: "orange",
+        added: "blue",
+        removed: "red",
+      } as Record<string, string>,
+      moved: "ย้ายลำดับ",
+      headingBefore: (heading: string) => `เดิม: ${heading}`,
+      hideSame: "ซ่อนข้อที่ไม่เปลี่ยน",
+      title: "การตรวจสัญญา",
+      hint: "เปิดรอบตรวจบนฉบับล่าสุด ให้ความเห็นรายข้อ ผู้ร่างตอบทีละข้อว่าแก้แล้วหรือไม่แก้ (พร้อมเหตุผล) — ตอบครบทุกข้อจึงปิดรอบได้",
+      open: "เปิดรอบตรวจ",
+      openNote: "หมายเหตุรอบตรวจ",
+      round: (no: number, version: number) =>
+        `รอบที่ ${no} · ตรวจฉบับที่ ${version}`,
+      roundStatus: {
+        open: "กำลังตรวจ",
+        closed: "ปิดรอบแล้ว",
+      } as Record<string, string>,
+      roundColor: {
+        open: "blue",
+        closed: "green",
+      } as Record<string, string>,
+      openedBy: (name: string, at: string) => `เปิดโดย ${name} · ${at}`,
+      closedBy: (name: string, at: string, version: number) =>
+        `ปิดโดย ${name} · ${at} · ที่ฉบับที่ ${version}`,
+      unanswered: (n: number) => `ยังไม่ตอบ ${n} ข้อ`,
+      noRounds: "ยังไม่มีรอบตรวจ",
+      noComments: "ยังไม่มีความเห็น",
+      clause: "ข้อที่ให้ความเห็น",
+      comment: "ความเห็น",
+      commentPlaceholder: "เช่น ค่าปรับสูงเกินมาตรฐาน เสนอลดเป็นร้อยละ 0.05",
+      addComment: "เพิ่มความเห็น",
+      commentStatus: {
+        open: "รอตอบ",
+        resolved: "แก้แล้ว",
+        declined: "ไม่แก้",
+      } as Record<string, string>,
+      commentColor: {
+        open: "orange",
+        resolved: "green",
+        declined: "default",
+      } as Record<string, string>,
+      changedSince: "ข้อนี้ถูกแก้แล้วหลังฉบับที่ตรวจ",
+      notChangedSince: "ข้อนี้ยังไม่ถูกแก้",
+      resolvedIn: (n: number) => `แก้ในฉบับที่ ${n}`,
+      response: "คำตอบ / เหตุผล",
+      resolve: "แก้แล้ว",
+      decline: "ไม่แก้",
+      reasonRequired: "ไม่แก้ต้องให้เหตุผล",
+      close: "ปิดรอบตรวจ",
+      closeBlocked: "ตอบความเห็นให้ครบก่อนปิดรอบ",
+      opened: "เปิดรอบตรวจแล้ว",
+      closed: "ปิดรอบตรวจแล้ว",
+      commentCount: (n: number) => `${n} ความเห็น`,
     },
     /** CD-158 — ประเมินความเสี่ยงกฎหมาย. */
     risk: {

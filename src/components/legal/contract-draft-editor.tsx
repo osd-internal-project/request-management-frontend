@@ -8,11 +8,17 @@ import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
 import dayjs from "dayjs";
 import { appApi } from "@/lib/api/client";
-import type { ContractClause, ContractDraftView } from "@/lib/api/contracts";
+import type {
+  ContractClause,
+  ContractDraftView,
+  DraftComparison,
+} from "@/lib/api/contracts";
+import { ContractDraftCompare } from "@/components/legal/contract-draft-compare";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 
 const m = messages.contracts.drafts;
+const mr = messages.contracts.review;
 
 const VARIABLE = /\{\{\s*([a-z0-9_]+)\s*\}\}/g;
 
@@ -39,9 +45,12 @@ function unfilled(clauses: readonly ContractClause[]): string[] {
 export function ContractDraftEditor({
   view,
   canManage,
+  comparison,
 }: {
   readonly view: ContractDraftView;
   readonly canManage: boolean;
+  /** CD-147 — this version against another, when asked for. */
+  readonly comparison?: DraftComparison | null;
 }) {
   const router = useRouter();
   const { message } = App.useApp();
@@ -130,6 +139,27 @@ export function ContractDraftEditor({
             return { value: no, label: m.versionOf(no, view.latestVersionNo) };
           })}
         />
+        {view.latestVersionNo > 1 && (
+          <Select
+            aria-label={mr.compareWith}
+            placeholder={mr.compareWith}
+            allowClear
+            className="min-w-36"
+            value={comparison?.from}
+            disabled={editing !== null}
+            onChange={(no?: number) =>
+              router.push(
+                ROUTES.contractDraft(view.id, view.version.versionNo, no),
+              )
+            }
+            options={Array.from({ length: view.latestVersionNo }, (_, i) => i + 1)
+              .filter((no) => no !== view.version.versionNo)
+              .map((no) => ({
+                value: no,
+                label: `${mr.compareWith} ${no}`,
+              }))}
+          />
+        )}
         {canManage && view.editable && editing === null && (
           <Button
             type="primary"
@@ -256,6 +286,9 @@ export function ContractDraftEditor({
         />
       )}
 
+      {comparison ? (
+        <ContractDraftCompare comparison={comparison} />
+      ) : (
       <Card size="small">
         <div className="divide-y">
           {view.clauses.map((clause, index) => (
@@ -300,6 +333,7 @@ export function ContractDraftEditor({
           ))}
         </div>
       </Card>
+      )}
 
       {view.removed.length > 0 && (
         <Card size="small" title={m.removedTitle}>
