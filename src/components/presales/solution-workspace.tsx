@@ -40,6 +40,7 @@ import { RequirementsCard } from "./requirements-card";
 import { ScopeOfWorkCard, type ScopeOfWork } from "./scope-of-work-card";
 import { FeasibilityCard } from "./feasibility-card";
 import { BoqCard } from "./boq-card";
+import { CostCard } from "./cost-card";
 import { ClarificationsCard } from "./clarifications-card";
 import { RisksCard } from "./risks-card";
 import { DemosCard } from "./demos-card";
@@ -480,6 +481,12 @@ export function SolutionWorkspace({ solution }: { solution: SolutionDetail }) {
         lines={editable ? boq : version.boq}
         editable={editable}
         onChange={setBoq}
+      />
+
+      <CostCard
+        // Reset the labour form to what was stored after every change.
+        key={JSON.stringify(solution.cost?.labor ?? [])}
+        solution={solution}
       />
 
       <ScopeOfWorkCard

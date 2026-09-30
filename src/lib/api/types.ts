@@ -1780,6 +1780,10 @@ export interface CrmConfig {
   solutionApprovalTypeCode?: string | null;
   /** CD-139 — the type Pre-Sales takes Demo/POC requests on. */
   demoRequestTypeCode?: string | null;
+  /** CD-136 — the type Pre-Sales asks Purchasing for partner prices on. */
+  vendorQuoteTypeCode?: string | null;
+  /** CD-136 — labour cost per manday by role, until HR (CD-17). */
+  presalesLaborRates?: { role: string; rate: number }[];
   /** CD-61 — KYC ใช้ได้กี่เดือนก่อนต้องทบทวน ตามความเสี่ยง. */
   kycReviewMonthsHigh?: number;
   kycReviewMonthsMedium?: number;

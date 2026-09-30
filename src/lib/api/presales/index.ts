@@ -245,6 +245,51 @@ export interface BoqSummary {
   ref_total: number;
 }
 
+/** CD-136 — the cost estimate of a version. */
+export interface LaborLine {
+  role: string;
+  mandays: number;
+  rate: number;
+  note: string;
+}
+
+export interface CostLine {
+  index: number;
+  productCode: string;
+  name: string;
+  quantity: number;
+  unitCost: number | null;
+  source: "quote" | "reference" | null;
+  quoteId: string | null;
+  vendorName: string | null;
+  expired: boolean;
+}
+
+export interface CostEstimate {
+  lines: CostLine[];
+  labor: LaborLine[];
+  materials_total: number;
+  labor_total: number;
+  total: number;
+  missing_cost: number;
+  expired_quotes: number;
+  complete: boolean;
+}
+
+export interface PartnerQuote {
+  id: string;
+  seq: number;
+  vendorName: string;
+  vendorCode: string;
+  quoteNo: string;
+  quoteDate: string | null;
+  validUntil: string | null;
+  requestId: string | null;
+  lines: { lineIndex: number; productCode: string; unitPrice: number }[];
+  fileName: string | null;
+  sizeBytes: number | null;
+}
+
 export interface SolutionDetail {
   id: string;
   companyId: string;
@@ -267,8 +312,15 @@ export interface SolutionDetail {
   demo_counts: DemoCounts;
   /** CD-135 — the BOQ of the version shown. */
   boq_summary: BoqSummary;
-  /** CD-135 — handoff 3: the newest approved version, if any. */
+  /** CD-135/136 — handoff 3: the newest approved version with a complete estimate. */
   pricing_ready: { versionNo: number } | null;
+  /** CD-136 — the estimate of the version shown. */
+  cost: CostEstimate | null;
+  partner_quotes: PartnerQuote[];
+  cost_settings: {
+    labor_rates: { role: string; rate: number }[];
+    vendor_quote_configured: boolean;
+  };
   /** CD-138 — the TOR and its clauses. */
   tor: SolutionTor;
   tor_counts: TorCounts;

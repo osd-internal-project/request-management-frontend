@@ -353,6 +353,10 @@ function ConfigSection({
     config.solutionRequestTypeCode ?? "",
   );
   const [demoType, setDemoType] = useState(config.demoRequestTypeCode ?? "");
+  const [vqType, setVqType] = useState(config.vendorQuoteTypeCode ?? "");
+  const [laborRates, setLaborRates] = useState(
+    config.presalesLaborRates ?? [],
+  );
   const [solutionApprovalType, setSolutionApprovalType] = useState(
     config.solutionApprovalTypeCode ?? "",
   );
@@ -375,6 +379,8 @@ function ConfigSection({
       solution_request_type_code: solutionType,
       solution_approval_type_code: solutionApprovalType,
       demo_request_type_code: demoType,
+      vendor_quote_type_code: vqType,
+      presales_labor_rates: laborRates.filter((rate) => rate.role.trim()),
       dedup_threshold: threshold,
       min_margin_pct: minMargin,
       quotation_validity_days: validityDays,
@@ -624,6 +630,68 @@ function ConfigSection({
       </div>
       <Text type="secondary" className="mt-2 block text-xs">
         {m.demoHint}
+      </Text>
+      {/* CD-136 — ประเภทคำขอราคาจากคู่ค้า + อัตราต้นทุนแรงงาน */}
+      <div className="mt-3 max-w-xs">
+        <Text className="mb-1 block text-xs">{m.vendorQuoteTypeCode}</Text>
+        <Input
+          value={vqType}
+          maxLength={20}
+          allowClear
+          onChange={(e) => setVqType(e.target.value.toUpperCase())}
+        />
+      </div>
+      <div className="mt-3 max-w-md">
+        <Text className="mb-1 block text-xs">{m.laborRates}</Text>
+        {laborRates.map((rate, index) => (
+          <Space.Compact key={index} className="mb-1 w-full">
+            <Input
+              value={rate.role}
+              maxLength={100}
+              placeholder={m.laborRole}
+              onChange={(e) =>
+                setLaborRates((rows) =>
+                  rows.map((row, at) =>
+                    at === index ? { ...row, role: e.target.value } : row,
+                  ),
+                )
+              }
+            />
+            <InputNumber
+              value={rate.rate}
+              min={0}
+              style={{ width: 160 }}
+              placeholder={m.laborRate}
+              onChange={(value) =>
+                setLaborRates((rows) =>
+                  rows.map((row, at) =>
+                    at === index ? { ...row, rate: Number(value) || 0 } : row,
+                  ),
+                )
+              }
+            />
+            <Button
+              danger
+              onClick={() =>
+                setLaborRates((rows) => rows.filter((_, at) => at !== index))
+              }
+            >
+              ×
+            </Button>
+          </Space.Compact>
+        ))}
+        <Button
+          size="small"
+          type="dashed"
+          onClick={() =>
+            setLaborRates((rows) => [...rows, { role: "", rate: 0 }])
+          }
+        >
+          {m.addLaborRate}
+        </Button>
+      </div>
+      <Text type="secondary" className="mt-2 block text-xs">
+        {m.laborRatesHint}
       </Text>
 
       <Button
