@@ -124,6 +124,16 @@ export interface ContractTermsView {
     capPct: number | null;
     capAmount: number | null;
     ceiling: number | null;
+    /** CD-154 — the project milestones the penalty runs on. */
+    project: { id: string; projectNo: string } | null;
+    milestones: ({
+      id: string;
+      title: string;
+      status: string;
+      dueOn: string | null;
+      achievedOn: string | null;
+    } & MilestonePenalty)[];
+    exposure: PenaltyExposure;
   };
   warranty: {
     months: number | null;
@@ -195,6 +205,20 @@ export function getContractObligations(
 
 export function getMyObligations(): Promise<ApiResult<MyObligation[]>> {
   return apiGet("/contract-obligations/mine");
+}
+
+/** CD-154 — the delay penalty on one milestone. */
+export interface MilestonePenalty {
+  daysLate: number;
+  units: number;
+  basisAmount: number | null;
+  amount: number | null;
+}
+
+export interface PenaltyExposure {
+  total: number;
+  capped: boolean;
+  unknown: number;
 }
 
 /** CD-164 — one installment of the billing schedule. */

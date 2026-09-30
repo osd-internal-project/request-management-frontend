@@ -37,6 +37,7 @@ interface Draft {
   dueOn: Dayjs | null;
   installmentId: string | null;
   criteria: string;
+  penaltyApplies: boolean;
 }
 
 const evidenceUrl = (projectId: string, milestoneId: string) =>
@@ -98,6 +99,7 @@ export function ProjectMilestonesCard({
       description: draft.description,
       due_on: draft.dueOn ? draft.dueOn.format("YYYY-MM-DD") : null,
       installment_id: draft.installmentId,
+      penalty_applies: draft.penaltyApplies,
       criteria: draft.criteria
         .split("\n")
         .map((line) => line.trim())
@@ -170,6 +172,7 @@ export function ProjectMilestonesCard({
                   dueOn: null,
                   installmentId: null,
                   criteria: "",
+                  penaltyApplies: Boolean(view.penalty.rate),
                 });
               }}
             >
@@ -182,6 +185,19 @@ export function ProjectMilestonesCard({
       <Text type="secondary" className="mb-2 block text-xs">
         {m.hint}
       </Text>
+      {view.penalty.exposure.total > 0 && (
+        <Alert
+          className="mb-2"
+          type="warning"
+          showIcon
+          title={m.exposure(
+            formatAmount(view.penalty.exposure.total),
+            view.penalty.ceiling === null
+              ? null
+              : formatAmount(view.penalty.ceiling),
+          )}
+        />
+      )}
       {canEdit && waiting > 0 && (
         <Alert
           className="mb-2"
@@ -215,6 +231,19 @@ export function ProjectMilestonesCard({
                       {m.status[row.status]}
                     </Tag>
                     {row.overdue && <Tag color="red">{m.overdue}</Tag>}
+                    {row.penaltyApplies && (
+                      <Tag color="volcano">{m.penaltyTag}</Tag>
+                    )}
+                    {row.penalty && row.penalty.daysLate > 0 && (
+                      <Text type="danger" className="text-xs">
+                        {m.penaltyLate(
+                          row.penalty.daysLate,
+                          row.penalty.amount === null
+                            ? null
+                            : formatAmount(row.penalty.amount),
+                        )}
+                      </Text>
+                    )}
                     <div className="flex flex-wrap gap-x-3 text-xs">
                       {row.dueOn && (
                         <Text type="secondary">
@@ -264,6 +293,7 @@ export function ProjectMilestonesCard({
                             description: row.description ?? "",
                             dueOn: row.dueOn ? dayjs(row.dueOn) : null,
                             installmentId: row.installment?.id ?? null,
+                            penaltyApplies: row.penaltyApplies,
                             criteria: row.criteria
                               .map((item) => item.text)
                               .join("\n"),
@@ -422,6 +452,16 @@ export function ProjectMilestonesCard({
                 }
               />
             </label>
+            {view.penalty.rate && (
+              <Checkbox
+                checked={draft.penaltyApplies}
+                onChange={(event) =>
+                  setDraft({ ...draft, penaltyApplies: event.target.checked })
+                }
+              >
+                {m.penaltyApplies}
+              </Checkbox>
+            )}
           </div>
         )}
       </Modal>

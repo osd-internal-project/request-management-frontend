@@ -3,6 +3,7 @@
  */
 import { apiGet, type ApiResult } from "./core";
 import type { Paginated } from "./types";
+import type { MilestonePenalty, PenaltyExposure } from "./contracts";
 
 export type ProjectStatus = "active" | "on_hold" | "closed" | "cancelled";
 
@@ -207,6 +208,9 @@ export interface ProjectMilestone {
   } | null;
   achievedOn: string | null;
   achievedAt: string | null;
+  /** CD-154 — the contract's delay penalty runs on it if late. */
+  penaltyApplies: boolean;
+  penalty: MilestonePenalty | null;
   achievedByName: string | null;
   evidenceNote: string | null;
   evidenceFile: { name: string; size: number | null } | null;
@@ -214,6 +218,16 @@ export interface ProjectMilestone {
 
 export interface ProjectMilestonesView {
   canEdit: boolean;
+  /** CD-154 — the contract's delay penalty; rate null = none agreed. */
+  penalty: {
+    rate: {
+      ratePct: number | null;
+      period: string | null;
+      basis: string | null;
+    } | null;
+    ceiling: number | null;
+    exposure: PenaltyExposure;
+  };
   milestones: ProjectMilestone[];
   /** The contract's installments, and the milestone tied to each. */
   installments: {

@@ -4685,6 +4685,17 @@ export const messages = {
       cancel: "ยกเลิกหมุดหมาย",
       cancelConfirm: "ยกเลิกหมุดหมายนี้? งวดชำระที่ผูกไว้จะว่างให้ผูกใหม่ได้",
       achieve: "บันทึกว่าบรรลุ",
+      /** CD-154 */
+      penaltyApplies: "คิดค่าปรับตามสัญญาหากล่าช้า",
+      penaltyTag: "มีค่าปรับ",
+      penaltyLate: (days: number, amount: string | null) =>
+        amount === null
+          ? `ล่าช้า ${days} วัน`
+          : `ล่าช้า ${days} วัน · ค่าปรับ ${amount} บาท`,
+      exposure: (amount: string, ceiling: string | null) =>
+        ceiling
+          ? `ค่าปรับสะสมโดยประมาณ ${amount} บาท (เพดาน ${ceiling})`
+          : `ค่าปรับสะสมโดยประมาณ ${amount} บาท`,
       achieveHint: "ยืนยันเกณฑ์ให้ครบทุกข้อก่อน",
       achievedOn: (day: string, name: string) => `บรรลุ ${day} · ${name}`,
       evidence: "หลักฐาน",
@@ -5386,6 +5397,17 @@ export const messages = {
       penaltyLine: (rate: string, period: string, basis: string) =>
         `ร้อยละ ${rate} ต่อ${period} ของ${basis}`,
       ceiling: (amount: string) => `ค่าปรับสูงสุด ${amount} บาท`,
+      /** CD-154 — the milestones the penalty runs on. */
+      penaltyMilestones: "หมุดหมายที่คิดค่าปรับหากล่าช้า",
+      penaltyNoProject: "ผูกกับหมุดหมายได้เมื่อเปิดโครงการ",
+      penaltyNone: "ยังไม่มีหมุดหมายที่คิดค่าปรับ — ตั้งที่หมุดหมายในหน้าโครงการ",
+      penaltyLate: (days: number) => `ล่าช้า ${days} วัน`,
+      penaltyOnTime: "ตรงเวลา",
+      penaltyAmount: (amount: string) => `ค่าปรับ ${amount} บาท`,
+      penaltyUnknown: "คำนวณเป็นเงินไม่ได้ (ฐานไม่ใช่มูลค่าสัญญา/งวด)",
+      exposure: (amount: string) => `ค่าปรับสะสมโดยประมาณ ${amount} บาท`,
+      exposureCapped: "ถึงเพดานแล้ว",
+      goProject: (no: string) => `โครงการ ${no}`,
       warranty: "การรับประกัน",
       warrantyMonths: "ระยะประกัน (เดือน)",
       warrantyScope: "ขอบเขต",
