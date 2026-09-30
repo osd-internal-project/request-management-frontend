@@ -286,6 +286,9 @@ export function CostCard({ solution }: { solution: SolutionDetail }) {
           size="small"
           rowKey="index"
           pagination={false}
+          // A fixed role column: an empty select at "100%" of an auto column
+          // collapsed to nothing, then widened on pick and shifted the inputs.
+          scroll={{ x: 600 }}
           dataSource={(editable ? labor : (cost?.labor ?? [])).map(
             (line, index) => ({ ...line, index }),
           )}
@@ -293,6 +296,7 @@ export function CostCard({ solution }: { solution: SolutionDetail }) {
             {
               title: mc.role,
               dataIndex: "role",
+              width: 220,
               render: (role: string, row) =>
                 editable ? (
                   <Select
