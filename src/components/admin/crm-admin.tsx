@@ -352,6 +352,7 @@ function ConfigSection({
   const [solutionType, setSolutionType] = useState(
     config.solutionRequestTypeCode ?? "",
   );
+  const [demoType, setDemoType] = useState(config.demoRequestTypeCode ?? "");
   const [solutionApprovalType, setSolutionApprovalType] = useState(
     config.solutionApprovalTypeCode ?? "",
   );
@@ -373,6 +374,7 @@ function ConfigSection({
       contract_approval_type_code: contractApprovalType,
       solution_request_type_code: solutionType,
       solution_approval_type_code: solutionApprovalType,
+      demo_request_type_code: demoType,
       dedup_threshold: threshold,
       min_margin_pct: minMargin,
       quotation_validity_days: validityDays,
@@ -609,6 +611,19 @@ function ConfigSection({
       </div>
       <Text type="secondary" className="mt-2 block text-xs">
         {m.solutionApprovalHint}
+      </Text>
+      {/* CD-139 — ประเภทคำขอ Demo/POC */}
+      <div className="mt-3 max-w-xs">
+        <Text className="mb-1 block text-xs">{m.demoRequestTypeCode}</Text>
+        <Input
+          value={demoType}
+          maxLength={20}
+          allowClear
+          onChange={(e) => setDemoType(e.target.value.toUpperCase())}
+        />
+      </div>
+      <Text type="secondary" className="mt-2 block text-xs">
+        {m.demoHint}
       </Text>
 
       <Button

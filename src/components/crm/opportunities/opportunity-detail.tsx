@@ -85,6 +85,7 @@ export function OpportunityDetailView({
   phoneNumbers = null,
   contractTypeName = null,
   solutionTypeName = null,
+  demoTypeName = null,
   solutions = [],
   handover = null,
   handoverTeams = [],
@@ -114,6 +115,8 @@ export function OpportunityDetailView({
   contractTypeName?: string | null;
   /** CD-130 — name of the solution type when the viewer may raise it. */
   solutionTypeName?: string | null;
+  /** CD-139 — name of the Demo/POC type when the viewer may raise it. */
+  demoTypeName?: string | null;
   /** CD-132 — the Solutions Pre-Sales designed for this deal. */
   solutions?: DealSolution[];
   /** CD-84 — null = could not be read (the card is hidden). */
@@ -507,6 +510,19 @@ export function OpportunityDetailView({
           )}
           requests={relatedRequests.filter(
             (row) => row.typeCode === opportunity.solutionRequestTypeCode,
+          )}
+        />
+      )}
+
+      {/* CD-139 — ขอจัด Demo หรือ POC จาก Pre-Sales */}
+      {relatedRequests !== null && opportunity.demoRequestTypeCode && (
+        <ContractCard
+          opportunityCode={opportunity.opportunityCode}
+          typeCode={opportunity.demoRequestTypeCode}
+          typeName={editable ? demoTypeName : null}
+          labels={md.demos}
+          requests={relatedRequests.filter(
+            (row) => row.typeCode === opportunity.demoRequestTypeCode,
           )}
         />
       )}

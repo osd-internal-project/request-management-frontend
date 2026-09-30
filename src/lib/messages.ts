@@ -2142,6 +2142,78 @@ export const messages = {
       notConfigured: "ยังไม่ได้ตั้งประเภทคำขอ “ขออนุมัติ Solution” ในตั้งค่า CRM",
     },
 
+    /** CD-139 — Demo / POC */
+    demos: {
+      title: "Demo / POC",
+      hint: "แผน คนที่จอง อุปกรณ์ที่เบิก-คืน ผลตามเกณฑ์ความสำเร็จ และข้อค้นพบ · ปิดได้เมื่อคืนอุปกรณ์ครบ · ข้อค้นพบที่ต้องปรับ Solution ต้องปิดด้วยเวอร์ชันที่ปรับแล้วก่อนขออนุมัติ",
+      summary: (planned: number, out: number, findings: number) =>
+        `วางแผน ${planned} · อุปกรณ์ยังไม่คืน ${out} · ข้อค้นพบรอปรับ ${findings}`,
+      empty: "ยังไม่มี Demo / POC",
+      add: "เพิ่ม Demo / POC",
+      fromRequest: "จากคำขอ",
+      blank: "กรอกเอง (ไม่อ้างคำขอ)",
+      requestUsed: "ใช้แล้ว",
+      create: "สร้าง",
+      kinds: { demo: "Demo", poc: "POC" } as Record<string, string>,
+      statuses: {
+        planned: "วางแผน",
+        done: "จัดแล้ว",
+        cancelled: "ยกเลิก",
+      } as Record<string, string>,
+      titleLabel: "ชื่อ",
+      scheduledOn: "วันที่จัด",
+      site: "สถานที่",
+      people: "คน/ทีมที่จอง",
+      plan: "แผนการจัด",
+      criteria: "เกณฑ์ความสำเร็จและผล",
+      addCriterion: "เพิ่มเกณฑ์",
+      criterionPlaceholder: "เกณฑ์ความสำเร็จ",
+      notePlaceholder: "ผลที่ได้/หมายเหตุ",
+      results: {
+        pending: "ยังไม่ได้ผล",
+        met: "ผ่าน",
+        not_met: "ไม่ผ่าน",
+      } as Record<string, string>,
+      outcome: "สรุปผล",
+      save: "บันทึก",
+      saved: "บันทึกแล้ว",
+      closeDone: "ปิด — จัดแล้ว",
+      closeCancelled: "ยกเลิก",
+      closeConfirm: "ปิด Demo/POC นี้? ปิดแล้วแก้แผน/ผลไม่ได้",
+      remove: "เอาออก",
+      removeConfirm: "เอา Demo/POC นี้ออก?",
+      equipment: "อุปกรณ์ที่เบิก",
+      equipmentEmpty: "ยังไม่ได้เบิกอุปกรณ์",
+      equipmentName: "อุปกรณ์/รุ่น",
+      serial: "Serial / เลขครุภัณฑ์",
+      quantity: "จำนวน",
+      takenBy: "ผู้เบิก",
+      outOn: "วันที่เบิก",
+      returnedOn: "วันที่คืน",
+      notReturned: "ยังไม่คืน",
+      checkOut: "เบิก",
+      checkIn: "คืนอุปกรณ์",
+      findings: "ข้อค้นพบ",
+      findingsEmpty: "ยังไม่มีข้อค้นพบ",
+      findingPlaceholder: "สิ่งที่พบจากการ Demo/POC",
+      requiresChange: "ต้องปรับ Solution",
+      addFinding: "เพิ่ม",
+      findingOpen: "รอปรับ Solution",
+      findingResolved: (no: number) => `ปรับแล้วใน v${no}`,
+      resolve: "ปรับแล้ว",
+      resolveTitle: "ปิดข้อค้นพบ",
+      resolveHint: "เลือกเวอร์ชันที่ปรับตามข้อค้นพบนี้แล้ว — ร่างที่กำลังแก้ หรือเวอร์ชันที่ยืนยันหลังบันทึกข้อค้นพบ",
+      resolveOk: "ปิดข้อนี้",
+      openRequest: "เปิดคำขอ",
+      onDeal: (out: number, findings: number) =>
+        [
+          out ? `อุปกรณ์ Demo ยังไม่คืน ${out}` : "",
+          findings ? `ข้อค้นพบ Demo รอปรับ ${findings}` : "",
+        ]
+          .filter(Boolean)
+          .join(" · "),
+    },
+
     /** CD-141 — ความเสี่ยงทางเทคนิค */
     risks: {
       title: "ความเสี่ยงทางเทคนิค",
@@ -3387,6 +3459,32 @@ export const messages = {
             cancelled: "ยกเลิก",
           } as Record<string, string>,
         },
+        /** CD-139 — ขอจัด Demo หรือ POC (Sales → Pre-Sales) */
+        demos: {
+          title: "Demo / POC",
+          raise: "ขอจัด Demo หรือ POC",
+          empty: "ยังไม่ได้ขอจัด Demo หรือ POC",
+          cannotRaise: "คุณยังยื่นคำขอ Demo/POC ไม่ได้ — ติดต่อผู้ดูแลระบบ",
+          draftNo: "(ร่าง)",
+          columns: {
+            no: "เลขคำขอ",
+            stage: "สถานะ",
+            owner: "ผู้รับผิดชอบ",
+            raised: "วันที่ขอ",
+          },
+          stages: {
+            draft: "ยังไม่ได้ยื่น",
+            submitted: "รอหัวหน้า Pre-Sales รับเรื่อง",
+            in_progress: "Pre-Sales เตรียม/จัดอยู่",
+            on_hold: "พักไว้",
+            returned: "Pre-Sales ตีกลับ",
+            completed: "จัดแล้ว — รอตรวจรับ",
+            approved: "จัดแล้ว",
+            closed: "จัดแล้ว",
+            rejected: "Pre-Sales ไม่รับจัด",
+            cancelled: "ยกเลิก",
+          } as Record<string, string>,
+        },
         noRequests: "ยังไม่มีคำขอที่อ้างโอกาสการขายนี้",
         edit: "แก้ไข",
         quotationsTitle: "ใบเสนอราคา",
@@ -4177,6 +4275,10 @@ export const messages = {
       solutionRequestTypeCode: "ประเภทคำขอ \"ขอ Solution และประเมินต้นทุน\"",
       solutionHint:
         "หน้าดีลจะมีการ์ด “Solution” พร้อมปุ่มขอ Solution ด้วยประเภทนี้ — ช่องบังคับของฟอร์มประเภทนี้คือรายการตรวจความครบก่อนยื่น (แก้ได้ที่หน้าประเภทคำขอ) · เว้นว่าง = ไม่แสดงการ์ด",
+      /* CD-139 */
+      demoRequestTypeCode: "ประเภทคำขอ \"ขอจัด Demo หรือ POC\"",
+      demoHint:
+        "หน้าดีลจะมีการ์ด “Demo / POC” พร้อมปุ่มขอจัด — หัวหน้าทีมที่รับเรื่องรับคำขอ = อนุมัติ · เว้นว่าง = ไม่แสดงการ์ด",
       /* CD-143 */
       solutionApprovalTypeCode: "ประเภทคำขอ \"ขออนุมัติ Solution\"",
       solutionApprovalHint:

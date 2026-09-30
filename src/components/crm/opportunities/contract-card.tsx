@@ -146,6 +146,15 @@ export function ContractCard({
                               ] ?? design.latest.approvalStatus}
                             </Tag>
                           )}
+                          {(design.demo_counts.equipment_out > 0 ||
+                            design.demo_counts.findings_open > 0) && (
+                            <Tag color="orange">
+                              {messages.presales.demos.onDeal(
+                                design.demo_counts.equipment_out,
+                                design.demo_counts.findings_open,
+                              )}
+                            </Tag>
+                          )}
                           {design.risk_counts.open_high > 0 && (
                             <Tag
                               color={

@@ -1580,6 +1580,8 @@ export interface OpportunityDetail extends OpportunityRow {
   contractRequestTypeCode?: string | null;
   /** CD-130 — the type Pre-Sales takes solution requests on. */
   solutionRequestTypeCode?: string | null;
+  /** CD-139 — the type Pre-Sales takes Demo/POC requests on. */
+  demoRequestTypeCode?: string | null;
 }
 
 /** CD-79 — a company's standard trade term (CRM settings). */
@@ -1776,6 +1778,8 @@ export interface CrmConfig {
   solutionRequestTypeCode?: string | null;
   /** CD-143 — the type a Solution version is sent for approval on. */
   solutionApprovalTypeCode?: string | null;
+  /** CD-139 — the type Pre-Sales takes Demo/POC requests on. */
+  demoRequestTypeCode?: string | null;
   /** CD-61 — KYC ใช้ได้กี่เดือนก่อนต้องทบทวน ตามความเสี่ยง. */
   kycReviewMonthsHigh?: number;
   kycReviewMonthsMedium?: number;
@@ -1966,6 +1970,21 @@ export interface HandoverTechnicalPackage {
     assessment: string;
     note: string;
     customerAnswer: string | null;
+  }[];
+  /** CD-139 — the demos and what they showed. */
+  demos: {
+    seq: number;
+    kind: string;
+    title: string;
+    status: string;
+    scheduledOn: string | null;
+    criteria: { text: string; result: string; note: string }[];
+    outcome: string;
+    findings: {
+      text: string;
+      requiresChange: boolean;
+      resolvedVersionNo: number | null;
+    }[];
   }[];
   /** CD-141 — the project's risks, highest score first. */
   risks: {

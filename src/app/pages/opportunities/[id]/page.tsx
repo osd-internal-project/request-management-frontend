@@ -78,7 +78,8 @@ export default async function OpportunityDetailPage({
     // CD-81 / CD-130 — only to tell whether the viewer may raise the
     // contract or the solution type.
     (opportunityResult.data.contractRequestTypeCode ||
-      opportunityResult.data.solutionRequestTypeCode) &&
+      opportunityResult.data.solutionRequestTypeCode ||
+      opportunityResult.data.demoRequestTypeCode) &&
     canReadRequests
       ? getRequestTypes()
       : Promise.resolve(null),
@@ -112,6 +113,12 @@ export default async function OpportunityDetailPage({
     (typesResult?.ok &&
       typesResult.data.find((type) => type.code === solutionCode)?.name) ||
     null;
+  // CD-139 — likewise the Demo/POC type.
+  const demoCode = opportunityResult.data.demoRequestTypeCode ?? null;
+  const demoTypeName =
+    (typesResult?.ok &&
+      typesResult.data.find((type) => type.code === demoCode)?.name) ||
+    null;
 
   return (
     <OpportunityDetailView
@@ -130,6 +137,7 @@ export default async function OpportunityDetailPage({
       canManage={canManage}
       contractTypeName={contractTypeName}
       solutionTypeName={solutionTypeName}
+      demoTypeName={demoTypeName}
       solutions={solutionsResult?.ok ? solutionsResult.data : []}
       currentUserId={session?.user.id ?? null}
       negotiations={negotiationsResult.ok ? negotiationsResult.data : null}

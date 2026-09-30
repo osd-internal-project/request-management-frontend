@@ -40,6 +40,7 @@ import { ScopeOfWorkCard, type ScopeOfWork } from "./scope-of-work-card";
 import { FeasibilityCard } from "./feasibility-card";
 import { ClarificationsCard } from "./clarifications-card";
 import { RisksCard } from "./risks-card";
+import { DemosCard } from "./demos-card";
 
 const mp = messages.presales;
 
@@ -472,6 +473,8 @@ export function SolutionWorkspace({ solution }: { solution: SolutionDetail }) {
       <ClarificationsCard solution={solution} />
 
       <RisksCard solution={solution} />
+
+      <DemosCard solution={solution} />
 
       <Card
         size="small"

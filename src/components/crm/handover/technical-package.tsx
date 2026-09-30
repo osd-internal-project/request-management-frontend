@@ -195,6 +195,50 @@ export function TechnicalPackage({
                   ),
                 },
                 {
+                  key: "demos",
+                  label: mp.demos.title,
+                  children: pkg.demos.length ? (
+                    <ol className="m-0 pl-5">
+                      {pkg.demos.map((demo) => (
+                        <li key={demo.seq}>
+                          <Tag>{mp.demos.kinds[demo.kind] ?? demo.kind}</Tag>
+                          {demo.title}{" "}
+                          <Text type="secondary" className="text-xs">
+                            ({mp.demos.statuses[demo.status] ?? demo.status}
+                            {demo.scheduledOn
+                              ? ` · ${demo.scheduledOn.slice(0, 10)}`
+                              : ""}
+                            )
+                          </Text>
+                          {demo.criteria.map((item, index) => (
+                            <div key={index} className="text-xs">
+                              {item.text}:{" "}
+                              {mp.demos.results[item.result] ?? item.result}
+                              {item.note && ` (${item.note})`}
+                            </div>
+                          ))}
+                          {demo.outcome && (
+                            <div className="text-xs">
+                              {mp.demos.outcome}: {demo.outcome}
+                            </div>
+                          )}
+                          {demo.findings.map((finding, index) => (
+                            <div key={index} className="text-xs">
+                              {mp.demos.findings}: {finding.text}
+                              {finding.requiresChange &&
+                                (finding.resolvedVersionNo !== null
+                                  ? ` (${mp.demos.findingResolved(finding.resolvedVersionNo)})`
+                                  : ` (${mp.demos.findingOpen})`)}
+                            </div>
+                          ))}
+                        </li>
+                      ))}
+                    </ol>
+                  ) : (
+                    <Text type="secondary">{mt.none}</Text>
+                  ),
+                },
+                {
                   key: "risks",
                   label: mp.risks.title,
                   children: pkg.risks.length ? (

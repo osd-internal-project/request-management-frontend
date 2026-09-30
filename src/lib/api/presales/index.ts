@@ -126,6 +126,69 @@ export interface RiskCounts {
   needs_plan: number;
 }
 
+/** CD-139 — a Demo or POC, with its equipment and findings. */
+export type DemoStatus = "planned" | "done" | "cancelled";
+export type CriterionResult = "pending" | "met" | "not_met";
+
+export interface DemoCriterion {
+  text: string;
+  result: CriterionResult;
+  note: string;
+}
+
+export interface DemoEquipment {
+  id: string;
+  name: string;
+  serial: string;
+  quantity: number;
+  takenBy: string;
+  outOn: string;
+  returnedOn: string | null;
+}
+
+export interface DemoFinding {
+  id: string;
+  seq: number;
+  text: string;
+  requiresChange: boolean;
+  recordedOnVersionNo: number;
+  resolvedVersionNo: number | null;
+}
+
+export interface SolutionDemo {
+  id: string;
+  seq: number;
+  requestId: string | null;
+  kind: "demo" | "poc";
+  title: string;
+  scheduledOn: string | null;
+  site: string;
+  people: string;
+  plan: string;
+  criteria: DemoCriterion[];
+  outcome: string;
+  status: DemoStatus;
+  closedAt: string | null;
+  equipment: DemoEquipment[];
+  findings: DemoFinding[];
+}
+
+export interface DemoCounts {
+  total: number;
+  planned: number;
+  equipment_out: number;
+  findings_open: number;
+}
+
+/** CD-139 — the deal's Demo/POC requests, to start a demo from. */
+export interface DemoRequestOption {
+  id: string;
+  requestNo: string | null;
+  status: string;
+  objective: string;
+  used: boolean;
+}
+
 export interface SolutionDetail {
   id: string;
   companyId: string;
@@ -143,6 +206,9 @@ export interface SolutionDetail {
   /** CD-141 — highest score first. */
   risks: SolutionRisk[];
   risk_counts: RiskCounts;
+  /** CD-139 — oldest first. */
+  demos: SolutionDemo[];
+  demo_counts: DemoCounts;
   deal: {
     id: string;
     opportunityCode: string;
@@ -200,6 +266,8 @@ export interface DealSolution {
   clarification_counts: ClarificationCounts;
   /** CD-141 — open high/critical risks, and those without a plan. */
   risk_counts: RiskCounts;
+  /** CD-139 — equipment still out, findings still to work in. */
+  demo_counts: DemoCounts;
 }
 
 export async function getSolution(
