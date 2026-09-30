@@ -93,6 +93,8 @@ export const messages = {
     projects: "โครงการ",
     projectOpen: "เปิดโครงการ",
     presalesGroup: "Pre-Sales",
+    pricingGroup: "Pricing",
+    pricingPrices: "ราคามาตรฐาน",
     partners: "คู่ค้า",
     contracts: "คลังสัญญา",
     contractTemplates: "แม่แบบสัญญา",
@@ -2926,6 +2928,37 @@ export const messages = {
     signDate: "วันที่ ______/______/______",
     loadFailed: "โหลดใบเสนอราคาไม่สำเร็จ",
   },
+  /** CD-194 ราคามาตรฐาน */
+  pricing: {
+    prices: {
+      title: "ราคามาตรฐาน",
+      hint: "ราคาขายอ้างอิงต่อรหัสสินค้า SAP แยกตามสกุลเงิน — ช่วงเวลามีผลของรหัสและสกุลเงินเดียวกันห้ามซ้อนกัน · เลือกสินค้าในใบเสนอราคาแล้วระบบเติมราคาที่มีผลวันนี้ให้",
+      search: "ค้นรหัสหรือชื่อสินค้า",
+      all: "ทั้งหมด",
+      statuses: {
+        current: "มีผลอยู่",
+        future: "รอมีผล",
+        expired: "หมดอายุ",
+      } as Record<string, string>,
+      add: "เพิ่มราคา",
+      edit: "แก้ราคา",
+      product: "สินค้า",
+      currency: "สกุลเงิน",
+      unitPrice: "ราคาต่อหน่วย",
+      validFrom: "มีผลตั้งแต่",
+      validTo: "ถึง (รวมวันนี้)",
+      noEnd: "ไม่มีกำหนด",
+      period: "ช่วงเวลามีผล",
+      note: "หมายเหตุ",
+      status: "สถานะ",
+      save: "บันทึก",
+      saved: "บันทึกราคาแล้ว",
+      remove: "ลบราคานี้? ใบเสนอราคาที่ใช้ราคานี้ไปแล้วไม่เปลี่ยน",
+      removed: "ลบแล้ว",
+      empty: "ยังไม่มีราคามาตรฐาน",
+      pickProduct: "เลือกสินค้าจาก SAP",
+    },
+  },
   /** CD-137 ข้อเสนอทางเทคนิค (พิมพ์) */
   solutionProposal: {
     docTitle: "ข้อเสนอทางเทคนิค",
@@ -3843,6 +3876,9 @@ export const messages = {
         noLines: "ยังไม่มีรายการ — เพิ่มอย่างน้อยหนึ่งรายการก่อนยื่น",
         productPlaceholder: "ค้นรหัส/ชื่อสินค้า (ว่าง = บริการ)",
         productNotFound: "ไม่พบในรายการสินค้าจาก SAP",
+        /** CD-194 */
+        priceFilled: (code: string, price: string) =>
+          `เติมราคามาตรฐานของ ${code}: ${price}`,
         line: {
           productCode: "รหัสสินค้า",
           description: "รายละเอียด",

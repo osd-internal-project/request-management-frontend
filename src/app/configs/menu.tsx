@@ -178,6 +178,14 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     group: messages.nav.pmGroup,
   },
 
+  /** CD-194 — ราคาขายมาตรฐาน: Pricing เป็นเจ้าของราคาอ้างอิงแหล่งเดียว. */
+  {
+    label: messages.nav.pricingPrices,
+    href: ROUTES.pricingPrices,
+    permissions: ["pricing.price.read", "pricing.price.manage"],
+    group: messages.nav.pricingGroup,
+  },
+
   /** CD-161 — คลังสัญญา: สัญญาทุกฉบับของบริษัท (ลูกค้า NDA MSA คู่สัญญาอื่น). */
   {
     label: messages.nav.contracts,

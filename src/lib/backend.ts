@@ -74,6 +74,8 @@ export const CORE_SERVICE_PREFIXES = [
   "/sale-orders",
   "/handovers",
   "/presales",
+  // CD-12 Pricing — standard prices (CD-194)
+  "/pricing",
   // CD-18 PM
   "/projects",
   "/sales-targets",

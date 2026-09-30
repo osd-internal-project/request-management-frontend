@@ -23,8 +23,12 @@ import Title from "antd/es/typography/Title";
 import { PrinterOutlined } from "@ant-design/icons";
 import dayjs, { type Dayjs } from "dayjs";
 import { formatAmount } from "@/components/crm/opportunities/opportunity-list";
-import { formatMargin, QuotationStatusTags } from "@/components/crm/quotations/quotation-list";
+import {
+  formatMargin,
+  QuotationStatusTags,
+} from "@/components/crm/quotations/quotation-list";
 import { ProductPicker } from "@/components/crm/quotations/product-picker";
+import { lookupPrices } from "@/lib/api/pricing/client";
 import { appApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
@@ -152,7 +156,9 @@ export function QuotationDetailView({
     canEditHeader &&
     (title !== initial.title ||
       (validUntil?.format("YYYY-MM-DD") ?? null) !==
-        (initial.validUntil ? dayjs(initial.validUntil).format("YYYY-MM-DD") : null) ||
+        (initial.validUntil
+          ? dayjs(initial.validUntil).format("YYYY-MM-DD")
+          : null) ||
       paymentTerms !== initial.paymentTerms ||
       note !== initial.note ||
       JSON.stringify(lines) !== JSON.stringify(initial.lines));
@@ -177,7 +183,8 @@ export function QuotationDetailView({
 
   async function save() {
     const linesInvalid = lines.some(
-      (line) => !line.description.trim() || !line.quantity || line.unitPrice === null,
+      (line) =>
+        !line.description.trim() || !line.quantity || line.unitPrice === null,
     );
     if (canEditLines && linesInvalid) {
       setError(md.noLines);
@@ -232,11 +239,17 @@ export function QuotationDetailView({
     setActionText("");
     if (action === "submit") {
       message.success(
-        result.data.status === "pending_approval" ? md.requestDrafted : md.approvedNow,
+        result.data.status === "pending_approval"
+          ? md.requestDrafted
+          : md.approvedNow,
       );
     } else {
       message.success(
-        action === "accept" ? md.accepted : action === "decline" ? md.declined : md.cancelled,
+        action === "accept"
+          ? md.accepted
+          : action === "decline"
+            ? md.declined
+            : md.cancelled,
       );
     }
     router.refresh();
@@ -268,18 +281,48 @@ export function QuotationDetailView({
     setActionError(null);
   }
 
+  /**
+   * CD-194 — the standard price in effect today, in this quotation's
+   * currency, becomes the line's unit price. No price, no change.
+   */
+  async function fillStandardPrice(key: string, code: string) {
+    const result = await lookupPrices([code], currency);
+    const found = result.ok ? result.data[code] : undefined;
+    if (!found) return;
+    patchLine(key, { unitPrice: found.unit_price });
+    void message.info(
+      md.priceFilled(code, money(found.unit_price, found.currency)),
+    );
+  }
+
   function patchLine(key: string, patch: Partial<DraftLine>) {
     setLines((current) =>
       current.map((line) => (line.key === key ? { ...line, ...patch } : line)),
     );
   }
 
-  const revisable = ["pending_approval", "approved", "sent", "declined"].includes(status);
-  const cancellable = ["draft", "pending_approval", "approved", "sent"].includes(status);
+  const revisable = [
+    "pending_approval",
+    "approved",
+    "sent",
+    "declined",
+  ].includes(status);
+  const cancellable = [
+    "draft",
+    "pending_approval",
+    "approved",
+    "sent",
+  ].includes(status);
 
   const actionMeta: Record<
     ActionKind,
-    { title: string; ok: string; placeholder: string; required: boolean; hint?: string }
+    {
+      title: string;
+      ok: string;
+      placeholder: string;
+      required: boolean;
+      hint?: string;
+    }
   > = {
     submit: {
       title: md.submit,
@@ -288,9 +331,24 @@ export function QuotationDetailView({
       required: false,
       hint: `${md.submitHint} · ${md.reasonHint}`,
     },
-    accept: { title: md.acceptTitle, ok: md.accept, placeholder: md.acceptNote, required: false },
-    decline: { title: md.declineTitle, ok: md.decline, placeholder: md.declineReason, required: true },
-    cancel: { title: md.cancelTitle, ok: md.cancel, placeholder: md.cancelReason, required: true },
+    accept: {
+      title: md.acceptTitle,
+      ok: md.accept,
+      placeholder: md.acceptNote,
+      required: false,
+    },
+    decline: {
+      title: md.declineTitle,
+      ok: md.decline,
+      placeholder: md.declineReason,
+      required: true,
+    },
+    cancel: {
+      title: md.cancelTitle,
+      ok: md.cancel,
+      placeholder: md.cancelReason,
+      required: true,
+    },
   };
 
   // --- render --------------------------------------------------------------
@@ -312,7 +370,9 @@ export function QuotationDetailView({
     <div className="space-y-4">
       {error && <Alert type="error" showIcon title={error} />}
 
-      {quotation.expired && <Alert type="error" showIcon title={md.expiredBanner} />}
+      {quotation.expired && (
+        <Alert type="error" showIcon title={md.expiredBanner} />
+      )}
       {status === "pending_approval" && (
         <Alert
           type="warning"
@@ -342,9 +402,15 @@ export function QuotationDetailView({
       {["approved", "sent", "declined"].includes(status) && (
         <Alert type="info" showIcon title={md.lockedBanner} />
       )}
-      {status === "superseded" && <Alert type="info" showIcon title={md.supersededBanner} />}
+      {status === "superseded" && (
+        <Alert type="info" showIcon title={md.supersededBanner} />
+      )}
       {status === "cancelled" && (
-        <Alert type="warning" showIcon title={md.cancelledBanner(quotation.cancelReason ?? "")} />
+        <Alert
+          type="warning"
+          showIcon
+          title={md.cancelledBanner(quotation.cancelReason ?? "")}
+        />
       )}
       {status === "accepted" && (
         <Alert
@@ -364,7 +430,8 @@ export function QuotationDetailView({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <Title level={4} className="mb-1!">
-            {quotation.quotationNo} {mq.version(quotation.version)} · {quotation.title}
+            {quotation.quotationNo} {mq.version(quotation.version)} ·{" "}
+            {quotation.title}
           </Title>
           <QuotationStatusTags row={quotation} />
         </div>
@@ -382,47 +449,62 @@ export function QuotationDetailView({
             </Link>
           )}
           {canManage && (
-          <>
-            {isDraft && (
-              <>
-                <Button loading={busy} disabled={!dirty} onClick={() => void save()}>
-                  {md.save}
-                </Button>
+            <>
+              {isDraft && (
+                <>
+                  <Button
+                    loading={busy}
+                    disabled={!dirty}
+                    onClick={() => void save()}
+                  >
+                    {md.save}
+                  </Button>
+                  <Button
+                    type="primary"
+                    loading={busy}
+                    onClick={() =>
+                      dirty
+                        ? setError(md.submitDirtyFirst)
+                        : openAction("submit")
+                    }
+                  >
+                    {md.submit}
+                  </Button>
+                </>
+              )}
+              {status === "approved" && (
                 <Button
                   type="primary"
                   loading={busy}
-                  onClick={() =>
-                    dirty ? setError(md.submitDirtyFirst) : openAction("submit")
-                  }
+                  onClick={() => void send()}
                 >
-                  {md.submit}
+                  {md.send}
                 </Button>
-              </>
-            )}
-            {status === "approved" && (
-              <Button type="primary" loading={busy} onClick={() => void send()}>
-                {md.send}
-              </Button>
-            )}
-            {status === "sent" && (
-              <>
-                <Button type="primary" onClick={() => openAction("accept")}>
-                  {md.accept}
+              )}
+              {status === "sent" && (
+                <>
+                  <Button type="primary" onClick={() => openAction("accept")}>
+                    {md.accept}
+                  </Button>
+                  <Button onClick={() => openAction("decline")}>
+                    {md.decline}
+                  </Button>
+                </>
+              )}
+              {revisable && (
+                <Popconfirm
+                  title={md.reviseConfirm}
+                  onConfirm={() => void revise()}
+                >
+                  <Button loading={busy}>{md.revise}</Button>
+                </Popconfirm>
+              )}
+              {cancellable && (
+                <Button danger onClick={() => openAction("cancel")}>
+                  {md.cancel}
                 </Button>
-                <Button onClick={() => openAction("decline")}>{md.decline}</Button>
-              </>
-            )}
-            {revisable && (
-              <Popconfirm title={md.reviseConfirm} onConfirm={() => void revise()}>
-                <Button loading={busy}>{md.revise}</Button>
-              </Popconfirm>
-            )}
-            {cancellable && (
-              <Button danger onClick={() => openAction("cancel")}>
-                {md.cancel}
-              </Button>
-            )}
-          </>
+              )}
+            </>
           )}
         </Space>
       </div>
@@ -437,7 +519,8 @@ export function QuotationDetailView({
               label: md.fromOpportunity,
               children: (
                 <Link href={ROUTES.opportunityDetail(quotation.opportunity.id)}>
-                  {quotation.opportunity.opportunityCode} · {quotation.opportunity.title}
+                  {quotation.opportunity.opportunityCode} ·{" "}
+                  {quotation.opportunity.title}
                 </Link>
               ),
             },
@@ -453,16 +536,32 @@ export function QuotationDetailView({
               ),
             },
             ...(quotation.partyTaxId
-              ? [{ key: "tax", label: md.taxId, children: quotation.partyTaxId }]
+              ? [
+                  {
+                    key: "tax",
+                    label: md.taxId,
+                    children: quotation.partyTaxId,
+                  },
+                ]
               : []),
             ...(quotation.contactName
-              ? [{ key: "contact", label: md.contact, children: quotation.contactName }]
+              ? [
+                  {
+                    key: "contact",
+                    label: md.contact,
+                    children: quotation.contactName,
+                  },
+                ]
               : []),
             {
               key: "title",
               label: md.title,
               children: canEditHeader ? (
-                <Input value={title} maxLength={255} onChange={(e) => setTitle(e.target.value)} />
+                <Input
+                  value={title}
+                  maxLength={255}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
               ) : (
                 quotation.title
               ),
@@ -492,7 +591,7 @@ export function QuotationDetailView({
                   onChange={(e) => setPaymentTerms(e.target.value)}
                 />
               ) : (
-                quotation.paymentTerms ?? "—"
+                (quotation.paymentTerms ?? "—")
               ),
             },
             {
@@ -506,11 +605,17 @@ export function QuotationDetailView({
                   onChange={(e) => setNote(e.target.value)}
                 />
               ) : (
-                quotation.note ?? "—"
+                (quotation.note ?? "—")
               ),
             },
             ...(quotation.responseNote
-              ? [{ key: "response", label: md.responseNote, children: quotation.responseNote }]
+              ? [
+                  {
+                    key: "response",
+                    label: md.responseNote,
+                    children: quotation.responseNote,
+                  },
+                ]
               : []),
           ]}
         />
@@ -567,14 +672,15 @@ export function QuotationDetailView({
                 canEditLines ? (
                   <ProductPicker
                     value={value}
-                    onPick={(product) =>
+                    onPick={(product) => {
                       patchLine(row.key, {
                         productCode: product.code,
                         // Fill only what the user has not written yet.
                         description: row.description || product.name,
                         unit: row.unit || (product.unit ?? ""),
-                      })
-                    }
+                      });
+                      void fillStandardPrice(row.key, product.code);
+                    }}
                     onClear={() => patchLine(row.key, { productCode: "" })}
                   />
                 ) : (
@@ -590,7 +696,9 @@ export function QuotationDetailView({
                     autoSize={{ minRows: 1, maxRows: 4 }}
                     value={value}
                     maxLength={1000}
-                    onChange={(e) => patchLine(row.key, { description: e.target.value })}
+                    onChange={(e) =>
+                      patchLine(row.key, { description: e.target.value })
+                    }
                   />
                 ) : (
                   value
@@ -622,7 +730,9 @@ export function QuotationDetailView({
                   <Input
                     value={value}
                     maxLength={30}
-                    onChange={(e) => patchLine(row.key, { unit: e.target.value })}
+                    onChange={(e) =>
+                      patchLine(row.key, { unit: e.target.value })
+                    }
                   />
                 ) : (
                   value || "—"
@@ -658,7 +768,9 @@ export function QuotationDetailView({
                           className="w-full"
                           min={0}
                           value={value}
-                          onChange={(next) => patchLine(row.key, { unitCost: next })}
+                          onChange={(next) =>
+                            patchLine(row.key, { unitCost: next })
+                          }
                         />
                       ) : (
                         formatAmount(value)
@@ -678,7 +790,9 @@ export function QuotationDetailView({
                     min={0}
                     max={100}
                     value={value}
-                    onChange={(next) => patchLine(row.key, { discountPct: next })}
+                    onChange={(next) =>
+                      patchLine(row.key, { discountPct: next })
+                    }
                   />
                 ) : (
                   formatAmount(value)
@@ -704,7 +818,9 @@ export function QuotationDetailView({
                         type="text"
                         danger
                         onClick={() =>
-                          setLines((current) => current.filter((line) => line.key !== row.key))
+                          setLines((current) =>
+                            current.filter((line) => line.key !== row.key),
+                          )
                         }
                       >
                         {md.removeLine}
@@ -723,17 +839,34 @@ export function QuotationDetailView({
                 {md.unsavedPreview}
               </Text>
             )}
-            <Row label={md.totals.subtotal} value={money(shown.subtotal, currency)} />
-            <Row label={md.totals.discount} value={money(shown.discount, currency)} />
-            <Row label={md.totals.net} value={money(shown.net, currency)} strong />
+            <Row
+              label={md.totals.subtotal}
+              value={money(shown.subtotal, currency)}
+            />
+            <Row
+              label={md.totals.discount}
+              value={money(shown.discount, currency)}
+            />
+            <Row
+              label={md.totals.net}
+              value={money(shown.net, currency)}
+              strong
+            />
             <Row
               label={md.totals.vat(String(Number(quotation.vatPct)))}
               value={money(shown.vat, currency)}
             />
-            <Row label={md.totals.grand} value={money(shown.grand, currency)} strong />
+            <Row
+              label={md.totals.grand}
+              value={money(shown.grand, currency)}
+              strong
+            />
             {costVisible && (
               <>
-                <Row label={md.totals.cost} value={money(shown.cost, currency)} />
+                <Row
+                  label={md.totals.cost}
+                  value={money(shown.cost, currency)}
+                />
                 <Row
                   label={md.totals.margin}
                   value={`${money(shown.margin, currency)} · ${formatMargin(shown.marginPct)}`}
@@ -741,7 +874,9 @@ export function QuotationDetailView({
                 />
                 {quotation.minMarginPct !== null && (
                   <Text type="secondary" className="block text-right text-xs">
-                    {md.totals.minMargin(String(Number(quotation.minMarginPct)))}
+                    {md.totals.minMargin(
+                      String(Number(quotation.minMarginPct)),
+                    )}
                   </Text>
                 )}
               </>
@@ -756,13 +891,17 @@ export function QuotationDetailView({
             {quotation.versions.map((version) =>
               version.id === quotation.id ? (
                 <Tag key={version.id} color="blue">
-                  {mq.version(version.version)} · {mq.status[version.status]} · {md.current}
+                  {mq.version(version.version)} · {mq.status[version.status]} ·{" "}
+                  {md.current}
                 </Tag>
               ) : (
-                <Link key={version.id} href={ROUTES.quotationDetail(version.id)}>
+                <Link
+                  key={version.id}
+                  href={ROUTES.quotationDetail(version.id)}
+                >
                   <Tag>
-                    {mq.version(version.version)} · {mq.status[version.status]} ·{" "}
-                    {money(version.netTotal, currency)}
+                    {mq.version(version.version)} · {mq.status[version.status]}{" "}
+                    · {money(version.netTotal, currency)}
                   </Tag>
                 </Link>
               ),
@@ -775,7 +914,10 @@ export function QuotationDetailView({
         <Card size="small" title={md.saleOrdersTitle}>
           <Space wrap>
             {quotation.saleOrders.map((order) => (
-              <Tag key={order.id} color={order.status === "open" ? "green" : "red"}>
+              <Tag
+                key={order.id}
+                color={order.status === "open" ? "green" : "red"}
+              >
                 {order.saleOrderCode}
               </Tag>
             ))}
@@ -789,7 +931,9 @@ export function QuotationDetailView({
         okText={action ? actionMeta[action].ok : ""}
         okButtonProps={{
           danger: action === "cancel",
-          disabled: action ? actionMeta[action].required && !actionText.trim() : true,
+          disabled: action
+            ? actionMeta[action].required && !actionText.trim()
+            : true,
         }}
         confirmLoading={busy}
         onCancel={() => setAction(null)}
@@ -818,7 +962,15 @@ export function QuotationDetailView({
   );
 }
 
-function Row({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
+function Row({
+  label,
+  value,
+  strong,
+}: {
+  label: string;
+  value: string;
+  strong?: boolean;
+}) {
   return (
     <div className="flex justify-between gap-4">
       <Text type="secondary">{label}</Text>
