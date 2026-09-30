@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { ProjectDetailView } from "@/components/pm/project-detail";
-import { getProject } from "@/lib/api/projects";
+import { getProject, getProjectMilestones } from "@/lib/api/projects";
 import { getAllDirectoryUsers } from "@/lib/api/users";
 import { HOME_PATH } from "@/lib/routes";
 import { can, getSession } from "@/lib/session";
@@ -19,6 +19,8 @@ export default async function ProjectPage({ params }: Params) {
   const result = await getProject(id);
   if (!result.ok) notFound();
   const project = result.data;
+  // CD-182 — whoever sees the project sees its milestones
+  const milestones = await getProjectMilestones(id);
   // the pickers only for who may change the manager or the team
   const users =
     (project.canManage || project.canEditTeam) && can(session, "user.read")
@@ -28,6 +30,7 @@ export default async function ProjectPage({ params }: Params) {
   return (
     <ProjectDetailView
       project={project}
+      milestones={milestones.ok ? milestones.data : null}
       people={(users?.ok ? users.data : []).map((user) => ({
         id: user.id,
         name: user.displayName,

@@ -180,3 +180,57 @@ export function getProjectPreview(
 ): Promise<ApiResult<ProjectPreview>> {
   return apiGet(`/projects/preview/${encodeURIComponent(contractId)}`);
 }
+
+/** CD-182 — one milestone of a project. */
+export interface ProjectMilestone {
+  id: string;
+  seq: number;
+  title: string;
+  description: string | null;
+  dueOn: string | null;
+  overdue: boolean;
+  status: "planned" | "achieved" | "cancelled";
+  criteria: {
+    text: string;
+    met: boolean;
+    metAt: string | null;
+    metBy: string | null;
+    metByName: string | null;
+  }[];
+  criteriaMet: number;
+  installment: {
+    id: string;
+    seq: number;
+    kind: string;
+    label: string;
+    amount: number;
+  } | null;
+  achievedOn: string | null;
+  achievedAt: string | null;
+  achievedByName: string | null;
+  evidenceNote: string | null;
+  evidenceFile: { name: string; size: number | null } | null;
+}
+
+export interface ProjectMilestonesView {
+  canEdit: boolean;
+  milestones: ProjectMilestone[];
+  /** The contract's installments, and the milestone tied to each. */
+  installments: {
+    id: string;
+    seq: number;
+    kind: string;
+    label: string;
+    amount: number;
+    dueOn: string | null;
+    milestone: string | null;
+    milestoneId: string | null;
+    milestoneStatus: string | null;
+  }[];
+}
+
+export function getProjectMilestones(
+  id: string,
+): Promise<ApiResult<ProjectMilestonesView>> {
+  return apiGet(`/projects/${encodeURIComponent(id)}/milestones`);
+}
