@@ -189,6 +189,41 @@ export interface DemoRequestOption {
   used: boolean;
 }
 
+/** CD-138 — the TOR / RFP: facts, original files, clauses and answers. */
+export type TorCompliance = "unanswered" | "comply" | "partial" | "not_comply";
+
+export interface TorClause {
+  id: string;
+  seq: number;
+  clauseNo: string;
+  text: string;
+  mandatory: boolean;
+  compliance: TorCompliance;
+  response: string;
+  reference: string;
+}
+
+export interface SolutionTor {
+  facts: {
+    buyer: string;
+    projectNo: string;
+    submissionDeadline: string | null;
+    bidBond: string;
+    note: string;
+  } | null;
+  files: SolutionFile[];
+  clauses: TorClause[];
+}
+
+export interface TorCounts {
+  total: number;
+  mandatory: number;
+  mandatory_answered: number;
+  mandatory_gaps: number;
+  partial: number;
+  unanswered: number;
+}
+
 export interface SolutionDetail {
   id: string;
   companyId: string;
@@ -209,6 +244,9 @@ export interface SolutionDetail {
   /** CD-139 — oldest first. */
   demos: SolutionDemo[];
   demo_counts: DemoCounts;
+  /** CD-138 — the TOR and its clauses. */
+  tor: SolutionTor;
+  tor_counts: TorCounts;
   deal: {
     id: string;
     opportunityCode: string;
@@ -268,6 +306,8 @@ export interface DealSolution {
   risk_counts: RiskCounts;
   /** CD-139 — equipment still out, findings still to work in. */
   demo_counts: DemoCounts;
+  /** CD-138 — mandatory TOR clauses still open. */
+  tor_counts: TorCounts;
 }
 
 export async function getSolution(

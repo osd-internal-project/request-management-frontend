@@ -195,6 +195,43 @@ export function TechnicalPackage({
                   ),
                 },
                 {
+                  key: "tor",
+                  label: mp.tor.title,
+                  children: pkg.tor ? (
+                    <>
+                      {pkg.tor.facts && (
+                        <div className="mb-1 text-xs">
+                          {[
+                            pkg.tor.facts.buyer &&
+                              `${mp.tor.buyer}: ${pkg.tor.facts.buyer}`,
+                            pkg.tor.facts.projectNo &&
+                              `${mp.tor.projectNo}: ${pkg.tor.facts.projectNo}`,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </div>
+                      )}
+                      <ol className="m-0 pl-5">
+                        {pkg.tor.clauses.map((row) => (
+                          <li key={row.seq}>
+                            {row.clauseNo && `${row.clauseNo} `}
+                            {row.text}{" "}
+                            <Tag>
+                              {mp.tor.compliances[row.compliance] ??
+                                row.compliance}
+                            </Tag>
+                            {row.response && (
+                              <div className="text-xs">{row.response}</div>
+                            )}
+                          </li>
+                        ))}
+                      </ol>
+                    </>
+                  ) : (
+                    <Text type="secondary">{mt.none}</Text>
+                  ),
+                },
+                {
                   key: "demos",
                   label: mp.demos.title,
                   children: pkg.demos.length ? (

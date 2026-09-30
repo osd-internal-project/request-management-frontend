@@ -41,6 +41,7 @@ import { FeasibilityCard } from "./feasibility-card";
 import { ClarificationsCard } from "./clarifications-card";
 import { RisksCard } from "./risks-card";
 import { DemosCard } from "./demos-card";
+import { TorCard } from "./tor-card";
 
 const mp = messages.presales;
 
@@ -475,6 +476,12 @@ export function SolutionWorkspace({ solution }: { solution: SolutionDetail }) {
       <RisksCard solution={solution} />
 
       <DemosCard solution={solution} />
+
+      <TorCard
+        // Reset the facts form to what was stored after every change.
+        key={JSON.stringify(solution.tor.facts)}
+        solution={solution}
+      />
 
       <Card
         size="small"

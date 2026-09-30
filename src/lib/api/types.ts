@@ -1971,6 +1971,24 @@ export interface HandoverTechnicalPackage {
     note: string;
     customerAnswer: string | null;
   }[];
+  /** CD-138 — the TOR, and how each clause was answered. */
+  tor: {
+    facts: {
+      buyer: string;
+      projectNo: string;
+      submissionDeadline: string | null;
+      bidBond: string;
+    } | null;
+    clauses: {
+      seq: number;
+      clauseNo: string;
+      text: string;
+      mandatory: boolean;
+      compliance: string;
+      response: string;
+      reference: string;
+    }[];
+  } | null;
   /** CD-139 — the demos and what they showed. */
   demos: {
     seq: number;

@@ -146,6 +146,13 @@ export function ContractCard({
                               ] ?? design.latest.approvalStatus}
                             </Tag>
                           )}
+                          {design.tor_counts.mandatory_gaps > 0 && (
+                            <Tag color="red">
+                              {messages.presales.tor.onDeal(
+                                design.tor_counts.mandatory_gaps,
+                              )}
+                            </Tag>
+                          )}
                           {(design.demo_counts.equipment_out > 0 ||
                             design.demo_counts.findings_open > 0) && (
                             <Tag color="orange">
