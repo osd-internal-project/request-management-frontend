@@ -212,6 +212,21 @@ export interface ContractInstallment {
   guaranteeAmount: number | null;
   guaranteeRef: string | null;
   guaranteeExpiresOn: string | null;
+  /** CD-182 — the project milestone that unlocks it. */
+  projectMilestone: {
+    id: string;
+    title: string;
+    status: "planned" | "achieved" | "cancelled";
+    dueOn: string | null;
+    achievedOn: string | null;
+  } | null;
+  /** CD-152 — tied to something measurable? billable now? */
+  check: {
+    seq: number;
+    verdict: "ok" | "problem" | "pending";
+    billable: boolean;
+    notes: string[];
+  };
 }
 
 /** CD-164 — the schedule, its total and how far it is from the value. */
@@ -223,6 +238,10 @@ export interface ContractInstallmentsView {
   difference: number | null;
   balanced: boolean;
   installments: ContractInstallment[];
+  /** CD-175 — the project opened from the contract. */
+  project: { id: string; projectNo: string } | null;
+  /** CD-152 — counts over the schedule. */
+  paymentCheck: { problems: number; pending: number; billable: number };
 }
 
 export function getContractInstallments(
@@ -249,7 +268,8 @@ export interface ContractRiskView {
   assessedBy: string | null;
   assessedAt: string | null;
   opinion: {
-    state: "not_needed" | "missing" | "draft" | "pending" | "approved" | "rejected";
+    state:
+      "not_needed" | "missing" | "draft" | "pending" | "approved" | "rejected";
     request: { id: string; requestNo: string | null; status: string } | null;
     error: string | null;
   };
@@ -346,9 +366,7 @@ export function getTemplateVariables(): Promise<ApiResult<TemplateVariables>> {
 export function getDraftForRequest(
   requestId: string,
 ): Promise<ApiResult<DraftForRequest>> {
-  return apiGet(
-    `/contract-drafts/by-request/${encodeURIComponent(requestId)}`,
-  );
+  return apiGet(`/contract-drafts/by-request/${encodeURIComponent(requestId)}`);
 }
 
 export function getContractDraft(
@@ -420,9 +438,7 @@ export interface DraftReviews {
   rounds: ReviewRound[];
 }
 
-export function getDraftReviews(
-  id: string,
-): Promise<ApiResult<DraftReviews>> {
+export function getDraftReviews(id: string): Promise<ApiResult<DraftReviews>> {
   return apiGet(`/contract-drafts/${encodeURIComponent(id)}/reviews`);
 }
 
@@ -448,7 +464,8 @@ export interface DraftApproval {
     id: string;
     versionNo: number;
     riskLevel: string | null;
-    state: "not_needed" | "missing" | "draft" | "pending" | "approved" | "rejected";
+    state:
+      "not_needed" | "missing" | "draft" | "pending" | "approved" | "rejected";
     request: { id: string; requestNo: string | null; status: string } | null;
     error: string | null;
     requestedAt: string;
@@ -463,9 +480,7 @@ export interface DraftApproval {
   }[];
 }
 
-export function getDraftRisk(
-  id: string,
-): Promise<ApiResult<ContractRiskView>> {
+export function getDraftRisk(id: string): Promise<ApiResult<ContractRiskView>> {
   return apiGet(`/contract-drafts/${encodeURIComponent(id)}/risk`);
 }
 
@@ -491,10 +506,18 @@ export interface ContractRequestPackage {
       nonStandard: boolean;
       note: string | null;
     }[];
-    solution: { id: string; title: string | null; versionNo: number | null } | null;
+    solution: {
+      id: string;
+      title: string | null;
+      versionNo: number | null;
+    } | null;
     inScope: string[];
     outOfScope: string[];
-    deliverables: { title: string; description?: string; criteria?: string[] }[];
+    deliverables: {
+      title: string;
+      description?: string;
+      criteria?: string[];
+    }[];
     assumptionsText: string | null;
     missing: string[];
   } | null;
@@ -503,9 +526,7 @@ export interface ContractRequestPackage {
 export function getContractRequestPackage(
   requestId: string,
 ): Promise<ApiResult<ContractRequestPackage>> {
-  return apiGet(
-    `/contract-requests/${encodeURIComponent(requestId)}/package`,
-  );
+  return apiGet(`/contract-requests/${encodeURIComponent(requestId)}/package`);
 }
 
 /** CD-150 — one scope item against the contract's text. */
@@ -531,8 +552,6 @@ export interface ScopeCheckView {
   items: ScopeCheckItem[];
 }
 
-export function getScopeCheck(
-  id: string,
-): Promise<ApiResult<ScopeCheckView>> {
+export function getScopeCheck(id: string): Promise<ApiResult<ScopeCheckView>> {
   return apiGet(`/contract-drafts/${encodeURIComponent(id)}/scope-check`);
 }

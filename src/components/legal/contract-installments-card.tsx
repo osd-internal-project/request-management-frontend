@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Alert,
@@ -23,8 +24,10 @@ import type {
   ContractInstallmentsView,
 } from "@/lib/api/contracts";
 import { messages } from "@/lib/messages";
+import { ROUTES } from "@/lib/routes";
 
 const m = messages.contracts.installments;
+const mc = m.check;
 
 type Kind = ContractInstallment["kind"];
 type GuaranteeType = NonNullable<ContractInstallment["guaranteeType"]>;
@@ -224,6 +227,18 @@ export function ContractInstallmentsCard({
                       .filter(Boolean)
                       .join(" · ")}
                   </Text>
+                  {/* CD-152 — tied to a measurable milestone? billable? */}
+                  <div className="mt-1 flex flex-wrap items-center gap-1">
+                    <Tag color={mc.verdictColor[row.check.verdict]}>
+                      {mc.verdict[row.check.verdict]}
+                    </Tag>
+                    {row.check.billable && (
+                      <Tag color="gold">{mc.billable}</Tag>
+                    )}
+                    <Text type="secondary" className="text-xs">
+                      {row.check.notes.join(" · ")}
+                    </Text>
+                  </div>
                   {row.guaranteeType && (
                     <Text type="secondary" className="block text-xs">
                       {m.guarantee}: {m.guaranteeTypes[row.guaranteeType]}{" "}
@@ -247,6 +262,28 @@ export function ContractInstallmentsCard({
               </div>
             ))}
           </div>
+          <div className="mt-2 flex flex-wrap items-center gap-2 border-t pt-2 text-sm">
+            <Text strong>{mc.title}:</Text>
+            {view.paymentCheck.problems ? (
+              <Text type="danger">
+                {mc.summary(
+                  view.paymentCheck.problems,
+                  view.paymentCheck.billable,
+                )}
+              </Text>
+            ) : (
+              <Text type={view.project ? "success" : "secondary"}>
+                {view.project
+                  ? mc.allGood(view.paymentCheck.billable)
+                  : mc.noProject}
+              </Text>
+            )}
+            {view.project && (
+              <Link href={ROUTES.projectDetail(view.project.id)}>
+                {mc.project} {view.project.projectNo}
+              </Link>
+            )}
+          </div>
           <div className="mt-2 border-t pt-2">
             {totalLine(
               satang(view.total),
@@ -255,10 +292,7 @@ export function ContractInstallmentsCard({
           </div>
         </>
       ) : (
-        <Empty
-          image={Empty.PRESENTED_IMAGE_SIMPLE}
-          description={m.empty}
-        />
+        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={m.empty} />
       )}
 
       <Modal
@@ -291,14 +325,15 @@ export function ContractInstallmentsCard({
           </div>
         }
       >
-        {error && <Alert type="error" showIcon className="mb-3" title={error} />}
+        {error && (
+          <Alert type="error" showIcon className="mb-3" title={error} />
+        )}
         <div className="flex flex-col gap-3">
           {(rows ?? []).map((row, index) => {
             const rest =
               value === null
                 ? null
-                : satang(value) -
-                  (total - satang(row.amount));
+                : satang(value) - (total - satang(row.amount));
             return (
               <div key={index} className="rounded border p-3">
                 <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
@@ -380,9 +415,7 @@ export function ContractInstallmentsCard({
                         value &&
                         patch(index, {
                           amount:
-                            pct === null
-                              ? null
-                              : Math.round(value * pct) / 100,
+                            pct === null ? null : Math.round(value * pct) / 100,
                         })
                       }
                     />
@@ -437,8 +470,7 @@ export function ContractInstallmentsCard({
                         onChange={(type?: GuaranteeType) =>
                           patch(index, {
                             guaranteeType: type ?? null,
-                            guaranteeAmount:
-                              row.guaranteeAmount ?? row.amount,
+                            guaranteeAmount: row.guaranteeAmount ?? row.amount,
                           })
                         }
                       />

@@ -5259,6 +5259,28 @@ export const messages = {
     },
     /** CD-164 — แผนการวางบิลตามงวด. */
     installments: {
+      /** CD-152 — each payment against the project's milestones. */
+      check: {
+        title: "ตรวจเงื่อนไขชำระเงิน",
+        verdict: {
+          ok: "ผูกหมุดหมายแล้ว",
+          problem: "ต้องแก้",
+          pending: "รอ",
+        } as Record<string, string>,
+        verdictColor: {
+          ok: "green",
+          problem: "red",
+          pending: "default",
+        } as Record<string, string>,
+        billable: "วางบิลได้",
+        summary: (problems: number, billable: number) =>
+          `ต้องแก้ ${problems} งวด · วางบิลได้ ${billable} งวด`,
+        allGood: (billable: number) =>
+          `ทุกงวดผูกกับหมุดหมายที่วัดได้ · วางบิลได้ ${billable} งวด`,
+        noProject:
+          "ยังไม่ได้เปิดโครงการ — งวดตามความคืบหน้าจะผูกกับหมุดหมายของโครงการเมื่อเปิดแล้ว",
+        project: "ไปที่โครงการ",
+      },
       title: "แผนการวางบิลตามงวด",
       edit: "วางงวด",
       empty: "ยังไม่ได้วางงวดชำระของสัญญานี้",
