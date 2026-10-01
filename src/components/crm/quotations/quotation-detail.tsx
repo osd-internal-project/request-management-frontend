@@ -311,11 +311,13 @@ export function QuotationDetailView({
     setAction(null);
     setActionText("");
     if (action === "submit") {
-      message.success(
-        result.data.status === "pending_approval"
-          ? md.requestDrafted
-          : md.approvedNow,
-      );
+      // CD-201 — the system files the request; one it could not submit is
+      // left as a draft for the salesperson to finish.
+      if (result.data.approvalRequest?.status === "draft") {
+        message.warning(md.requestDrafted);
+      } else {
+        message.success(md.requestSubmitted);
+      }
     } else {
       message.success(
         action === "accept"
