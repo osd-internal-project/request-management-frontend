@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Alert,
@@ -33,6 +33,9 @@ import { appApi } from "@/lib/api/client";
 import {
   getPriceVersions,
   PRICE_MODELS,
+  searchPriceTargets,
+  SPECIAL_SCOPES,
+  type PriceScope,
   type PriceModel,
   type PriceStatus,
   type PriceVersion,
@@ -51,6 +54,10 @@ const STATUS_COLORS: Record<PriceStatus, string> = {
 
 interface Draft {
   id?: string;
+  /** CD-197 — standard, or a special price for one customer/group/deal. */
+  scope: PriceScope;
+  targetId: string | null;
+  targetLabel: string;
   productCode: string;
   productName: string;
   priceModel: PriceModel;
@@ -93,15 +100,69 @@ const priceLabel = (row: {
  * range of days. The server refuses an overlapping range and names the row
  * it collides with; the message shows as it comes.
  */
+/** CD-197 — pick the customer, customer group or deal a special price is for. */
+function TargetPicker({
+  kind,
+  value,
+  label,
+  onChange,
+}: {
+  kind: Exclude<PriceScope, "standard">;
+  value: string | null;
+  label: string;
+  onChange: (target: { id: string; label: string } | null) => void;
+}) {
+  const [search, setSearch] = useState("");
+  const [options, setOptions] = useState<{ id: string; label: string }[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(true);
+      void searchPriceTargets(kind, search).then((result) => {
+        setLoading(false);
+        if (result.ok) setOptions(result.data);
+      });
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [kind, search]);
+
+  const list =
+    value && !options.some((option) => option.id === value)
+      ? [{ id: value, label }, ...options]
+      : options;
+  return (
+    <Select<string>
+      className="w-full"
+      showSearch={{ filterOption: false, onSearch: setSearch }}
+      allowClear
+      loading={loading}
+      placeholder={mp.pickTarget}
+      value={value ?? undefined}
+      options={list.map((option) => ({
+        value: option.id,
+        label: option.label,
+      }))}
+      onChange={(id) => {
+        const picked = list.find((option) => option.id === id);
+        onChange(picked ?? null);
+      }}
+    />
+  );
+}
+
 export function PriceList({
   rows,
   q,
   status,
+  special,
   canManage,
 }: {
   rows: ProductPriceRow[];
   q: string;
   status: PriceStatus | null;
+  /** CD-197 — showing the special-price tab. */
+  special: boolean;
   canManage: boolean;
 }) {
   const router = useRouter();
@@ -114,10 +175,16 @@ export function PriceList({
   } | null>(null);
   const [busy, setBusy] = useState(false);
 
-  function go(next: { q?: string; status?: PriceStatus | null }) {
+  function go(next: {
+    q?: string;
+    status?: PriceStatus | null;
+    special?: boolean;
+  }) {
     const params = new URLSearchParams();
     const query = next.q ?? q;
     const picked = next.status === undefined ? status : next.status;
+    const tab = next.special === undefined ? special : next.special;
+    if (tab) params.set("tab", "special");
     if (query) params.set("q", query);
     if (picked) params.set("status", picked);
     const qs = params.toString();
@@ -143,6 +210,8 @@ export function PriceList({
       : await appApi("pricing/prices", {
           method: "POST",
           body: JSON.stringify({
+            scope: draft.scope,
+            target_id: draft.targetId ?? undefined,
             ...body,
             product_code: draft.productCode,
             currency: draft.currency,
@@ -214,6 +283,9 @@ export function PriceList({
             icon={<PlusOutlined />}
             onClick={() =>
               setDraft({
+                scope: special ? "customer" : "standard",
+                targetId: null,
+                targetLabel: "",
                 productCode: "",
                 productName: "",
                 priceModel: "unit",
@@ -231,6 +303,17 @@ export function PriceList({
           </Button>
         )}
       </div>
+
+      {/* CD-197 — standard prices / special prices for a customer, group or deal */}
+      <Segmented<string>
+        value={special ? "special" : "standard"}
+        onChange={(value) => go({ special: value === "special" })}
+        options={[
+          { value: "standard", label: mp.tabs.standard },
+          { value: "special", label: mp.tabs.special },
+        ]}
+      />
+      {special && <Alert type="info" showIcon title={mp.specialHint} />}
 
       <Card>
         <Space orientation="vertical" className="w-full">
@@ -278,6 +361,20 @@ export function PriceList({
                   </div>
                 ),
               },
+              ...(special
+                ? [
+                    {
+                      title: mp.appliesTo,
+                      key: "target",
+                      render: (_: unknown, row: ProductPriceRow) => (
+                        <div>
+                          <Tag>{mp.scopes[row.scope] ?? row.scope}</Tag>
+                          <span className="text-xs">{row.target?.label}</span>
+                        </div>
+                      ),
+                    },
+                  ]
+                : []),
               {
                 title: mp.unitPrice,
                 key: "price",
@@ -328,6 +425,9 @@ export function PriceList({
                         onClick={() =>
                           setDraft({
                             id: row.id,
+                            scope: row.scope,
+                            targetId: row.target?.id ?? null,
+                            targetLabel: row.target?.label ?? "",
                             productCode: row.productCode,
                             productName: row.productName ?? "",
                             priceModel: row.priceModel,
@@ -395,7 +495,9 @@ export function PriceList({
             !draft?.productCode ||
             draft.unitPrice === null ||
             !draft.validFrom ||
-            (draft.started && !draft.reason.trim()),
+            (draft.started && !draft.reason.trim()) ||
+            // CD-197 — a special price names its target and must end.
+            (draft.scope !== "standard" && (!draft.targetId || !draft.validTo)),
         }}
         onOk={() => void save()}
         onCancel={() => setDraft(null)}
@@ -403,6 +505,49 @@ export function PriceList({
       >
         {draft && (
           <Space orientation="vertical" className="w-full">
+            {draft.scope !== "standard" && (
+              <div>
+                <Text type="secondary">{mp.appliesTo}</Text>
+                {draft.id ? (
+                  <div>
+                    <Tag>{mp.scopes[draft.scope]}</Tag> {draft.targetLabel}
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <Select<PriceScope>
+                      style={{ width: 130 }}
+                      value={draft.scope}
+                      onChange={(scope) =>
+                        setDraft({
+                          ...draft,
+                          scope,
+                          targetId: null,
+                          targetLabel: "",
+                        })
+                      }
+                      options={SPECIAL_SCOPES.map((value) => ({
+                        value,
+                        label: mp.scopes[value],
+                      }))}
+                    />
+                    <div className="flex-1">
+                      <TargetPicker
+                        kind={draft.scope as Exclude<PriceScope, "standard">}
+                        value={draft.targetId}
+                        label={draft.targetLabel}
+                        onChange={(target) =>
+                          setDraft({
+                            ...draft,
+                            targetId: target?.id ?? null,
+                            targetLabel: target?.label ?? "",
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
             {draft.started && (
               <Alert type="info" showIcon title={mp.lockedHint} />
             )}
@@ -487,7 +632,9 @@ export function PriceList({
                 <Text type="secondary">{mp.validTo}</Text>
                 <DatePicker
                   className="w-full"
-                  placeholder={mp.noEnd}
+                  placeholder={
+                    draft.scope !== "standard" ? mp.endRequired : mp.noEnd
+                  }
                   value={draft.validTo ? dayjs(draft.validTo) : null}
                   onChange={(date) =>
                     setDraft({

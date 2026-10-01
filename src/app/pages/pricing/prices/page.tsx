@@ -10,20 +10,27 @@ const STATUSES: PriceStatus[] = ["current", "future", "expired"];
 export default async function PricesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; tab?: string }>;
 }) {
   const session = await getSession();
   if (!canAny(session, ["pricing.price.read", "pricing.price.manage"])) {
     redirect(HOME_PATH);
   }
-  const { q, status } = await searchParams;
+  const { q, status, tab } = await searchParams;
   const picked = STATUSES.find((value) => value === status);
-  const result = await getPrices({ q, status: picked });
+  // CD-197 — standard prices or special (customer / group / deal) prices.
+  const special = tab === "special";
+  const result = await getPrices({
+    q,
+    status: picked,
+    scope: special ? "special" : "standard",
+  });
   return (
     <PriceList
       rows={result.ok ? result.data : []}
       q={q ?? ""}
       status={picked ?? null}
+      special={special}
       canManage={can(session, "pricing.price.manage")}
     />
   );

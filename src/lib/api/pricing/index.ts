@@ -7,8 +7,11 @@ export type { PriceStatus, ProductPriceRow } from "./client";
 export async function getPrices(query: {
   q?: string;
   status?: PriceStatus;
+  /** CD-197 */
+  scope?: "standard" | "special";
 }): Promise<ApiResult<ProductPriceRow[]>> {
   const params = new URLSearchParams();
+  if (query.scope === "special") params.set("scope", "special");
   if (query.q) params.set("q", query.q);
   if (query.status) params.set("status", query.status);
   const qs = params.toString();

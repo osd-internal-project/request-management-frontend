@@ -9,12 +9,22 @@ export type PriceStatus = "current" | "future" | "expired";
 /** CD-196 — ต่อหน่วย / เหมา / ต่อเดือน. */
 export type PriceModel = "unit" | "lump_sum" | "monthly";
 export const PRICE_MODELS: PriceModel[] = ["unit", "lump_sum", "monthly"];
+/** CD-197 — who a price is for. */
+export type PriceScope = "standard" | "segment" | "customer" | "opportunity";
+export const SPECIAL_SCOPES: Exclude<PriceScope, "standard">[] = [
+  "customer",
+  "segment",
+  "opportunity",
+];
 
 export interface ProductPriceRow {
   id: string;
   productCode: string;
   productName: string | null;
   priceModel: PriceModel;
+  /** CD-197 */
+  scope: PriceScope;
+  target: { id: string; label: string } | null;
   currency: string;
   unitPrice: number;
   /** YYYY-MM-DD */
@@ -29,6 +39,8 @@ export interface ProductPriceRow {
 export interface PriceLookup {
   price_id: string;
   price_model: PriceModel;
+  /** CD-197 — where the price came from. */
+  scope: PriceScope;
   unit_price: number;
   currency: string;
   valid_from: string;
@@ -39,9 +51,24 @@ export interface PriceLookup {
 export function lookupPrices(
   codes: string[],
   currency: string,
+  /** CD-197 — the quotation's deal: brings in its special prices. */
+  opportunityId?: string,
 ): Promise<ClientResult<Record<string, PriceLookup>>> {
+  const deal = opportunityId
+    ? `&opportunity_id=${encodeURIComponent(opportunityId)}`
+    : "";
   return appApi(
-    `pricing/prices/lookup?codes=${encodeURIComponent(codes.join(","))}&currency=${encodeURIComponent(currency)}`,
+    `pricing/prices/lookup?codes=${encodeURIComponent(codes.join(","))}&currency=${encodeURIComponent(currency)}${deal}`,
+  );
+}
+
+/** CD-197 — options for the special-price target picker. */
+export function searchPriceTargets(
+  kind: Exclude<PriceScope, "standard">,
+  q: string,
+): Promise<ClientResult<{ id: string; label: string }[]>> {
+  return appApi(
+    `pricing/prices/targets?kind=${kind}${q ? `&q=${encodeURIComponent(q)}` : ""}`,
   );
 }
 

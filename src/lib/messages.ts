@@ -2963,6 +2963,18 @@ export const messages = {
       removed: "ลบแล้ว",
       empty: "ยังไม่มีราคามาตรฐาน",
       pickProduct: "เลือกสินค้าจาก SAP",
+      /** CD-197 */
+      tabs: { standard: "ราคามาตรฐาน", special: "ราคาเฉพาะ" },
+      specialHint:
+        "ราคาเฉพาะลูกค้า กลุ่มลูกค้า หรือดีล — ต้องมีวันสิ้นสุด · ใบเสนอราคาใช้ราคาที่เจาะจงที่สุดที่มีผล: ดีล → ลูกค้า → กลุ่มลูกค้า (ต่ำสุดถ้าหลายกลุ่ม) → ราคามาตรฐาน",
+      appliesTo: "ใช้กับ",
+      scopes: {
+        customer: "ลูกค้า",
+        segment: "กลุ่มลูกค้า",
+        opportunity: "ดีล",
+      } as Record<string, string>,
+      pickTarget: "ค้นหาแล้วเลือก",
+      endRequired: "ราคาเฉพาะต้องมีวันสิ้นสุด",
       /** CD-196 */
       priceModel: "รูปแบบราคา",
       models: {
@@ -3920,8 +3932,15 @@ export const messages = {
         productPlaceholder: "ค้นรหัส/ชื่อสินค้า (ว่าง = บริการ)",
         productNotFound: "ไม่พบในรายการสินค้าจาก SAP",
         /** CD-194 */
-        priceFilled: (code: string, price: string) =>
-          `เติมราคามาตรฐานของ ${code}: ${price}`,
+        priceFilled: (code: string, price: string, source: string) =>
+          `เติม${source}ของ ${code}: ${price}`,
+        /** CD-197 — where the filled price came from. */
+        priceSources: {
+          standard: "ราคามาตรฐาน",
+          segment: "ราคาเฉพาะกลุ่มลูกค้า",
+          customer: "ราคาเฉพาะลูกค้า",
+          opportunity: "ราคาเฉพาะดีล",
+        } as Record<string, string>,
         line: {
           productCode: "รหัสสินค้า",
           description: "รายละเอียด",

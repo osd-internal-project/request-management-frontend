@@ -320,7 +320,11 @@ export function QuotationDetailView({
    * currency, becomes the line's unit price. No price, no change.
    */
   async function fillStandardPrice(key: string, code: string) {
-    const result = await lookupPrices([code], currency);
+    const result = await lookupPrices(
+      [code],
+      currency,
+      quotation.opportunityId,
+    );
     const found = result.ok ? result.data[code] : undefined;
     if (!found) return;
     const model = (found.price_model ?? "unit") as PriceModel;
@@ -341,7 +345,11 @@ export function QuotationDetailView({
       ),
     );
     void message.info(
-      md.priceFilled(code, money(found.unit_price, found.currency)),
+      md.priceFilled(
+        code,
+        money(found.unit_price, found.currency),
+        md.priceSources[found.scope] ?? "",
+      ),
     );
   }
 
