@@ -2957,6 +2957,31 @@ export const messages = {
       removed: "ลบแล้ว",
       empty: "ยังไม่มีราคามาตรฐาน",
       pickProduct: "เลือกสินค้าจาก SAP",
+      /** CD-195 */
+      lockedHint:
+        "ราคานี้มีผลแล้ว — แก้ได้เฉพาะวันสิ้นสุด (ไม่ย้อนก่อนเมื่อวาน) ถ้าจะเปลี่ยนราคาให้ใช้ \"ปรับราคา\"",
+      reason: "เหตุผล",
+      reasonPlaceholder: "เช่น เลิกขายรุ่นนี้ / ต้นทุนเปลี่ยน",
+      revise: "ปรับราคา",
+      reviseTitle: (code: string) => `ปรับราคา ${code}`,
+      reviseHint:
+        "ราคาเดิมจะสิ้นสุดวันก่อนวันที่ราคาใหม่มีผล แล้วราคาใหม่ใช้ต่อจนถึงวันสิ้นสุดเดิม",
+      newPrice: "ราคาใหม่",
+      effectiveFrom: "ราคาใหม่มีผลตั้งแต่",
+      revised: "ปรับราคาแล้ว",
+      history: "ประวัติ",
+      historyTitle: (code: string) => `ประวัติราคา ${code}`,
+      version: "ครั้งที่",
+      action: "การเปลี่ยน",
+      actions: {
+        created: "สร้าง",
+        updated: "แก้ไข",
+        ended: "กำหนดวันสิ้นสุด",
+        revised: "ปรับราคา",
+        removed: "ลบ",
+      } as Record<string, string>,
+      changedAt: "เมื่อ",
+      historyEmpty: "ยังไม่มีประวัติ",
     },
   },
   /** CD-137 ข้อเสนอทางเทคนิค (พิมพ์) */

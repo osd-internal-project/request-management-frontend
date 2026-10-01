@@ -1513,6 +1513,8 @@ export interface QuotationLine {
   discountPct: Money;
   lineTotal: Money;
   lineCost?: Money;
+  /** CD-195 — the standard price this line came from; null = typed by hand. */
+  priceId?: string | null;
 }
 
 export interface QuotationDetail extends QuotationRow {

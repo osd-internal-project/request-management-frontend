@@ -47,6 +47,8 @@ interface DraftLine {
   unitPrice: number | null;
   unitCost: number | null;
   discountPct: number | null;
+  /** CD-195 — the standard price the unit price came from; null = typed. */
+  priceId: string | null;
 }
 
 type ActionKind = "submit" | "accept" | "decline" | "cancel";
@@ -67,6 +69,7 @@ function toDraftLines(quotation: QuotationDetail): DraftLine[] {
     unitPrice: Number(line.unitPrice),
     unitCost: line.unitCost === undefined ? null : Number(line.unitCost),
     discountPct: Number(line.discountPct),
+    priceId: line.priceId ?? null,
   }));
 }
 
@@ -205,6 +208,7 @@ export function QuotationDetailView({
               unit_price: line.unitPrice,
               unit_cost: line.unitCost ?? 0,
               discount_pct: line.discountPct ?? 0,
+              price_id: line.priceId ?? undefined,
             })),
           }
         : {}),
@@ -289,7 +293,7 @@ export function QuotationDetailView({
     const result = await lookupPrices([code], currency);
     const found = result.ok ? result.data[code] : undefined;
     if (!found) return;
-    patchLine(key, { unitPrice: found.unit_price });
+    patchLine(key, { unitPrice: found.unit_price, priceId: found.price_id });
     void message.info(
       md.priceFilled(code, money(found.unit_price, found.currency)),
     );
@@ -640,6 +644,7 @@ export function QuotationDetailView({
                     unitPrice: null,
                     unitCost: null,
                     discountPct: 0,
+                    priceId: null,
                   },
                 ])
               }
@@ -678,10 +683,13 @@ export function QuotationDetailView({
                         // Fill only what the user has not written yet.
                         description: row.description || product.name,
                         unit: row.unit || (product.unit ?? ""),
+                        priceId: null,
                       });
                       void fillStandardPrice(row.key, product.code);
                     }}
-                    onClear={() => patchLine(row.key, { productCode: "" })}
+                    onClear={() =>
+                      patchLine(row.key, { productCode: "", priceId: null })
+                    }
                   />
                 ) : (
                   value || "—"
@@ -749,7 +757,10 @@ export function QuotationDetailView({
                     className="w-full"
                     min={0}
                     value={value}
-                    onChange={(next) => patchLine(row.key, { unitPrice: next })}
+                    onChange={(next) =>
+                      // A price typed by hand no longer is the standard one.
+                      patchLine(row.key, { unitPrice: next, priceId: null })
+                    }
                   />
                 ) : (
                   formatAmount(value)

@@ -39,3 +39,23 @@ export function lookupPrices(
     `pricing/prices/lookup?codes=${encodeURIComponent(codes.join(","))}&currency=${encodeURIComponent(currency)}`,
   );
 }
+
+/** CD-195 — one saved state of a price. */
+export interface PriceVersion {
+  versionNo: number;
+  action: "created" | "updated" | "ended" | "revised" | "removed";
+  unitPrice: number;
+  currency: string;
+  validFrom: string;
+  validTo: string | null;
+  note: string;
+  reason: string;
+  changedBy: string;
+  changedAt: string;
+}
+
+export function getPriceVersions(
+  id: string,
+): Promise<ClientResult<PriceVersion[]>> {
+  return appApi(`pricing/prices/${id}/versions`);
+}
