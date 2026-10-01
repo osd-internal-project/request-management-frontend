@@ -367,6 +367,9 @@ function ConfigSection({
     config.projectHealthAmber ?? 20,
   );
   const [healthRed, setHealthRed] = useState(config.projectHealthRed ?? 40);
+  const [readinessList, setReadinessList] = useState<string[]>(
+    config.projectReadinessChecklist ?? [],
+  );
   const [solutionType, setSolutionType] = useState(
     config.solutionRequestTypeCode ?? "",
   );
@@ -397,6 +400,7 @@ function ConfigSection({
       project_close_documents: closeDocuments,
       project_health_amber: healthAmber,
       project_health_red: healthRed,
+      project_readiness_checklist: readinessList,
       solution_request_type_code: solutionType,
       solution_approval_type_code: solutionApprovalType,
       demo_request_type_code: demoType,
@@ -693,6 +697,22 @@ function ConfigSection({
       </div>
       <Text type="secondary" className="mt-2 block text-xs">
         {m.projectHealthHint}
+      </Text>
+      {/* CD-225 — รายการตรวจความพร้อมก่อนส่งมอบ */}
+      <div className="mt-3 max-w-xl">
+        <Text className="mb-1 block text-xs">
+          {m.projectReadinessChecklist}
+        </Text>
+        <Select
+          mode="tags"
+          className="w-full"
+          value={readinessList}
+          open={false}
+          onChange={(values: string[]) => setReadinessList(values)}
+        />
+      </div>
+      <Text type="secondary" className="mt-2 block text-xs">
+        {m.projectReadinessHint}
       </Text>
 
       {/* CD-130 — ประเภทคำขอ Solution (Sales → Pre-Sales) */}

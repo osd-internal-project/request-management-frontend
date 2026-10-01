@@ -1802,6 +1802,8 @@ export interface CrmConfig {
   /** CD-192 — the health scores at which a project turns amber, and red. */
   projectHealthAmber?: number;
   projectHealthRed?: number;
+  /** CD-225 — the company's readiness checklist. */
+  projectReadinessChecklist?: string[];
   /** CD-130 — the type Pre-Sales takes solution requests on. */
   solutionRequestTypeCode?: string | null;
   /** CD-143 — the type a Solution version is sent for approval on. */

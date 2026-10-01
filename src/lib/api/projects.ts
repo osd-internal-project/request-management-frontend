@@ -890,3 +890,39 @@ export function getProjectTests(
 ): Promise<ApiResult<ProjectTestsView>> {
   return apiGet(`/projects/${encodeURIComponent(id)}/tests`);
 }
+
+/** CD-225 — one line of the readiness check before handover. */
+export interface ReadinessLineView {
+  id: string;
+  seq: number;
+  text: string;
+  inspectorUserId: string | null;
+  inspectorName: string | null;
+  result: "pass" | "fail" | null;
+  checkedOn: string | null;
+  note: string | null;
+  checkedByName: string | null;
+  checkedAt: string | null;
+  mayCheck: boolean;
+}
+
+export interface ProjectReadinessView {
+  canEdit: boolean;
+  started: boolean;
+  checks: { key: string; label: string; ok: boolean; detail: string | null }[];
+  readiness: {
+    passed: number;
+    total: number;
+    failed: number;
+    unchecked: number;
+    ready: boolean;
+    blockers: string[];
+  };
+  lines: ReadinessLineView[];
+}
+
+export function getProjectReadiness(
+  id: string,
+): Promise<ApiResult<ProjectReadinessView>> {
+  return apiGet(`/projects/${encodeURIComponent(id)}/readiness`);
+}
