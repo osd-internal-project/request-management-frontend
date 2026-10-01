@@ -223,7 +223,7 @@ export function AppShell({
             min={320}
             max="60%"
           >
-            <ChatPanel onClose={() => setChatOpen(false)} />
+            <ChatPanel widget={null} onClose={() => setChatOpen(false)} />
           </Splitter.Panel>
         )}
       </Splitter>
@@ -236,7 +236,7 @@ export function AppShell({
         styles={{ body: { padding: 0 } }}
         onClose={() => setChatOpen(false)}
       >
-        <ChatPanel onClose={() => setChatOpen(false)} />
+        <ChatPanel widget={null} onClose={() => setChatOpen(false)} />
       </Drawer>
     </Layout>
   );

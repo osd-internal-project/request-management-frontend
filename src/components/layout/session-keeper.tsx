@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { signOutChatWidget } from "@/components/layout/librechat-widget";
 import { SESSION_EXPIRED_PATH } from "@/lib/routes";
 
 /** Events that count as the user still being here. */
@@ -54,8 +55,9 @@ export function SessionKeeper({
     let timer: ReturnType<typeof setTimeout> | undefined;
     let stopped = false;
 
-    const expire = () => {
+    const expire = async () => {
       stopped = true;
+      await signOutChatWidget();
       // A full navigation, not `router.push`: logout has to leave the SPA and
       // pass through Keycloak's end-session endpoint (AUTH-03).
       window.location.href = SESSION_EXPIRED_PATH;

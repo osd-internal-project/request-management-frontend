@@ -177,6 +177,11 @@ export const SESSION_REFRESH_INTERVAL_SECONDS = Number(
   process.env.SESSION_REFRESH_INTERVAL_SECONDS ?? 5 * 60,
 );
 
+/** LibreChat (aiyara) inline widget. Origin only — the script is `${url}/widget/v1.js`. Unset = no chat. */
+export const LIBRECHAT_WIDGET_URL = process.env.LIBRECHAT_WIDGET_URL ?? "";
+export const LIBRECHAT_WIDGET_PUBLIC_ID =
+  process.env.LIBRECHAT_WIDGET_PUBLIC_ID ?? "";
+
 export const isProduction = process.env.NODE_ENV === "production";
 
 /**

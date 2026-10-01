@@ -116,6 +116,7 @@ export const messages = {
     title: "ผู้ช่วย AI",
     toggle: "เปิด/ปิดผู้ช่วย AI",
     close: "ปิด",
+    notConfigured: "ยังไม่ได้ตั้งค่าผู้ช่วย AI",
   },
 
   pending: {

@@ -19,6 +19,10 @@ import { usePathname, useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import type { MenuEntry } from "@/app/configs/menu";
 import { ChatPanel } from "@/components/layout/chat-panel";
+import {
+  signOutChatWidget,
+  type ChatWidgetConfig,
+} from "@/components/layout/librechat-widget";
 import { CompanySwitcher } from "@/components/layout/company-switcher";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { messages } from "@/lib/messages";
@@ -26,6 +30,8 @@ import { messages } from "@/lib/messages";
 const { Header, Content, Footer, Sider } = Layout;
 
 const currentYear = new Date().getFullYear();
+
+const LOGOUT_ROUTE = "/api/auth/logout";
 
 /** Only the width is remembered — see `readChatWidth`. */
 const CHAT_WIDTH_KEY = "chat-panel-width";
@@ -73,12 +79,15 @@ export function AppShell({
   user,
   menus,
   canReadNotifications,
+  chatWidget,
   children,
 }: {
   user: ShellUser;
   menus: MenuEntry[];
   /** SUP-03 — no bell (and no polling) for someone who cannot read the inbox. */
   canReadNotifications: boolean;
+  /** Null when the LibreChat env is unset — the panel says so instead. */
+  chatWidget: ChatWidgetConfig | null;
   children: React.ReactNode;
 }) {
   const router = useRouter();
@@ -148,13 +157,25 @@ export function AppShell({
     />
   );
 
+  async function onLogoutClick(event: React.MouseEvent<HTMLAnchorElement>) {
+    // Revoke the chat widget's session first; the navigation would cut its iframe off.
+    event.preventDefault();
+    await signOutChatWidget();
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- a route handler, must leave the SPA (AUTH-03)
+    window.location.href = LOGOUT_ROUTE;
+  }
+
   const avatarDropdownItems = [
     {
       key: "logout",
       label: (
         // A plain link, not a fetch: logout has to leave the SPA and pass
         // through Keycloak's end-session endpoint (AUTH-03).
-        <a href="/api/auth/logout" className="text-red-500">
+        <a
+          href={LOGOUT_ROUTE}
+          className="text-red-500"
+          onClick={onLogoutClick}
+        >
           {messages.nav.logout}
         </a>
       ),
@@ -253,7 +274,7 @@ export function AppShell({
             min={320}
             max="60%"
           >
-            <ChatPanel onClose={() => setChatOpen(false)} />
+            <ChatPanel widget={chatWidget} onClose={() => setChatOpen(false)} />
           </Splitter.Panel>
         )}
       </Splitter>
@@ -266,7 +287,7 @@ export function AppShell({
         styles={{ body: { padding: 0 } }}
         onClose={() => setChatOpen(false)}
       >
-        <ChatPanel onClose={() => setChatOpen(false)} />
+        <ChatPanel widget={chatWidget} onClose={() => setChatOpen(false)} />
       </Drawer>
     </Layout>
   );
