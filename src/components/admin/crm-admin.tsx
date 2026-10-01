@@ -349,6 +349,9 @@ function ConfigSection({
   const [contractApprovalType, setContractApprovalType] = useState(
     config.contractApprovalTypeCode ?? "",
   );
+  const [projectChangeType, setProjectChangeType] = useState(
+    config.projectChangeTypeCode ?? "",
+  );
   const [solutionType, setSolutionType] = useState(
     config.solutionRequestTypeCode ?? "",
   );
@@ -376,6 +379,7 @@ function ConfigSection({
       liability_approval_request_type_code: liabilityType,
       legal_risk_opinion_type_code: riskOpinionType,
       contract_approval_type_code: contractApprovalType,
+      project_change_type_code: projectChangeType,
       solution_request_type_code: solutionType,
       solution_approval_type_code: solutionApprovalType,
       demo_request_type_code: demoType,
@@ -585,6 +589,21 @@ function ConfigSection({
       </div>
       <Text type="secondary" className="mt-2 block text-xs">
         {m.contractApprovalHint}
+      </Text>
+      {/* CD-185 — คำขอเปลี่ยนแปลงโครงการ (คณะกรรมการเปลี่ยนแปลง) */}
+      <div className="mt-3 max-w-xs">
+        <Text className="mb-1 block text-xs">{m.projectChangeTypeCode}</Text>
+        <Input
+          value={projectChangeType}
+          maxLength={20}
+          allowClear
+          onChange={(e) =>
+            setProjectChangeType(e.target.value.toUpperCase())
+          }
+        />
+      </div>
+      <Text type="secondary" className="mt-2 block text-xs">
+        {m.projectChangeHint}
       </Text>
 
       {/* CD-130 — ประเภทคำขอ Solution (Sales → Pre-Sales) */}

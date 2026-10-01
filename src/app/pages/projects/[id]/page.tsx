@@ -6,6 +6,7 @@ import {
   getProjectPlan,
   getProjectProgress,
   getProjectBudget,
+  getProjectChanges,
 } from "@/lib/api/projects";
 import { getAllDirectoryUsers } from "@/lib/api/users";
 import { HOME_PATH } from "@/lib/routes";
@@ -27,13 +28,15 @@ export default async function ProjectPage({ params }: Params) {
   const project = result.data;
   // CD-182 — whoever sees the project sees its milestones
   // CD-177 — and its plan
-  const [milestones, plan, progress, budget] = await Promise.all([
+  const [milestones, plan, progress, budget, changes] = await Promise.all([
     getProjectMilestones(id),
     getProjectPlan(id),
     // CD-188
     getProjectProgress(id),
     // CD-179
     getProjectBudget(id),
+    // CD-185
+    getProjectChanges(id),
   ]);
   // the pickers only for who may change the manager or the team
   const users =
@@ -48,6 +51,7 @@ export default async function ProjectPage({ params }: Params) {
       plan={plan.ok ? plan.data : null}
       progress={progress.ok ? progress.data : null}
       budget={budget.ok ? budget.data : null}
+      changes={changes.ok ? changes.data : null}
       people={(users?.ok ? users.data : []).map((user) => ({
         id: user.id,
         name: user.displayName,

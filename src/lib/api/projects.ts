@@ -266,6 +266,8 @@ export interface PlanTaskView {
   doneAt: string | null;
   summary: boolean;
   milestone: { id: string; title: string; status: string } | null;
+  /** CD-185 — the change request it comes from; it starts once approved. */
+  changeRequest: { id: string; seq: number; status: string } | null;
   start: string | null;
   finish: string | null;
   floatDays: number | null;
@@ -460,4 +462,54 @@ export function getProjectBudget(
   id: string,
 ): Promise<ApiResult<ProjectBudgetView>> {
   return apiGet(`/projects/${encodeURIComponent(id)}/budget`);
+}
+
+/** CD-185 — a change request and its effect. */
+export interface ProjectChangeView {
+  id: string;
+  seq: number;
+  label: string;
+  title: string;
+  reason: string;
+  scopeAdded: string | null;
+  scopeRemoved: string | null;
+  scheduleDays: number;
+  costLines: BudgetLineView[];
+  costChange: number;
+  priceChange: number;
+  status: "draft" | "submitted" | "approved" | "rejected" | "cancelled";
+  impact: {
+    cost: { from: number | null; to: number | null; change: number };
+    value: { from: number | null; to: number | null; change: number };
+    margin: {
+      from: number | null;
+      to: number | null;
+      fromPct: number | null;
+      toPct: number | null;
+    };
+  } | null;
+  request: { id: string; requestNo: string | null } | null;
+  error: string | null;
+  submittedAt: string | null;
+  submittedByName: string | null;
+  decidedAt: string | null;
+  createdAt: string;
+  createdByName: string | null;
+}
+
+export interface ProjectChangesView {
+  canEdit: boolean;
+  typeConfigured: boolean;
+  budget: {
+    versionNo: number;
+    total: number;
+    contractValue: number | null;
+  } | null;
+  changes: ProjectChangeView[];
+}
+
+export function getProjectChanges(
+  id: string,
+): Promise<ApiResult<ProjectChangesView>> {
+  return apiGet(`/projects/${encodeURIComponent(id)}/changes`);
 }

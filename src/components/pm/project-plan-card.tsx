@@ -42,6 +42,7 @@ interface Draft {
   ownerUserId: string | null;
   durationDays: number;
   milestoneId: string | null;
+  changeRequestId: string | null;
   after: string[];
   summary: boolean;
 }
@@ -58,10 +59,13 @@ export function ProjectPlanCard({
   projectId,
   view,
   people,
+  changeOptions = [],
 }: {
   readonly projectId: string;
   readonly view: ProjectPlanView;
   readonly people: { id: string; name: string }[];
+  /** CD-185 — open change requests a task may come from. */
+  readonly changeOptions?: { id: string; label: string }[];
 }) {
   const router = useRouter();
   const { message } = App.useApp();
@@ -138,6 +142,7 @@ export function ProjectPlanCard({
             ownerUserId: task.ownerUserId,
             durationDays: task.durationDays,
             milestoneId: task.milestone?.id ?? null,
+            changeRequestId: task.changeRequest?.id ?? null,
             after: task.predecessors.map((item) => item.taskId),
             summary: task.summary,
           }
@@ -149,6 +154,7 @@ export function ProjectPlanCard({
             ownerUserId: null,
             durationDays: 1,
             milestoneId: null,
+            changeRequestId: null,
             after: [],
             summary: false,
           },
@@ -172,6 +178,7 @@ export function ProjectPlanCard({
       owner_user_id: draft.ownerUserId,
       duration_days: draft.durationDays,
       milestone_id: draft.milestoneId,
+      change_request_id: draft.changeRequestId,
     });
     const saved = await call(
       draft.id ? `${base}/tasks/${draft.id}` : `${base}/tasks`,
@@ -318,6 +325,21 @@ export function ProjectPlanCard({
                   >
                     {task.title}
                   </Link>{" "}
+                  {task.changeRequest && (
+                    <Tag
+                      color={
+                        task.changeRequest.status === "approved"
+                          ? "purple"
+                          : "orange"
+                      }
+                    >
+                      {messages.projects.changes.taskFrom(
+                        `CR-${task.changeRequest.seq}`,
+                      )}
+                      {task.changeRequest.status !== "approved" &&
+                        ` · ${messages.projects.changes.taskWaits}`}
+                    </Tag>
+                  )}
                   {!task.summary && task.status !== "open" && (
                     <Tag
                       color={messages.projects.work.statusColor[task.status]}
@@ -598,6 +620,23 @@ export function ProjectPlanCard({
                 }))}
               />
             </label>
+            {changeOptions.length > 0 && (
+              <label className="block text-xs">
+                {messages.projects.changes.title}
+                <Select
+                  className="w-full"
+                  allowClear
+                  value={draft.changeRequestId ?? undefined}
+                  onChange={(value?: string) =>
+                    setDraft({ ...draft, changeRequestId: value ?? null })
+                  }
+                  options={changeOptions.map((row) => ({
+                    value: row.id,
+                    label: row.label,
+                  }))}
+                />
+              </label>
+            )}
             {!draft.summary && (
               <label className="block text-xs">
                 {m.form.after}

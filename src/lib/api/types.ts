@@ -1781,6 +1781,8 @@ export interface CrmConfig {
   legalRiskOpinionTypeCode?: string | null;
   /** CD-159 — ประเภทคำขออนุมัติสัญญา. */
   contractApprovalTypeCode?: string | null;
+  /** CD-185 — project change requests go to the change board as this type. */
+  projectChangeTypeCode?: string | null;
   /** CD-130 — the type Pre-Sales takes solution requests on. */
   solutionRequestTypeCode?: string | null;
   /** CD-143 — the type a Solution version is sent for approval on. */

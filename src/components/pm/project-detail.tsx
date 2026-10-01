@@ -26,6 +26,7 @@ import type {
   ProjectPlanView,
   ProjectProgressView,
   ProjectBudgetView,
+  ProjectChangesView,
 } from "@/lib/api/projects";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
@@ -34,6 +35,7 @@ import { ProjectMilestonesCard } from "./project-milestones-card";
 import { ProjectPlanCard } from "./project-plan-card";
 import { ProjectProgressCard } from "./project-progress-card";
 import { ProjectBudgetCard } from "./project-budget-card";
+import { ProjectChangesCard } from "./project-changes-card";
 import {
   ProjectTeamFields,
   teamPayload,
@@ -53,6 +55,7 @@ export function ProjectDetailView({
   plan,
   progress,
   budget,
+  changes,
   people,
 }: {
   readonly project: ProjectDetail;
@@ -64,6 +67,8 @@ export function ProjectDetailView({
   readonly progress: ProjectProgressView | null;
   /** CD-179 — null = could not load. */
   readonly budget: ProjectBudgetView | null;
+  /** CD-185 — null = could not load. */
+  readonly changes: ProjectChangesView | null;
   /** The company's people, for the manager and team pickers. */
   readonly people: { id: string; name: string }[];
 }) {
@@ -319,7 +324,19 @@ export function ProjectDetailView({
       )}
 
       {plan && (
-        <ProjectPlanCard projectId={project.id} view={plan} people={pickable} />
+        <ProjectPlanCard
+          projectId={project.id}
+          view={plan}
+          people={pickable}
+          changeOptions={(changes?.changes ?? [])
+            .filter((row) =>
+              ["draft", "submitted", "approved"].includes(row.status),
+            )
+            .map((row) => ({
+              id: row.id,
+              label: `${row.label} · ${row.title}`,
+            }))}
+        />
       )}
 
       {budget && (
@@ -329,6 +346,8 @@ export function ProjectDetailView({
           view={budget}
         />
       )}
+
+      {changes && <ProjectChangesCard projectId={project.id} view={changes} />}
 
       <Card size="small" title={md.baseline}>
         <Text type="secondary" className="mb-2 block text-xs">
