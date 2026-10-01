@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Alert,
@@ -11,6 +11,7 @@ import {
   InputNumber,
   Modal,
   Popconfirm,
+  Segmented,
   Select,
   Space,
   Table,
@@ -20,8 +21,13 @@ import Text from "antd/es/typography/Text";
 import dayjs from "dayjs";
 import { SearchSelect } from "@/components/ui/search-select";
 import { appApi } from "@/lib/api/client";
-import type { PlanTaskView, ProjectPlanView } from "@/lib/api/projects";
+import type {
+  PlanPreview,
+  PlanTaskView,
+  ProjectPlanView,
+} from "@/lib/api/projects";
 import { messages } from "@/lib/messages";
+import { ProjectGantt } from "./project-gantt";
 
 const m = messages.projects.plan;
 
@@ -60,6 +66,35 @@ export function ProjectPlanCard({
   const [draft, setDraft] = useState<Draft | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mode, setMode] = useState<"table" | "timeline">("table");
+  const [impact, setImpact] = useState<PlanPreview | null>(null);
+
+  // CD-178 — what saving this change would move, before it is saved
+  const editingId = draft?.id;
+  const editingDays = draft?.durationDays;
+  const editingAfter = draft?.after.join(",");
+  useEffect(() => {
+    if (!editingId) return;
+    const timer = setTimeout(() => {
+      const current = view.tasks.find((task) => task.id === editingId);
+      void appApi<PlanPreview>(`projects/${projectId}/plan/preview`, {
+        method: "POST",
+        body: JSON.stringify({
+          task_id: editingId,
+          duration_days: editingDays,
+          predecessors: (editingAfter ? editingAfter.split(",") : []).map(
+            (id) => ({
+              task_id: id,
+              lag_days:
+                current?.predecessors.find((item) => item.taskId === id)
+                  ?.lagDays ?? 0,
+            }),
+          ),
+        }),
+      }).then((result) => setImpact(result.ok ? result.data : null));
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [editingId, editingDays, editingAfter, projectId, view.tasks]);
   const { canEdit } = view;
   const base = `projects/${projectId}/plan`;
   const pickable = [
@@ -89,6 +124,7 @@ export function ProjectPlanCard({
 
   function open(task?: PlanTaskView, parentId?: string) {
     setError(null);
+    setImpact(null);
     setDraft(
       task
         ? {
@@ -212,129 +248,178 @@ export function ProjectPlanCard({
         <Alert className="mb-2" type="error" showIcon title={error} />
       )}
 
-      <Table<PlanTaskView>
-        size="small"
-        rowKey="id"
-        pagination={false}
-        scroll={{ x: 980 }}
-        dataSource={view.tasks}
-        locale={{ emptyText: m.empty }}
-        columns={[
-          { title: m.columns.wbs, dataIndex: "wbs", width: 70 },
-          {
-            title: m.columns.task,
-            key: "task",
-            render: (_: unknown, task) => (
-              <div style={{ paddingLeft: depth(task.wbs) * 16 }}>
-                <span className={task.summary ? "font-medium" : ""}>
-                  {task.title}
-                </span>{" "}
-                {task.critical && !task.summary && (
-                  <Tag color="red">{m.critical}</Tag>
-                )}
-                {task.durationDays === 0 && !task.summary && (
-                  <Tag>{m.point}</Tag>
-                )}
-                {task.milestone && (
-                  <Tag color="blue">{task.milestone.title}</Tag>
-                )}
-              </div>
-            ),
-          },
-          {
-            title: m.columns.owner,
-            key: "owner",
-            width: 140,
-            render: (_: unknown, task) => task.ownerName ?? "—",
-          },
-          {
-            title: m.columns.duration,
-            key: "duration",
-            width: 80,
-            align: "right",
-            render: (_: unknown, task) =>
-              task.summary ? "—" : task.durationDays,
-          },
-          {
-            title: m.columns.start,
-            key: "start",
-            width: 100,
-            render: (_: unknown, task) => date(task.start),
-          },
-          {
-            title: m.columns.finish,
-            key: "finish",
-            width: 100,
-            render: (_: unknown, task) => date(task.finish),
-          },
-          {
-            title: m.columns.float,
-            key: "float",
-            width: 80,
-            align: "right",
-            render: (_: unknown, task) =>
-              task.floatDays === null ? (
-                "—"
-              ) : (
-                <Text type={task.floatDays === 0 ? "danger" : undefined}>
-                  {task.floatDays}
+      {view.milestones.length > 0 && (
+        <div className="mb-2 rounded border p-2 text-xs">
+          <Text strong>{m.forecastTitle}</Text>
+          {view.milestones.map((row) => (
+            <div key={row.id} className="flex flex-wrap gap-x-3">
+              <span>{row.title}</span>
+              <Text type={row.late ? "danger" : "secondary"}>
+                {row.forecast
+                  ? m.forecast(dayjs(row.forecast).format("D MMM YY"))
+                  : m.noForecast}
+              </Text>
+              {row.dueOn && (
+                <Text type="secondary">
+                  {m.due(dayjs(row.dueOn).format("D MMM YY"))}
                 </Text>
+              )}
+              {row.installment?.dueOn && (
+                <Text type="secondary">
+                  {m.payDue(
+                    row.installment.seq,
+                    dayjs(row.installment.dueOn).format("D MMM YY"),
+                  )}
+                </Text>
+              )}
+              {row.late && <Tag color="red">{m.late}</Tag>}
+            </div>
+          ))}
+        </div>
+      )}
+
+      <Segmented
+        className="mb-2"
+        size="small"
+        value={mode}
+        onChange={(value) => setMode(value as "table" | "timeline")}
+        options={[
+          { value: "table", label: m.views.table },
+          { value: "timeline", label: m.views.timeline },
+        ]}
+      />
+      {mode === "timeline" ? (
+        <ProjectGantt
+          tasks={view.tasks}
+          projectStart={view.projectStart}
+          finish={view.finish}
+          milestones={view.milestones}
+        />
+      ) : (
+        <Table<PlanTaskView>
+          size="small"
+          rowKey="id"
+          pagination={false}
+          scroll={{ x: 980 }}
+          dataSource={view.tasks}
+          locale={{ emptyText: m.empty }}
+          columns={[
+            { title: m.columns.wbs, dataIndex: "wbs", width: 70 },
+            {
+              title: m.columns.task,
+              key: "task",
+              render: (_: unknown, task) => (
+                <div style={{ paddingLeft: depth(task.wbs) * 16 }}>
+                  <span className={task.summary ? "font-medium" : ""}>
+                    {task.title}
+                  </span>{" "}
+                  {task.critical && !task.summary && (
+                    <Tag color="red">{m.critical}</Tag>
+                  )}
+                  {task.durationDays === 0 && !task.summary && (
+                    <Tag>{m.point}</Tag>
+                  )}
+                  {task.milestone && (
+                    <Tag color="blue">{task.milestone.title}</Tag>
+                  )}
+                </div>
               ),
-          },
-          {
-            title: m.columns.after,
-            key: "after",
-            width: 100,
-            render: (_: unknown, task) =>
-              task.predecessors
-                .map((item) =>
-                  item.lagDays ? `${item.wbs}+${item.lagDays}` : item.wbs,
-                )
-                .join(", ") || "—",
-          },
-          ...(canEdit
-            ? [
-                {
-                  title: "",
-                  key: "actions",
-                  width: 210,
-                  render: (_: unknown, task: PlanTaskView) => (
-                    <Space size={0} wrap>
-                      <Button
-                        size="small"
-                        type="link"
-                        onClick={() => open(task)}
-                      >
-                        {m.edit}
-                      </Button>
-                      {!task.predecessors.length && (
+            },
+            {
+              title: m.columns.owner,
+              key: "owner",
+              width: 140,
+              render: (_: unknown, task) => task.ownerName ?? "—",
+            },
+            {
+              title: m.columns.duration,
+              key: "duration",
+              width: 80,
+              align: "right",
+              render: (_: unknown, task) =>
+                task.summary ? "—" : task.durationDays,
+            },
+            {
+              title: m.columns.start,
+              key: "start",
+              width: 100,
+              render: (_: unknown, task) => date(task.start),
+            },
+            {
+              title: m.columns.finish,
+              key: "finish",
+              width: 100,
+              render: (_: unknown, task) => date(task.finish),
+            },
+            {
+              title: m.columns.float,
+              key: "float",
+              width: 80,
+              align: "right",
+              render: (_: unknown, task) =>
+                task.floatDays === null ? (
+                  "—"
+                ) : (
+                  <Text type={task.floatDays === 0 ? "danger" : undefined}>
+                    {task.floatDays}
+                  </Text>
+                ),
+            },
+            {
+              title: m.columns.after,
+              key: "after",
+              width: 100,
+              render: (_: unknown, task) =>
+                task.predecessors
+                  .map((item) =>
+                    item.lagDays ? `${item.wbs}+${item.lagDays}` : item.wbs,
+                  )
+                  .join(", ") || "—",
+            },
+            ...(canEdit
+              ? [
+                  {
+                    title: "",
+                    key: "actions",
+                    width: 210,
+                    render: (_: unknown, task: PlanTaskView) => (
+                      <Space size={0} wrap>
                         <Button
                           size="small"
                           type="link"
-                          onClick={() => open(undefined, task.id)}
+                          onClick={() => open(task)}
                         >
-                          {m.addChild}
+                          {m.edit}
                         </Button>
-                      )}
-                      <Popconfirm
-                        title={m.cancelConfirm}
-                        onConfirm={() =>
-                          void call(`${base}/tasks/${task.id}/cancel`, {
-                            method: "POST",
-                          })
-                        }
-                      >
-                        <Button size="small" type="link" danger>
-                          {m.cancel}
-                        </Button>
-                      </Popconfirm>
-                    </Space>
-                  ),
-                },
-              ]
-            : []),
-        ]}
-      />
+                        {!task.predecessors.length && (
+                          <Button
+                            size="small"
+                            type="link"
+                            onClick={() => open(undefined, task.id)}
+                          >
+                            {m.addChild}
+                          </Button>
+                        )}
+                        <Popconfirm
+                          title={m.cancelConfirm}
+                          onConfirm={() =>
+                            void call(`${base}/tasks/${task.id}/cancel`, {
+                              method: "POST",
+                            })
+                          }
+                        >
+                          <Button size="small" type="link" danger>
+                            {m.cancel}
+                          </Button>
+                        </Popconfirm>
+                      </Space>
+                    ),
+                  },
+                ]
+              : []),
+          ]}
+        />
+      )}
 
       <Modal
         open={draft !== null}
@@ -350,6 +435,65 @@ export function ProjectPlanCard({
         {draft && (
           <div className="space-y-3">
             {error && <Alert type="error" showIcon title={error} />}
+            {draft.id && impact && (
+              <Alert
+                type={
+                  impact.problems.length
+                    ? "error"
+                    : impact.milestones.some(
+                          (row) =>
+                            row.installment &&
+                            row.from &&
+                            row.forecast &&
+                            row.forecast > row.from,
+                        )
+                      ? "warning"
+                      : "info"
+                }
+                showIcon
+                title={m.impact.title}
+                description={
+                  <div className="text-xs">
+                    {impact.problems.map((problem) => (
+                      <div key={problem}>{problem}</div>
+                    ))}
+                    {impact.finish.from &&
+                      impact.finish.to &&
+                      impact.finish.from !== impact.finish.to && (
+                        <div>
+                          {m.impact.finish(
+                            dayjs(impact.finish.from).format("D MMM YY"),
+                            dayjs(impact.finish.to).format("D MMM YY"),
+                          )}
+                        </div>
+                      )}
+                    <div>
+                      {impact.moved.length
+                        ? m.impact.moved(impact.moved.length)
+                        : m.impact.none}
+                    </div>
+                    {impact.milestones.map((row) => (
+                      <div key={row.id}>
+                        {m.impact.milestone(
+                          row.title,
+                          row.from ? dayjs(row.from).format("D MMM YY") : "—",
+                          row.forecast
+                            ? dayjs(row.forecast).format("D MMM YY")
+                            : "—",
+                        )}
+                      </div>
+                    ))}
+                    {impact.milestones.some(
+                      (row) =>
+                        row.installment &&
+                        row.from &&
+                        row.forecast &&
+                        row.forecast > row.from,
+                    ) && <div className="font-medium">{m.impact.notify}</div>}
+                  </div>
+                }
+              />
+            )}
             <label className="block text-xs">
               {m.form.name}
               <Input

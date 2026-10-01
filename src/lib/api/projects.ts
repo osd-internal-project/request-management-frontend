@@ -274,8 +274,35 @@ export interface ProjectPlanView {
   projectStart: string;
   finish: string | null;
   problems: string[];
-  milestones: { id: string; title: string }[];
+  /** CD-178 — each milestone's forecast against its due day. */
+  milestones: PlanMilestoneForecast[];
   tasks: PlanTaskView[];
+}
+
+export interface PlanMilestoneForecast {
+  id: string;
+  title: string;
+  status: string;
+  dueOn: string | null;
+  installment: { seq: number; label: string; dueOn: string | null } | null;
+  forecast: string | null;
+  late: boolean;
+}
+
+/** CD-178 — what a change to one task would move (nothing saved). */
+export interface PlanPreview {
+  problems: string[];
+  finish: { from: string | null; to: string | null };
+  moved: {
+    id: string;
+    wbs: string;
+    title: string;
+    fromStart: string | null;
+    toStart: string | null;
+    fromFinish: string | null;
+    toFinish: string | null;
+  }[];
+  milestones: (PlanMilestoneForecast & { from: string | null })[];
 }
 
 export function getProjectPlan(

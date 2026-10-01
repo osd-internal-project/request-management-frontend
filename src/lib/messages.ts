@@ -4758,6 +4758,23 @@ export const messages = {
         after: "ต้องรอให้งานเหล่านี้เสร็จก่อน",
         required: "ระบุชื่องาน",
       },
+      /** CD-178 */
+      views: { table: "ตาราง", timeline: "ไทม์ไลน์" },
+      forecastTitle: "หมุดหมายตามแผน",
+      forecast: (at: string) => `คาดว่าเสร็จ ${at}`,
+      noForecast: "ยังไม่มีงานที่ส่งมอบหมุดหมายนี้",
+      due: (at: string) => `กำหนด ${at}`,
+      payDue: (seq: number, at: string) => `ชำระงวดที่ ${seq} ${at}`,
+      late: "ช้ากว่ากำหนด",
+      impact: {
+        title: "ผลกระทบถ้าบันทึก",
+        none: "ไม่มีงานอื่นเลื่อน",
+        finish: (from: string, to: string) => `โครงการจบ ${from} → ${to}`,
+        moved: (n: number) => `งานที่เลื่อน ${n} งาน`,
+        milestone: (title: string, from: string, to: string) =>
+          `หมุดหมาย "${title}" ${from} → ${to}`,
+        notify: "หมุดหมายที่ผูกงวดชำระเลื่อนช้าลง — ระบบจะแจ้งเจ้าของสัญญาและฝ่ายกฎหมาย",
+      },
       saved: "บันทึกแล้ว",
       save: "บันทึก",
       close: "ยกเลิก",
