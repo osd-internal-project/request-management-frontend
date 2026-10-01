@@ -4892,6 +4892,59 @@ export const messages = {
         close: "ยกเลิก",
       },
     },
+    payments: {
+      title: "งวดชำระ",
+      hint: "ติดตามการวางบิลและรับเงินของแต่ละงวดตามสัญญา ผูกกับ milestone ที่ปลดงวด · บันทึกเองจนกว่าจะเชื่อม SAP",
+      empty: "สัญญานี้ยังไม่มีงวดวางบิล",
+      totals: (
+        scheduled: string,
+        invoiced: string,
+        received: string,
+        outstanding: string,
+      ) =>
+        `มูลค่าตามงวด ${scheduled} · วางบิลแล้ว ${invoiced} · รับเงินแล้ว ${received} · คงค้าง ${outstanding}`,
+      overdueTotal: (amount: string) => `เลยกำหนดรับเงิน ${amount}`,
+      billableTotal: (amount: string) => `พร้อมวางบิล ${amount}`,
+      state: {
+        paid: "รับเงินแล้ว",
+        invoiced: "วางบิลแล้ว",
+        billable: "พร้อมวางบิล",
+        waiting: "รอ",
+      } as Record<string, string>,
+      stateColor: {
+        paid: "success",
+        invoiced: "processing",
+        billable: "gold",
+        waiting: "default",
+      } as Record<string, string>,
+      overdue: "เลยกำหนด",
+      milestone: (title: string, forecast: string | null) =>
+        forecast ? `${title} (คาดว่าเสร็จ ${forecast})` : title,
+      noMilestone: "ไม่ผูก milestone",
+      due: (day: string) => `ครบกำหนด ${day}`,
+      expectedBill: (day: string) => `คาดวางบิล ${day}`,
+      expectedPay: (day: string) => `คาดรับเงิน ${day}`,
+      invoice: (no: string | null, day: string, amount: string) =>
+        `บิล ${no ?? "-"} · ${day} · ${amount}`,
+      paid: (day: string, amount: string) => `รับเงิน ${day} · ${amount}`,
+      record: "บันทึกวางบิล/รับเงิน",
+      cash: "กระแสเงินสดรายเดือน",
+      cashRow: (received: string, expected: string) =>
+        `รับแล้ว ${received} · คาดว่าจะรับ ${expected}`,
+      unscheduled: (amount: string) => `ยังกำหนดเดือนไม่ได้ ${amount}`,
+      saved: "บันทึกแล้ว",
+      form: {
+        title: (label: string) => `บันทึกวางบิล/รับเงิน: ${label}`,
+        invoiceNo: "เลขที่ใบแจ้งหนี้",
+        invoicedOn: "วันวางบิล",
+        invoicedAmount: "ยอดวางบิล",
+        paidOn: "วันรับเงิน",
+        paidAmount: "ยอดรับเงิน",
+        note: "หมายเหตุ",
+        save: "บันทึก",
+        close: "ปิด",
+      },
+    },
     /** CD-184 — ปัญหาระหว่างทาง. */
     issues: {
       title: "ปัญหาระหว่างทาง",

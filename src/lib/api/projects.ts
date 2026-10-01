@@ -641,3 +641,58 @@ export function getCustomerLogs(
 ): Promise<ApiResult<CustomerLogsView>> {
   return apiGet(`/projects/${encodeURIComponent(id)}/customer-logs`);
 }
+
+/** CD-193 — one installment of the contract and where it stands. */
+export interface PaymentInstallmentView {
+  seq: number;
+  kind: string;
+  label: string;
+  amount: number;
+  dueOn: string | null;
+  milestone: {
+    id: string;
+    title: string;
+    status: string;
+    forecast: string | null;
+  } | null;
+  state: "paid" | "invoiced" | "billable" | "waiting";
+  expectedBillOn: string | null;
+  expectedPayOn: string | null;
+  overdue: boolean;
+  received: number;
+  billing: {
+    invoiceNo: string | null;
+    invoicedOn: string | null;
+    invoicedAmount: number | null;
+    paidOn: string | null;
+    paidAmount: number | null;
+    source: string;
+    note: string | null;
+    recordedAt: string;
+  } | null;
+}
+
+export interface ProjectPaymentsView {
+  canEdit: boolean;
+  today: string;
+  creditDays: number;
+  totals: {
+    scheduled: number;
+    invoiced: number;
+    received: number;
+    outstanding: number;
+    overdue: number;
+    billable: number;
+  };
+  installments: PaymentInstallmentView[];
+  forecast: {
+    months: { month: string; received: number; expected: number }[];
+    unscheduled: number;
+  };
+}
+
+export function getProjectPayments(
+  id: string,
+): Promise<ApiResult<ProjectPaymentsView>> {
+  return apiGet(`/projects/${encodeURIComponent(id)}/payments`);
+}
