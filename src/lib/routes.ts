@@ -167,6 +167,8 @@ export const ROUTES = {
   projectTask: (projectId: string, taskId: string) =>
     `${HOME_PATH}/projects/${projectId}/tasks/${taskId}`,
   myTasks: `${HOME_PATH}/my-tasks`,
+  /** CD-183 — risks the executives should see, across projects. */
+  projectRisks: `${HOME_PATH}/projects/risks`,
   /** CD-161 — คลังสัญญา (ฝ่ายกฎหมาย). */
   contracts: `${HOME_PATH}/contracts`,
   contractDetail: (id: string) => `${HOME_PATH}/contracts/${id}`,

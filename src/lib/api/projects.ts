@@ -513,3 +513,60 @@ export function getProjectChanges(
 ): Promise<ApiResult<ProjectChangesView>> {
   return apiGet(`/projects/${encodeURIComponent(id)}/changes`);
 }
+
+/** CD-183 — a project risk. */
+export interface ProjectRiskView {
+  id: string;
+  seq: number;
+  label: string;
+  source: "technical" | "legal" | "project";
+  title: string;
+  description: string | null;
+  likelihood: number;
+  impact: number;
+  score: number;
+  level: "low" | "medium" | "high" | "critical";
+  ownerUserId: string | null;
+  ownerName: string | null;
+  response: string | null;
+  status: "open" | "mitigated" | "accepted" | "closed";
+  reviewEveryDays: number;
+  lastReviewedAt: string | null;
+  nextReviewOn: string | null;
+  needsPlan: boolean;
+  reviewOverdue: boolean;
+}
+
+export interface ProjectRisksView {
+  canEdit: boolean;
+  today: string;
+  risks: (ProjectRiskView & {
+    reviews: {
+      id: string;
+      note: string;
+      level: string;
+      status: string;
+      reviewedByName: string;
+      reviewedAt: string;
+    }[];
+  })[];
+}
+
+export type RiskAttentionRow = ProjectRiskView & {
+  project: {
+    id: string;
+    projectNo: string;
+    name: string;
+    managerName: string | null;
+  };
+};
+
+export function getProjectRisks(
+  id: string,
+): Promise<ApiResult<ProjectRisksView>> {
+  return apiGet(`/projects/${encodeURIComponent(id)}/risks`);
+}
+
+export function getRiskAttention(): Promise<ApiResult<RiskAttentionRow[]>> {
+  return apiGet("/project-risks/attention");
+}

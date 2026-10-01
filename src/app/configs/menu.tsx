@@ -193,6 +193,14 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     group: messages.nav.pricingGroup,
   },
 
+  /** CD-183 — ความเสี่ยงที่ผู้บริหารต้องเห็น ข้ามทุกโครงการ. */
+  {
+    label: messages.nav.projectRisks,
+    href: ROUTES.projectRisks,
+    permissions: ["pm.project.read"],
+    group: messages.nav.pmGroup,
+  },
+
   /** CD-161 — คลังสัญญา: สัญญาทุกฉบับของบริษัท (ลูกค้า NDA MSA คู่สัญญาอื่น). */
   {
     label: messages.nav.contracts,

@@ -27,6 +27,7 @@ import type {
   ProjectProgressView,
   ProjectBudgetView,
   ProjectChangesView,
+  ProjectRisksView,
 } from "@/lib/api/projects";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
@@ -36,6 +37,7 @@ import { ProjectPlanCard } from "./project-plan-card";
 import { ProjectProgressCard } from "./project-progress-card";
 import { ProjectBudgetCard } from "./project-budget-card";
 import { ProjectChangesCard } from "./project-changes-card";
+import { ProjectRisksCard } from "./project-risks-card";
 import {
   ProjectTeamFields,
   teamPayload,
@@ -56,6 +58,8 @@ export function ProjectDetailView({
   progress,
   budget,
   changes,
+  risks,
+  currentUserId,
   people,
 }: {
   readonly project: ProjectDetail;
@@ -69,6 +73,9 @@ export function ProjectDetailView({
   readonly budget: ProjectBudgetView | null;
   /** CD-185 — null = could not load. */
   readonly changes: ProjectChangesView | null;
+  /** CD-183 — null = could not load. */
+  readonly risks: ProjectRisksView | null;
+  readonly currentUserId: string | null;
   /** The company's people, for the manager and team pickers. */
   readonly people: { id: string; name: string }[];
 }) {
@@ -344,6 +351,15 @@ export function ProjectDetailView({
           key={`${budget.current?.id ?? "none"}-${budget.current?.status ?? ""}`}
           projectId={project.id}
           view={budget}
+        />
+      )}
+
+      {risks && (
+        <ProjectRisksCard
+          projectId={project.id}
+          view={risks}
+          people={pickable}
+          currentUserId={currentUserId}
         />
       )}
 
