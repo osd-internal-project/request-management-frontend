@@ -14,6 +14,7 @@ import {
   InputNumber,
   Modal,
   Popconfirm,
+  Select,
   Space,
   Table,
   Tag,
@@ -49,6 +50,23 @@ interface DraftLine {
   discountPct: number | null;
   /** CD-195 — the standard price the unit price came from; null = typed. */
   priceId: string | null;
+  /** CD-196 — unit · lump_sum (quantity is 1) · monthly (× termMonths). */
+  priceModel: PriceModel;
+  termMonths: number | null;
+}
+
+type PriceModel = "unit" | "lump_sum" | "monthly";
+const PRICE_MODELS: PriceModel[] = ["unit", "lump_sum", "monthly"];
+/** A monthly line starts at a year — the usual service term. */
+const DEFAULT_TERM_MONTHS = 12;
+
+/** CD-196 — what the unit price is multiplied by (the server does the same). */
+function billedQuantity(line: DraftLine): number {
+  if (line.priceModel === "lump_sum") return 1;
+  const quantity = line.quantity ?? 0;
+  return line.priceModel === "monthly"
+    ? quantity * (line.termMonths ?? 0)
+    : quantity;
 }
 
 type ActionKind = "submit" | "accept" | "decline" | "cancel";
@@ -70,6 +88,8 @@ function toDraftLines(quotation: QuotationDetail): DraftLine[] {
     unitCost: line.unitCost === undefined ? null : Number(line.unitCost),
     discountPct: Number(line.discountPct),
     priceId: line.priceId ?? null,
+    priceModel: (line.priceModel ?? "unit") as PriceModel,
+    termMonths: line.termMonths ?? null,
   }));
 }
 
@@ -83,13 +103,17 @@ function previewTotals(lines: DraftLine[], vatPct: number) {
   let subtotal = 0;
   let net = 0;
   let cost = 0;
+  let monthly = 0;
   const lineTotals = lines.map((line) => {
-    const quantity = line.quantity ?? 0;
+    const quantity = billedQuantity(line);
     const gross = round2(quantity * (line.unitPrice ?? 0));
     const total = round2((gross * (100 - (line.discountPct ?? 0))) / 100);
     subtotal += gross;
     net += total;
     cost += round2(quantity * (line.unitCost ?? 0));
+    if (line.priceModel === "monthly" && line.termMonths) {
+      monthly += round2(total / line.termMonths);
+    }
     return total;
   });
   const vat = round2((net * vatPct) / 100);
@@ -104,6 +128,7 @@ function previewTotals(lines: DraftLine[], vatPct: number) {
     cost,
     margin,
     marginPct: net > 0 ? round2((margin / net) * 100) : null,
+    monthly,
   };
 }
 
@@ -209,6 +234,11 @@ export function QuotationDetailView({
               unit_cost: line.unitCost ?? 0,
               discount_pct: line.discountPct ?? 0,
               price_id: line.priceId ?? undefined,
+              price_model: line.priceModel,
+              term_months:
+                line.priceModel === "monthly"
+                  ? (line.termMonths ?? undefined)
+                  : undefined,
             })),
           }
         : {}),
@@ -293,7 +323,23 @@ export function QuotationDetailView({
     const result = await lookupPrices([code], currency);
     const found = result.ok ? result.data[code] : undefined;
     if (!found) return;
-    patchLine(key, { unitPrice: found.unit_price, priceId: found.price_id });
+    const model = (found.price_model ?? "unit") as PriceModel;
+    setLines((current) =>
+      current.map((line) =>
+        line.key === key
+          ? {
+              ...line,
+              unitPrice: found.unit_price,
+              priceId: found.price_id,
+              priceModel: model,
+              termMonths:
+                model === "monthly"
+                  ? (line.termMonths ?? DEFAULT_TERM_MONTHS)
+                  : null,
+            }
+          : line,
+      ),
+    );
     void message.info(
       md.priceFilled(code, money(found.unit_price, found.currency)),
     );
@@ -368,6 +414,7 @@ export function QuotationDetailView({
         cost: quotation.costTotal,
         margin: quotation.marginAmount,
         marginPct: quotation.marginPct,
+        monthly: Number(quotation.monthlyRecurring ?? 0),
       };
 
   return (
@@ -645,6 +692,8 @@ export function QuotationDetailView({
                     unitCost: null,
                     discountPct: 0,
                     priceId: null,
+                    priceModel: "unit",
+                    termMonths: null,
                   },
                 ])
               }
@@ -722,11 +771,60 @@ export function QuotationDetailView({
                   <InputNumber
                     className="w-full"
                     min={0.001}
-                    value={value}
+                    // CD-196 — a lump sum is one job.
+                    disabled={row.priceModel === "lump_sum"}
+                    value={row.priceModel === "lump_sum" ? 1 : value}
                     onChange={(next) => patchLine(row.key, { quantity: next })}
                   />
                 ) : (
                   formatAmount(value)
+                ),
+            },
+            {
+              title: md.line.priceModel,
+              dataIndex: "priceModel",
+              width: 170,
+              render: (value: PriceModel, row) =>
+                canEditLines ? (
+                  <div className="flex gap-1">
+                    <Select<PriceModel>
+                      className="min-w-24 flex-1"
+                      value={value}
+                      onChange={(model) =>
+                        patchLine(row.key, {
+                          priceModel: model,
+                          priceId: null,
+                          quantity: model === "lump_sum" ? 1 : row.quantity,
+                          termMonths:
+                            model === "monthly"
+                              ? (row.termMonths ?? DEFAULT_TERM_MONTHS)
+                              : null,
+                        })
+                      }
+                      options={PRICE_MODELS.map((model) => ({
+                        value: model,
+                        label: md.priceModels[model],
+                      }))}
+                    />
+                    {value === "monthly" && (
+                      <InputNumber
+                        className="w-16"
+                        min={1}
+                        max={120}
+                        precision={0}
+                        aria-label={md.line.termMonths}
+                        title={md.line.termMonths}
+                        value={row.termMonths}
+                        onChange={(next) =>
+                          patchLine(row.key, { termMonths: next })
+                        }
+                      />
+                    )}
+                  </div>
+                ) : value === "monthly" ? (
+                  md.monthlyTerm(row.termMonths ?? 0)
+                ) : (
+                  md.priceModels[value]
                 ),
             },
             {
@@ -872,6 +970,12 @@ export function QuotationDetailView({
               value={money(shown.grand, currency)}
               strong
             />
+            {shown.monthly > 0 && (
+              <Row
+                label={md.totals.monthly}
+                value={money(shown.monthly, currency)}
+              />
+            )}
             {costVisible && (
               <>
                 <Row

@@ -32,6 +32,8 @@ import { ProductPicker } from "@/components/crm/quotations/product-picker";
 import { appApi } from "@/lib/api/client";
 import {
   getPriceVersions,
+  PRICE_MODELS,
+  type PriceModel,
   type PriceStatus,
   type PriceVersion,
   type ProductPriceRow,
@@ -51,6 +53,7 @@ interface Draft {
   id?: string;
   productCode: string;
   productName: string;
+  priceModel: PriceModel;
   currency: string;
   unitPrice: number | null;
   validFrom: string;
@@ -77,6 +80,13 @@ const money = (value: number) =>
     maximumFractionDigits: 2,
   });
 const thaiDay = (value: string) => dayjs(value).format("D MMM YYYY");
+/** CD-196 — "1,200.00 THB / เดือน", "50,000.00 THB · เหมา". */
+const priceLabel = (row: {
+  unitPrice: number;
+  currency: string;
+  priceModel: PriceModel;
+}) =>
+  `${money(row.unitPrice)} ${row.currency}${mp.modelSuffix[row.priceModel]}`;
 
 /**
  * CD-194 — the standard price list: one row per product code, currency and
@@ -118,6 +128,7 @@ export function PriceList({
     if (!draft) return;
     setBusy(true);
     const body = {
+      price_model: draft.priceModel,
       unit_price: draft.unitPrice,
       valid_from: draft.validFrom,
       valid_to: draft.validTo,
@@ -205,6 +216,7 @@ export function PriceList({
               setDraft({
                 productCode: "",
                 productName: "",
+                priceModel: "unit",
                 currency: "THB",
                 unitPrice: null,
                 validFrom: dayjs().format("YYYY-MM-DD"),
@@ -271,8 +283,7 @@ export function PriceList({
                 key: "price",
                 align: "right",
                 width: 160,
-                render: (_: unknown, row) =>
-                  `${money(row.unitPrice)} ${row.currency}`,
+                render: (_: unknown, row) => priceLabel(row),
               },
               {
                 title: mp.period,
@@ -319,6 +330,7 @@ export function PriceList({
                             id: row.id,
                             productCode: row.productCode,
                             productName: row.productName ?? "",
+                            priceModel: row.priceModel,
                             currency: row.currency,
                             unitPrice: row.unitPrice,
                             validFrom: row.validFrom,
@@ -416,6 +428,19 @@ export function PriceList({
                   }
                 />
               )}
+            </div>
+            <div>
+              <Text type="secondary">{mp.priceModel}</Text>
+              <Select<PriceModel>
+                className="w-full"
+                value={draft.priceModel}
+                disabled={draft.started}
+                onChange={(priceModel) => setDraft({ ...draft, priceModel })}
+                options={PRICE_MODELS.map((value) => ({
+                  value,
+                  label: mp.models[value],
+                }))}
+              />
             </div>
             <div className="grid gap-2 sm:grid-cols-[120px_1fr]">
               <div>
@@ -606,8 +631,7 @@ export function PriceList({
               key: "price",
               align: "right",
               width: 130,
-              render: (_: unknown, row) =>
-                `${money(row.unitPrice)} ${row.currency}`,
+              render: (_: unknown, row) => priceLabel(row),
             },
             {
               title: mp.period,

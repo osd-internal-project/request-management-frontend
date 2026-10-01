@@ -64,7 +64,12 @@ export function QuotationPrint({ view }: { view: QuotationPrintView }) {
         </Button>
         <span className="text-xs text-gray-500">{mp.printHint}</span>
         {!isFinal && (
-          <Alert type="warning" showIcon className="w-full" title={mp.draftBanner} />
+          <Alert
+            type="warning"
+            showIcon
+            className="w-full"
+            title={mp.draftBanner}
+          />
         )}
       </div>
 
@@ -85,12 +90,18 @@ export function QuotationPrint({ view }: { view: QuotationPrintView }) {
           <div className="flex min-w-0 gap-3">
             {lh.logo && (
               // eslint-disable-next-line @next/next/no-img-element -- a data URL from settings
-              <img src={lh.logo} alt="" className="h-16 w-auto max-w-32 object-contain" />
+              <img
+                src={lh.logo}
+                alt=""
+                className="h-16 w-auto max-w-32 object-contain"
+              />
             )}
             <div className="min-w-0">
               <div className="text-[15px] font-bold">{lh.nameTh}</div>
               {lh.nameEn && <div className="font-semibold">{lh.nameEn}</div>}
-              {lh.address && <div className="whitespace-pre-line">{lh.address}</div>}
+              {lh.address && (
+                <div className="whitespace-pre-line">{lh.address}</div>
+              )}
               {(lh.taxId || lh.branch) && (
                 <div>
                   {lh.taxId && `${mp.taxId} ${lh.taxId}`}
@@ -159,8 +170,12 @@ export function QuotationPrint({ view }: { view: QuotationPrintView }) {
                 ...(q.paymentTerms ? [[mp.paymentTerms, q.paymentTerms]] : []),
               ].map(([label, value]) => (
                 <tr key={label}>
-                  <td className="px-2 py-0.5 align-top whitespace-nowrap text-gray-500">{label}</td>
-                  <td className="px-2 py-0.5 text-right font-medium">{value}</td>
+                  <td className="px-2 py-0.5 align-top whitespace-nowrap text-gray-500">
+                    {label}
+                  </td>
+                  <td className="px-2 py-0.5 text-right font-medium">
+                    {value}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -176,38 +191,76 @@ export function QuotationPrint({ view }: { view: QuotationPrintView }) {
         <table className="mt-2 w-full border-collapse">
           <thead>
             <tr className="bg-gray-100 text-[11px]">
-              <th className="border border-gray-400 px-1.5 py-1 w-10">{mp.col.no}</th>
-              <th className="border border-gray-400 px-1.5 py-1 text-left">{mp.col.description}</th>
-              <th className="border border-gray-400 px-1.5 py-1 w-16 text-right">{mp.col.qty}</th>
-              <th className="border border-gray-400 px-1.5 py-1 w-14">{mp.col.unit}</th>
-              <th className="border border-gray-400 px-1.5 py-1 w-24 text-right">{mp.col.unitPrice}</th>
+              <th className="border border-gray-400 px-1.5 py-1 w-10">
+                {mp.col.no}
+              </th>
+              <th className="border border-gray-400 px-1.5 py-1 text-left">
+                {mp.col.description}
+              </th>
+              <th className="border border-gray-400 px-1.5 py-1 w-16 text-right">
+                {mp.col.qty}
+              </th>
+              <th className="border border-gray-400 px-1.5 py-1 w-14">
+                {mp.col.unit}
+              </th>
+              <th className="border border-gray-400 px-1.5 py-1 w-24 text-right">
+                {mp.col.unitPrice}
+              </th>
               {hasDiscount && (
                 <th className="border border-gray-400 px-1.5 py-1 w-14 text-right">
                   {mp.col.discount}
                 </th>
               )}
-              <th className="border border-gray-400 px-1.5 py-1 w-28 text-right">{mp.col.amount}</th>
+              <th className="border border-gray-400 px-1.5 py-1 w-28 text-right">
+                {mp.col.amount}
+              </th>
             </tr>
           </thead>
           <tbody>
             {q.lines.map((line) => (
               <tr key={line.lineNo} className="qt-row align-top">
-                <td className="border border-gray-400 px-1.5 py-1 text-center">{line.lineNo}</td>
+                <td className="border border-gray-400 px-1.5 py-1 text-center">
+                  {line.lineNo}
+                </td>
                 <td className="border border-gray-400 px-1.5 py-1">
                   {line.productCode && (
-                    <span className="mr-1 text-gray-500">[{line.productCode}]</span>
+                    <span className="mr-1 text-gray-500">
+                      [{line.productCode}]
+                    </span>
                   )}
-                  <span className="whitespace-pre-line">{line.description}</span>
+                  <span className="whitespace-pre-line">
+                    {line.description}
+                  </span>
+                  {/* CD-196 — the amount covers the whole term / the whole job. */}
+                  {line.priceModel === "monthly" && line.termMonths ? (
+                    <div className="text-[11px] text-gray-600">
+                      {mp.monthlyTerm(line.termMonths)}
+                    </div>
+                  ) : line.priceModel === "lump_sum" ? (
+                    <div className="text-[11px] text-gray-600">
+                      {mp.lumpSum}
+                    </div>
+                  ) : null}
                 </td>
-                <td className="border border-gray-400 px-1.5 py-1 text-right">{quantity(line.quantity)}</td>
-                <td className="border border-gray-400 px-1.5 py-1 text-center">{line.unit ?? ""}</td>
-                <td className="border border-gray-400 px-1.5 py-1 text-right">{money(line.unitPrice)}</td>
+                <td className="border border-gray-400 px-1.5 py-1 text-right">
+                  {quantity(line.quantity)}
+                </td>
+                <td className="border border-gray-400 px-1.5 py-1 text-center">
+                  {line.unit ?? ""}
+                </td>
+                <td className="border border-gray-400 px-1.5 py-1 text-right">
+                  {money(line.unitPrice)}
+                </td>
                 {hasDiscount && (
                   <td className="border border-gray-400 px-1.5 py-1 text-right">
-                    {Number(line.discountPct) > 0 ? `${quantity(line.discountPct)}%` : ""}
+                    {Number(line.discountPct) > 0
+                      ? `${quantity(line.discountPct)}%`
+                      : ""}
                   </td>
                 )}
-                <td className="border border-gray-400 px-1.5 py-1 text-right">{money(line.lineTotal)}</td>
+                <td className="border border-gray-400 px-1.5 py-1 text-right">
+                  {money(line.lineTotal)}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -228,11 +281,15 @@ export function QuotationPrint({ view }: { view: QuotationPrintView }) {
                 <>
                   <tr>
                     <td className="px-2 py-0.5">{mp.discount}</td>
-                    <td className="px-2 py-0.5 text-right">{money(q.discountTotal)}</td>
+                    <td className="px-2 py-0.5 text-right">
+                      {money(q.discountTotal)}
+                    </td>
                   </tr>
                   <tr>
                     <td className="px-2 py-0.5">{mp.net}</td>
-                    <td className="px-2 py-0.5 text-right">{money(q.netTotal)}</td>
+                    <td className="px-2 py-0.5 text-right">
+                      {money(q.netTotal)}
+                    </td>
                   </tr>
                 </>
               )}
@@ -246,6 +303,14 @@ export function QuotationPrint({ view }: { view: QuotationPrintView }) {
                   {money(q.grandTotal)} {q.currency}
                 </td>
               </tr>
+              {Number(view.monthlyRecurring ?? 0) > 0 && (
+                <tr className="text-[11px] text-gray-600">
+                  <td className="px-2 pt-1">{mp.monthlyRecurring}</td>
+                  <td className="px-2 pt-1 text-right">
+                    {money(view.monthlyRecurring ?? 0)} {q.currency}
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </section>
@@ -276,7 +341,11 @@ export function QuotationPrint({ view }: { view: QuotationPrintView }) {
           ].map((box) => (
             <div key={box.title}>
               <div className="mx-auto mt-8 w-full border-b border-dotted border-gray-600" />
-              <div className="mt-1">{box.name ? `(${box.name})` : "(.......................................)"}</div>
+              <div className="mt-1">
+                {box.name
+                  ? `(${box.name})`
+                  : "(.......................................)"}
+              </div>
               <div className="font-semibold">{box.title}</div>
               <div className="text-[11px] text-gray-500">{mp.signDate}</div>
             </div>

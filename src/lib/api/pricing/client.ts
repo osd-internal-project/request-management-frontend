@@ -6,11 +6,15 @@
 import { appApi, type ClientResult } from "../client";
 
 export type PriceStatus = "current" | "future" | "expired";
+/** CD-196 — ต่อหน่วย / เหมา / ต่อเดือน. */
+export type PriceModel = "unit" | "lump_sum" | "monthly";
+export const PRICE_MODELS: PriceModel[] = ["unit", "lump_sum", "monthly"];
 
 export interface ProductPriceRow {
   id: string;
   productCode: string;
   productName: string | null;
+  priceModel: PriceModel;
   currency: string;
   unitPrice: number;
   /** YYYY-MM-DD */
@@ -24,6 +28,7 @@ export interface ProductPriceRow {
 
 export interface PriceLookup {
   price_id: string;
+  price_model: PriceModel;
   unit_price: number;
   currency: string;
   valid_from: string;
@@ -45,6 +50,7 @@ export interface PriceVersion {
   versionNo: number;
   action: "created" | "updated" | "ended" | "revised" | "removed";
   unitPrice: number;
+  priceModel: PriceModel;
   currency: string;
   validFrom: string;
   validTo: string | null;

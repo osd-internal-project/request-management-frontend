@@ -2928,6 +2928,11 @@ export const messages = {
     signCustomer: "ลูกค้ายืนยันการสั่งซื้อ",
     signDate: "วันที่ ______/______/______",
     loadFailed: "โหลดใบเสนอราคาไม่สำเร็จ",
+    /** CD-196 */
+    monthlyTerm: (months: number) =>
+      `ราคาต่อเดือน × ${months} เดือน (ยอดรวมทั้งระยะสัญญา)`,
+    lumpSum: "ราคาเหมาทั้งงาน",
+    monthlyRecurring: "ค่าบริการรายเดือน (รวมอยู่ในยอดแล้ว)",
   },
   /** CD-194 ราคามาตรฐาน */
   pricing: {
@@ -2958,6 +2963,18 @@ export const messages = {
       removed: "ลบแล้ว",
       empty: "ยังไม่มีราคามาตรฐาน",
       pickProduct: "เลือกสินค้าจาก SAP",
+      /** CD-196 */
+      priceModel: "รูปแบบราคา",
+      models: {
+        unit: "ต่อหน่วย",
+        lump_sum: "เหมา (ราคาทั้งงาน)",
+        monthly: "รายเดือน (ราคาต่อเดือน)",
+      } as Record<string, string>,
+      modelSuffix: {
+        unit: "",
+        lump_sum: " · เหมา",
+        monthly: " / เดือน",
+      } as Record<string, string>,
       /** CD-195 */
       lockedHint:
         "ราคานี้มีผลแล้ว — แก้ได้เฉพาะวันสิ้นสุด (ไม่ย้อนก่อนเมื่อวาน) ถ้าจะเปลี่ยนราคาให้ใช้ \"ปรับราคา\"",
@@ -3914,10 +3931,22 @@ export const messages = {
           unitCost: "ต้นทุน/หน่วย",
           discountPct: "ส่วนลด %",
           lineTotal: "รวม",
+          /** CD-196 */
+          priceModel: "รูปแบบราคา",
+          termMonths: "จำนวนเดือน",
         },
+        /** CD-196 */
+        priceModels: {
+          unit: "ต่อหน่วย",
+          lump_sum: "เหมา",
+          monthly: "รายเดือน",
+        } as Record<string, string>,
+        monthlyTerm: (months: number) => `รายเดือน × ${months} เดือน`,
         costHint:
           "ต้นทุนกรอกเองต่อรายการจนกว่าจะมี BOQ/ทะเบียนสินค้า — ผู้ไม่มีสิทธิ์เห็นต้นทุนจะไม่เห็นคอลัมน์นี้และ margin",
         totals: {
+          /** CD-196 — the totals above already cover the whole term. */
+          monthly: "ค่าบริการรายเดือน (รวมอยู่ในยอดแล้ว)",
           subtotal: "รวมก่อนส่วนลด",
           discount: "ส่วนลด",
           net: "ยอดสุทธิก่อน VAT",

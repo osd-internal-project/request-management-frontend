@@ -25,7 +25,9 @@ export function QuotationStatusTags({
 }) {
   return (
     <Space size={4} wrap>
-      <Tag color={m.statusColor[row.status]}>{m.status[row.status] ?? row.status}</Tag>
+      <Tag color={m.statusColor[row.status]}>
+        {m.status[row.status] ?? row.status}
+      </Tag>
       {row.expired && <Tag color="red">{m.expiredTag}</Tag>}
     </Space>
   );
@@ -166,7 +168,8 @@ export function QuotationList({
             title: m.columns.validUntil,
             dataIndex: "validUntil",
             width: 110,
-            render: (at: string | null) => (at ? dayjs(at).format("D MMM YYYY") : "—"),
+            render: (at: string | null) =>
+              at ? dayjs(at).format("D MMM YYYY") : "—",
           },
         ]}
       />

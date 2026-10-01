@@ -1515,9 +1515,14 @@ export interface QuotationLine {
   lineCost?: Money;
   /** CD-195 — the standard price this line came from; null = typed by hand. */
   priceId?: string | null;
+  /** CD-196 */
+  priceModel?: "unit" | "lump_sum" | "monthly";
+  termMonths?: number | null;
 }
 
 export interface QuotationDetail extends QuotationRow {
+  /** CD-196 — monthly charge of the monthly lines (the totals cover the term). */
+  monthlyRecurring?: Money;
   companyId: string;
   partyTaxId: string | null;
   contactName: string | null;
@@ -1890,6 +1895,9 @@ export interface QuotationPrintView {
       unitPrice: Money;
       discountPct: Money;
       lineTotal: Money;
+      /** CD-196 */
+      priceModel?: "unit" | "lump_sum" | "monthly";
+      termMonths?: number | null;
     }[];
   };
   billTo: {
@@ -1914,6 +1922,8 @@ export interface QuotationPrintView {
     terms: string | null;
   };
   /** false = draft / awaiting approval — the page watermarks it. */
+  /** CD-196 — monthly charge (the totals already cover the term). */
+  monthlyRecurring?: Money;
   isFinal: boolean;
 }
 
