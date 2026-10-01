@@ -76,6 +76,8 @@ export const CORE_SERVICE_PREFIXES = [
   "/presales",
   // CD-12 Pricing — standard prices (CD-194)
   "/pricing",
+  // CD-203 — discount impact on a price approval request
+  "/quotation-approvals",
   // CD-18 PM
   "/projects",
   "/project-tasks",

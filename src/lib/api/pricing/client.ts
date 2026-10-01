@@ -134,3 +134,70 @@ export interface MarkupOptions {
 export function getMarkupOptions(): Promise<ClientResult<MarkupOptions>> {
   return appApi("pricing/markup-rules/options");
 }
+
+/** CD-203 — what a discount does to the margin, for the price approval. */
+export type WorkTypeKey = WorkType | "none";
+
+export interface DiscountFigures {
+  gross: string;
+  discount: string;
+  discountPct: string | null;
+  net: string;
+  /** Absent for a viewer who may not see cost. */
+  cost?: string;
+  marginBeforePct?: string | null;
+  marginPct?: string | null;
+}
+
+export interface DiscountGroup extends DiscountFigures {
+  workType: WorkTypeKey;
+  minMarginPct: number;
+  below?: boolean;
+  maxDiscountPct?: number;
+}
+
+export interface DiscountLine {
+  lineNo: number;
+  description: string;
+  workType: WorkTypeKey;
+  gross: string;
+  discountPct: number;
+  net: string;
+  cost?: string;
+}
+
+export interface QuotationApprovalImpact {
+  requestId: string;
+  quotation: {
+    id: string;
+    quotationNo: string;
+    version: number;
+    status: string;
+    title: string;
+    partyName: string;
+    currency: string;
+  };
+  costVisible: boolean;
+  canChoose: boolean;
+  companyMinMarginPct: number;
+  minMarginByWorkType: Partial<Record<WorkType, number>>;
+  totals: DiscountFigures;
+  groups: DiscountGroup[];
+  lines: DiscountLine[];
+  suggestion: {
+    caps: Partial<Record<WorkTypeKey, number>>;
+    totals: DiscountFigures;
+    groups: DiscountGroup[];
+  } | null;
+}
+
+export async function chooseDiscount(
+  requestId: string,
+  caps: Partial<Record<WorkTypeKey, number>>,
+  note?: string,
+): Promise<ClientResult<QuotationApprovalImpact>> {
+  return appApi(`quotation-approvals/${requestId}/choose`, {
+    method: "POST",
+    body: JSON.stringify({ caps, note }),
+  });
+}

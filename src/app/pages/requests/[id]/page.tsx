@@ -29,6 +29,8 @@ import { DueBadge } from "@/components/requests/due-badge";
 import { ResponseClock, SeverityTag } from "@/components/requests/severity";
 import { can, getSession } from "@/lib/session";
 import { getSolutionForRequest } from "@/lib/api/presales";
+import { getQuotationApproval } from "@/lib/api/pricing";
+import { DiscountImpactCard } from "@/components/pricing/discount-impact-card";
 import { SolutionStartCard } from "@/components/presales/solution-start-card";
 import {
   getContractRequestPackage,
@@ -168,6 +170,12 @@ export default async function RequestDetailPage({
     : { parent: null, descendants: [] };
 
   const request = result.data;
+  // CD-203 — a price approval shows what its discount does to the margin.
+  const discountResult =
+    request.refType === "quotation" &&
+    (can(session, "approval.decide") || can(session, "crm.sales.read"))
+      ? await getQuotationApproval(request.id)
+      : null;
   const approvalCase = request.approvalCases?.[0];
   const events = [...(request.events ?? [])].sort((a, b) => a.seq - b.seq);
 
@@ -224,12 +232,15 @@ export default async function RequestDetailPage({
   const flowMoves = request.flow_moves ?? null;
   const isFlowV2 = flowMoves?.schema_version === 2;
   // v2: the step's holder acts on it; a requester step after the first is shown here too.
-  const holdsStep = isFlowV2 ? flowMoves?.holder_user_id === viewerId : showReceiverForm;
+  const holdsStep = isFlowV2
+    ? flowMoves?.holder_user_id === viewerId
+    : showReceiverForm;
   const showStepCard =
     ["in_progress", "pending_approval"].includes(request.status) ||
     (isFlowV2 &&
       (request.status === "approved" ||
-        (request.status === "returned" && currentFlowStep?.code !== flowSteps[0]?.code)));
+        (request.status === "returned" &&
+          currentFlowStep?.code !== flowSteps[0]?.code)));
 
   const directChildren = tree.descendants.filter(
     (node) => node.parentRequestId === request.id,
@@ -273,6 +284,8 @@ export default async function RequestDetailPage({
         }}
         session={session}
       />
+
+      {discountResult?.ok && <DiscountImpactCard view={discountResult.data} />}
 
       {solutionResult?.ok && (
         <SolutionStartCard view={{ ...solutionResult.data, requestId: id }} />
@@ -348,34 +361,32 @@ export default async function RequestDetailPage({
       */}
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,0.5fr)]">
         <div className="space-y-2 max-lg:contents [&>*]:max-lg:order-4">
-          {currentFlowStep &&
-            flowMoves &&
-            showStepCard && (
-              <div className="max-lg:order-1!">
-                <CurrentStepCard
-                  requestId={request.id}
-                  stepName={currentFlowStep.name}
-                  formSchema={currentFlowStep.formSchema}
-                  initial={request.stepFormData?.[currentFlowStep.code] ?? {}}
-                  checklist={flowMoves.checklist}
-                  childRequests={directChildren.filter(
-                    (child) => child.parentStepCode === currentFlowStep.code,
-                  )}
-                  requiresApproval={flowMoves.requires_approval}
-                  isLast={flowMoves.is_last}
-                  canEdit={holdsStep}
-                  requiredDocs={currentFlowStep.requiredDocs}
-                  attachments={attachments}
-                />
-              </div>
-            )}
+          {currentFlowStep && flowMoves && showStepCard && (
+            <div className="max-lg:order-1!">
+              <CurrentStepCard
+                requestId={request.id}
+                stepName={currentFlowStep.name}
+                formSchema={currentFlowStep.formSchema}
+                initial={request.stepFormData?.[currentFlowStep.code] ?? {}}
+                checklist={flowMoves.checklist}
+                childRequests={directChildren.filter(
+                  (child) => child.parentStepCode === currentFlowStep.code,
+                )}
+                requiresApproval={flowMoves.requires_approval}
+                isLast={flowMoves.is_last}
+                canEdit={holdsStep}
+                requiredDocs={currentFlowStep.requiredDocs}
+                attachments={attachments}
+              />
+            </div>
+          )}
           {/*
             Who is holding this, before what it says. "ใครรับเรื่องนี้" is the
             question a reader arrives with, and until now the screen answered
             it nowhere — the three people were fetched and used only to compare
             against the viewer's own id.
           */}
-         
+
           <div>
             <Card title={messages.requestDetail.infoTitle} size="small">
               <RequestFacts request={request} />
@@ -486,12 +497,16 @@ export default async function RequestDetailPage({
                           {step.approver?.displayName ?? "—"}
                           {" · "}
                           {step.status === "skipped"
-                            ? messages.requestDetail.stepSkipped(step.skipReason)
+                            ? messages.requestDetail.stepSkipped(
+                                step.skipReason,
+                              )
                             : stepOutcome(step.status, approvalCase.status)}
                           {step.mode === "all" &&
                             step.status === "pending" &&
                             ` · ${messages.requestDetail.stepVotes(
-                              (step.votes ?? []).filter((vote) => vote.decision === "approve").length,
+                              (step.votes ?? []).filter(
+                                (vote) => vote.decision === "approve",
+                              ).length,
                               step.candidateUserIds.length,
                             )}`}
                           {step.decidedAt && ` · ${when(step.decidedAt)}`}
@@ -785,11 +800,12 @@ function RequestFacts({ request }: { request: RequestDetail }) {
  * was raised, which answers a reporting question rather than "who do I call".
  */
 function RequestPeople({ request }: { request: RequestDetail }) {
-  const people: { label: string; person: RequestPerson | null | undefined }[] = [
-    { label: messages.requestDetail.requester, person: request.requester },
-    { label: messages.requestDetail.receiverLabel, person: request.receiver },
-    { label: messages.requestDetail.assigneeLabel, person: request.assignee },
-  ];
+  const people: { label: string; person: RequestPerson | null | undefined }[] =
+    [
+      { label: messages.requestDetail.requester, person: request.requester },
+      { label: messages.requestDetail.receiverLabel, person: request.receiver },
+      { label: messages.requestDetail.assigneeLabel, person: request.assignee },
+    ];
 
   const known = people.filter((entry) => entry.person);
 
@@ -797,7 +813,8 @@ function RequestPeople({ request }: { request: RequestDetail }) {
 
   return (
     <Descriptions
-      size="small" labelStyle={{ width: "30%" }}
+      size="small"
+      labelStyle={{ width: "30%" }}
       column={{ xs: 1, md: known.length > 1 ? 1 : 1 }}
       items={known.map(({ label, person }) => ({
         key: label,
@@ -811,7 +828,9 @@ function RequestPeople({ request }: { request: RequestDetail }) {
 /** Name first, then the facts that let someone act on it. */
 function PersonCell({ person }: { person: RequestPerson }) {
   const contact = [person.extension, person.email].filter(Boolean).join(" · ");
-  const role = [person.position, person.orgUnit?.name].filter(Boolean).join(" · ");
+  const role = [person.position, person.orgUnit?.name]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
     <div className="text-xs">

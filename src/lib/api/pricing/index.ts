@@ -1,6 +1,11 @@
 /** CD-194 ราคามาตรฐาน — server-side reads; see `./client` for the rest. */
 import { apiGet, type ApiResult } from "../core";
-import type { MarkupRule, PriceStatus, ProductPriceRow } from "./client";
+import type {
+  MarkupRule,
+  PriceStatus,
+  ProductPriceRow,
+  QuotationApprovalImpact,
+} from "./client";
 
 export type { MarkupRule, PriceStatus, ProductPriceRow } from "./client";
 
@@ -21,4 +26,11 @@ export async function getPrices(query: {
 /** CD-200 — markup rules in priority order. */
 export async function getMarkupRules(): Promise<ApiResult<MarkupRule[]>> {
   return apiGet("pricing/markup-rules");
+}
+
+/** CD-203 — the discount's effect on the quotation a price request approves. */
+export async function getQuotationApproval(
+  requestId: string,
+): Promise<ApiResult<QuotationApprovalImpact>> {
+  return apiGet(`quotation-approvals/${requestId}`);
 }
