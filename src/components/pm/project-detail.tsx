@@ -24,12 +24,14 @@ import type {
   ProjectDetail,
   ProjectMilestonesView,
   ProjectPlanView,
+  ProjectProgressView,
 } from "@/lib/api/projects";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import { ProjectBaselineView } from "./project-baseline";
 import { ProjectMilestonesCard } from "./project-milestones-card";
 import { ProjectPlanCard } from "./project-plan-card";
+import { ProjectProgressCard } from "./project-progress-card";
 import {
   ProjectTeamFields,
   teamPayload,
@@ -47,6 +49,7 @@ export function ProjectDetailView({
   project,
   milestones,
   plan,
+  progress,
   people,
 }: {
   readonly project: ProjectDetail;
@@ -54,6 +57,8 @@ export function ProjectDetailView({
   readonly milestones: ProjectMilestonesView | null;
   /** CD-177 — null = could not load. */
   readonly plan: ProjectPlanView | null;
+  /** CD-188 — null = could not load. */
+  readonly progress: ProjectProgressView | null;
   /** The company's people, for the manager and team pickers. */
   readonly people: { id: string; name: string }[];
 }) {
@@ -299,6 +304,10 @@ export function ProjectDetailView({
           </Text>
         )}
       </Card>
+
+      {progress && (
+        <ProjectProgressCard projectId={project.id} view={progress} />
+      )}
 
       {milestones && (
         <ProjectMilestonesCard projectId={project.id} view={milestones} />

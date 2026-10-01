@@ -384,3 +384,30 @@ export function getTaskWork(
     `/projects/${encodeURIComponent(projectId)}/plan/tasks/${encodeURIComponent(taskId)}`,
   );
 }
+
+/** CD-188 — progress from what closed, against the plan. */
+export interface ProjectProgressView {
+  canEdit: boolean;
+  threshold: number;
+  today: string;
+  work: { pct: number | null; done: number; total: number };
+  milestones: { achieved: number; total: number; pct: number | null };
+  planned: { pct: number | null; variance: number | null };
+  reports: {
+    id: string;
+    reportedPct: number;
+    computedPct: number;
+    plannedPct: number | null;
+    reason: string | null;
+    note: string | null;
+    reportedAt: string;
+    reportedBy: string;
+    reportedByName: string;
+  }[];
+}
+
+export function getProjectProgress(
+  id: string,
+): Promise<ApiResult<ProjectProgressView>> {
+  return apiGet(`/projects/${encodeURIComponent(id)}/progress`);
+}

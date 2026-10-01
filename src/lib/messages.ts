@@ -4809,6 +4809,33 @@ export const messages = {
       save: "บันทึก",
       close: "ยกเลิก",
     },
+    /** CD-188 — ความคืบหน้า. */
+    progress: {
+      title: "ความคืบหน้า",
+      hint: "คำนวณจากงานที่ปิดจริง (ถ่วงตามวันทำงาน) และหมุดหมายที่บรรลุ — ไม่ใช่ตัวเลขที่กรอกเอง",
+      work: "งานที่เสร็จ",
+      workCount: (done: number, total: number) => `${done}/${total} งาน`,
+      milestones: "หมุดหมายที่บรรลุ",
+      milestoneCount: (done: number, total: number) => `${done}/${total} หมุด`,
+      planned: "ตามแผนควรถึง",
+      variance: "เทียบแผน",
+      ahead: (points: number) => `เร็วกว่าแผน ${points} จุด`,
+      behind: (points: number) => `ช้ากว่าแผน ${points} จุด`,
+      onPlan: "ตรงตามแผน",
+      noPlan: "ยังไม่มีแผนงาน",
+      report: "บันทึกตัวเลขที่รายงาน",
+      reportTitle: "บันทึกความคืบหน้าที่รายงาน",
+      reported: "ความคืบหน้าที่รายงาน (%)",
+      reason: (points: number) =>
+        `เหตุผล (จำเป็นเมื่อต่างจากค่าที่ระบบคำนวณเกิน ${points} จุด)`,
+      note: "หมายเหตุ",
+      history: "ตัวเลขที่เคยรายงาน",
+      row: (reported: number, computed: number) =>
+        `รายงาน ${reported}% · ระบบคำนวณ ${computed}%`,
+      saved: "บันทึกแล้ว",
+      save: "บันทึก",
+      close: "ยกเลิก",
+    },
     /** CD-181 — งานย่อย. */
     work: {
       mineTitle: "งานโครงการของฉัน",
