@@ -696,3 +696,61 @@ export function getProjectPayments(
 ): Promise<ApiResult<ProjectPaymentsView>> {
   return apiGet(`/projects/${encodeURIComponent(id)}/payments`);
 }
+
+/** CD-191 — one line of the close-out checklist. */
+export interface CloseCheckView {
+  key: string;
+  label: string;
+  ok: boolean;
+  blocking: boolean;
+  detail: string | null;
+}
+
+export interface CloseDocumentView {
+  id: string;
+  title: string;
+  note: string | null;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  uploadedAt: string;
+  uploadedByName: string | null;
+}
+
+export interface LessonView {
+  id: string;
+  kind: "went_well" | "improve" | "recommend";
+  text: string;
+  kbmsStatus: string;
+  createdBy: string;
+  createdAt: string;
+  createdByName: string | null;
+}
+
+export interface ProjectCloseoutView {
+  canEdit: boolean;
+  canWrite: boolean;
+  typeConfigured: boolean;
+  projectStatus: string;
+  closeout: {
+    status: "draft" | "submitted" | "approved" | "rejected";
+    summary: string | null;
+    error: string | null;
+    requestId: string | null;
+    requestNo: string | null;
+    submittedAt: string | null;
+    submittedByName: string | null;
+    decidedAt: string | null;
+  } | null;
+  checks: CloseCheckView[];
+  problems: string[];
+  required: { title: string; documentIds: string[] }[];
+  documents: CloseDocumentView[];
+  lessons: LessonView[];
+}
+
+export function getProjectCloseout(
+  id: string,
+): Promise<ApiResult<ProjectCloseoutView>> {
+  return apiGet(`/projects/${encodeURIComponent(id)}/closeout`);
+}

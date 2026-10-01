@@ -352,6 +352,12 @@ function ConfigSection({
   const [projectChangeType, setProjectChangeType] = useState(
     config.projectChangeTypeCode ?? "",
   );
+  const [projectCloseType, setProjectCloseType] = useState(
+    config.projectCloseTypeCode ?? "",
+  );
+  const [closeDocuments, setCloseDocuments] = useState<string[]>(
+    config.projectCloseDocuments ?? [],
+  );
   const [solutionType, setSolutionType] = useState(
     config.solutionRequestTypeCode ?? "",
   );
@@ -380,6 +386,8 @@ function ConfigSection({
       legal_risk_opinion_type_code: riskOpinionType,
       contract_approval_type_code: contractApprovalType,
       project_change_type_code: projectChangeType,
+      project_close_type_code: projectCloseType,
+      project_close_documents: closeDocuments,
       solution_request_type_code: solutionType,
       solution_approval_type_code: solutionApprovalType,
       demo_request_type_code: demoType,
@@ -604,6 +612,32 @@ function ConfigSection({
       </div>
       <Text type="secondary" className="mt-2 block text-xs">
         {m.projectChangeHint}
+      </Text>
+      {/* CD-191 — คำขอปิดโครงการ และเอกสารที่ต้องแนบ */}
+      <div className="mt-3 max-w-xs">
+        <Text className="mb-1 block text-xs">{m.projectCloseTypeCode}</Text>
+        <Input
+          value={projectCloseType}
+          maxLength={20}
+          allowClear
+          onChange={(e) => setProjectCloseType(e.target.value.toUpperCase())}
+        />
+      </div>
+      <Text type="secondary" className="mt-2 block text-xs">
+        {m.projectCloseHint}
+      </Text>
+      <div className="mt-3 max-w-xl">
+        <Text className="mb-1 block text-xs">{m.projectCloseDocuments}</Text>
+        <Select
+          mode="tags"
+          className="w-full"
+          value={closeDocuments}
+          open={false}
+          onChange={(values: string[]) => setCloseDocuments(values)}
+        />
+      </div>
+      <Text type="secondary" className="mt-2 block text-xs">
+        {m.projectCloseDocumentsHint}
       </Text>
 
       {/* CD-130 — ประเภทคำขอ Solution (Sales → Pre-Sales) */}

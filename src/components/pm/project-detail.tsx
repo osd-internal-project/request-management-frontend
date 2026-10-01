@@ -31,6 +31,7 @@ import type {
   ProjectIssuesView,
   CustomerLogsView,
   ProjectPaymentsView,
+  ProjectCloseoutView,
 } from "@/lib/api/projects";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
@@ -44,6 +45,7 @@ import { ProjectRisksCard } from "./project-risks-card";
 import { ProjectIssuesCard } from "./project-issues-card";
 import { CustomerLogsCard } from "./customer-logs-card";
 import { ProjectPaymentsCard } from "./project-payments-card";
+import { ProjectCloseoutCard } from "./project-closeout-card";
 import {
   ProjectTeamFields,
   teamPayload,
@@ -68,6 +70,7 @@ export function ProjectDetailView({
   issues,
   customerLogs,
   payments,
+  closeout,
   currentUserId,
   people,
 }: {
@@ -90,6 +93,8 @@ export function ProjectDetailView({
   readonly customerLogs: CustomerLogsView | null;
   /** CD-193 — null = could not load. */
   readonly payments: ProjectPaymentsView | null;
+  /** CD-191 — null = could not load. */
+  readonly closeout: ProjectCloseoutView | null;
   readonly currentUserId: string | null;
   /** The company's people, for the manager and team pickers. */
   readonly people: { id: string; name: string }[];
@@ -402,6 +407,15 @@ export function ProjectDetailView({
       )}
 
       {changes && <ProjectChangesCard projectId={project.id} view={changes} />}
+
+      {closeout && (
+        <ProjectCloseoutCard
+          key={`${closeout.closeout?.status ?? "none"}-${closeout.closeout?.summary ?? ""}`}
+          projectId={project.id}
+          view={closeout}
+          currentUserId={currentUserId}
+        />
+      )}
 
       <Card size="small" title={md.baseline}>
         <Text type="secondary" className="mb-2 block text-xs">
