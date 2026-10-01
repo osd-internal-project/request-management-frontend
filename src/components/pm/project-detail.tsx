@@ -29,6 +29,7 @@ import type {
   ProjectChangesView,
   ProjectRisksView,
   ProjectIssuesView,
+  CustomerLogsView,
 } from "@/lib/api/projects";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
@@ -40,6 +41,7 @@ import { ProjectBudgetCard } from "./project-budget-card";
 import { ProjectChangesCard } from "./project-changes-card";
 import { ProjectRisksCard } from "./project-risks-card";
 import { ProjectIssuesCard } from "./project-issues-card";
+import { CustomerLogsCard } from "./customer-logs-card";
 import {
   ProjectTeamFields,
   teamPayload,
@@ -62,6 +64,7 @@ export function ProjectDetailView({
   changes,
   risks,
   issues,
+  customerLogs,
   currentUserId,
   people,
 }: {
@@ -80,6 +83,8 @@ export function ProjectDetailView({
   readonly risks: ProjectRisksView | null;
   /** CD-184 — null = could not load. */
   readonly issues: ProjectIssuesView | null;
+  /** CD-186 — null = could not load. */
+  readonly customerLogs: CustomerLogsView | null;
   readonly currentUserId: string | null;
   /** The company's people, for the manager and team pickers. */
   readonly people: { id: string; name: string }[];
@@ -357,6 +362,10 @@ export function ProjectDetailView({
           projectId={project.id}
           view={budget}
         />
+      )}
+
+      {customerLogs && (
+        <CustomerLogsCard projectId={project.id} view={customerLogs} />
       )}
 
       {issues && (

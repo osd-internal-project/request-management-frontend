@@ -611,3 +611,33 @@ export function getProjectIssues(
 ): Promise<ApiResult<ProjectIssuesView>> {
   return apiGet(`/projects/${encodeURIComponent(id)}/issues`);
 }
+
+/** CD-186 — a contact with the customer. */
+export interface CustomerLogView {
+  id: string;
+  seq: number;
+  label: string;
+  kind: "meeting" | "call" | "email" | "site_visit" | "other";
+  occurredOn: string;
+  contactName: string | null;
+  summary: string;
+  decision: string | null;
+  affectsScope: boolean;
+  owesChange: boolean;
+  changeRequest: { id: string; label: string } | null;
+  createdAt: string;
+  createdByName: string | null;
+}
+
+export interface CustomerLogsView {
+  canWrite: boolean;
+  canConvert: boolean;
+  owesChange: number;
+  logs: CustomerLogView[];
+}
+
+export function getCustomerLogs(
+  id: string,
+): Promise<ApiResult<CustomerLogsView>> {
+  return apiGet(`/projects/${encodeURIComponent(id)}/customer-logs`);
+}
