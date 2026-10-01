@@ -29,6 +29,13 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     permissions: ["notification.read"],
     group: messages.nav.requestGroup,
   },
+  /** CD-181 — project tasks handed to me (anyone may be given one). */
+  {
+    label: messages.nav.myTasks,
+    href: ROUTES.myTasks,
+    permissions: ["notification.read"],
+    group: messages.nav.requestGroup,
+  },
   /** CD-14 — documents I am asked to sign (anyone may be a signer). */
   {
     label: messages.nav.esignMine,

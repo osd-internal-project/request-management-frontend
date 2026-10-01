@@ -78,6 +78,7 @@ export const CORE_SERVICE_PREFIXES = [
   "/pricing",
   // CD-18 PM
   "/projects",
+  "/project-tasks",
   "/sales-targets",
   "/campaigns",
   "/target-accounts",

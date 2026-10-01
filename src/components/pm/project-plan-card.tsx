@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Alert,
@@ -27,6 +28,7 @@ import type {
   ProjectPlanView,
 } from "@/lib/api/projects";
 import { messages } from "@/lib/messages";
+import { ROUTES } from "@/lib/routes";
 import { ProjectGantt } from "./project-gantt";
 
 const m = messages.projects.plan;
@@ -310,9 +312,19 @@ export function ProjectPlanCard({
               key: "task",
               render: (_: unknown, task) => (
                 <div style={{ paddingLeft: depth(task.wbs) * 16 }}>
-                  <span className={task.summary ? "font-medium" : ""}>
+                  <Link
+                    href={ROUTES.projectTask(projectId, task.id)}
+                    className={task.summary ? "font-medium" : ""}
+                  >
                     {task.title}
-                  </span>{" "}
+                  </Link>{" "}
+                  {!task.summary && task.status !== "open" && (
+                    <Tag
+                      color={messages.projects.work.statusColor[task.status]}
+                    >
+                      {messages.projects.work.status[task.status]}
+                    </Tag>
+                  )}
                   {task.critical && !task.summary && (
                     <Tag color="red">{m.critical}</Tag>
                   )}

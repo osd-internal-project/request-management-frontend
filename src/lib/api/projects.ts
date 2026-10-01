@@ -260,6 +260,10 @@ export interface PlanTaskView {
   ownerUserId: string | null;
   ownerName: string | null;
   durationDays: number;
+  /** CD-181 — open · in_progress · done. */
+  status: TaskStatus;
+  startedAt: string | null;
+  doneAt: string | null;
   summary: boolean;
   milestone: { id: string; title: string; status: string } | null;
   start: string | null;
@@ -309,4 +313,74 @@ export function getProjectPlan(
   id: string,
 ): Promise<ApiResult<ProjectPlanView>> {
   return apiGet(`/projects/${encodeURIComponent(id)}/plan`);
+}
+
+export type TaskStatus = "open" | "in_progress" | "done" | "cancelled";
+
+/** CD-181 — a task handed to me. */
+export interface MyTask {
+  id: string;
+  wbs: string;
+  title: string;
+  status: TaskStatus;
+  start: string | null;
+  finish: string | null;
+  critical: boolean;
+  summary: boolean;
+  milestone: { id: string; title: string } | null;
+  project: { id: string; projectNo: string; name: string; status: string };
+}
+
+/** CD-181 — one task with its reports and files. */
+export interface TaskWorkView {
+  task: {
+    id: string;
+    title: string;
+    status: TaskStatus;
+    ownerUserId: string | null;
+    ownerName: string | null;
+    startedAt: string | null;
+    doneAt: string | null;
+    wbs: string;
+    start: string | null;
+    finish: string | null;
+    critical: boolean;
+    summary: boolean;
+    description: string | null;
+    milestone: { id: string; title: string } | null;
+  };
+  project: { id: string; projectNo: string; name: string };
+  canReport: boolean;
+  updates: {
+    id: string;
+    authorId: string;
+    authorName: string;
+    note: string;
+    statusFrom: string | null;
+    statusTo: string | null;
+    createdAt: string;
+    files: string[];
+  }[];
+  files: {
+    id: string;
+    updateId: string | null;
+    fileName: string;
+    mimeType: string;
+    sizeBytes: number;
+    uploadedByName: string;
+    uploadedAt: string;
+  }[];
+}
+
+export function getMyTasks(): Promise<ApiResult<MyTask[]>> {
+  return apiGet("/project-tasks/mine");
+}
+
+export function getTaskWork(
+  projectId: string,
+  taskId: string,
+): Promise<ApiResult<TaskWorkView>> {
+  return apiGet(
+    `/projects/${encodeURIComponent(projectId)}/plan/tasks/${encodeURIComponent(taskId)}`,
+  );
 }

@@ -163,6 +163,10 @@ export const ROUTES = {
   projectOpen: (contractId?: string) =>
     `${HOME_PATH}/projects/open${contractId ? `?contract=${contractId}` : ""}`,
   projectDetail: (id: string) => `${HOME_PATH}/projects/${id}`,
+  /** CD-181 — one task, and the tasks handed to me. */
+  projectTask: (projectId: string, taskId: string) =>
+    `${HOME_PATH}/projects/${projectId}/tasks/${taskId}`,
+  myTasks: `${HOME_PATH}/my-tasks`,
   /** CD-161 — คลังสัญญา (ฝ่ายกฎหมาย). */
   contracts: `${HOME_PATH}/contracts`,
   contractDetail: (id: string) => `${HOME_PATH}/contracts/${id}`,
