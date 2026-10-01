@@ -117,6 +117,11 @@ export const messages = {
     toggle: "เปิด/ปิดผู้ช่วย AI",
     close: "ปิด",
     notConfigured: "ยังไม่ได้ตั้งค่าผู้ช่วย AI",
+    collapse: "ย่อ",
+    collapseHint: "ซ่อนผู้ช่วย AI (บทสนทนายังอยู่)",
+    expand: "ขยายเต็มจอ",
+    dock: "ย่อเป็นแผงข้าง",
+    snapHint: "ปล่อยเพื่อขยายผู้ช่วย AI เต็มจอ",
   },
 
   pending: {

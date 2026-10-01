@@ -1,11 +1,10 @@
 import { redirect } from "next/navigation";
 import { accessMenuItems, type BiMenuDashboard } from "../configs/menu";
 import { AppShell } from "@/components/layout/app-shell";
+import { readChatWidgetConfig } from "@/components/layout/chat/chat-config";
 import { SessionKeeper } from "@/components/layout/session-keeper";
 import { apiGet } from "@/lib/api/core";
 import {
-  LIBRECHAT_WIDGET_PUBLIC_ID,
-  LIBRECHAT_WIDGET_URL,
   SESSION_IDLE_TIMEOUT_SECONDS,
   SESSION_REFRESH_INTERVAL_SECONDS,
 } from "@/lib/backend";
@@ -61,11 +60,7 @@ export default async function DashboardLayout({
       }}
       menus={accessMenuItems(session, biDashboards)}
       canReadNotifications={session.permissions.includes("notification.read")}
-      chatWidget={
-        LIBRECHAT_WIDGET_URL && LIBRECHAT_WIDGET_PUBLIC_ID
-          ? { url: LIBRECHAT_WIDGET_URL, publicId: LIBRECHAT_WIDGET_PUBLIC_ID }
-          : null
-      }
+      chatWidget={readChatWidgetConfig()}
     >
       {/* AUTH-02. The two durations are server env, so they reach the browser
           as props rather than as NEXT_PUBLIC_ variables. */}

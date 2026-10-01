@@ -2,9 +2,50 @@ import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import type { Session } from "@/lib/session";
 
+/** A string, not a component: menus are built on the server and cross to the client. */
+export type MenuIconKey =
+  | "inbox"
+  | "obligation"
+  | "newRequest"
+  | "allWork"
+  | "bottleneck"
+  | "slaReport"
+  | "decisionLog"
+  | "crmDashboard"
+  | "customer"
+  | "keeper"
+  | "targetAccount"
+  | "lead"
+  | "visitLog"
+  | "handover"
+  | "opportunity"
+  | "quotation"
+  | "saleOrder"
+  | "campaign"
+  | "salesTarget"
+  | "salesReport"
+  | "contract"
+  | "contractTemplate"
+  | "requestType"
+  | "intakeChannel"
+  | "slaSettings"
+  | "org"
+  | "user"
+  | "audit"
+  | "notificationLog"
+  | "notificationRule"
+  | "notificationTemplate"
+  | "biSettings"
+  | "crmSettings"
+  | "apiKey"
+  | "erpSync"
+  | "runNumber"
+  | "dashboard";
+
 export interface MenuEntry {
   label: string;
   href: string;
+  icon: MenuIconKey;
   /** Shown only if the session holds at least one of these. */
   permissions?: readonly string[];
   /** Group heading rendered above this entry, e.g. "ผู้ดูแลระบบ". */
@@ -19,6 +60,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
   {
     label: messages.nav.myWork,
     href: ROUTES.myWork,
+    icon: "inbox",
     permissions: ["request.read"],
     group: messages.nav.requestGroup,
   },
@@ -26,12 +68,14 @@ const MENU_ITEMS: readonly MenuEntry[] = [
   {
     label: messages.nav.obligations,
     href: ROUTES.obligations,
+    icon: "obligation",
     permissions: ["notification.read"],
     group: messages.nav.requestGroup,
   },
   {
     label: messages.nav.newRequest,
     href: ROUTES.newRequest,
+    icon: "newRequest",
     permissions: ["request.create"],
     group: messages.nav.requestGroup,
   },
@@ -43,12 +87,14 @@ const MENU_ITEMS: readonly MenuEntry[] = [
   {
     label: messages.nav.allWork,
     href: ROUTES.allWork,
+    icon: "allWork",
     permissions: ["request.read"],
     group: messages.nav.requestGroup,
   },
   {
     label: messages.nav.bottleneckReport,
     href: ROUTES.bottleneckReport,
+    icon: "bottleneck",
     permissions: ["report.request.read"],
     group: messages.nav.biGroup,
   },
@@ -56,6 +102,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
   {
     label: messages.nav.slaReport,
     href: ROUTES.slaReport,
+    icon: "slaReport",
     permissions: ["report.request.read"],
     group: messages.nav.biGroup,
   },
@@ -63,6 +110,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
   {
     label: messages.nav.decisionLog,
     href: ROUTES.decisionLog,
+    icon: "decisionLog",
     permissions: ["approval.history.read"],
     group: messages.nav.biGroup,
   },
@@ -71,6 +119,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
   {
     label: messages.nav.crmDashboard,
     href: ROUTES.crmDashboard,
+    icon: "crmDashboard",
     permissions: ["crm.sales.read"],
     group: messages.nav.crmGroup,
   },
@@ -78,6 +127,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
   {
     label: messages.nav.customers,
     href: ROUTES.customers,
+    icon: "customer",
     permissions: ["crm.customer.read"],
     group: messages.nav.crmGroup,
   },
@@ -85,6 +135,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
   {
     label: messages.nav.keeper,
     href: ROUTES.keeper,
+    icon: "keeper",
     permissions: ["crm.customer.read"],
     group: messages.nav.crmGroup,
   },
@@ -92,18 +143,21 @@ const MENU_ITEMS: readonly MenuEntry[] = [
   {
     label: messages.nav.targetAccounts,
     href: ROUTES.targetAccounts,
+    icon: "targetAccount",
     permissions: ["crm.sales.read"],
     group: messages.nav.crmGroup,
   },
   {
     label: messages.nav.leads,
     href: ROUTES.leads,
+    icon: "lead",
     permissions: ["crm.sales.read"],
     group: messages.nav.crmGroup,
   },
   {
     label: messages.nav.visitLog,
     href: ROUTES.visitLog,
+    icon: "visitLog",
     permissions: ["crm.sales.manage"],
     group: messages.nav.crmGroup,
   },
@@ -111,11 +165,13 @@ const MENU_ITEMS: readonly MenuEntry[] = [
   {
     label: messages.nav.handovers,
     href: ROUTES.handovers,
+    icon: "handover",
     group: messages.nav.crmGroup,
   },
   {
     label: messages.nav.opportunities,
     href: ROUTES.opportunities,
+    icon: "opportunity",
     permissions: ["crm.sales.read"],
     group: messages.nav.crmGroup,
   },
@@ -123,6 +179,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
   {
     label: messages.nav.quotations,
     href: ROUTES.quotations,
+    icon: "quotation",
     permissions: ["crm.sales.read"],
     group: messages.nav.crmGroup,
   },
@@ -130,6 +187,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
   {
     label: messages.nav.saleOrders,
     href: ROUTES.saleOrders,
+    icon: "saleOrder",
     permissions: ["crm.sales.read"],
     group: messages.nav.crmGroup,
   },
@@ -137,6 +195,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
   {
     label: messages.nav.campaigns,
     href: ROUTES.campaigns,
+    icon: "campaign",
     permissions: ["crm.sales.read"],
     group: messages.nav.crmGroup,
   },
@@ -144,6 +203,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
   {
     label: messages.nav.salesTargets,
     href: ROUTES.salesTargets,
+    icon: "salesTarget",
     permissions: ["crm.sales.read"],
     group: messages.nav.crmGroup,
   },
@@ -151,6 +211,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
   {
     label: messages.nav.salesReport,
     href: ROUTES.salesReport,
+    icon: "salesReport",
     permissions: ["crm.sales.read"],
     group: messages.nav.crmGroup,
   },
@@ -159,6 +220,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
   {
     label: messages.nav.contracts,
     href: ROUTES.contracts,
+    icon: "contract",
     permissions: ["legal.contract.read"],
     group: messages.nav.legalGroup,
   },
@@ -166,6 +228,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
   {
     label: messages.nav.contractTemplates,
     href: ROUTES.contractTemplates,
+    icon: "contractTemplate",
     permissions: ["legal.contract.read"],
     group: messages.nav.legalGroup,
   },
@@ -174,6 +237,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     // request type it belongs to, reached from ประเภทคำขอ below.
     label: messages.nav.adminRequestTypes,
     href: ROUTES.adminRequestTypes,
+    icon: "requestType",
     permissions: ["admin.request-type.manage"],
     group: messages.nav.adminGroup,
   },
@@ -181,30 +245,35 @@ const MENU_ITEMS: readonly MenuEntry[] = [
   {
     label: messages.nav.adminIntakeChannels,
     href: ROUTES.adminIntakeChannels,
+    icon: "intakeChannel",
     permissions: ["admin.request-type.manage"],
     group: messages.nav.adminGroup,
   },
   {
     label: messages.nav.adminSla,
     href: ROUTES.adminSla,
+    icon: "slaSettings",
     permissions: ["admin.sla.manage"],
     group: messages.nav.adminGroup,
   },
   {
     label: messages.nav.adminOrg,
     href: ROUTES.adminOrg,
+    icon: "org",
     permissions: ["admin.org.manage"],
     group: messages.nav.adminGroup,
   },
   {
     label: messages.nav.adminUsers,
     href: ROUTES.adminUsers,
+    icon: "user",
     permissions: ["user.read"],
     group: messages.nav.adminGroup,
   },
   {
     label: messages.nav.adminAudit,
     href: ROUTES.adminAudit,
+    icon: "audit",
     permissions: ["audit.read"],
     group: messages.nav.adminGroup,
   },
@@ -212,6 +281,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
   {
     label: messages.nav.adminNotificationLog,
     href: ROUTES.adminNotificationLog,
+    icon: "notificationLog",
     permissions: ["audit.read"],
     group: messages.nav.adminGroup,
   },
@@ -219,6 +289,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
   {
     label: messages.nav.adminNotificationRules,
     href: ROUTES.adminNotificationRules,
+    icon: "notificationRule",
     permissions: ["admin.notification.manage"],
     group: messages.nav.adminGroup,
   },
@@ -226,24 +297,28 @@ const MENU_ITEMS: readonly MenuEntry[] = [
   {
     label: messages.nav.adminNotificationTemplates,
     href: ROUTES.adminNotificationTemplates,
+    icon: "notificationTemplate",
     permissions: ["admin.notification.manage"],
     group: messages.nav.adminGroup,
   },
   {
     label: messages.nav.adminBi,
     href: ROUTES.adminBi,
+    icon: "biSettings",
     permissions: ["admin.bi.manage"],
     group: messages.nav.adminGroup,
   },
   {
     label: messages.nav.adminCrm,
     href: ROUTES.adminCrm,
+    icon: "crmSettings",
     permissions: ["admin.crm.manage"],
     group: messages.nav.adminGroup,
   },
   {
     label: messages.nav.adminApiKeys,
     href: ROUTES.adminApiKeys,
+    icon: "apiKey",
     permissions: ["admin.integration.manage"],
     group: messages.nav.adminGroup,
   },
@@ -251,12 +326,14 @@ const MENU_ITEMS: readonly MenuEntry[] = [
   {
     label: messages.nav.adminErpSync,
     href: ROUTES.adminErpSync,
+    icon: "erpSync",
     permissions: ["admin.integration.manage"],
     group: messages.nav.adminGroup,
   },
   {
     label: messages.nav.adminRunNumbers,
     href: ROUTES.adminRunNumbers,
+    icon: "runNumber",
     permissions: ["admin.run-number.manage"],
     group: messages.nav.adminGroup,
   },
@@ -291,6 +368,7 @@ export const accessMenuItems = (
   const biEntries: MenuEntry[] = biDashboards.map((dashboard) => ({
     label: dashboard.title,
     href: ROUTES.biDashboard(dashboard.key),
+    icon: "dashboard",
     permissions: ["report.dashboard.read"],
     group: messages.nav.biGroup,
   }));

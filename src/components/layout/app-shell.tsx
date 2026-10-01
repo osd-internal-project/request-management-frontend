@@ -10,19 +10,19 @@ import {
   Menu,
   Splitter,
 } from "antd";
-import {
-  MenuOutlined,
-  MessageOutlined,
-  MessageTwoTone,
-} from "@ant-design/icons";
+import { MenuOutlined } from "@ant-design/icons";
 import { usePathname, useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import type { MenuEntry } from "@/app/configs/menu";
-import { ChatPanel } from "@/components/layout/chat-panel";
+import { ChatPanel } from "@/components/layout/chat/chat-panel";
+import { ChatToggleButton } from "@/components/layout/chat/chat-toggle-button";
 import {
   signOutChatWidget,
   type ChatWidgetConfig,
-} from "@/components/layout/librechat-widget";
+} from "@/components/layout/chat/librechat-widget";
+import { useChatDock } from "@/components/layout/chat/use-chat-dock";
+import { MenuIcon } from "@/components/layout/nav-icons";
+import { NavRail } from "@/components/layout/nav-rail";
 import { CompanySwitcher } from "@/components/layout/company-switcher";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { messages } from "@/lib/messages";
@@ -33,29 +33,12 @@ const currentYear = new Date().getFullYear();
 
 const LOGOUT_ROUTE = "/api/auth/logout";
 
-/** Only the width is remembered — see `readChatWidth`. */
-const CHAT_WIDTH_KEY = "chat-panel-width";
-const CHAT_WIDTH_DEFAULT = "33%";
-
-/**
- * Whether the panel is open is deliberately *not* stored: the server renders
- * it closed, so a stored "open" would break hydration.
- */
-function readChatWidth() {
-  try {
-    const stored = Number(window.localStorage.getItem(CHAT_WIDTH_KEY));
-    return Number.isFinite(stored) && stored > 0 ? stored : null;
-  } catch {
-    return null;
-  }
-}
-
-function writeChatWidth(width: number) {
-  try {
-    window.localStorage.setItem(CHAT_WIDTH_KEY, String(Math.round(width)));
-  } catch {
-    // Private mode or blocked storage — the panel still works, it just forgets.
-  }
+function toMenuItem(entry: MenuEntry) {
+  return {
+    key: entry.href,
+    label: entry.label,
+    icon: <MenuIcon name={entry.icon} />,
+  };
 }
 
 export interface ShellCompany {
@@ -93,26 +76,12 @@ export function AppShell({
   const router = useRouter();
   const pathname = usePathname();
   const screens = Grid.useBreakpoint();
-  const [chatOpen, setChatOpen] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
-  const [chatWidth, setChatWidth] = useState<number | null>(null);
+  const chat = useChatDock();
 
   // Below `lg` the Sider is already collapsed — two panes would leave neither
   // usable, so the panel covers the screen instead.
   const isDesktop = !!screens.lg;
-
-  function toggleChat() {
-    // The stored width is read here rather than during render or on mount:
-    // the server cannot read localStorage, and a differing first paint is a
-    // hydration error.
-    if (!chatOpen) setChatWidth(readChatWidth());
-    setChatOpen(!chatOpen);
-  }
-
-  function onSplitterResizeEnd(sizes: number[]) {
-    const panelWidth = sizes[1];
-    if (panelWidth) writeChatWidth(panelWidth);
-  }
 
   // Groups keep the "ผู้ดูแลระบบ" heading from the mockups without the menu
   // config needing to know about antd's item shape.
@@ -127,15 +96,12 @@ export function AppShell({
     }
 
     return [
-      ...ungrouped.map((entry) => ({ key: entry.href, label: entry.label })),
+      ...ungrouped.map(toMenuItem),
       ...[...groups.entries()].map(([group, entries]) => ({
         key: `group:${group}`,
         type: "group" as const,
         label: group,
-        children: entries.map((entry) => ({
-          key: entry.href,
-          label: entry.label,
-        })),
+        children: entries.map(toMenuItem),
       })),
     ];
   }, [menus]);
@@ -182,22 +148,51 @@ export function AppShell({
     },
   ];
 
+  const isExpanded = isDesktop && chat.mode === "expanded";
+
+  function onRailNavigate(href: string) {
+    // Leave the full-width chat so the page just opened is actually visible.
+    chat.dock();
+    router.push(href);
+  }
+
+  const chatPanel = (
+    <ChatPanel
+      widget={chatWidget}
+      mode={chat.mode}
+      canExpand={isDesktop}
+      onClose={chat.close}
+      onExpand={chat.expand}
+      onDock={chat.dock}
+    />
+  );
+
   return (
     // The shell is exactly one viewport tall; scrolling belongs to the menu
     // and the content, never to the page.
-    <Layout className="h-screen overflow-hidden">
+    // `hasSider`: antd only detects a real <Sider> child, and NavRail is not one.
+    <Layout hasSider className="h-screen overflow-hidden">
       {/* Hidden by CSS below `lg` rather than by `useBreakpoint`, which the
           server cannot know — a JS switch would flash the layout on hydration. */}
-      <Sider
-        className="max-lg:hidden!"
-        classNames={{ body: "flex h-full flex-col" }}
-      >
-        <div className="flex h-16 w-full shrink-0 items-center justify-center">
-          <h1 className="text-xl font-bold">{messages.app.name}</h1>
-        </div>
+      {isExpanded ? (
+        <NavRail
+          className="max-lg:hidden!"
+          menus={menus}
+          pathname={pathname}
+          onNavigate={onRailNavigate}
+        />
+      ) : (
+        <Sider
+          className="max-lg:hidden!"
+          classNames={{ body: "flex h-full flex-col" }}
+        >
+          <div className="flex h-16 w-full shrink-0 items-center justify-center">
+            <h1 className="text-xl font-bold">{messages.app.name}</h1>
+          </div>
 
-        {navMenu}
-      </Sider>
+          {navMenu}
+        </Sider>
+      )}
 
       <Drawer
         open={navOpen}
@@ -210,84 +205,82 @@ export function AppShell({
         {navMenu}
       </Drawer>
 
-      {/* The Splitter renders even while the panel is closed: swapping the
-          wrapper on toggle would move `children` in the React tree and remount
-          the whole page, losing form state and scroll position. */}
-      <Splitter className="min-w-0 flex-1" onResizeEnd={onSplitterResizeEnd}>
-        <Splitter.Panel min="40%">
-          {/* min-w-0 keeps a wide table from pushing the Sider off-screen. */}
-          <Layout className="h-full min-w-0">
-            <Header
-              style={{ padding: 0 }}
-              className="shrink-0 bg-white shadow-sm"
-            >
-              <div className="mx-3 flex h-full items-center justify-between gap-2 md:mx-4">
-                <Button
-                  type="text"
-                  className="lg:hidden!"
-                  icon={<MenuOutlined />}
-                  aria-label={messages.nav.openMenu}
-                  onClick={() => setNavOpen(true)}
-                />
-                <CompanySwitcher
-                  companies={user.companies}
-                  activeCompanyId={user.activeCompanyId}
-                />
-                <div className="flex shrink-0 items-center gap-2 md:gap-3">
-                  {canReadNotifications && <NotificationBell />}
-                  <span className="text-sm text-gray-700 max-md:hidden">
-                    {user.displayName}
-                  </span>
-                  <Dropdown
-                    menu={{ items: avatarDropdownItems }}
-                    trigger={["click"]}
-                  >
-                    <Avatar className="cursor-pointer">
-                      {user.displayName.charAt(0)}
-                    </Avatar>
-                  </Dropdown>
-                  <Button
-                    // hidden={true}
-                    type="text"
-                    icon={chatOpen ? <MessageTwoTone /> : <MessageOutlined />}
-                    onClick={toggleChat}
-                    aria-label={messages.chat.toggle}
-                  />
-                </div>
-              </div>
-            </Header>
+      {/* min-w-0 keeps a wide table from pushing the Sider off-screen. */}
+      <Layout className="min-w-0 flex-1">
+        {/* Spans content and chat, so the chat button stays put in every mode. */}
+        <Header
+          style={{ padding: 0 }}
+          className="z-10 shrink-0 bg-white shadow-sm"
+        >
+          <div className="mx-3 flex h-full items-center justify-between gap-2 md:mx-4">
+            <Button
+              type="text"
+              className="lg:hidden!"
+              icon={<MenuOutlined />}
+              aria-label={messages.nav.openMenu}
+              onClick={() => setNavOpen(true)}
+            />
+            <CompanySwitcher
+              companies={user.companies}
+              activeCompanyId={user.activeCompanyId}
+            />
+            <div className="flex shrink-0 items-center gap-2 md:gap-3">
+              {canReadNotifications && <NotificationBell />}
+              <span className="text-sm text-gray-700 max-md:hidden">
+                {user.displayName}
+              </span>
+              <Dropdown
+                menu={{ items: avatarDropdownItems }}
+                trigger={["click"]}
+              >
+                <Avatar className="cursor-pointer">
+                  {user.displayName.charAt(0)}
+                </Avatar>
+              </Dropdown>
+              <ChatToggleButton open={chat.isOpen} onClick={chat.toggle} />
+            </div>
+          </div>
+        </Header>
 
+        {/* Both panels always render: swapping the tree on toggle would remount
+            `children` (losing form state) and the widget (losing the conversation). */}
+        <Splitter
+          className="min-h-0 flex-1"
+          classNames={{ dragger: chat.isOpen ? undefined : "hidden!" }}
+          {...chat.splitter}
+        >
+          <Splitter.Panel className="relative overflow-hidden!">
             {/* The app's only scroll region: viewport height minus the header. */}
-            <Content className="min-h-0 flex-1 overflow-y-auto">
+            <Content className="h-full overflow-y-auto">
               <div className="p-3 md:p-6">{children}</div>
 
               <Footer className="text-center">
                 {messages.app.name} ©{currentYear}
               </Footer>
             </Content>
-          </Layout>
-        </Splitter.Panel>
 
-        {chatOpen && isDesktop && (
-          <Splitter.Panel
-            defaultSize={chatWidth ?? CHAT_WIDTH_DEFAULT}
-            min={320}
-            max="60%"
-          >
-            <ChatPanel widget={chatWidget} onClose={() => setChatOpen(false)} />
+            {chat.isSnapPreview && (
+              <div className="absolute inset-0 flex items-center justify-center bg-white/80 p-4 text-center font-medium text-[var(--app-text-muted)]">
+                {messages.chat.snapHint}
+              </div>
+            )}
           </Splitter.Panel>
-        )}
-      </Splitter>
+
+          <Splitter.Panel {...chat.chatPanel}>
+            {chat.hasOpened && isDesktop && chatPanel}
+          </Splitter.Panel>
+        </Splitter>
+      </Layout>
 
       <Drawer
-        open={chatOpen && !isDesktop}
+        open={chat.isOpen && !isDesktop}
         placement="right"
         size="100%"
         closable={false}
         styles={{ body: { padding: 0 } }}
-        onClose={() => setChatOpen(false)}
+        onClose={chat.close}
       >
-        <ChatPanel widget={chatWidget} onClose={() => setChatOpen(false)} />
+        {chat.hasOpened && !isDesktop && chatPanel}
       </Drawer>
     </Layout>
   );

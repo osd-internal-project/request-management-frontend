@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { signOutChatWidget } from "@/components/layout/librechat-widget";
+import { signOutChatWidget } from "@/components/layout/chat/librechat-widget";
 import { SESSION_EXPIRED_PATH } from "@/lib/routes";
 
 /** Events that count as the user still being here. */

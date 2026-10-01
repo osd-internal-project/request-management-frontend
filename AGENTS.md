@@ -83,3 +83,9 @@ core-service log each time, burying the real ones.
 Skipping the call, not hiding the error, is the fix: an empty result for
 someone who cannot decide is the truthful answer. And hide the UI it feeds —
 a tab that can only ever read `· 0` looks like a page that failed to load.
+
+## Shell layout (antd `Layout`)
+
+Swapping `<Sider>` for a custom element (e.g. `NavRail`) silently flips antd `Layout` to a
+column, pushing the header, content and chat below the viewport → antd only detects a real
+`Sider` child → pass `hasSider` on the root `Layout` in `app-shell.tsx`, and walk every chat mode on screen.
