@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -33,7 +33,12 @@ import { lookupPrices } from "@/lib/api/pricing/client";
 import { appApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
-import type { QuotationDetail, QuotationStatus } from "@/lib/api/types";
+import type {
+  DealMargin,
+  QuotationDetail,
+  QuotationStatus,
+} from "@/lib/api/types";
+import { DealMarginLine } from "@/components/crm/quotations/deal-margin";
 
 const mq = messages.sales.quotations;
 const md = mq.detail;
@@ -107,13 +112,16 @@ function previewTotals(lines: DraftLine[], vatPct: number) {
   let net = 0;
   let cost = 0;
   let monthly = 0;
+  const lineCosts: number[] = [];
   const lineTotals = lines.map((line) => {
     const quantity = billedQuantity(line);
     const gross = round2(quantity * (line.unitPrice ?? 0));
     const total = round2((gross * (100 - (line.discountPct ?? 0))) / 100);
     subtotal += gross;
     net += total;
-    cost += round2(quantity * (line.unitCost ?? 0));
+    const lineCost = round2(quantity * (line.unitCost ?? 0));
+    lineCosts.push(lineCost);
+    cost += lineCost;
     if (line.priceModel === "monthly" && line.termMonths) {
       monthly += round2(total / line.termMonths);
     }
@@ -123,6 +131,7 @@ function previewTotals(lines: DraftLine[], vatPct: number) {
   const margin = net - cost;
   return {
     lineTotals,
+    lineCosts,
     subtotal,
     discount: subtotal - net,
     net,
@@ -160,6 +169,19 @@ export function QuotationDetailView({
   const status: QuotationStatus = quotation.status;
   const currency = quotation.currency;
   const costVisible = quotation.costTotal !== undefined;
+  // CD-199 — the deal's margin and the company minimum (cost viewers only).
+  const [dealMargin, setDealMargin] = useState<DealMargin | null>(null);
+  useEffect(() => {
+    if (!costVisible) return;
+    void appApi<DealMargin>(
+      `opportunities/${quotation.opportunityId}/margin`,
+    ).then((result) => {
+      if (result.ok) setDealMargin(result.data);
+    });
+  }, [costVisible, quotation.opportunityId, quotation.netTotal]);
+  const minMargin = Number(
+    quotation.minMarginPct ?? dealMargin?.minMarginPct ?? 0,
+  );
   const isDraft = status === "draft";
   const canEditHeader = canManage && isDraft;
   const canEditLines = canEditHeader && costVisible;
@@ -417,6 +439,7 @@ export function QuotationDetailView({
     ? preview
     : {
         lineTotals: quotation.lines.map((line) => Number(line.lineTotal)),
+        lineCosts: quotation.lines.map((line) => Number(line.lineCost ?? 0)),
         subtotal: quotation.subtotal,
         discount: quotation.discountTotal,
         net: quotation.netTotal,
@@ -952,6 +975,34 @@ export function QuotationDetailView({
               render: (_: unknown, __: DraftLine, index: number) =>
                 formatAmount(shown.lineTotals[index] ?? null),
             },
+            // CD-199 — each line's margin, live, red under the minimum.
+            ...(costVisible
+              ? [
+                  {
+                    title: md.line.margin,
+                    key: "margin",
+                    width: 130,
+                    align: "right" as const,
+                    render: (_: unknown, __: DraftLine, index: number) => {
+                      const total = shown.lineTotals[index] ?? 0;
+                      const amount = round2(
+                        total - (shown.lineCosts[index] ?? 0),
+                      );
+                      const pct =
+                        total > 0 ? round2((amount / total) * 100) : null;
+                      const low = pct === null || pct < minMargin;
+                      return (
+                        <div className={low ? "text-red-600" : undefined}>
+                          <div>{formatAmount(amount)}</div>
+                          <div className="text-[11px]">
+                            {pct === null ? "—" : `${pct.toFixed(2)}%`}
+                          </div>
+                        </div>
+                      );
+                    },
+                  },
+                ]
+              : []),
             ...(canEditLines
               ? [
                   {
@@ -1030,6 +1081,12 @@ export function QuotationDetailView({
                       String(Number(quotation.minMarginPct)),
                     )}
                   </Text>
+                )}
+                {/* CD-199 — the deal as a whole, saved versions only. */}
+                {dealMargin && dealMargin.quotations.length > 0 && (
+                  <div className="mt-2">
+                    <DealMarginLine margin={dealMargin} />
+                  </div>
                 )}
               </>
             )}

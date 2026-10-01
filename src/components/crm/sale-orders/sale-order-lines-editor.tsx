@@ -42,12 +42,20 @@ export function draftLineTotal(line: SaleOrderDraftLine): number {
 }
 
 export function draftLinesTotal(lines: readonly SaleOrderDraftLine[]): number {
-  return Math.round(lines.reduce((sum, line) => sum + draftLineTotal(line) * 100, 0)) / 100;
+  return (
+    Math.round(
+      lines.reduce((sum, line) => sum + draftLineTotal(line) * 100, 0),
+    ) / 100
+  );
 }
 
 /** A row the backend will accept: description, quantity > 0, a price. */
 export function draftLineComplete(line: SaleOrderDraftLine): boolean {
-  return Boolean(line.description.trim()) && (line.quantity ?? 0) > 0 && line.unitPrice !== null;
+  return (
+    Boolean(line.description.trim()) &&
+    (line.quantity ?? 0) > 0 &&
+    line.unitPrice !== null
+  );
 }
 
 /** The request body shape of `OpenSaleOrderDto.lines`. */
@@ -75,7 +83,9 @@ export function SaleOrderLinesEditor({
   onChange: (lines: SaleOrderDraftLine[]) => void;
 }) {
   function patch(key: string, change: Partial<SaleOrderDraftLine>) {
-    onChange(lines.map((line) => (line.key === key ? { ...line, ...change } : line)));
+    onChange(
+      lines.map((line) => (line.key === key ? { ...line, ...change } : line)),
+    );
   }
 
   return (
@@ -126,7 +136,9 @@ export function SaleOrderLinesEditor({
               <Input
                 value={value}
                 maxLength={1000}
-                onChange={(e) => patch(row.key, { description: e.target.value })}
+                onChange={(e) =>
+                  patch(row.key, { description: e.target.value })
+                }
               />
             ),
           },
@@ -200,7 +212,9 @@ export function SaleOrderLinesEditor({
                 danger
                 aria-label={md.saleOrderRemoveLine}
                 icon={<DeleteOutlined />}
-                onClick={() => onChange(lines.filter((line) => line.key !== row.key))}
+                onClick={() =>
+                  onChange(lines.filter((line) => line.key !== row.key))
+                }
               />
             ),
           },

@@ -8,6 +8,7 @@ import {
   getPhoneReservations,
   getLostReasons,
   getQuotations,
+  getDealMargin,
 } from "@/lib/api/sales";
 import { getRequests, getRequestTypes } from "@/lib/api/requests";
 import { getDealSolutions } from "@/lib/api/presales";
@@ -59,6 +60,7 @@ export default async function OpportunityDetailPage({
     handoverResult,
     teamsResult,
     solutionsResult,
+    marginResult,
   ] = await Promise.all([
     getLostReasons(),
     canReadRequests
@@ -102,6 +104,8 @@ export default async function OpportunityDetailPage({
     opportunityResult.data.solutionRequestTypeCode
       ? getDealSolutions(id)
       : Promise.resolve(null),
+    // CD-199 — same `crm.sales.read`; cost and margin masked by the API.
+    getDealMargin(id),
   ]);
   const contractCode = opportunityResult.data.contractRequestTypeCode ?? null;
   const contractTypeName =
@@ -133,6 +137,7 @@ export default async function OpportunityDetailPage({
       }
       customers={customersResult?.ok ? customersResult.data.data : []}
       quotations={quotationsResult.ok ? quotationsResult.data.data : []}
+      dealMargin={marginResult.ok ? marginResult.data : null}
       activities={activitiesResult.ok ? activitiesResult.data : []}
       canManage={canManage}
       contractTypeName={contractTypeName}

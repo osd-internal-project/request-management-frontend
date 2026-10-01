@@ -3886,6 +3886,13 @@ export const messages = {
       },
     },
     quotations: {
+      /** CD-199 — margin ของดีล */
+      dealMargin: {
+        title: "Margin ของดีล",
+        basis: (count: number, revenue: string, cost: string, currency: string) =>
+          `จากใบเสนอราคา ${count} ใบที่ยังมีผล · รายได้ ${revenue} · ต้นทุน ${cost} ${currency}`,
+        belowMin: (min: number) => `ต่ำกว่าเกณฑ์ ${min}%`,
+      },
       title: "ใบเสนอราคา (Quotation)",
       scopeNote:
         "เห็นเฉพาะใบเสนอราคาของคุณและของทีม ตามสิทธิ์ที่ได้รับ · สร้างใบใหม่จากหน้ารายละเอียดโอกาสการขาย",
@@ -3962,6 +3969,8 @@ export const messages = {
           unitCost: "ต้นทุน/หน่วย",
           discountPct: "ส่วนลด %",
           lineTotal: "รวม",
+          /** CD-199 */
+          margin: "Margin",
           /** CD-196 */
           priceModel: "รูปแบบราคา",
           termMonths: "จำนวนเดือน",

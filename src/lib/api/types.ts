@@ -395,7 +395,15 @@ export interface SubRequestTypeRule {
   required: boolean;
 }
 
-export const FLOW_CONDITION_OPS = ["gt", "gte", "lt", "lte", "eq", "neq", "in"] as const;
+export const FLOW_CONDITION_OPS = [
+  "gt",
+  "gte",
+  "lt",
+  "lte",
+  "eq",
+  "neq",
+  "in",
+] as const;
 export type FlowConditionOp = (typeof FLOW_CONDITION_OPS)[number];
 
 /** `{ field, op, value }` over the request's answers; see `request-flow.ts`. */
@@ -407,9 +415,7 @@ export interface FlowCondition {
 
 /** Who carries the work on entering a step. */
 export type FlowAssigneeRule =
-  | { type: "keep" }
-  | { type: "requester" }
-  | { type: "user"; userId: string };
+  { type: "keep" } | { type: "requester" } | { type: "user"; userId: string };
 
 /** v2: the status a step sits under; who holds it follows from it. */
 export type FlowStepScope =
@@ -1215,10 +1221,7 @@ export type LeadActivityType =
   | "social";
 /** CD-85 — ผลการติดต่อหนึ่งครั้ง. */
 export type ActivityOutcome =
-  | "reached"
-  | "no_answer"
-  | "interested"
-  | "not_interested";
+  "reached" | "no_answer" | "interested" | "not_interested";
 /** CD-85 — สี่อย่างที่ต้องรู้ก่อนเปิดดีล. */
 export type DiscoveryItem = "need" | "budget" | "decision_maker" | "timeframe";
 export type OpportunityStage =
@@ -1341,10 +1344,7 @@ export interface LeadDetail extends LeadRow {
 /** CD-85 — บริษัทเป้าหมายของแกน Getter. */
 export type TargetAccountPriority = "high" | "medium" | "low";
 export type TargetAccountStatus =
-  | "targeting"
-  | "approaching"
-  | "converted"
-  | "dropped";
+  "targeting" | "approaching" | "converted" | "dropped";
 
 export interface TargetAccountRow {
   id: string;
@@ -1823,7 +1823,9 @@ export interface CrmConfig {
   /** CD-84 — the team a handover goes to by default. */
   handoverOrgUnitId?: string | null;
   /** CD-62 — approval request type per customer type. */
-  customerApprovalTypes?: Partial<Record<"corporate" | "individual" | "government", string>>;
+  customerApprovalTypes?: Partial<
+    Record<"corporate" | "individual" | "government", string>
+  >;
 }
 
 /** CM-07 — one assignable value with its dimension, for pickers and filters. */
@@ -1953,7 +1955,8 @@ export interface HandoverItem extends HandoverChecklistItem {
   detail: string | null;
 }
 
-export type SalesHandoverStatus = "draft" | "submitted" | "accepted" | "returned";
+export type SalesHandoverStatus =
+  "draft" | "submitted" | "accepted" | "returned";
 
 export interface HandoverHistoryEntry {
   action: "submitted" | "accepted" | "returned";
@@ -2060,7 +2063,12 @@ export interface HandoverTechnicalPackage {
     answeredOn: string | null;
     affectsScope: boolean;
   }[];
-  files: { id: string; fileName: string; mimeType: string; sizeBytes: number }[];
+  files: {
+    id: string;
+    fileName: string;
+    mimeType: string;
+    sizeBytes: number;
+  }[];
 }
 
 export interface SalesHandover {
@@ -2115,13 +2123,7 @@ export interface DealHandoverView {
 export type AccountTier = "a" | "b" | "c";
 export type HealthLevel = "green" | "amber" | "red";
 export type CustomerTouchType =
-  | "review"
-  | "call"
-  | "email"
-  | "meeting"
-  | "visit"
-  | "line"
-  | "social";
+  "review" | "call" | "email" | "meeting" | "visit" | "line" | "social";
 
 export interface HealthSignal {
   code:
@@ -2174,7 +2176,8 @@ export interface Portfolio {
 }
 
 export interface CustomerAccount extends PortfolioRow {
-  plan: (AccountPlanSummary & { goals: string | null; updated_at: string }) | null;
+  plan:
+    (AccountPlanSummary & { goals: string | null; updated_at: string }) | null;
   touchpoints: {
     id: string;
     type: CustomerTouchType;
@@ -2230,4 +2233,24 @@ export interface CustomerApprovalView {
   } | null;
   type_code: string | null;
   can_raise: boolean;
+}
+
+/**
+ * CD-199 — the deal's margin over the latest standing version of each of its
+ * quotations. Cost and margin are absent for someone who may not see cost.
+ */
+export interface DealMargin {
+  quotations: {
+    id: string;
+    quotationNo: string;
+    version: number;
+    status: QuotationStatus;
+    netTotal: Money;
+  }[];
+  netTotal: Money;
+  costTotal?: Money;
+  marginAmount?: Money;
+  marginPct?: Money | null;
+  currency: string;
+  minMarginPct: number;
 }

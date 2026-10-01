@@ -79,7 +79,9 @@ export function LeadBoard({
   const draggable = (lead: LeadRow) => canManage && isLeadOpen(lead.status);
 
   function accepts(status: string): boolean {
-    return dragging !== null && draggable(dragging) && dragging.status !== status;
+    return (
+      dragging !== null && draggable(dragging) && dragging.status !== status
+    );
   }
 
   async function move(lead: LeadRow, status: string) {
@@ -138,7 +140,9 @@ export function LeadBoard({
                 event.dataTransfer.dropEffect = "move";
                 setHovered(status);
               }}
-              onDragLeave={() => setHovered((at) => (at === status ? null : at))}
+              onDragLeave={() =>
+                setHovered((at) => (at === status ? null : at))
+              }
               onDrop={(event) => {
                 event.preventDefault();
                 drop(status);
@@ -155,7 +159,10 @@ export function LeadBoard({
 
               <div className="flex max-h-[62vh] flex-col gap-2 overflow-y-auto">
                 {cards.length === 0 ? (
-                  <Text type="secondary" className="px-1 py-4 text-center text-xs">
+                  <Text
+                    type="secondary"
+                    className="px-1 py-4 text-center text-xs"
+                  >
                     {mb.empty}
                   </Text>
                 ) : (
@@ -251,9 +258,7 @@ function LeadCard({
           </Text>
         )}
 
-        {lead.sourceCode && (
-          <Tag className="m-0! mt-1">{lead.sourceCode}</Tag>
-        )}
+        {lead.sourceCode && <Tag className="m-0! mt-1">{lead.sourceCode}</Tag>}
 
         {lead.convertedOpportunity && (
           <Link href={ROUTES.opportunityDetail(lead.convertedOpportunity.id)}>
@@ -284,7 +289,11 @@ function LeadCard({
               menu={{
                 items: [
                   { key: "convert", label: m.actions.convert },
-                  { key: "disqualify", label: m.actions.disqualify, danger: true },
+                  {
+                    key: "disqualify",
+                    label: m.actions.disqualify,
+                    danger: true,
+                  },
                 ],
                 onClick: ({ key }) =>
                   key === "convert" ? onConvert() : onDisqualify(),
