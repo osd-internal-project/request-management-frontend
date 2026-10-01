@@ -120,6 +120,8 @@ export const ROUTES = {
   quotationPrint: (id: string) => `/print/quotations/${id}`,
   /** CD-194 — ราคาขายมาตรฐานต่อรหัสสินค้า. */
   pricingPrices: `${HOME_PATH}/pricing/prices`,
+  /** CD-200 — markup rules. */
+  pricingMarkup: `${HOME_PATH}/pricing/markup`,
   /** CD-142 — SAP's suppliers with the technical profile Pre-Sales keeps. */
   partners: `${HOME_PATH}/partners`,
   partnerDetail: (code: string) =>

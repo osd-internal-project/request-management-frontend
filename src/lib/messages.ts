@@ -97,6 +97,7 @@ export const messages = {
     presalesGroup: "Pre-Sales",
     pricingGroup: "Pricing",
     pricingPrices: "ราคามาตรฐาน",
+    pricingMarkup: "กำหนด Markup",
     partners: "คู่ค้า",
     contracts: "คลังสัญญา",
     contractTemplates: "แม่แบบสัญญา",
@@ -2948,6 +2949,27 @@ export const messages = {
   },
   /** CD-194 ราคามาตรฐาน */
   pricing: {
+    /** CD-200 กำหนด Markup */
+    markup: {
+      title: "กำหนด Markup",
+      hint: "ใช้เสนอราคา = ต้นทุน × (1 + markup) เมื่อบรรทัดไม่มีราคามาตรฐาน/ราคาเฉพาะ · ช่องที่เว้นว่าง = ตรงทุกค่า · เลขลำดับน้อยทำก่อน ถ้าเท่ากันใช้กฎที่ระบุเงื่อนไขมากกว่า",
+      add: "เพิ่มกฎ",
+      edit: "แก้กฎ",
+      priority: "ลำดับ",
+      workType: "ประเภทงาน",
+      group: "กลุ่มสินค้า (SAP)",
+      segment: "กลุ่มลูกค้า",
+      any: "ทุกค่า",
+      markupPct: "Markup %",
+      note: "หมายเหตุ",
+      active: "ใช้งาน",
+      inactive: "ปิด",
+      save: "บันทึก",
+      saved: "บันทึกกฎแล้ว",
+      remove: "ลบกฎนี้? บรรทัดที่เคยตั้งราคาจากกฎนี้ไม่เปลี่ยน",
+      removed: "ลบแล้ว",
+      empty: "ยังไม่มีกฎ markup",
+    },
     prices: {
       title: "ราคามาตรฐาน",
       hint: "ราคาขายอ้างอิงต่อรหัสสินค้า SAP แยกตามสกุลเงิน — ช่วงเวลามีผลของรหัสและสกุลเงินเดียวกันห้ามซ้อนกัน · เลือกสินค้าในใบเสนอราคาแล้วระบบเติมราคาที่มีผลวันนี้ให้",
@@ -3969,12 +3991,24 @@ export const messages = {
           unitCost: "ต้นทุน/หน่วย",
           discountPct: "ส่วนลด %",
           lineTotal: "รวม",
+          /** CD-200 */
+          workType: "ประเภทงาน",
           /** CD-199 */
           margin: "Margin",
           /** CD-196 */
           priceModel: "รูปแบบราคา",
           termMonths: "จำนวนเดือน",
         },
+        /** CD-200 */
+        workTypes: {
+          equipment: "อุปกรณ์",
+          material: "วัสดุ",
+          software: "ซอฟต์แวร์",
+          service: "บริการ",
+        } as Record<string, string>,
+        fromMarkup: (pct: number) => `ราคาจาก markup ${pct}%`,
+        markupFilled: (code: string, price: string, pct: number) =>
+          `ไม่มีราคามาตรฐาน — เสนอราคาจาก markup ${pct}% ของ ${code}: ${price}`,
         /** CD-198 */
         fromSolution: "สร้างจาก Solution",
         solutionVersion: (no: number) => `เวอร์ชัน ${no} (เปิดหน้า Solution)`,

@@ -1,8 +1,8 @@
 /** CD-194 ราคามาตรฐาน — server-side reads; see `./client` for the rest. */
 import { apiGet, type ApiResult } from "../core";
-import type { PriceStatus, ProductPriceRow } from "./client";
+import type { MarkupRule, PriceStatus, ProductPriceRow } from "./client";
 
-export type { PriceStatus, ProductPriceRow } from "./client";
+export type { MarkupRule, PriceStatus, ProductPriceRow } from "./client";
 
 export async function getPrices(query: {
   q?: string;
@@ -16,4 +16,9 @@ export async function getPrices(query: {
   if (query.status) params.set("status", query.status);
   const qs = params.toString();
   return apiGet(qs ? `pricing/prices?${qs}` : "pricing/prices");
+}
+
+/** CD-200 — markup rules in priority order. */
+export async function getMarkupRules(): Promise<ApiResult<MarkupRule[]>> {
+  return apiGet("pricing/markup-rules");
 }

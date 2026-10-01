@@ -191,6 +191,12 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     href: ROUTES.pricingPrices,
     permissions: ["pricing.price.read", "pricing.price.manage"],
     group: messages.nav.pricingGroup,
+  } /** CD-200 — markup by work type, SAP item group and customer group. */,
+  {
+    label: messages.nav.pricingMarkup,
+    href: ROUTES.pricingMarkup,
+    permissions: ["pricing.price.read", "pricing.price.manage"],
+    group: messages.nav.pricingGroup,
   },
 
   /** CD-183 — ความเสี่ยงที่ผู้บริหารต้องเห็น ข้ามทุกโครงการ. */

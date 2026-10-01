@@ -92,3 +92,45 @@ export function getPriceVersions(
 ): Promise<ClientResult<PriceVersion[]>> {
   return appApi(`pricing/prices/${id}/versions`);
 }
+
+/** CD-200 — the markup that applies to each line of a deal, or null. */
+export function suggestMarkup(
+  lines: { product_code?: string; work_type?: string }[],
+  opportunityId?: string,
+): Promise<ClientResult<({ rule_id: string; markup_pct: number } | null)[]>> {
+  return appApi("pricing/markup-rules/suggest", {
+    method: "POST",
+    body: JSON.stringify({ lines, opportunity_id: opportunityId }),
+  });
+}
+
+export type WorkType = "equipment" | "material" | "software" | "service";
+export const WORK_TYPES: WorkType[] = [
+  "equipment",
+  "material",
+  "software",
+  "service",
+];
+
+/** CD-200 — a markup rule as the list shows it. */
+export interface MarkupRule {
+  id: string;
+  priority: number;
+  workType: WorkType | null;
+  productGroupCode: string | null;
+  productGroupName: string | null;
+  segmentValueId: string | null;
+  segmentLabel: string | null;
+  markupPct: number;
+  note: string;
+  active: boolean;
+}
+
+export interface MarkupOptions {
+  groups: { code: string; name: string }[];
+  segments: { id: string; label: string }[];
+}
+
+export function getMarkupOptions(): Promise<ClientResult<MarkupOptions>> {
+  return appApi("pricing/markup-rules/options");
+}

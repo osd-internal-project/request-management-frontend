@@ -1520,6 +1520,9 @@ export interface QuotationLine {
   termMonths?: number | null;
   /** CD-198 — where the cost came from when started from a Solution. */
   costSource?: string | null;
+  /** CD-200 — work type, and the markup the price was filled from. */
+  workType?: string | null;
+  markupPct?: Money | null;
 }
 
 export interface QuotationDetail extends QuotationRow {

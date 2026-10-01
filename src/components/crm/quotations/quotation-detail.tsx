@@ -29,7 +29,7 @@ import {
   QuotationStatusTags,
 } from "@/components/crm/quotations/quotation-list";
 import { ProductPicker } from "@/components/crm/quotations/product-picker";
-import { lookupPrices } from "@/lib/api/pricing/client";
+import { lookupPrices, suggestMarkup } from "@/lib/api/pricing/client";
 import { appApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
@@ -60,7 +60,14 @@ interface DraftLine {
   termMonths: number | null;
   /** CD-198 — display only; the server keeps it while product and cost stand. */
   costSource: string | null;
+  /** CD-200 — equipment · material · software · service. */
+  workType: WorkType | null;
+  /** CD-200 — the markup that priced the line; cleared by a hand edit. */
+  markupPct: number | null;
 }
+
+type WorkType = "equipment" | "material" | "software" | "service";
+const WORK_TYPES: WorkType[] = ["equipment", "material", "software", "service"];
 
 type PriceModel = "unit" | "lump_sum" | "monthly";
 const PRICE_MODELS: PriceModel[] = ["unit", "lump_sum", "monthly"];
@@ -98,6 +105,11 @@ function toDraftLines(quotation: QuotationDetail): DraftLine[] {
     priceModel: (line.priceModel ?? "unit") as PriceModel,
     termMonths: line.termMonths ?? null,
     costSource: line.costSource ?? null,
+    workType: (line.workType ?? null) as WorkType | null,
+    markupPct:
+      line.markupPct === null || line.markupPct === undefined
+        ? null
+        : Number(line.markupPct),
   }));
 }
 
@@ -260,6 +272,8 @@ export function QuotationDetailView({
               discount_pct: line.discountPct ?? 0,
               price_id: line.priceId ?? undefined,
               price_model: line.priceModel,
+              work_type: line.workType ?? undefined,
+              markup_pct: line.markupPct ?? undefined,
               term_months:
                 line.priceModel === "monthly"
                   ? (line.termMonths ?? undefined)
@@ -344,6 +358,31 @@ export function QuotationDetailView({
    * CD-194 — the standard price in effect today, in this quotation's
    * currency, becomes the line's unit price. No price, no change.
    */
+  /**
+   * CD-200 — no standard or special price: offer cost × (1 + markup) from the
+   * rule that applies to this product, work type and deal.
+   */
+  async function fillMarkupPrice(key: string, code: string) {
+    const line = lines.find((row) => row.key === key);
+    const cost = line?.unitCost ?? 0;
+    if (!cost) return;
+    const result = await suggestMarkup(
+      [{ product_code: code, work_type: line?.workType ?? undefined }],
+      quotation.opportunityId,
+    );
+    const markup = result.ok ? result.data[0] : null;
+    if (!markup) return;
+    const price = round2(cost * (1 + markup.markup_pct / 100));
+    patchLine(key, {
+      unitPrice: price,
+      priceId: null,
+      markupPct: markup.markup_pct,
+    });
+    void message.info(
+      md.markupFilled(code, money(price, currency), markup.markup_pct),
+    );
+  }
+
   async function fillStandardPrice(key: string, code: string) {
     const result = await lookupPrices(
       [code],
@@ -351,7 +390,10 @@ export function QuotationDetailView({
       quotation.opportunityId,
     );
     const found = result.ok ? result.data[code] : undefined;
-    if (!found) return;
+    if (!found) {
+      await fillMarkupPrice(key, code);
+      return;
+    }
     const model = (found.price_model ?? "unit") as PriceModel;
     setLines((current) =>
       current.map((line) =>
@@ -745,6 +787,8 @@ export function QuotationDetailView({
                     priceModel: "unit",
                     termMonths: null,
                     costSource: null,
+                    workType: null,
+                    markupPct: null,
                   },
                 ])
               }
@@ -834,10 +878,10 @@ export function QuotationDetailView({
             {
               title: md.line.priceModel,
               dataIndex: "priceModel",
-              width: 170,
+              width: 250,
               render: (value: PriceModel, row) =>
                 canEditLines ? (
-                  <div className="flex gap-1">
+                  <div className="flex flex-wrap gap-1">
                     <Select<PriceModel>
                       className="min-w-24 flex-1"
                       value={value}
@@ -871,6 +915,19 @@ export function QuotationDetailView({
                         }
                       />
                     )}
+                    <Select<WorkType>
+                      className="min-w-24"
+                      allowClear
+                      placeholder={md.line.workType}
+                      value={row.workType ?? undefined}
+                      onChange={(type) =>
+                        patchLine(row.key, { workType: type ?? null })
+                      }
+                      options={WORK_TYPES.map((type) => ({
+                        value: type,
+                        label: md.workTypes[type],
+                      }))}
+                    />
                   </div>
                 ) : value === "monthly" ? (
                   md.monthlyTerm(row.termMonths ?? 0)
@@ -908,11 +965,22 @@ export function QuotationDetailView({
                     value={value}
                     onChange={(next) =>
                       // A price typed by hand no longer is the standard one.
-                      patchLine(row.key, { unitPrice: next, priceId: null })
+                      patchLine(row.key, {
+                        unitPrice: next,
+                        priceId: null,
+                        markupPct: null,
+                      })
                     }
                   />
                 ) : (
-                  formatAmount(value)
+                  <>
+                    {formatAmount(value)}
+                    {row.markupPct !== null && (
+                      <div className="text-[11px] text-gray-500">
+                        {md.fromMarkup(row.markupPct)}
+                      </div>
+                    )}
+                  </>
                 ),
             },
             ...(costVisible
@@ -930,7 +998,11 @@ export function QuotationDetailView({
                             min={0}
                             value={value}
                             onChange={(next) =>
-                              patchLine(row.key, { unitCost: next })
+                              // CD-200 — a new cost no longer is what the markup priced.
+                              patchLine(row.key, {
+                                unitCost: next,
+                                markupPct: null,
+                              })
                             }
                           />
                         ) : (
