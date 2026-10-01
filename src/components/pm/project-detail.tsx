@@ -32,6 +32,7 @@ import type {
   CustomerLogsView,
   ProjectPaymentsView,
   ProjectCloseoutView,
+  StatusReportsView,
 } from "@/lib/api/projects";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
@@ -46,6 +47,7 @@ import { ProjectIssuesCard } from "./project-issues-card";
 import { CustomerLogsCard } from "./customer-logs-card";
 import { ProjectPaymentsCard } from "./project-payments-card";
 import { ProjectCloseoutCard } from "./project-closeout-card";
+import { ProjectStatusCard } from "./project-status-card";
 import {
   ProjectTeamFields,
   teamPayload,
@@ -71,6 +73,7 @@ export function ProjectDetailView({
   customerLogs,
   payments,
   closeout,
+  statusReports,
   currentUserId,
   people,
 }: {
@@ -95,6 +98,8 @@ export function ProjectDetailView({
   readonly payments: ProjectPaymentsView | null;
   /** CD-191 — null = could not load. */
   readonly closeout: ProjectCloseoutView | null;
+  /** CD-192 — null = could not load. */
+  readonly statusReports: StatusReportsView | null;
   readonly currentUserId: string | null;
   /** The company's people, for the manager and team pickers. */
   readonly people: { id: string; name: string }[];
@@ -341,6 +346,16 @@ export function ProjectDetailView({
           </Text>
         )}
       </Card>
+
+      {statusReports && (
+        <ProjectStatusCard
+          key={statusReports.reports
+            .map((row) => `${row.id}${row.status}`)
+            .join()}
+          projectId={project.id}
+          view={statusReports}
+        />
+      )}
 
       {progress && (
         <ProjectProgressCard projectId={project.id} view={progress} />

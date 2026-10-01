@@ -754,3 +754,96 @@ export function getProjectCloseout(
 ): Promise<ApiResult<ProjectCloseoutView>> {
   return apiGet(`/projects/${encodeURIComponent(id)}/closeout`);
 }
+
+/** CD-192 — a project's health: the score and what adds to it. */
+export interface ProjectHealth {
+  score: number;
+  level: "green" | "amber" | "red";
+  factors: { key: string; label: string; points: number; detail: string }[];
+}
+
+/** CD-192 — what a status report freezes. */
+export interface StatusSnapshot {
+  today: string;
+  health: ProjectHealth;
+  progress: {
+    workPct: number | null;
+    plannedPct: number | null;
+    variance: number | null;
+  };
+  milestones: {
+    achieved: number;
+    total: number;
+    late: { title: string; dueOn: string | null; forecast: string | null }[];
+  };
+  risks: { open: number; high: number; critical: number };
+  issues: { open: number; overdue: number };
+  budget: {
+    versionNo: number;
+    total: number;
+    firstTotal: number;
+    growthPct: number | null;
+  } | null;
+  payments: {
+    scheduled: number;
+    received: number;
+    outstanding: number;
+    overdue: number;
+    overdueCount: number;
+  };
+}
+
+export interface StatusReportView {
+  id: string;
+  weekStart: string;
+  status: "draft" | "submitted";
+  healthLevel: ProjectHealth["level"];
+  healthScore: number;
+  snapshot: StatusSnapshot;
+  snapshotAt: string;
+  accomplished: string | null;
+  nextSteps: string | null;
+  helpNeeded: string | null;
+  submittedAt: string | null;
+  submittedByName: string | null;
+}
+
+export interface StatusReportsView {
+  canEdit: boolean;
+  thisWeek: string;
+  live: StatusSnapshot;
+  reports: StatusReportView[];
+}
+
+export function getStatusReports(
+  id: string,
+): Promise<ApiResult<StatusReportsView>> {
+  return apiGet(`/projects/${encodeURIComponent(id)}/status-reports`);
+}
+
+/** CD-192 — one running project on the portfolio. */
+export interface PortfolioRow {
+  id: string;
+  projectNo: string;
+  name: string;
+  status: string;
+  customerName: string | null;
+  managerName: string | null;
+  endOn: string;
+  contractValue: number | null;
+  health: ProjectHealth;
+  progress: StatusSnapshot["progress"];
+  paymentsOverdue: number;
+  reportStatus: "draft" | "submitted" | null;
+}
+
+export interface PortfolioView {
+  thisWeek: string;
+  thresholds: { amber: number; red: number };
+  counts: { red: number; amber: number; green: number; unreported: number };
+  projects: PortfolioRow[];
+}
+
+export function getPortfolio(): Promise<ApiResult<PortfolioView>> {
+  return apiGet(`/project-portfolio`);
+}

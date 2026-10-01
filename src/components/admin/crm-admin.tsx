@@ -363,6 +363,10 @@ function ConfigSection({
   const [closeDocuments, setCloseDocuments] = useState<string[]>(
     config.projectCloseDocuments ?? [],
   );
+  const [healthAmber, setHealthAmber] = useState(
+    config.projectHealthAmber ?? 20,
+  );
+  const [healthRed, setHealthRed] = useState(config.projectHealthRed ?? 40);
   const [solutionType, setSolutionType] = useState(
     config.solutionRequestTypeCode ?? "",
   );
@@ -391,6 +395,8 @@ function ConfigSection({
       project_change_type_code: projectChangeType,
       project_close_type_code: projectCloseType,
       project_close_documents: closeDocuments,
+      project_health_amber: healthAmber,
+      project_health_red: healthRed,
       solution_request_type_code: solutionType,
       solution_approval_type_code: solutionApprovalType,
       demo_request_type_code: demoType,
@@ -663,6 +669,30 @@ function ConfigSection({
       </div>
       <Text type="secondary" className="mt-2 block text-xs">
         {m.projectCloseDocumentsHint}
+      </Text>
+      {/* CD-192 — เกณฑ์สุขภาพโครงการ */}
+      <div className="mt-3 flex flex-wrap gap-4">
+        <div>
+          <Text className="mb-1 block text-xs">{m.projectHealthAmber}</Text>
+          <InputNumber
+            min={1}
+            max={500}
+            value={healthAmber}
+            onChange={(value) => setHealthAmber(Number(value ?? 20))}
+          />
+        </div>
+        <div>
+          <Text className="mb-1 block text-xs">{m.projectHealthRed}</Text>
+          <InputNumber
+            min={1}
+            max={500}
+            value={healthRed}
+            onChange={(value) => setHealthRed(Number(value ?? 40))}
+          />
+        </div>
+      </div>
+      <Text type="secondary" className="mt-2 block text-xs">
+        {m.projectHealthHint}
       </Text>
 
       {/* CD-130 — ประเภทคำขอ Solution (Sales → Pre-Sales) */}

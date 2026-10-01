@@ -93,6 +93,7 @@ export const messages = {
     projects: "โครงการ",
     myTasks: "งานโครงการของฉัน",
     projectRisks: "ความเสี่ยงโครงการ",
+    projectPortfolio: "ภาพรวมโครงการ",
     projectOpen: "เปิดโครงการ",
     presalesGroup: "Pre-Sales",
     pricingGroup: "Pricing",
@@ -4765,6 +4766,10 @@ export const messages = {
       projectCloseHint:
         "การ์ดปิดโครงการส่งคำขอถึงผู้บริหารโครงการด้วยประเภทนี้เมื่อผ่านรายการตรวจครบ · form มี contract_value (มูลค่าสัญญา) ให้ตั้งเงื่อนไขในตารางอำนาจอนุมัติได้ · อนุมัติแล้วโครงการปิดให้อัตโนมัติ · ว่าง = ส่งไม่ได้",
       projectCloseDocuments: "เอกสารที่ต้องแนบก่อนปิดโครงการ",
+      projectHealthAmber: "คะแนนสุขภาพโครงการที่ขึ้นสีเหลือง",
+      projectHealthRed: "คะแนนสุขภาพโครงการที่ขึ้นสีแดง",
+      projectHealthHint:
+        "คะแนนรวมจาก: งานช้ากว่าแผน (≥5 จุด = 5, ≥10 = 15, ≥20 = 30) · milestone ล่าช้า 15/รายการ (สูงสุด 30) · ความเสี่ยงวิกฤติ 20 สูง 10 (สูงสุด 30) · ปัญหาเลยกำหนด 5/ข้อ (สูงสุด 20) · งบเพิ่ม ≥10% = 10, ≥20% = 20 · งวดชำระเลยกำหนด 10/งวด (สูงสุด 20) — ถึงเกณฑ์เหลือง/แดงตามค่าที่ตั้ง",
       projectCloseDocumentsHint:
         "พิมพ์ชื่อเอกสารแล้วกด Enter ทีละรายการ · ทุกโครงการต้องแนบไฟล์ตามชื่อนี้ครบก่อนขอปิด",
       projectChangeHint:
@@ -4977,6 +4982,82 @@ export const messages = {
         save: "บันทึก",
         close: "ยกเลิก",
       },
+    },
+    health: {
+      level: {
+        green: "ปกติ",
+        amber: "เฝ้าระวัง",
+        red: "เสี่ยง",
+      } as Record<string, string>,
+      color: {
+        green: "success",
+        amber: "warning",
+        red: "error",
+      } as Record<string, string>,
+      score: (n: number) => `คะแนน ${n}`,
+      none: "ไม่มีปัจจัยเสี่ยง",
+    },
+    statusReports: {
+      title: "รายงานสถานะ",
+      hint: "ระบบร่างรายงานทุกวันจันทร์จากตัวเลขของโครงการ และอัปเดตตัวเลขทุกวันจนกว่าจะส่ง · ผู้จัดการโครงการเติมงานที่ทำได้ งานถัดไป และสิ่งที่ต้องการความช่วยเหลือ แล้วกดส่ง — ตัวเลขถูกตรึงไว้ ณ ตอนส่ง",
+      live: "สุขภาพตอนนี้",
+      week: (day: string) => `สัปดาห์ ${day}`,
+      draft: "ร่าง",
+      submitted: "ส่งแล้ว",
+      noDraft: "ยังไม่มีร่างของสัปดาห์นี้",
+      makeDraft: "ร่างรายงานสัปดาห์นี้",
+      refresh: "อัปเดตตัวเลข",
+      save: "บันทึก",
+      submit: "ส่งรายงาน",
+      submitConfirm: "ส่งรายงานสัปดาห์นี้? ตัวเลขจะถูกตรึงไว้และแก้ไขไม่ได้",
+      saved: "บันทึกแล้ว",
+      sent: "ส่งรายงานแล้ว",
+      accomplished: "งานที่ทำได้ในสัปดาห์นี้",
+      nextSteps: "งานสัปดาห์ถัดไป",
+      helpNeeded: "สิ่งที่ต้องการความช่วยเหลือ/การตัดสินใจ (ถ้ามี)",
+      history: (n: number) => `รายงานก่อนหน้า (${n})`,
+      by: (name: string, at: string) => `ส่งโดย ${name} · ${at}`,
+      figures: {
+        progress: (work: string, planned: string) =>
+          `งานเสร็จ ${work}% · ตามแผน ${planned}%`,
+        milestones: (done: number, total: number, late: number) =>
+          `milestone ${done}/${total}${late ? ` · ล่าช้า ${late}` : ""}`,
+        risks: (open: number, high: number, critical: number) =>
+          `ความเสี่ยงเปิด ${open} (สูง ${high} · วิกฤติ ${critical})`,
+        issues: (open: number, overdue: number) =>
+          `ปัญหาเปิด ${open}${overdue ? ` · เลยกำหนด ${overdue}` : ""}`,
+        budget: (version: number, total: string, growth: string | null) =>
+          `งบฉบับ ${version} ${total}${growth ? ` (เพิ่ม ${growth}%)` : ""}`,
+        payments: (received: string, outstanding: string, overdue: string) =>
+          `รับเงินแล้ว ${received} · คงค้าง ${outstanding}${overdue !== "0" ? ` · เลยกำหนด ${overdue}` : ""}`,
+      },
+    },
+    portfolio: {
+      title: "ภาพรวมโครงการ",
+      subtitle: (week: string, amber: number, red: number) =>
+        `โครงการที่ดำเนินอยู่ เรียงโครงการที่เสี่ยงเกินเกณฑ์ขึ้นก่อน · สัปดาห์ ${week} · เกณฑ์ เหลือง ≥ ${amber} แดง ≥ ${red}`,
+      counts: {
+        red: "เสี่ยง",
+        amber: "เฝ้าระวัง",
+        green: "ปกติ",
+        unreported: "ยังไม่ส่งรายงานสัปดาห์นี้",
+      },
+      columns: {
+        project: "โครงการ",
+        customer: "ลูกค้า",
+        manager: "ผู้จัดการโครงการ",
+        health: "สุขภาพ",
+        factors: "ปัจจัย",
+        progress: "งานเสร็จ / ตามแผน",
+        endOn: "สิ้นสุด",
+        report: "รายงานสัปดาห์นี้",
+      },
+      report: {
+        submitted: "ส่งแล้ว",
+        draft: "ร่าง",
+        none: "ยังไม่มี",
+      } as Record<string, string>,
+      empty: "ไม่มีโครงการที่ดำเนินอยู่",
     },
     closeout: {
       title: "ปิดโครงการ",

@@ -80,6 +80,8 @@ export const CORE_SERVICE_PREFIXES = [
   "/projects",
   "/project-tasks",
   "/project-risks",
+  // CD-192 — the portfolio
+  "/project-portfolio",
   "/sales-targets",
   "/campaigns",
   "/target-accounts",

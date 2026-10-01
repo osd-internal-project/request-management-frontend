@@ -1799,6 +1799,9 @@ export interface CrmConfig {
   projectCloseTypeCode?: string | null;
   /** CD-191 — the documents every project must attach before closing. */
   projectCloseDocuments?: string[];
+  /** CD-192 — the health scores at which a project turns amber, and red. */
+  projectHealthAmber?: number;
+  projectHealthRed?: number;
   /** CD-130 — the type Pre-Sales takes solution requests on. */
   solutionRequestTypeCode?: string | null;
   /** CD-143 — the type a Solution version is sent for approval on. */

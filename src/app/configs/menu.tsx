@@ -199,6 +199,14 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     group: messages.nav.pricingGroup,
   },
 
+  /** CD-192 — ภาพรวมโครงการ เรียงโครงการที่เสี่ยงเกินเกณฑ์ขึ้นก่อน. */
+  {
+    label: messages.nav.projectPortfolio,
+    href: ROUTES.projectPortfolio,
+    permissions: ["pm.project.read"],
+    group: messages.nav.pmGroup,
+  },
+
   /** CD-183 — ความเสี่ยงที่ผู้บริหารต้องเห็น ข้ามทุกโครงการ. */
   {
     label: messages.nav.projectRisks,
