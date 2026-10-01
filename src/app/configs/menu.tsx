@@ -40,12 +40,23 @@ export type MenuIconKey =
   | "apiKey"
   | "erpSync"
   | "runNumber"
-  | "dashboard";
+  | "dashboard"
+  | "myTask"
+  | "esign"
+  | "partner"
+  | "project"
+  | "pricingPrice"
+  | "pricingMarkup"
+  | "projectPortfolio"
+  | "projectRisk"
+  | "esignLayout"
+  | "esignAuthority";
 
 export interface MenuEntry {
   label: string;
   href: string;
-  icon: MenuIconKey;
+  /** Optional: an entry without one shows the generic icon. */
+  icon?: MenuIconKey;
   /** Shown only if the session holds at least one of these. */
   permissions?: readonly string[];
   /** Group heading rendered above this entry, e.g. "ผู้ดูแลระบบ". */
@@ -76,6 +87,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
   {
     label: messages.nav.myTasks,
     href: ROUTES.myTasks,
+    icon: "myTask",
     permissions: ["notification.read"],
     group: messages.nav.requestGroup,
   },
@@ -83,6 +95,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
   {
     label: messages.nav.esignMine,
     href: ROUTES.esignMine,
+    icon: "esign",
     permissions: ["notification.read"],
     group: messages.nav.requestGroup,
   },
@@ -234,6 +247,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
   {
     label: messages.nav.partners,
     href: ROUTES.partners,
+    icon: "partner",
     permissions: ["presales.solution.read", "presales.solution.manage"],
     group: messages.nav.presalesGroup,
   },
@@ -242,6 +256,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
   {
     label: messages.nav.projects,
     href: ROUTES.projects,
+    icon: "project",
     permissions: ["notification.read"],
     group: messages.nav.pmGroup,
   },
@@ -250,12 +265,14 @@ const MENU_ITEMS: readonly MenuEntry[] = [
   {
     label: messages.nav.pricingPrices,
     href: ROUTES.pricingPrices,
+    icon: "pricingPrice",
     permissions: ["pricing.price.read", "pricing.price.manage"],
     group: messages.nav.pricingGroup,
   } /** CD-200 — markup by work type, SAP item group and customer group. */,
   {
     label: messages.nav.pricingMarkup,
     href: ROUTES.pricingMarkup,
+    icon: "pricingMarkup",
     permissions: ["pricing.price.read", "pricing.price.manage"],
     group: messages.nav.pricingGroup,
   },
@@ -264,6 +281,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
   {
     label: messages.nav.projectPortfolio,
     href: ROUTES.projectPortfolio,
+    icon: "projectPortfolio",
     permissions: ["pm.project.read"],
     group: messages.nav.pmGroup,
   },
@@ -272,6 +290,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
   {
     label: messages.nav.projectRisks,
     href: ROUTES.projectRisks,
+    icon: "projectRisk",
     permissions: ["pm.project.read"],
     group: messages.nav.pmGroup,
   },
@@ -288,6 +307,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
   {
     label: messages.nav.esignLayouts,
     href: ROUTES.esignLayouts,
+    icon: "esignLayout",
     permissions: ["esign.manage"],
     group: messages.nav.legalGroup,
   },
@@ -295,6 +315,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
   {
     label: messages.nav.esignAuthorities,
     href: ROUTES.esignAuthorities,
+    icon: "esignAuthority",
     permissions: ["esign.manage"],
     group: messages.nav.legalGroup,
   },

@@ -8,29 +8,38 @@ import {
   BarChartOutlined,
   BellOutlined,
   CarryOutOutlined,
+  CheckSquareOutlined,
   ClockCircleOutlined,
   ControlOutlined,
   DashboardOutlined,
+  DollarOutlined,
   EnvironmentOutlined,
   FieldTimeOutlined,
   FileProtectOutlined,
   FileTextOutlined,
   FlagOutlined,
   FormOutlined,
+  FundProjectionScreenOutlined,
   FunnelPlotOutlined,
   GlobalOutlined,
   HeartOutlined,
   HistoryOutlined,
   InboxOutlined,
   KeyOutlined,
+  LayoutOutlined,
   MailOutlined,
   MessageOutlined,
   NotificationOutlined,
   NumberOutlined,
+  PercentageOutlined,
   PieChartOutlined,
+  ProjectOutlined,
   RiseOutlined,
+  SafetyOutlined,
   SettingOutlined,
+  ShopOutlined,
   ShoppingCartOutlined,
+  SignatureOutlined,
   SnippetsOutlined,
   SwapOutlined,
   SyncOutlined,
@@ -38,6 +47,7 @@ import {
   UnorderedListOutlined,
   UserAddOutlined,
   UserOutlined,
+  WarningOutlined,
 } from "@ant-design/icons";
 import type { ComponentType } from "react";
 import type { MenuIconKey } from "@/app/configs/menu";
@@ -81,9 +91,19 @@ const MENU_ICONS: Record<MenuIconKey, ComponentType> = {
   erpSync: SyncOutlined,
   runNumber: NumberOutlined,
   dashboard: DashboardOutlined,
+  myTask: CheckSquareOutlined,
+  esign: SignatureOutlined,
+  partner: ShopOutlined,
+  project: ProjectOutlined,
+  pricingPrice: DollarOutlined,
+  pricingMarkup: PercentageOutlined,
+  projectPortfolio: FundProjectionScreenOutlined,
+  projectRisk: WarningOutlined,
+  esignLayout: LayoutOutlined,
+  esignAuthority: SafetyOutlined,
 };
 
-export function MenuIcon({ name }: { name: MenuIconKey }) {
-  const Icon = MENU_ICONS[name];
+export function MenuIcon({ name }: { name?: MenuIconKey }) {
+  const Icon = name ? MENU_ICONS[name] : AppstoreOutlined;
   return <Icon />;
 }
