@@ -25,6 +25,7 @@ import type {
   ProjectMilestonesView,
   ProjectPlanView,
   ProjectProgressView,
+  ProjectBudgetView,
 } from "@/lib/api/projects";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
@@ -32,6 +33,7 @@ import { ProjectBaselineView } from "./project-baseline";
 import { ProjectMilestonesCard } from "./project-milestones-card";
 import { ProjectPlanCard } from "./project-plan-card";
 import { ProjectProgressCard } from "./project-progress-card";
+import { ProjectBudgetCard } from "./project-budget-card";
 import {
   ProjectTeamFields,
   teamPayload,
@@ -50,6 +52,7 @@ export function ProjectDetailView({
   milestones,
   plan,
   progress,
+  budget,
   people,
 }: {
   readonly project: ProjectDetail;
@@ -59,6 +62,8 @@ export function ProjectDetailView({
   readonly plan: ProjectPlanView | null;
   /** CD-188 — null = could not load. */
   readonly progress: ProjectProgressView | null;
+  /** CD-179 — null = could not load. */
+  readonly budget: ProjectBudgetView | null;
   /** The company's people, for the manager and team pickers. */
   readonly people: { id: string; name: string }[];
 }) {
@@ -315,6 +320,14 @@ export function ProjectDetailView({
 
       {plan && (
         <ProjectPlanCard projectId={project.id} view={plan} people={pickable} />
+      )}
+
+      {budget && (
+        <ProjectBudgetCard
+          key={`${budget.current?.id ?? "none"}-${budget.current?.status ?? ""}`}
+          projectId={project.id}
+          view={budget}
+        />
       )}
 
       <Card size="small" title={md.baseline}>

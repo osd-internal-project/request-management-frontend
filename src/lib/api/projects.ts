@@ -411,3 +411,53 @@ export function getProjectProgress(
 ): Promise<ApiResult<ProjectProgressView>> {
   return apiGet(`/projects/${encodeURIComponent(id)}/progress`);
 }
+
+/** CD-179 — one line of the reference budget. */
+export interface BudgetLineView {
+  category: "material" | "labor" | "other";
+  code: string | null;
+  description: string;
+  quantity: number;
+  unit: string | null;
+  unitCost: number | null;
+  amount: number;
+}
+
+export interface ProjectBudgetView {
+  canEdit: boolean;
+  current: {
+    id: string;
+    versionNo: number;
+    status: "draft" | "locked" | "superseded";
+    lines: BudgetLineView[];
+    contractValue: number | null;
+    byCategory: Record<"material" | "labor" | "other", number>;
+    total: number;
+    margin: number | null;
+    marginPct: number | null;
+    missingCost: number;
+    note: string | null;
+    changeRequestId: string | null;
+    createdAt: string;
+    createdByName: string | null;
+    lockedAt: string | null;
+    lockedByName: string | null;
+    lockProblems: string[];
+  } | null;
+  versions: {
+    id: string;
+    versionNo: number;
+    status: string;
+    total: number;
+    changeRequestId: string | null;
+    lockedAt: string | null;
+    lockedByName: string | null;
+  }[];
+  actual: null;
+}
+
+export function getProjectBudget(
+  id: string,
+): Promise<ApiResult<ProjectBudgetView>> {
+  return apiGet(`/projects/${encodeURIComponent(id)}/budget`);
+}
