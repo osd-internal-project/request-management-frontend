@@ -847,3 +847,46 @@ export interface PortfolioView {
 export function getPortfolio(): Promise<ApiResult<PortfolioView>> {
   return apiGet(`/project-portfolio`);
 }
+
+/** CD-221 — one thing the project must prove works, and its runs. */
+export interface TestItemView {
+  id: string;
+  label: string;
+  source: "scope" | "criterion" | "change" | "manual";
+  deliverable: string | null;
+  text: string;
+  steps: string | null;
+  ownerUserId: string | null;
+  ownerName: string | null;
+  state: "untested" | "passed" | "failed" | "waived";
+  waivedReason: string | null;
+  runs: {
+    id: string;
+    result: "pass" | "fail";
+    note: string | null;
+    evidenceName: string | null;
+    issue: { id: string; label: string | null } | null;
+    testedByName: string;
+    testedAt: string;
+  }[];
+}
+
+export interface ProjectTestsView {
+  canEdit: boolean;
+  canWrite: boolean;
+  coverage: {
+    total: number;
+    passed: number;
+    failed: number;
+    untested: number;
+    waived: number;
+    complete: boolean;
+  };
+  items: TestItemView[];
+}
+
+export function getProjectTests(
+  id: string,
+): Promise<ApiResult<ProjectTestsView>> {
+  return apiGet(`/projects/${encodeURIComponent(id)}/tests`);
+}

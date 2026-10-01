@@ -33,6 +33,7 @@ import type {
   ProjectPaymentsView,
   ProjectCloseoutView,
   StatusReportsView,
+  ProjectTestsView,
 } from "@/lib/api/projects";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
@@ -48,6 +49,7 @@ import { CustomerLogsCard } from "./customer-logs-card";
 import { ProjectPaymentsCard } from "./project-payments-card";
 import { ProjectCloseoutCard } from "./project-closeout-card";
 import { ProjectStatusCard } from "./project-status-card";
+import { ProjectTestsCard } from "./project-tests-card";
 import {
   ProjectTeamFields,
   teamPayload,
@@ -74,6 +76,7 @@ export function ProjectDetailView({
   payments,
   closeout,
   statusReports,
+  tests,
   currentUserId,
   people,
 }: {
@@ -100,6 +103,8 @@ export function ProjectDetailView({
   readonly closeout: ProjectCloseoutView | null;
   /** CD-192 — null = could not load. */
   readonly statusReports: StatusReportsView | null;
+  /** CD-221 — null = could not load. */
+  readonly tests: ProjectTestsView | null;
   readonly currentUserId: string | null;
   /** The company's people, for the manager and team pickers. */
   readonly people: { id: string; name: string }[];
@@ -391,6 +396,14 @@ export function ProjectDetailView({
 
       {payments && (
         <ProjectPaymentsCard projectId={project.id} view={payments} />
+      )}
+
+      {tests && (
+        <ProjectTestsCard
+          projectId={project.id}
+          view={tests}
+          people={pickable}
+        />
       )}
 
       {customerLogs && (
