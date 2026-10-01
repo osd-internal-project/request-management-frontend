@@ -1526,6 +1526,8 @@ export interface QuotationLine {
 }
 
 export interface QuotationDetail extends QuotationRow {
+  /** CD-202 — the company's minimum per work type (none = minMarginPct). */
+  minMarginByWorkType?: Record<string, number>;
   /** CD-198 — the Solution version this quotation was started from. */
   solutionId?: string | null;
   solutionVersionNo?: number | null;
@@ -1779,6 +1781,8 @@ export interface CrmConfig {
   quotationValidityDays: number;
   vatPct: number;
   quotationApprovalTypeCode: string;
+  /** CD-202 — margin ขั้นต่ำต่อประเภทงาน; ประเภทที่ไม่มี = minMarginPct. */
+  minMarginByWorkType?: Record<string, number>;
   /** CD-82 — ประเภทคำขอสำหรับอนุมัติการปรับเป้าระหว่างงวด; null = ยังไม่ตั้ง. */
   targetApprovalTypeCode?: string | null;
   /** CD-81 — ประเภทคำขอที่ฝ่ายกฎหมายรับทำสัญญา; null = ไม่แสดงการ์ดสัญญา. */
@@ -2260,4 +2264,6 @@ export interface DealMargin {
   marginPct?: Money | null;
   currency: string;
   minMarginPct: number;
+  /** CD-202 */
+  minMarginByWorkType?: Record<string, number>;
 }

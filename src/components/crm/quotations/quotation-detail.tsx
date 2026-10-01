@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -194,6 +194,13 @@ export function QuotationDetailView({
   const minMargin = Number(
     quotation.minMarginPct ?? dealMargin?.minMarginPct ?? 0,
   );
+  // CD-202 — a work type is held to its own minimum when the company set one.
+  const minByType =
+    quotation.minMarginByWorkType ?? dealMargin?.minMarginByWorkType ?? {};
+  const minFor = (workType: string | null): number =>
+    workType && minByType[workType] !== undefined
+      ? Number(minByType[workType])
+      : minMargin;
   const isDraft = status === "draft";
   const canEditHeader = canManage && isDraft;
   const canEditLines = canEditHeader && costVisible;
@@ -494,6 +501,30 @@ export function QuotationDetailView({
         marginPct: quotation.marginPct,
         monthly: Number(quotation.monthlyRecurring ?? 0),
       };
+
+  // CD-202 — the shown lines summed per work type, the untyped ones last.
+  const marginRows = canEditHeader ? lines : toDraftLines(quotation);
+  const typeMargins = [...WORK_TYPES, null]
+    .map((workType) => {
+      let net = 0;
+      let cost = 0;
+      let found = false;
+      marginRows.forEach((line, index) => {
+        const key =
+          line.workType && WORK_TYPES.includes(line.workType)
+            ? line.workType
+            : null;
+        if (key !== workType) return;
+        found = true;
+        net += shown.lineTotals[index] ?? 0;
+        cost += shown.lineCosts[index] ?? 0;
+      });
+      if (!found) return null;
+      const pct = net > 0 ? round2(((net - cost) / net) * 100) : null;
+      const min = minFor(workType);
+      return { workType, pct, min, low: pct === null || pct < min };
+    })
+    .filter((group) => group !== null);
 
   return (
     <div className="space-y-4">
@@ -1057,14 +1088,14 @@ export function QuotationDetailView({
                     key: "margin",
                     width: 130,
                     align: "right" as const,
-                    render: (_: unknown, __: DraftLine, index: number) => {
+                    render: (_: unknown, row: DraftLine, index: number) => {
                       const total = shown.lineTotals[index] ?? 0;
                       const amount = round2(
                         total - (shown.lineCosts[index] ?? 0),
                       );
                       const pct =
                         total > 0 ? round2((amount / total) * 100) : null;
-                      const low = pct === null || pct < minMargin;
+                      const low = pct === null || pct < minFor(row.workType);
                       return (
                         <div className={low ? "text-red-600" : undefined}>
                           <div>{formatAmount(amount)}</div>
@@ -1156,6 +1187,36 @@ export function QuotationDetailView({
                     )}
                   </Text>
                 )}
+                {/* CD-202 — each work type against its own minimum. */}
+                {typeMargins.length > 1 || Object.keys(minByType).length ? (
+                  <div className="mt-2">
+                    <Text type="secondary" className="block text-xs">
+                      {md.marginByWorkType}
+                    </Text>
+                    {typeMargins.map((group) => (
+                      <Row
+                        key={group.workType ?? "none"}
+                        label={
+                          group.workType
+                            ? (md.workTypes[group.workType] ?? group.workType)
+                            : md.noWorkType
+                        }
+                        value={
+                          <span
+                            className={group.low ? "text-red-600" : undefined}
+                          >
+                            {md.workTypeMargin(
+                              group.pct === null
+                                ? "—"
+                                : `${group.pct.toFixed(2)}%`,
+                              group.min,
+                            )}
+                          </span>
+                        }
+                      />
+                    ))}
+                  </div>
+                ) : null}
                 {/* CD-199 — the deal as a whole, saved versions only. */}
                 {dealMargin && dealMargin.quotations.length > 0 && (
                   <div className="mt-2">
@@ -1251,7 +1312,7 @@ function Row({
   strong,
 }: {
   label: string;
-  value: string;
+  value: ReactNode;
   strong?: boolean;
 }) {
   return (

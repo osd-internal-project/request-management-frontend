@@ -26,6 +26,7 @@ import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import { ProductPicker } from "@/components/crm/quotations/product-picker";
 import { SearchSelect } from "@/components/ui/search-select";
+import { WORK_TYPES } from "@/lib/api/pricing/client";
 import type {
   CrmConfig,
   HandoverCategory,
@@ -39,6 +40,7 @@ import type {
 } from "@/lib/api/types";
 
 const m = messages.customers.admin;
+const workTypeLabels = messages.sales.quotations.detail.workTypes;
 
 /**
  * ตั้งค่า CRM — the client half. Writes go to `/admin/crm/*`; every save is
@@ -327,6 +329,9 @@ function ConfigSection({
 }) {
   const [threshold, setThreshold] = useState(config.dedupThreshold);
   const [minMargin, setMinMargin] = useState(config.minMarginPct);
+  const [minByType, setMinByType] = useState<Record<string, number | null>>(
+    config.minMarginByWorkType ?? {},
+  );
   const [validityDays, setValidityDays] = useState(
     config.quotationValidityDays,
   );
@@ -363,9 +368,7 @@ function ConfigSection({
   );
   const [demoType, setDemoType] = useState(config.demoRequestTypeCode ?? "");
   const [vqType, setVqType] = useState(config.vendorQuoteTypeCode ?? "");
-  const [laborRates, setLaborRates] = useState(
-    config.presalesLaborRates ?? [],
-  );
+  const [laborRates, setLaborRates] = useState(config.presalesLaborRates ?? []);
   const [solutionApprovalType, setSolutionApprovalType] = useState(
     config.solutionApprovalTypeCode ?? "",
   );
@@ -395,6 +398,9 @@ function ConfigSection({
       presales_labor_rates: laborRates.filter((rate) => rate.role.trim()),
       dedup_threshold: threshold,
       min_margin_pct: minMargin,
+      min_margin_by_work_type: Object.fromEntries(
+        WORK_TYPES.map((type) => [type, minByType[type] ?? null]),
+      ),
       quotation_validity_days: validityDays,
       vat_pct: vat,
       quotation_approval_type_code: approvalType || undefined,
@@ -482,6 +488,31 @@ function ConfigSection({
       <Text type="secondary" className="mt-2 block text-xs">
         {m.quotationHint}
       </Text>
+      {/* CD-202 — เกณฑ์ margin ตามประเภทงาน */}
+      <Text className="mt-4 mb-1 block text-xs">{m.minMarginByWorkType}</Text>
+      <div className="grid max-w-3xl grid-cols-2 gap-4 md:grid-cols-4">
+        {WORK_TYPES.map((type) => (
+          <div key={type}>
+            <Text type="secondary" className="mb-1 block text-xs">
+              {workTypeLabels[type]}
+            </Text>
+            <InputNumber
+              min={0}
+              max={100}
+              step={0.5}
+              placeholder={String(minMargin)}
+              value={minByType[type] ?? null}
+              onChange={(value) =>
+                setMinByType({ ...minByType, [type]: value ?? null })
+              }
+              className="w-full"
+            />
+          </div>
+        ))}
+      </div>
+      <Text type="secondary" className="mt-2 block text-xs">
+        {m.minMarginByWorkTypeHint}
+      </Text>
 
       {/* CD-65 — เกณฑ์ดีลเงียบ ย้ายไปอยู่กับกติกาแจ้งเตือนอื่น (CD-53) */}
       <Text strong className="mt-5 block">
@@ -568,9 +599,7 @@ function ConfigSection({
       </Text>
       {/* CD-158 — ขอความเห็นความเสี่ยงทางกฎหมาย (ส่งผู้บริหาร) */}
       <div className="mt-3 max-w-xs">
-        <Text className="mb-1 block text-xs">
-          {m.legalRiskOpinionTypeCode}
-        </Text>
+        <Text className="mb-1 block text-xs">{m.legalRiskOpinionTypeCode}</Text>
         <Input
           value={riskOpinionType}
           maxLength={20}
@@ -583,9 +612,7 @@ function ConfigSection({
       </Text>
       {/* CD-159 — อนุมัติสัญญา (ตารางอำนาจอนุมัติกำหนดเส้นทางตามมูลค่า/ความเสี่ยง) */}
       <div className="mt-3 max-w-xs">
-        <Text className="mb-1 block text-xs">
-          {m.contractApprovalTypeCode}
-        </Text>
+        <Text className="mb-1 block text-xs">{m.contractApprovalTypeCode}</Text>
         <Input
           value={contractApprovalType}
           maxLength={20}
@@ -605,9 +632,7 @@ function ConfigSection({
           value={projectChangeType}
           maxLength={20}
           allowClear
-          onChange={(e) =>
-            setProjectChangeType(e.target.value.toUpperCase())
-          }
+          onChange={(e) => setProjectChangeType(e.target.value.toUpperCase())}
         />
       </div>
       <Text type="secondary" className="mt-2 block text-xs">
