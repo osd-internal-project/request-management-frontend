@@ -28,6 +28,7 @@ import type {
   ProjectBudgetView,
   ProjectChangesView,
   ProjectRisksView,
+  ProjectIssuesView,
 } from "@/lib/api/projects";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
@@ -38,6 +39,7 @@ import { ProjectProgressCard } from "./project-progress-card";
 import { ProjectBudgetCard } from "./project-budget-card";
 import { ProjectChangesCard } from "./project-changes-card";
 import { ProjectRisksCard } from "./project-risks-card";
+import { ProjectIssuesCard } from "./project-issues-card";
 import {
   ProjectTeamFields,
   teamPayload,
@@ -59,6 +61,7 @@ export function ProjectDetailView({
   budget,
   changes,
   risks,
+  issues,
   currentUserId,
   people,
 }: {
@@ -75,6 +78,8 @@ export function ProjectDetailView({
   readonly changes: ProjectChangesView | null;
   /** CD-183 — null = could not load. */
   readonly risks: ProjectRisksView | null;
+  /** CD-184 — null = could not load. */
+  readonly issues: ProjectIssuesView | null;
   readonly currentUserId: string | null;
   /** The company's people, for the manager and team pickers. */
   readonly people: { id: string; name: string }[];
@@ -351,6 +356,21 @@ export function ProjectDetailView({
           key={`${budget.current?.id ?? "none"}-${budget.current?.status ?? ""}`}
           projectId={project.id}
           view={budget}
+        />
+      )}
+
+      {issues && (
+        <ProjectIssuesCard
+          projectId={project.id}
+          view={issues}
+          people={pickable}
+          tasks={(plan?.tasks ?? [])
+            .filter((task) => !task.summary)
+            .map((task) => ({
+              id: task.id,
+              label: `${task.wbs} ${task.title}`,
+            }))}
+          currentUserId={currentUserId}
         />
       )}
 

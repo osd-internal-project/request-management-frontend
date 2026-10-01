@@ -570,3 +570,44 @@ export function getProjectRisks(
 export function getRiskAttention(): Promise<ApiResult<RiskAttentionRow[]>> {
   return apiGet("/project-risks/attention");
 }
+
+/** CD-184 — an issue met on the way. */
+export interface ProjectIssueView {
+  id: string;
+  seq: number;
+  label: string;
+  title: string;
+  description: string | null;
+  severity: "low" | "medium" | "high" | "critical";
+  scheduleImpactDays: number;
+  costImpact: number;
+  ownerUserId: string;
+  ownerName: string | null;
+  dueOn: string | null;
+  overdue: boolean;
+  task: { id: string; title: string } | null;
+  status: "open" | "resolved";
+  resolution: string | null;
+  resolvedAt: string | null;
+  resolvedByName: string | null;
+  changeRequest: { id: string; label: string } | null;
+  createdAt: string;
+}
+
+export interface ProjectIssuesView {
+  canEdit: boolean;
+  today: string;
+  summary: {
+    open: number;
+    overdue: number;
+    scheduleDays: number;
+    cost: number;
+  };
+  issues: ProjectIssueView[];
+}
+
+export function getProjectIssues(
+  id: string,
+): Promise<ApiResult<ProjectIssuesView>> {
+  return apiGet(`/projects/${encodeURIComponent(id)}/issues`);
+}
