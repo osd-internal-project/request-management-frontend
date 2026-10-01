@@ -53,6 +53,8 @@ interface DraftLine {
   /** CD-196 — unit · lump_sum (quantity is 1) · monthly (× termMonths). */
   priceModel: PriceModel;
   termMonths: number | null;
+  /** CD-198 — display only; the server keeps it while product and cost stand. */
+  costSource: string | null;
 }
 
 type PriceModel = "unit" | "lump_sum" | "monthly";
@@ -90,6 +92,7 @@ function toDraftLines(quotation: QuotationDetail): DraftLine[] {
     priceId: line.priceId ?? null,
     priceModel: (line.priceModel ?? "unit") as PriceModel,
     termMonths: line.termMonths ?? null,
+    costSource: line.costSource ?? null,
   }));
 }
 
@@ -583,6 +586,22 @@ export function QuotationDetailView({
                 </Link>
               ),
             },
+            // CD-198 — started from a Solution version (handoff 3).
+            ...(quotation.solutionId
+              ? [
+                  {
+                    key: "solution",
+                    label: md.fromSolution,
+                    children: (
+                      <Link
+                        href={`${ROUTES.solutionDetail(quotation.solutionId)}?v=${quotation.solutionVersionNo ?? ""}`}
+                      >
+                        {md.solutionVersion(quotation.solutionVersionNo ?? 0)}
+                      </Link>
+                    ),
+                  },
+                ]
+              : []),
             {
               key: "party",
               label: md.party,
@@ -702,6 +721,7 @@ export function QuotationDetailView({
                     priceId: null,
                     priceModel: "unit",
                     termMonths: null,
+                    costSource: null,
                   },
                 ])
               }
@@ -879,19 +899,28 @@ export function QuotationDetailView({
                     dataIndex: "unitCost",
                     width: 130,
                     align: "right" as const,
-                    render: (value: number | null, row: DraftLine) =>
-                      canEditLines ? (
-                        <InputNumber
-                          className="w-full"
-                          min={0}
-                          value={value}
-                          onChange={(next) =>
-                            patchLine(row.key, { unitCost: next })
-                          }
-                        />
-                      ) : (
-                        formatAmount(value)
-                      ),
+                    render: (value: number | null, row: DraftLine) => (
+                      <>
+                        {canEditLines ? (
+                          <InputNumber
+                            className="w-full"
+                            min={0}
+                            value={value}
+                            onChange={(next) =>
+                              patchLine(row.key, { unitCost: next })
+                            }
+                          />
+                        ) : (
+                          formatAmount(value)
+                        )}
+                        {/* CD-198 — where the cost came from (from a Solution). */}
+                        {row.costSource && (
+                          <div className="text-[11px] text-gray-500">
+                            {row.costSource}
+                          </div>
+                        )}
+                      </>
+                    ),
                   },
                 ]
               : []),

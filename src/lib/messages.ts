@@ -2031,6 +2031,17 @@ export const messages = {
   /** CD-132 — ออกแบบ Solution (Pre-Sales) */
   presales: {
     title: "ออกแบบ Solution",
+    /** CD-198 — handoff 3 Pre-Sales → Pricing */
+    quotation: {
+      title: "ใบเสนอราคาจาก Solution",
+      create: (no: number) => `สร้างใบเสนอราคาจากเวอร์ชัน ${no}`,
+      hint: "ต้นทุนและที่มาต่อบรรทัดมาจาก BOQ + ประมาณต้นทุน · ราคาเติมจากราคามาตรฐาน/ราคาเฉพาะ — บรรทัดที่ไม่มีราคาเป็น 0 ให้ Pricing กำหนด",
+      notReady:
+        "ยังไม่พร้อมส่ง Pricing — ต้องมีเวอร์ชันที่อนุมัติแล้วและประมาณต้นทุนครบทุกบรรทัด",
+      created: "สร้างร่างใบเสนอราคาแล้ว",
+      opened: "มีใบเสนอราคาจากเวอร์ชันนี้อยู่แล้ว — เปิดใบเดิม",
+      fromVersion: (no: number) => `จาก Solution v${no}`,
+    },
     deal: "โอกาสการขาย",
     request: "คำขอ",
     brief: "โจทย์จากฝ่ายขาย",
@@ -3955,6 +3966,9 @@ export const messages = {
           priceModel: "รูปแบบราคา",
           termMonths: "จำนวนเดือน",
         },
+        /** CD-198 */
+        fromSolution: "สร้างจาก Solution",
+        solutionVersion: (no: number) => `เวอร์ชัน ${no} (เปิดหน้า Solution)`,
         /** CD-196 */
         priceModels: {
           unit: "ต่อหน่วย",

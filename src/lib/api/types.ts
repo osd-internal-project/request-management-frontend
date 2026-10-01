@@ -1518,9 +1518,14 @@ export interface QuotationLine {
   /** CD-196 */
   priceModel?: "unit" | "lump_sum" | "monthly";
   termMonths?: number | null;
+  /** CD-198 — where the cost came from when started from a Solution. */
+  costSource?: string | null;
 }
 
 export interface QuotationDetail extends QuotationRow {
+  /** CD-198 — the Solution version this quotation was started from. */
+  solutionId?: string | null;
+  solutionVersionNo?: number | null;
   /** CD-196 — monthly charge of the monthly lines (the totals cover the term). */
   monthlyRecurring?: Money;
   companyId: string;

@@ -574,3 +574,20 @@ export async function getPartner(
 ): Promise<ApiResult<PartnerDetail>> {
   return apiGet(`presales/partners/${encodeURIComponent(code)}`);
 }
+
+/** CD-198 — a quotation started from a Solution version. */
+export interface SolutionQuotation {
+  id: string;
+  quotationNo: string;
+  version: number;
+  status: string;
+  solutionVersionNo: number | null;
+  netTotal: string;
+  currency: string;
+}
+
+export async function getSolutionQuotations(
+  id: string,
+): Promise<ApiResult<SolutionQuotation[]>> {
+  return apiGet(`presales/solutions/${id}/quotations`);
+}

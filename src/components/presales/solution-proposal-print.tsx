@@ -52,7 +52,11 @@ function Bullets({ items }: { items: string[] }) {
  * ธรรมดาในตัวเอกสารให้พิมพ์ออกมาเหมือนกันทุกเครื่อง. ไม่มีราคาหรือต้นทุนเลย —
  * backend ตัดออกตั้งแต่ข้อมูล ราคาไปอยู่ในใบเสนอราคาแยก.
  */
-export function SolutionProposalPrint({ view }: { view: SolutionProposalView }) {
+export function SolutionProposalPrint({
+  view,
+}: {
+  view: SolutionProposalView;
+}) {
   const { letterhead: lh, solution, deal, version: v, boq } = view;
   const date = v.approvedAt ?? v.lockedAt;
 
@@ -84,7 +88,12 @@ export function SolutionProposalPrint({ view }: { view: SolutionProposalView }) 
         </Button>
         <span className="text-xs text-gray-500">{mp.printHint}</span>
         {v.superseded && (
-          <Alert type="warning" showIcon className="w-full" title={mp.supersededBanner} />
+          <Alert
+            type="warning"
+            showIcon
+            className="w-full"
+            title={mp.supersededBanner}
+          />
         )}
       </div>
 
@@ -105,12 +114,18 @@ export function SolutionProposalPrint({ view }: { view: SolutionProposalView }) 
           <div className="flex min-w-0 gap-3">
             {lh.logo && (
               // eslint-disable-next-line @next/next/no-img-element -- a data URL from settings
-              <img src={lh.logo} alt="" className="h-16 w-auto max-w-32 object-contain" />
+              <img
+                src={lh.logo}
+                alt=""
+                className="h-16 w-auto max-w-32 object-contain"
+              />
             )}
             <div className="min-w-0">
               <div className="text-[15px] font-bold">{lh.nameTh}</div>
               {lh.nameEn && <div className="font-semibold">{lh.nameEn}</div>}
-              {lh.address && <div className="whitespace-pre-line">{lh.address}</div>}
+              {lh.address && (
+                <div className="whitespace-pre-line">{lh.address}</div>
+              )}
               {(lh.taxId || lh.branch) && (
                 <div>
                   {lh.taxId && `${mp.taxId} ${lh.taxId}`}
@@ -163,8 +178,12 @@ export function SolutionProposalPrint({ view }: { view: SolutionProposalView }) 
                 [mp.date, date ? thaiDate(date) : mp.none],
               ].map(([label, value]) => (
                 <tr key={label}>
-                  <td className="px-2 py-0.5 align-top whitespace-nowrap text-gray-500">{label}</td>
-                  <td className="px-2 py-0.5 text-right font-medium">{value}</td>
+                  <td className="px-2 py-0.5 align-top whitespace-nowrap text-gray-500">
+                    {label}
+                  </td>
+                  <td className="px-2 py-0.5 text-right font-medium">
+                    {value}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -200,7 +219,9 @@ export function SolutionProposalPrint({ view }: { view: SolutionProposalView }) 
                 <li key={index} className="pp-row">
                   <div className="font-semibold">{item.title}</div>
                   {item.description && (
-                    <div className="whitespace-pre-line">{item.description}</div>
+                    <div className="whitespace-pre-line">
+                      {item.description}
+                    </div>
                   )}
                   {item.criteria.length > 0 && (
                     <div className="mt-0.5">
@@ -238,10 +259,14 @@ export function SolutionProposalPrint({ view }: { view: SolutionProposalView }) 
                   {boq.map((line) => (
                     <tr key={line.lineNo} className="pp-row align-top">
                       <td className={`${cell} text-center`}>{line.lineNo}</td>
-                      <td className={`${cell} text-center`}>{line.kindLabel}</td>
+                      <td className={`${cell} text-center`}>
+                        {line.kindLabel}
+                      </td>
                       <td className={cell}>
                         {line.productCode && (
-                          <span className="mr-1 text-gray-500">[{line.productCode}]</span>
+                          <span className="mr-1 text-gray-500">
+                            [{line.productCode}]
+                          </span>
                         )}
                         {line.name}
                         {line.description && (
@@ -251,7 +276,9 @@ export function SolutionProposalPrint({ view }: { view: SolutionProposalView }) 
                         )}
                       </td>
                       <td className={cell}>{line.model}</td>
-                      <td className={`${cell} text-right`}>{quantity(line.quantity)}</td>
+                      <td className={`${cell} text-right`}>
+                        {quantity(line.quantity)}
+                      </td>
                       <td className={`${cell} text-center`}>{line.unit}</td>
                     </tr>
                   ))}
@@ -279,7 +306,9 @@ export function SolutionProposalPrint({ view }: { view: SolutionProposalView }) 
                   <tr key={index} className="pp-row align-top">
                     <td className={`${cell} text-center`}>{index + 1}</td>
                     <td className={cell}>{item.categoryLabel}</td>
-                    <td className={`${cell} whitespace-pre-line`}>{item.text}</td>
+                    <td className={`${cell} whitespace-pre-line`}>
+                      {item.text}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -304,7 +333,9 @@ export function SolutionProposalPrint({ view }: { view: SolutionProposalView }) 
                 {view.dependencies.map((item, index) => (
                   <tr key={index} className="pp-row align-top">
                     <td className={`${cell} text-center`}>{index + 1}</td>
-                    <td className={`${cell} whitespace-pre-line`}>{item.text}</td>
+                    <td className={`${cell} whitespace-pre-line`}>
+                      {item.text}
+                    </td>
                     <td className={cell}>{item.owner ?? mp.none}</td>
                     <td className={`${cell} text-center`}>
                       {item.neededBy ? thaiDate(item.neededBy) : mp.none}
@@ -321,7 +352,9 @@ export function SolutionProposalPrint({ view }: { view: SolutionProposalView }) 
           {[mp.signPresales, mp.signCustomer].map((title) => (
             <div key={title}>
               <div className="mx-auto mt-8 w-full border-b border-dotted border-gray-600" />
-              <div className="mt-1">(.......................................)</div>
+              <div className="mt-1">
+                (.......................................)
+              </div>
               <div className="font-semibold">{title}</div>
               <div className="text-[11px] text-gray-500">{mp.signDate}</div>
             </div>

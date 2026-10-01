@@ -34,6 +34,7 @@ import type {
   AssumptionCategory,
   SolutionAssumption,
   SolutionDetail,
+  SolutionQuotation,
 } from "@/lib/api/presales";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
@@ -46,6 +47,7 @@ import { ClarificationsCard } from "./clarifications-card";
 import { RisksCard } from "./risks-card";
 import { DemosCard } from "./demos-card";
 import { TorCard } from "./tor-card";
+import { SolutionQuotations } from "./solution-quotations";
 
 const mp = messages.presales;
 
@@ -83,7 +85,16 @@ function fileSize(bytes: number): string {
  * builds from it. A draft is edited here; a locked version is read-only and a
  * change opens the next version.
  */
-export function SolutionWorkspace({ solution }: { solution: SolutionDetail }) {
+export function SolutionWorkspace({
+  solution,
+  quotations = [],
+  canQuote = false,
+}: {
+  solution: SolutionDetail;
+  /** CD-198 */
+  quotations?: SolutionQuotation[];
+  canQuote?: boolean;
+}) {
   const router = useRouter();
   const { message } = App.useApp();
   const version = solution.version;
@@ -324,7 +335,10 @@ export function SolutionWorkspace({ solution }: { solution: SolutionDetail }) {
           {/* CD-137 — the customer's copy, from an approved version only. */}
           {version.approvalStatus === "approved" && (
             <Link
-              href={ROUTES.solutionProposalPrint(solution.id, version.versionNo)}
+              href={ROUTES.solutionProposalPrint(
+                solution.id,
+                version.versionNo,
+              )}
               target="_blank"
             >
               <Button icon={<PrinterOutlined />}>
@@ -367,6 +381,14 @@ export function SolutionWorkspace({ solution }: { solution: SolutionDetail }) {
             )}
         </Space>
       </div>
+
+      {/* CD-198 — handoff 3: a draft quotation from the version ready for Pricing. */}
+      <SolutionQuotations
+        solutionId={solution.id}
+        readyVersionNo={solution.pricing_ready?.versionNo ?? null}
+        quotations={quotations}
+        canQuote={canQuote}
+      />
 
       {/* Why the approval button is not there — e.g. an open scope change (CD-140). */}
       {solution.can_manage &&
