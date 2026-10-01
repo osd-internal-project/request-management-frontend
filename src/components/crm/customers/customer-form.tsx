@@ -105,7 +105,9 @@ export function CustomerForm({
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const runCheck = useCallback(() => {
-    const nameTh = (form.getFieldValue("name_th") as string | undefined)?.trim();
+    const nameTh = (
+      form.getFieldValue("name_th") as string | undefined
+    )?.trim();
     if (!nameTh) {
       setCheck(null);
       return;
@@ -252,9 +254,7 @@ export function CustomerForm({
         }
       }}
     >
-      {error && (
-        <Alert type="error" showIcon title={error} className="mb-3!" />
-      )}
+      {error && <Alert type="error" showIcon title={error} className="mb-3!" />}
 
       <Card size="small" title={m.form.sectionMain} className="mb-4">
         <div className="grid grid-cols-1 gap-x-4 md:grid-cols-2">
@@ -300,7 +300,9 @@ export function CustomerForm({
             name="branch_code"
             label={m.form.branchCode}
             extra={m.form.branchCodeHint}
-            rules={[{ pattern: /^\d{5}$/, message: m.form.errors.branchFormat }]}
+            rules={[
+              { pattern: /^\d{5}$/, message: m.form.errors.branchFormat },
+            ]}
           >
             <Input maxLength={5} />
           </Form.Item>
@@ -570,7 +572,9 @@ function LocationList() {
                 <Form.Item
                   name={[field.name, "postal_code"]}
                   label={m.form.postalCode}
-                  rules={[{ pattern: /^\d{5}$/, message: m.form.errors.branchFormat }]}
+                  rules={[
+                    { pattern: /^\d{5}$/, message: m.form.errors.branchFormat },
+                  ]}
                 >
                   <Input maxLength={5} />
                 </Form.Item>

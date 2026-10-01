@@ -26,6 +26,7 @@ import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import { ProductPicker } from "@/components/crm/quotations/product-picker";
 import { SearchSelect } from "@/components/ui/search-select";
+import { WORK_TYPES } from "@/lib/api/pricing/client";
 import type {
   CrmConfig,
   HandoverCategory,
@@ -39,6 +40,7 @@ import type {
 } from "@/lib/api/types";
 
 const m = messages.customers.admin;
+const workTypeLabels = messages.sales.quotations.detail.workTypes;
 
 /**
  * ตั้งค่า CRM — the client half. Writes go to `/admin/crm/*`; every save is
@@ -327,6 +329,9 @@ function ConfigSection({
 }) {
   const [threshold, setThreshold] = useState(config.dedupThreshold);
   const [minMargin, setMinMargin] = useState(config.minMarginPct);
+  const [minByType, setMinByType] = useState<Record<string, number | null>>(
+    config.minMarginByWorkType ?? {},
+  );
   const [validityDays, setValidityDays] = useState(
     config.quotationValidityDays,
   );
@@ -349,10 +354,25 @@ function ConfigSection({
   const [contractApprovalType, setContractApprovalType] = useState(
     config.contractApprovalTypeCode ?? "",
   );
+  const [projectChangeType, setProjectChangeType] = useState(
+    config.projectChangeTypeCode ?? "",
+  );
+  const [projectCloseType, setProjectCloseType] = useState(
+    config.projectCloseTypeCode ?? "",
+  );
+  const [closeDocuments, setCloseDocuments] = useState<string[]>(
+    config.projectCloseDocuments ?? [],
+  );
+  const [healthAmber, setHealthAmber] = useState(
+    config.projectHealthAmber ?? 20,
+  );
+  const [healthRed, setHealthRed] = useState(config.projectHealthRed ?? 40);
   const [solutionType, setSolutionType] = useState(
     config.solutionRequestTypeCode ?? "",
   );
   const [demoType, setDemoType] = useState(config.demoRequestTypeCode ?? "");
+  const [vqType, setVqType] = useState(config.vendorQuoteTypeCode ?? "");
+  const [laborRates, setLaborRates] = useState(config.presalesLaborRates ?? []);
   const [solutionApprovalType, setSolutionApprovalType] = useState(
     config.solutionApprovalTypeCode ?? "",
   );
@@ -372,11 +392,21 @@ function ConfigSection({
       liability_approval_request_type_code: liabilityType,
       legal_risk_opinion_type_code: riskOpinionType,
       contract_approval_type_code: contractApprovalType,
+      project_change_type_code: projectChangeType,
+      project_close_type_code: projectCloseType,
+      project_close_documents: closeDocuments,
+      project_health_amber: healthAmber,
+      project_health_red: healthRed,
       solution_request_type_code: solutionType,
       solution_approval_type_code: solutionApprovalType,
       demo_request_type_code: demoType,
+      vendor_quote_type_code: vqType,
+      presales_labor_rates: laborRates.filter((rate) => rate.role.trim()),
       dedup_threshold: threshold,
       min_margin_pct: minMargin,
+      min_margin_by_work_type: Object.fromEntries(
+        WORK_TYPES.map((type) => [type, minByType[type] ?? null]),
+      ),
       quotation_validity_days: validityDays,
       vat_pct: vat,
       quotation_approval_type_code: approvalType || undefined,
@@ -464,6 +494,31 @@ function ConfigSection({
       <Text type="secondary" className="mt-2 block text-xs">
         {m.quotationHint}
       </Text>
+      {/* CD-202 — เกณฑ์ margin ตามประเภทงาน */}
+      <Text className="mt-4 mb-1 block text-xs">{m.minMarginByWorkType}</Text>
+      <div className="grid max-w-3xl grid-cols-2 gap-4 md:grid-cols-4">
+        {WORK_TYPES.map((type) => (
+          <div key={type}>
+            <Text type="secondary" className="mb-1 block text-xs">
+              {workTypeLabels[type]}
+            </Text>
+            <InputNumber
+              min={0}
+              max={100}
+              step={0.5}
+              placeholder={String(minMargin)}
+              value={minByType[type] ?? null}
+              onChange={(value) =>
+                setMinByType({ ...minByType, [type]: value ?? null })
+              }
+              className="w-full"
+            />
+          </div>
+        ))}
+      </div>
+      <Text type="secondary" className="mt-2 block text-xs">
+        {m.minMarginByWorkTypeHint}
+      </Text>
 
       {/* CD-65 — เกณฑ์ดีลเงียบ ย้ายไปอยู่กับกติกาแจ้งเตือนอื่น (CD-53) */}
       <Text strong className="mt-5 block">
@@ -550,9 +605,7 @@ function ConfigSection({
       </Text>
       {/* CD-158 — ขอความเห็นความเสี่ยงทางกฎหมาย (ส่งผู้บริหาร) */}
       <div className="mt-3 max-w-xs">
-        <Text className="mb-1 block text-xs">
-          {m.legalRiskOpinionTypeCode}
-        </Text>
+        <Text className="mb-1 block text-xs">{m.legalRiskOpinionTypeCode}</Text>
         <Input
           value={riskOpinionType}
           maxLength={20}
@@ -565,9 +618,7 @@ function ConfigSection({
       </Text>
       {/* CD-159 — อนุมัติสัญญา (ตารางอำนาจอนุมัติกำหนดเส้นทางตามมูลค่า/ความเสี่ยง) */}
       <div className="mt-3 max-w-xs">
-        <Text className="mb-1 block text-xs">
-          {m.contractApprovalTypeCode}
-        </Text>
+        <Text className="mb-1 block text-xs">{m.contractApprovalTypeCode}</Text>
         <Input
           value={contractApprovalType}
           maxLength={20}
@@ -579,6 +630,69 @@ function ConfigSection({
       </div>
       <Text type="secondary" className="mt-2 block text-xs">
         {m.contractApprovalHint}
+      </Text>
+      {/* CD-185 — คำขอเปลี่ยนแปลงโครงการ (คณะกรรมการเปลี่ยนแปลง) */}
+      <div className="mt-3 max-w-xs">
+        <Text className="mb-1 block text-xs">{m.projectChangeTypeCode}</Text>
+        <Input
+          value={projectChangeType}
+          maxLength={20}
+          allowClear
+          onChange={(e) => setProjectChangeType(e.target.value.toUpperCase())}
+        />
+      </div>
+      <Text type="secondary" className="mt-2 block text-xs">
+        {m.projectChangeHint}
+      </Text>
+      {/* CD-191 — คำขอปิดโครงการ และเอกสารที่ต้องแนบ */}
+      <div className="mt-3 max-w-xs">
+        <Text className="mb-1 block text-xs">{m.projectCloseTypeCode}</Text>
+        <Input
+          value={projectCloseType}
+          maxLength={20}
+          allowClear
+          onChange={(e) => setProjectCloseType(e.target.value.toUpperCase())}
+        />
+      </div>
+      <Text type="secondary" className="mt-2 block text-xs">
+        {m.projectCloseHint}
+      </Text>
+      <div className="mt-3 max-w-xl">
+        <Text className="mb-1 block text-xs">{m.projectCloseDocuments}</Text>
+        <Select
+          mode="tags"
+          className="w-full"
+          value={closeDocuments}
+          open={false}
+          onChange={(values: string[]) => setCloseDocuments(values)}
+        />
+      </div>
+      <Text type="secondary" className="mt-2 block text-xs">
+        {m.projectCloseDocumentsHint}
+      </Text>
+      {/* CD-192 — เกณฑ์สุขภาพโครงการ */}
+      <div className="mt-3 flex flex-wrap gap-4">
+        <div>
+          <Text className="mb-1 block text-xs">{m.projectHealthAmber}</Text>
+          <InputNumber
+            min={1}
+            max={500}
+            value={healthAmber}
+            onChange={(value) => setHealthAmber(Number(value ?? 20))}
+          />
+        </div>
+        <div>
+          <Text className="mb-1 block text-xs">{m.projectHealthRed}</Text>
+          <InputNumber
+            min={1}
+            max={500}
+            value={healthRed}
+            onChange={(value) => setHealthRed(Number(value ?? 40))}
+          />
+        </div>
+      </div>
+      <Text type="secondary" className="mt-2 block text-xs">
+        {m.projectHealthHint}
       </Text>
 
       {/* CD-130 — ประเภทคำขอ Solution (Sales → Pre-Sales) */}
@@ -624,6 +738,68 @@ function ConfigSection({
       </div>
       <Text type="secondary" className="mt-2 block text-xs">
         {m.demoHint}
+      </Text>
+      {/* CD-136 — ประเภทคำขอราคาจากคู่ค้า + อัตราต้นทุนแรงงาน */}
+      <div className="mt-3 max-w-xs">
+        <Text className="mb-1 block text-xs">{m.vendorQuoteTypeCode}</Text>
+        <Input
+          value={vqType}
+          maxLength={20}
+          allowClear
+          onChange={(e) => setVqType(e.target.value.toUpperCase())}
+        />
+      </div>
+      <div className="mt-3 max-w-md">
+        <Text className="mb-1 block text-xs">{m.laborRates}</Text>
+        {laborRates.map((rate, index) => (
+          <Space.Compact key={index} className="mb-1 w-full">
+            <Input
+              value={rate.role}
+              maxLength={100}
+              placeholder={m.laborRole}
+              onChange={(e) =>
+                setLaborRates((rows) =>
+                  rows.map((row, at) =>
+                    at === index ? { ...row, role: e.target.value } : row,
+                  ),
+                )
+              }
+            />
+            <InputNumber
+              value={rate.rate}
+              min={0}
+              style={{ width: 160 }}
+              placeholder={m.laborRate}
+              onChange={(value) =>
+                setLaborRates((rows) =>
+                  rows.map((row, at) =>
+                    at === index ? { ...row, rate: Number(value) || 0 } : row,
+                  ),
+                )
+              }
+            />
+            <Button
+              danger
+              onClick={() =>
+                setLaborRates((rows) => rows.filter((_, at) => at !== index))
+              }
+            >
+              ×
+            </Button>
+          </Space.Compact>
+        ))}
+        <Button
+          size="small"
+          type="dashed"
+          onClick={() =>
+            setLaborRates((rows) => [...rows, { role: "", rate: 0 }])
+          }
+        >
+          {m.addLaborRate}
+        </Button>
+      </div>
+      <Text type="secondary" className="mt-2 block text-xs">
+        {m.laborRatesHint}
       </Text>
 
       <Button

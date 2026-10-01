@@ -73,5 +73,7 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   // `f/` — CD-66's public request form and status pages: customers, no session.
-  matcher: ["/((?!api|f/|_next/static|_next/image|favicon.ico).*)"],
+  // `f/` customer forms (CD-66), `s/` signing links and `v/` the
+  // verification page (CD-14) are public — no session to redirect for
+  matcher: ["/((?!api|f/|s/|v/|_next/static|_next/image|favicon.ico).*)"],
 };

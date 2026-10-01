@@ -395,7 +395,15 @@ export interface SubRequestTypeRule {
   required: boolean;
 }
 
-export const FLOW_CONDITION_OPS = ["gt", "gte", "lt", "lte", "eq", "neq", "in"] as const;
+export const FLOW_CONDITION_OPS = [
+  "gt",
+  "gte",
+  "lt",
+  "lte",
+  "eq",
+  "neq",
+  "in",
+] as const;
 export type FlowConditionOp = (typeof FLOW_CONDITION_OPS)[number];
 
 /** `{ field, op, value }` over the request's answers; see `request-flow.ts`. */
@@ -407,9 +415,7 @@ export interface FlowCondition {
 
 /** Who carries the work on entering a step. */
 export type FlowAssigneeRule =
-  | { type: "keep" }
-  | { type: "requester" }
-  | { type: "user"; userId: string };
+  { type: "keep" } | { type: "requester" } | { type: "user"; userId: string };
 
 /** v2: the status a step sits under; who holds it follows from it. */
 export type FlowStepScope =
@@ -1215,10 +1221,7 @@ export type LeadActivityType =
   | "social";
 /** CD-85 — ผลการติดต่อหนึ่งครั้ง. */
 export type ActivityOutcome =
-  | "reached"
-  | "no_answer"
-  | "interested"
-  | "not_interested";
+  "reached" | "no_answer" | "interested" | "not_interested";
 /** CD-85 — สี่อย่างที่ต้องรู้ก่อนเปิดดีล. */
 export type DiscoveryItem = "need" | "budget" | "decision_maker" | "timeframe";
 export type OpportunityStage =
@@ -1341,10 +1344,7 @@ export interface LeadDetail extends LeadRow {
 /** CD-85 — บริษัทเป้าหมายของแกน Getter. */
 export type TargetAccountPriority = "high" | "medium" | "low";
 export type TargetAccountStatus =
-  | "targeting"
-  | "approaching"
-  | "converted"
-  | "dropped";
+  "targeting" | "approaching" | "converted" | "dropped";
 
 export interface TargetAccountRow {
   id: string;
@@ -1513,9 +1513,26 @@ export interface QuotationLine {
   discountPct: Money;
   lineTotal: Money;
   lineCost?: Money;
+  /** CD-195 — the standard price this line came from; null = typed by hand. */
+  priceId?: string | null;
+  /** CD-196 */
+  priceModel?: "unit" | "lump_sum" | "monthly";
+  termMonths?: number | null;
+  /** CD-198 — where the cost came from when started from a Solution. */
+  costSource?: string | null;
+  /** CD-200 — work type, and the markup the price was filled from. */
+  workType?: string | null;
+  markupPct?: Money | null;
 }
 
 export interface QuotationDetail extends QuotationRow {
+  /** CD-202 — the company's minimum per work type (none = minMarginPct). */
+  minMarginByWorkType?: Record<string, number>;
+  /** CD-198 — the Solution version this quotation was started from. */
+  solutionId?: string | null;
+  solutionVersionNo?: number | null;
+  /** CD-196 — monthly charge of the monthly lines (the totals cover the term). */
+  monthlyRecurring?: Money;
   companyId: string;
   partyTaxId: string | null;
   contactName: string | null;
@@ -1764,6 +1781,8 @@ export interface CrmConfig {
   quotationValidityDays: number;
   vatPct: number;
   quotationApprovalTypeCode: string;
+  /** CD-202 — margin ขั้นต่ำต่อประเภทงาน; ประเภทที่ไม่มี = minMarginPct. */
+  minMarginByWorkType?: Record<string, number>;
   /** CD-82 — ประเภทคำขอสำหรับอนุมัติการปรับเป้าระหว่างงวด; null = ยังไม่ตั้ง. */
   targetApprovalTypeCode?: string | null;
   /** CD-81 — ประเภทคำขอที่ฝ่ายกฎหมายรับทำสัญญา; null = ไม่แสดงการ์ดสัญญา. */
@@ -1774,12 +1793,25 @@ export interface CrmConfig {
   legalRiskOpinionTypeCode?: string | null;
   /** CD-159 — ประเภทคำขออนุมัติสัญญา. */
   contractApprovalTypeCode?: string | null;
+  /** CD-185 — project change requests go to the change board as this type. */
+  projectChangeTypeCode?: string | null;
+  /** CD-191 — a project is asked to be closed as this type. */
+  projectCloseTypeCode?: string | null;
+  /** CD-191 — the documents every project must attach before closing. */
+  projectCloseDocuments?: string[];
+  /** CD-192 — the health scores at which a project turns amber, and red. */
+  projectHealthAmber?: number;
+  projectHealthRed?: number;
   /** CD-130 — the type Pre-Sales takes solution requests on. */
   solutionRequestTypeCode?: string | null;
   /** CD-143 — the type a Solution version is sent for approval on. */
   solutionApprovalTypeCode?: string | null;
   /** CD-139 — the type Pre-Sales takes Demo/POC requests on. */
   demoRequestTypeCode?: string | null;
+  /** CD-136 — the type Pre-Sales asks Purchasing for partner prices on. */
+  vendorQuoteTypeCode?: string | null;
+  /** CD-136 — labour cost per manday by role, until HR (CD-17). */
+  presalesLaborRates?: { role: string; rate: number }[];
   /** CD-61 — KYC ใช้ได้กี่เดือนก่อนต้องทบทวน ตามความเสี่ยง. */
   kycReviewMonthsHigh?: number;
   kycReviewMonthsMedium?: number;
@@ -1805,7 +1837,9 @@ export interface CrmConfig {
   /** CD-84 — the team a handover goes to by default. */
   handoverOrgUnitId?: string | null;
   /** CD-62 — approval request type per customer type. */
-  customerApprovalTypes?: Partial<Record<"corporate" | "individual" | "government", string>>;
+  customerApprovalTypes?: Partial<
+    Record<"corporate" | "individual" | "government", string>
+  >;
 }
 
 /** CM-07 — one assignable value with its dimension, for pickers and filters. */
@@ -1884,6 +1918,9 @@ export interface QuotationPrintView {
       unitPrice: Money;
       discountPct: Money;
       lineTotal: Money;
+      /** CD-196 */
+      priceModel?: "unit" | "lump_sum" | "monthly";
+      termMonths?: number | null;
     }[];
   };
   billTo: {
@@ -1908,6 +1945,8 @@ export interface QuotationPrintView {
     terms: string | null;
   };
   /** false = draft / awaiting approval — the page watermarks it. */
+  /** CD-196 — monthly charge (the totals already cover the term). */
+  monthlyRecurring?: Money;
   isFinal: boolean;
 }
 
@@ -1930,7 +1969,8 @@ export interface HandoverItem extends HandoverChecklistItem {
   detail: string | null;
 }
 
-export type SalesHandoverStatus = "draft" | "submitted" | "accepted" | "returned";
+export type SalesHandoverStatus =
+  "draft" | "submitted" | "accepted" | "returned";
 
 export interface HandoverHistoryEntry {
   action: "submitted" | "accepted" | "returned";
@@ -1970,6 +2010,17 @@ export interface HandoverTechnicalPackage {
     assessment: string;
     note: string;
     customerAnswer: string | null;
+  }[];
+  /** CD-135 — the BOQ the project delivers against. */
+  boq: {
+    kind: string;
+    productCode: string;
+    name: string;
+    description: string;
+    model: string;
+    quantity: number;
+    unit: string;
+    refUnitCost: number | null;
   }[];
   /** CD-138 — the TOR, and how each clause was answered. */
   tor: {
@@ -2026,7 +2077,12 @@ export interface HandoverTechnicalPackage {
     answeredOn: string | null;
     affectsScope: boolean;
   }[];
-  files: { id: string; fileName: string; mimeType: string; sizeBytes: number }[];
+  files: {
+    id: string;
+    fileName: string;
+    mimeType: string;
+    sizeBytes: number;
+  }[];
 }
 
 export interface SalesHandover {
@@ -2081,13 +2137,7 @@ export interface DealHandoverView {
 export type AccountTier = "a" | "b" | "c";
 export type HealthLevel = "green" | "amber" | "red";
 export type CustomerTouchType =
-  | "review"
-  | "call"
-  | "email"
-  | "meeting"
-  | "visit"
-  | "line"
-  | "social";
+  "review" | "call" | "email" | "meeting" | "visit" | "line" | "social";
 
 export interface HealthSignal {
   code:
@@ -2140,7 +2190,8 @@ export interface Portfolio {
 }
 
 export interface CustomerAccount extends PortfolioRow {
-  plan: (AccountPlanSummary & { goals: string | null; updated_at: string }) | null;
+  plan:
+    (AccountPlanSummary & { goals: string | null; updated_at: string }) | null;
   touchpoints: {
     id: string;
     type: CustomerTouchType;
@@ -2196,4 +2247,26 @@ export interface CustomerApprovalView {
   } | null;
   type_code: string | null;
   can_raise: boolean;
+}
+
+/**
+ * CD-199 — the deal's margin over the latest standing version of each of its
+ * quotations. Cost and margin are absent for someone who may not see cost.
+ */
+export interface DealMargin {
+  quotations: {
+    id: string;
+    quotationNo: string;
+    version: number;
+    status: QuotationStatus;
+    netTotal: Money;
+  }[];
+  netTotal: Money;
+  costTotal?: Money;
+  marginAmount?: Money;
+  marginPct?: Money | null;
+  currency: string;
+  minMarginPct: number;
+  /** CD-202 */
+  minMarginByWorkType?: Record<string, number>;
 }

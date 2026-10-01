@@ -85,7 +85,10 @@ const TYPE_MAP: Record<string, string> = {
  * เลขภาษีไทยขึ้นต้นด้วย 0 บ่อยมาก. A 12-digit tax id or a short branch code is
  * almost certainly that accident, so pad; the backend checksum still gates.
  */
-function repairDigits(value: string | undefined, width: number): string | undefined {
+function repairDigits(
+  value: string | undefined,
+  width: number,
+): string | undefined {
   if (!value) return undefined;
   const digits = value.trim();
   if (!/^\d+$/.test(digits) || digits.length >= width) return digits;
@@ -117,9 +120,21 @@ export function CustomerImport() {
     const sheet = workbook.addWorksheet("customers");
 
     const headers = [
-      H.type, H.nameTh, H.nameEn, H.taxId, H.branchCode, H.branchName,
-      H.line1, H.line2, H.subDistrict, H.district, H.province, H.postalCode,
-      H.contactName, H.contactPhone, H.contactEmail,
+      H.type,
+      H.nameTh,
+      H.nameEn,
+      H.taxId,
+      H.branchCode,
+      H.branchName,
+      H.line1,
+      H.line2,
+      H.subDistrict,
+      H.district,
+      H.province,
+      H.postalCode,
+      H.contactName,
+      H.contactPhone,
+      H.contactEmail,
     ];
     sheet.addRow(headers);
     sheet.getRow(1).font = { bold: true };
@@ -127,12 +142,25 @@ export function CustomerImport() {
     // อุบัติเหตุอันดับหนึ่งของไฟล์ Excel
     for (const col of [4, 5, 12, 14]) sheet.getColumn(col).numFmt = "@";
     sheet.addRow([
-      messages.customers.type.corporate, "บริษัท ตัวอย่าง จำกัด", "Example Co., Ltd.",
-      "0105536001234", "00000", "สำนักงานใหญ่",
-      "เลขที่ 1 ถนนตัวอย่าง", "", "คลองตัน", "คลองเตย", "กรุงเทพมหานคร", "10110",
-      "สมชาย ตัวอย่าง", "0812345678", "somchai@example.co.th",
+      messages.customers.type.corporate,
+      "บริษัท ตัวอย่าง จำกัด",
+      "Example Co., Ltd.",
+      "0105536001234",
+      "00000",
+      "สำนักงานใหญ่",
+      "เลขที่ 1 ถนนตัวอย่าง",
+      "",
+      "คลองตัน",
+      "คลองเตย",
+      "กรุงเทพมหานคร",
+      "10110",
+      "สมชาย ตัวอย่าง",
+      "0812345678",
+      "somchai@example.co.th",
     ]);
-    sheet.columns.forEach((column) => { column.width = 18; });
+    sheet.columns.forEach((column) => {
+      column.width = 18;
+    });
 
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], {
@@ -181,13 +209,20 @@ export function CustomerImport() {
         const record: ParsedRow = { row_no: rowNo, name_th: "" };
         fieldOf.forEach((field, col) => {
           const text = row.getCell(col).text?.trim();
-          if (text) (record as unknown as Record<string, unknown>)[field] = text;
+          if (text)
+            (record as unknown as Record<string, unknown>)[field] = text;
         });
-        if (!Object.keys(record).some((key) => key !== "row_no" && key !== "name_th")
-          && !record.name_th) {
+        if (
+          !Object.keys(record).some(
+            (key) => key !== "row_no" && key !== "name_th",
+          ) &&
+          !record.name_th
+        ) {
           return; // ทั้งแถวว่าง — ข้ามเงียบ ๆ
         }
-        record.type = record.type ? (TYPE_MAP[record.type] ?? record.type) : undefined;
+        record.type = record.type
+          ? (TYPE_MAP[record.type] ?? record.type)
+          : undefined;
         record.tax_id = repairDigits(record.tax_id, 13);
         record.branch_code = repairDigits(record.branch_code, 5);
         record.postal_code = repairDigits(record.postal_code, 5);
@@ -268,16 +303,18 @@ export function CustomerImport() {
     if (failure) {
       setError(
         result
-          ? m.partialCommit(String(result.results.length), String(rows.length), failure)
+          ? m.partialCommit(
+              String(result.results.length),
+              String(rows.length),
+              failure,
+            )
           : failure,
       );
     }
   }
 
   const report = committed ?? dryRun;
-  const nameOf = new Map(
-    (rows ?? []).map((row) => [row.row_no, row] as const),
-  );
+  const nameOf = new Map((rows ?? []).map((row) => [row.row_no, row] as const));
 
   return (
     <div className="space-y-4">
@@ -287,7 +324,9 @@ export function CustomerImport() {
             <Button onClick={() => void downloadTemplate()}>
               {m.downloadTemplate}
             </Button>
-            <Text type="secondary" className="text-xs">{m.templateHint}</Text>
+            <Text type="secondary" className="text-xs">
+              {m.templateHint}
+            </Text>
           </Space>
           <Upload.Dragger
             accept=".xlsx"
@@ -299,9 +338,7 @@ export function CustomerImport() {
               return false;
             }}
           >
-            <p className="px-4 py-2">
-              {parsing ? m.parsing : m.uploadHint}
-            </p>
+            <p className="px-4 py-2">{parsing ? m.parsing : m.uploadHint}</p>
           </Upload.Dragger>
           {fileName && !parsing && (
             <Text type="secondary" className="text-xs">
@@ -411,22 +448,32 @@ export function CustomerImport() {
                       parts.push(m.headOfficeNote(row.headOfficeCode));
                     }
                     if (row.headOfficeRow !== undefined) {
-                      parts.push(m.headOfficeRowNote(String(row.headOfficeRow)));
+                      parts.push(
+                        m.headOfficeRowNote(String(row.headOfficeRow)),
+                      );
                     }
                     const warnings: string[] = [];
                     if (row.possibleDuplicateOf) {
-                      warnings.push(m.possibleDuplicate(row.possibleDuplicateOf));
+                      warnings.push(
+                        m.possibleDuplicate(row.possibleDuplicateOf),
+                      );
                     }
                     if (row.possibleDuplicateOfRow !== undefined) {
                       warnings.push(
-                        m.possibleDuplicateRow(String(row.possibleDuplicateOfRow)),
+                        m.possibleDuplicateRow(
+                          String(row.possibleDuplicateOfRow),
+                        ),
                       );
                     }
                     return (
                       <>
                         {parts.join(" · ") || (warnings.length ? "" : "—")}
                         {warnings.map((warning) => (
-                          <Text key={warning} type="warning" className="block text-xs">
+                          <Text
+                            key={warning}
+                            type="warning"
+                            className="block text-xs"
+                          >
                             {warning}
                           </Text>
                         ))}

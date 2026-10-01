@@ -274,6 +274,43 @@ export function ContractTermsCard({
                   {m.ceiling(money(penalty.ceiling))}
                 </Text>
               )}
+              {/* CD-154 — the project milestones it runs on */}
+              <div className="mt-1 text-xs">
+                <Text type="secondary">{m.penaltyMilestones}: </Text>
+                {!penalty.project ? (
+                  <Text type="secondary">{m.penaltyNoProject}</Text>
+                ) : penalty.milestones.length ? (
+                  <>
+                    <Link href={ROUTES.projectDetail(penalty.project.id)}>
+                      {m.goProject(penalty.project.projectNo)}
+                    </Link>
+                    {penalty.milestones.map((item) => (
+                      <div key={item.id}>
+                        {item.title} ·{" "}
+                        {item.daysLate ? (
+                          <Text type="danger">
+                            {m.penaltyLate(item.daysLate)}
+                            {" · "}
+                            {item.amount === null
+                              ? m.penaltyUnknown
+                              : m.penaltyAmount(money(item.amount))}
+                          </Text>
+                        ) : (
+                          <Text type="success">{m.penaltyOnTime}</Text>
+                        )}
+                      </div>
+                    ))}
+                    {penalty.exposure.total > 0 && (
+                      <div className="font-medium">
+                        {m.exposure(money(penalty.exposure.total))}
+                        {penalty.exposure.capped && ` · ${m.exposureCapped}`}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <Text type="secondary">{m.penaltyNone}</Text>
+                )}
+              </div>
             </>
           ) : (
             none

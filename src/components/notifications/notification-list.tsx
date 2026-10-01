@@ -25,8 +25,16 @@ export function notificationHref(notification: AppNotification): string | null {
       return ROUTES.myWork;
     case "contract_obligation":
       return ROUTES.obligations;
+    // CD-14 — my turn to sign; for the sender, their list of signings
+    case "esign_signer":
+      return ROUTES.esignSign(notification.resourceId);
+    case "esign_envelope":
+      return ROUTES.contracts;
     case "customer_contract":
       return ROUTES.contractDetail(notification.resourceId);
+    // CD-175 — put on a project
+    case "project":
+      return ROUTES.projectDetail(notification.resourceId);
     case "sales_handover":
       return `${ROUTES.handovers}?id=${notification.resourceId}`;
     default:

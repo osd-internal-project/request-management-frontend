@@ -56,10 +56,7 @@ export function CustomerList({
       ["search", next.search ?? filters.search],
       ["status", next.status ?? filters.status],
       ["segment_value_id", next.segmentValueId ?? filters.segmentValueId],
-      [
-        "view",
-        (next.mineOnly ?? filters.mineOnly) ? "mine" : undefined,
-      ],
+      ["view", (next.mineOnly ?? filters.mineOnly) ? "mine" : undefined],
       // Any filter change goes back to page 1 — page 3 of a different query
       // is nobody's intention.
       ["page", next.page ? String(next.page) : undefined],
@@ -175,7 +172,9 @@ export function CustomerList({
           allowClear
           value={filters.status}
           placeholder={messages.customers.filterStatus}
-          onChange={(value) => apply({ status: (value as string) || undefined })}
+          onChange={(value) =>
+            apply({ status: (value as string) || undefined })
+          }
           options={Object.entries(messages.customers.status).map(
             ([value, label]) => ({ value, label }),
           )}

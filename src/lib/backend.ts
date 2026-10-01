@@ -67,12 +67,21 @@ export const CORE_SERVICE_PREFIXES = [
   "/contract-reviews",
   "/contract-review-comments",
   "/contract-requests",
+  "/esign",
   "/leads",
   "/opportunities",
   "/quotations",
   "/sale-orders",
   "/handovers",
   "/presales",
+  // CD-12 Pricing — standard prices (CD-194)
+  "/pricing",
+  // CD-18 PM
+  "/projects",
+  "/project-tasks",
+  "/project-risks",
+  // CD-192 — the portfolio
+  "/project-portfolio",
   "/sales-targets",
   "/campaigns",
   "/target-accounts",

@@ -29,8 +29,15 @@ import dayjs from "dayjs";
 import { SearchSelect } from "@/components/ui/search-select";
 import { LoseOpportunityModal } from "@/components/crm/opportunities/opportunity-actions";
 import { OpportunityActivitiesCard } from "@/components/crm/opportunities/opportunity-activities";
-import { formatAmount, OpportunityParty } from "@/components/crm/opportunities/opportunity-list";
-import { formatMargin, QuotationStatusTags } from "@/components/crm/quotations/quotation-list";
+import {
+  formatAmount,
+  OpportunityParty,
+} from "@/components/crm/opportunities/opportunity-list";
+import {
+  formatMargin,
+  QuotationStatusTags,
+} from "@/components/crm/quotations/quotation-list";
+import { DealMarginLine } from "@/components/crm/quotations/deal-margin";
 import {
   draftLineComplete,
   draftLinesTotal,
@@ -43,6 +50,7 @@ import {
   saleOrderExpandable,
 } from "@/components/crm/sale-orders/sale-order-parts";
 import { appApi } from "@/lib/api/client";
+import type { DealMargin } from "@/lib/api/types";
 import type { DealSolution } from "@/lib/api/presales";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
@@ -78,6 +86,7 @@ export function OpportunityDetailView({
   relatedRequests,
   customers,
   quotations,
+  dealMargin,
   activities,
   canManage,
   currentUserId = null,
@@ -99,6 +108,8 @@ export function OpportunityDetailView({
   customers: CustomerRow[];
   /** CD-76 — ฉบับปัจจุบันของทุกเลข (ไม่รวมที่ถูกแทนแล้ว); margin ถูกปกปิดตามสิทธิ์. */
   quotations: QuotationRow[];
+  /** CD-199 — margin ของดีล; cost/margin absent when the viewer may not see cost. */
+  dealMargin?: DealMargin | null;
   /** CD-65 กิจกรรมและนัดติดตาม — ใหม่สุดก่อน. */
   activities: OpportunityActivity[];
   canManage: boolean;
@@ -196,7 +207,9 @@ export function OpportunityDetailView({
   // เปิดกล่องไปแล้วจาก state ตั้งต้น — ลบ `?action` ออกจาก URL กันรีเฟรชแล้วเด้งซ้ำ
   useEffect(() => {
     if (openSaleOrderOnLoad) {
-      router.replace(ROUTES.opportunityDetail(opportunity.id), { scroll: false });
+      router.replace(ROUTES.opportunityDetail(opportunity.id), {
+        scroll: false,
+      });
     }
   }, [openSaleOrderOnLoad, opportunity.id, router]);
 
@@ -230,21 +243,22 @@ export function OpportunityDetailView({
             },
           };
 
-    const result = await appApi<{ saleOrderCode: string; customerCreated: boolean }>(
-      `opportunities/${opportunity.id}/sale-orders`,
-      {
-        method: "POST",
-        body: JSON.stringify({
-          ...customerPart,
-          quotation_id: soQuotationId,
-          // With a quotation or typed lines the value is their total — the
-          // server fills it in (PO 24 ก.ย. 2569: no second figure).
-          amount: soQuotationId || manualLines ? undefined : (soAmount ?? undefined),
-          lines: manualLines ? soLines.map(toSaleOrderLinePayload) : undefined,
-          note: soNote.trim() || undefined,
-        }),
-      },
-    );
+    const result = await appApi<{
+      saleOrderCode: string;
+      customerCreated: boolean;
+    }>(`opportunities/${opportunity.id}/sale-orders`, {
+      method: "POST",
+      body: JSON.stringify({
+        ...customerPart,
+        quotation_id: soQuotationId,
+        // With a quotation or typed lines the value is their total — the
+        // server fills it in (PO 24 ก.ย. 2569: no second figure).
+        amount:
+          soQuotationId || manualLines ? undefined : (soAmount ?? undefined),
+        lines: manualLines ? soLines.map(toSaleOrderLinePayload) : undefined,
+        note: soNote.trim() || undefined,
+      }),
+    });
 
     setBusy(false);
     if (!result.ok) {
@@ -254,7 +268,10 @@ export function OpportunityDetailView({
       return;
     }
     message.success(
-      md.saleOrderOpened(result.data.saleOrderCode, result.data.customerCreated),
+      md.saleOrderOpened(
+        result.data.saleOrderCode,
+        result.data.customerCreated,
+      ),
     );
     setOpening(false);
     router.refresh();
@@ -280,13 +297,16 @@ export function OpportunityDetailView({
   }
 
   const reasonName =
-    lostReasons.find((reason) => reason.code === opportunity.lostReasonCode)?.name ??
+    lostReasons.find((reason) => reason.code === opportunity.lostReasonCode)
+      ?.name ??
     opportunity.lostReasonCode ??
     "";
 
   // Typed lines apply only without a quotation — the quotation's lines win.
   const manualLines = !soQuotationId && soLines.length > 0;
-  const pickedQuotation = acceptedQuotations.find((q) => q.id === soQuotationId);
+  const pickedQuotation = acceptedQuotations.find(
+    (q) => q.id === soQuotationId,
+  );
   const linesReady = !manualLines || soLines.every(draftLineComplete);
 
   const openReady =
@@ -295,7 +315,8 @@ export function OpportunityDetailView({
       ? true
       : useExisting
         ? Boolean(existingCustomerId)
-        : Boolean(custNameTh.trim()) && (!confirmDuplicate || overrideReason.trim()));
+        : Boolean(custNameTh.trim()) &&
+          (!confirmDuplicate || overrideReason.trim()));
 
   return (
     <div className="space-y-4">
@@ -355,11 +376,12 @@ export function OpportunityDetailView({
             <Tag color={m.stageColor[opportunity.stage]}>
               {m.stage[opportunity.stage] ?? opportunity.stage}
             </Tag>
-            {opportunity.dealType && opportunity.dealType !== "new_business" && (
-              <Tag color={m.dealTypeColor[opportunity.dealType]}>
-                {m.dealType[opportunity.dealType]}
-              </Tag>
-            )}
+            {opportunity.dealType &&
+              opportunity.dealType !== "new_business" && (
+                <Tag color={m.dealTypeColor[opportunity.dealType]}>
+                  {m.dealType[opportunity.dealType]}
+                </Tag>
+              )}
             {opportunity.fromLead && (
               <Text type="secondary" className="text-xs">
                 {md.fromLead(opportunity.fromLead.name)}
@@ -544,6 +566,11 @@ export function OpportunityDetailView({
           ) : undefined
         }
       >
+        {/* CD-199 — the deal's margin over its standing quotations. */}
+        {dealMargin?.marginAmount !== undefined &&
+          dealMargin.quotations.length > 0 && (
+            <DealMarginLine margin={dealMargin} />
+          )}
         {quotations.length ? (
           <Table<QuotationRow>
             size="small"
@@ -597,12 +624,18 @@ export function OpportunityDetailView({
             ]}
           />
         ) : (
-          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={md.noQuotations} />
+          <Empty
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            description={md.noQuotations}
+          />
         )}
       </Card>
 
       {/* ใบสั่งขาย — จุดที่ผู้มุ่งหวังกลายเป็นลูกค้า */}
-      <Card size="small" title={`${md.saleOrdersTitle} · ${opportunity.saleOrders.length}`}>
+      <Card
+        size="small"
+        title={`${md.saleOrdersTitle} · ${opportunity.saleOrders.length}`}
+      >
         {opportunity.saleOrders.length ? (
           <Table<SaleOrderRow>
             size="small"
@@ -611,7 +644,11 @@ export function OpportunityDetailView({
             dataSource={opportunity.saleOrders}
             expandable={saleOrderExpandable}
             columns={[
-              { title: md.saleOrderColumns.code, dataIndex: "saleOrderCode", width: 160 },
+              {
+                title: md.saleOrderColumns.code,
+                dataIndex: "saleOrderCode",
+                width: 160,
+              },
               {
                 title: md.saleOrderColumns.status,
                 dataIndex: "status",
@@ -641,7 +678,9 @@ export function OpportunityDetailView({
                 title: md.saleOrderColumns.note,
                 dataIndex: "note",
                 render: (note: string | null, row) =>
-                  row.status === "cancelled" ? row.cancelReason ?? note ?? "—" : note ?? "—",
+                  row.status === "cancelled"
+                    ? (row.cancelReason ?? note ?? "—")
+                    : (note ?? "—"),
               },
               ...(canManage
                 ? [
@@ -651,7 +690,11 @@ export function OpportunityDetailView({
                       width: 120,
                       render: (_: unknown, row: SaleOrderRow) =>
                         row.status === "open" ? (
-                          <Button size="small" danger onClick={() => setCancelling(row)}>
+                          <Button
+                            size="small"
+                            danger
+                            onClick={() => setCancelling(row)}
+                          >
                             {md.cancelSaleOrder}
                           </Button>
                         ) : null,
@@ -661,7 +704,10 @@ export function OpportunityDetailView({
             ]}
           />
         ) : (
-          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={md.noSaleOrders} />
+          <Empty
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            description={md.noSaleOrders}
+          />
         )}
       </Card>
 
@@ -835,7 +881,9 @@ export function OpportunityDetailView({
                       <>
                         <Checkbox
                           checked={confirmDuplicate}
-                          onChange={(e) => setConfirmDuplicate(e.target.checked)}
+                          onChange={(e) =>
+                            setConfirmDuplicate(e.target.checked)
+                          }
                         >
                           {md.confirmDuplicate}
                         </Checkbox>
@@ -856,7 +904,9 @@ export function OpportunityDetailView({
 
           {acceptedQuotations.length > 0 && (
             <div>
-              <Text className="mb-1 block text-xs">{md.saleOrderQuotation}</Text>
+              <Text className="mb-1 block text-xs">
+                {md.saleOrderQuotation}
+              </Text>
               <Select<string>
                 allowClear
                 className="w-full"
@@ -879,7 +929,9 @@ export function OpportunityDetailView({
             <>
               <SaleOrderLinesEditor lines={soLines} onChange={setSoLines} />
               <Text type="secondary" className="text-xs">
-                {soLines.length ? md.saleOrderLinesHint : md.saleOrderNoLinesHint}
+                {soLines.length
+                  ? md.saleOrderLinesHint
+                  : md.saleOrderNoLinesHint}
               </Text>
             </>
           )}

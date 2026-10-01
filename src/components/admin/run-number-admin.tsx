@@ -39,6 +39,7 @@ const DOC_TYPES: RunNumberDocType[] = [
   "OPPORTUNITY",
   "SALE_ORDER",
   "QUOTATION",
+  "PROJECT",
 ];
 
 const RESETS: RunNumberReset[] = ["none", "yearly", "monthly", "daily"];

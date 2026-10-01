@@ -252,3 +252,10 @@ export async function getOpportunityStageSummary(options?: {
   const query = params.toString();
   return apiGet(`opportunities/summary${query ? `?${query}` : ""}`);
 }
+
+/** CD-199 — the deal's margin (cost and margin masked by permission). */
+export async function getDealMargin(
+  opportunityId: string,
+): Promise<ApiResult<import("../types").DealMargin>> {
+  return apiGet(`opportunities/${opportunityId}/margin`);
+}

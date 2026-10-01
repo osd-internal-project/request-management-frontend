@@ -24,7 +24,13 @@ import type {
 const md = messages.sales.opportunities.detail;
 const ma = messages.sales.leads.detail.activities;
 
-const LOG_TYPES: LeadActivityType[] = ["call", "email", "meeting", "task", "note"];
+const LOG_TYPES: LeadActivityType[] = [
+  "call",
+  "email",
+  "meeting",
+  "task",
+  "note",
+];
 
 /**
  * CD-65 กิจกรรมและการติดตามบนโอกาสการขาย — ปุ่มลงกิจกรรมตามประเภท,
@@ -127,7 +133,9 @@ export function OpportunityActivitiesCard({
         </span>
         <span>
           {md.nextFollowUp}:{" "}
-          {opportunity.nextFollowUpAt ? formatWhen(opportunity.nextFollowUpAt) : "—"}
+          {opportunity.nextFollowUpAt
+            ? formatWhen(opportunity.nextFollowUpAt)
+            : "—"}
         </span>
       </div>
 

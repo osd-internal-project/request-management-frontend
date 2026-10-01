@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -14,6 +14,7 @@ import {
   InputNumber,
   Modal,
   Popconfirm,
+  Select,
   Space,
   Table,
   Tag,
@@ -23,12 +24,21 @@ import Title from "antd/es/typography/Title";
 import { PrinterOutlined } from "@ant-design/icons";
 import dayjs, { type Dayjs } from "dayjs";
 import { formatAmount } from "@/components/crm/opportunities/opportunity-list";
-import { formatMargin, QuotationStatusTags } from "@/components/crm/quotations/quotation-list";
+import {
+  formatMargin,
+  QuotationStatusTags,
+} from "@/components/crm/quotations/quotation-list";
 import { ProductPicker } from "@/components/crm/quotations/product-picker";
+import { lookupPrices, suggestMarkup } from "@/lib/api/pricing/client";
 import { appApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
-import type { QuotationDetail, QuotationStatus } from "@/lib/api/types";
+import type {
+  DealMargin,
+  QuotationDetail,
+  QuotationStatus,
+} from "@/lib/api/types";
+import { DealMarginLine } from "@/components/crm/quotations/deal-margin";
 
 const mq = messages.sales.quotations;
 const md = mq.detail;
@@ -43,6 +53,34 @@ interface DraftLine {
   unitPrice: number | null;
   unitCost: number | null;
   discountPct: number | null;
+  /** CD-195 — the standard price the unit price came from; null = typed. */
+  priceId: string | null;
+  /** CD-196 — unit · lump_sum (quantity is 1) · monthly (× termMonths). */
+  priceModel: PriceModel;
+  termMonths: number | null;
+  /** CD-198 — display only; the server keeps it while product and cost stand. */
+  costSource: string | null;
+  /** CD-200 — equipment · material · software · service. */
+  workType: WorkType | null;
+  /** CD-200 — the markup that priced the line; cleared by a hand edit. */
+  markupPct: number | null;
+}
+
+type WorkType = "equipment" | "material" | "software" | "service";
+const WORK_TYPES: WorkType[] = ["equipment", "material", "software", "service"];
+
+type PriceModel = "unit" | "lump_sum" | "monthly";
+const PRICE_MODELS: PriceModel[] = ["unit", "lump_sum", "monthly"];
+/** A monthly line starts at a year — the usual service term. */
+const DEFAULT_TERM_MONTHS = 12;
+
+/** CD-196 — what the unit price is multiplied by (the server does the same). */
+function billedQuantity(line: DraftLine): number {
+  if (line.priceModel === "lump_sum") return 1;
+  const quantity = line.quantity ?? 0;
+  return line.priceModel === "monthly"
+    ? quantity * (line.termMonths ?? 0)
+    : quantity;
 }
 
 type ActionKind = "submit" | "accept" | "decline" | "cancel";
@@ -63,6 +101,15 @@ function toDraftLines(quotation: QuotationDetail): DraftLine[] {
     unitPrice: Number(line.unitPrice),
     unitCost: line.unitCost === undefined ? null : Number(line.unitCost),
     discountPct: Number(line.discountPct),
+    priceId: line.priceId ?? null,
+    priceModel: (line.priceModel ?? "unit") as PriceModel,
+    termMonths: line.termMonths ?? null,
+    costSource: line.costSource ?? null,
+    workType: (line.workType ?? null) as WorkType | null,
+    markupPct:
+      line.markupPct === null || line.markupPct === undefined
+        ? null
+        : Number(line.markupPct),
   }));
 }
 
@@ -76,19 +123,27 @@ function previewTotals(lines: DraftLine[], vatPct: number) {
   let subtotal = 0;
   let net = 0;
   let cost = 0;
+  let monthly = 0;
+  const lineCosts: number[] = [];
   const lineTotals = lines.map((line) => {
-    const quantity = line.quantity ?? 0;
+    const quantity = billedQuantity(line);
     const gross = round2(quantity * (line.unitPrice ?? 0));
     const total = round2((gross * (100 - (line.discountPct ?? 0))) / 100);
     subtotal += gross;
     net += total;
-    cost += round2(quantity * (line.unitCost ?? 0));
+    const lineCost = round2(quantity * (line.unitCost ?? 0));
+    lineCosts.push(lineCost);
+    cost += lineCost;
+    if (line.priceModel === "monthly" && line.termMonths) {
+      monthly += round2(total / line.termMonths);
+    }
     return total;
   });
   const vat = round2((net * vatPct) / 100);
   const margin = net - cost;
   return {
     lineTotals,
+    lineCosts,
     subtotal,
     discount: subtotal - net,
     net,
@@ -97,6 +152,7 @@ function previewTotals(lines: DraftLine[], vatPct: number) {
     cost,
     margin,
     marginPct: net > 0 ? round2((margin / net) * 100) : null,
+    monthly,
   };
 }
 
@@ -125,6 +181,26 @@ export function QuotationDetailView({
   const status: QuotationStatus = quotation.status;
   const currency = quotation.currency;
   const costVisible = quotation.costTotal !== undefined;
+  // CD-199 — the deal's margin and the company minimum (cost viewers only).
+  const [dealMargin, setDealMargin] = useState<DealMargin | null>(null);
+  useEffect(() => {
+    if (!costVisible) return;
+    void appApi<DealMargin>(
+      `opportunities/${quotation.opportunityId}/margin`,
+    ).then((result) => {
+      if (result.ok) setDealMargin(result.data);
+    });
+  }, [costVisible, quotation.opportunityId, quotation.netTotal]);
+  const minMargin = Number(
+    quotation.minMarginPct ?? dealMargin?.minMarginPct ?? 0,
+  );
+  // CD-202 — a work type is held to its own minimum when the company set one.
+  const minByType =
+    quotation.minMarginByWorkType ?? dealMargin?.minMarginByWorkType ?? {};
+  const minFor = (workType: string | null): number =>
+    workType && minByType[workType] !== undefined
+      ? Number(minByType[workType])
+      : minMargin;
   const isDraft = status === "draft";
   const canEditHeader = canManage && isDraft;
   const canEditLines = canEditHeader && costVisible;
@@ -152,7 +228,9 @@ export function QuotationDetailView({
     canEditHeader &&
     (title !== initial.title ||
       (validUntil?.format("YYYY-MM-DD") ?? null) !==
-        (initial.validUntil ? dayjs(initial.validUntil).format("YYYY-MM-DD") : null) ||
+        (initial.validUntil
+          ? dayjs(initial.validUntil).format("YYYY-MM-DD")
+          : null) ||
       paymentTerms !== initial.paymentTerms ||
       note !== initial.note ||
       JSON.stringify(lines) !== JSON.stringify(initial.lines));
@@ -177,7 +255,8 @@ export function QuotationDetailView({
 
   async function save() {
     const linesInvalid = lines.some(
-      (line) => !line.description.trim() || !line.quantity || line.unitPrice === null,
+      (line) =>
+        !line.description.trim() || !line.quantity || line.unitPrice === null,
     );
     if (canEditLines && linesInvalid) {
       setError(md.noLines);
@@ -198,6 +277,14 @@ export function QuotationDetailView({
               unit_price: line.unitPrice,
               unit_cost: line.unitCost ?? 0,
               discount_pct: line.discountPct ?? 0,
+              price_id: line.priceId ?? undefined,
+              price_model: line.priceModel,
+              work_type: line.workType ?? undefined,
+              markup_pct: line.markupPct ?? undefined,
+              term_months:
+                line.priceModel === "monthly"
+                  ? (line.termMonths ?? undefined)
+                  : undefined,
             })),
           }
         : {}),
@@ -231,12 +318,20 @@ export function QuotationDetailView({
     setAction(null);
     setActionText("");
     if (action === "submit") {
-      message.success(
-        result.data.status === "pending_approval" ? md.requestDrafted : md.approvedNow,
-      );
+      // CD-201 — the system files the request; one it could not submit is
+      // left as a draft for the salesperson to finish.
+      if (result.data.approvalRequest?.status === "draft") {
+        message.warning(md.requestDrafted);
+      } else {
+        message.success(md.requestSubmitted);
+      }
     } else {
       message.success(
-        action === "accept" ? md.accepted : action === "decline" ? md.declined : md.cancelled,
+        action === "accept"
+          ? md.accepted
+          : action === "decline"
+            ? md.declined
+            : md.cancelled,
       );
     }
     router.refresh();
@@ -268,18 +363,100 @@ export function QuotationDetailView({
     setActionError(null);
   }
 
+  /**
+   * CD-194 — the standard price in effect today, in this quotation's
+   * currency, becomes the line's unit price. No price, no change.
+   */
+  /**
+   * CD-200 — no standard or special price: offer cost × (1 + markup) from the
+   * rule that applies to this product, work type and deal.
+   */
+  async function fillMarkupPrice(key: string, code: string) {
+    const line = lines.find((row) => row.key === key);
+    const cost = line?.unitCost ?? 0;
+    if (!cost) return;
+    const result = await suggestMarkup(
+      [{ product_code: code, work_type: line?.workType ?? undefined }],
+      quotation.opportunityId,
+    );
+    const markup = result.ok ? result.data[0] : null;
+    if (!markup) return;
+    const price = round2(cost * (1 + markup.markup_pct / 100));
+    patchLine(key, {
+      unitPrice: price,
+      priceId: null,
+      markupPct: markup.markup_pct,
+    });
+    void message.info(
+      md.markupFilled(code, money(price, currency), markup.markup_pct),
+    );
+  }
+
+  async function fillStandardPrice(key: string, code: string) {
+    const result = await lookupPrices(
+      [code],
+      currency,
+      quotation.opportunityId,
+    );
+    const found = result.ok ? result.data[code] : undefined;
+    if (!found) {
+      await fillMarkupPrice(key, code);
+      return;
+    }
+    const model = (found.price_model ?? "unit") as PriceModel;
+    setLines((current) =>
+      current.map((line) =>
+        line.key === key
+          ? {
+              ...line,
+              unitPrice: found.unit_price,
+              priceId: found.price_id,
+              priceModel: model,
+              termMonths:
+                model === "monthly"
+                  ? (line.termMonths ?? DEFAULT_TERM_MONTHS)
+                  : null,
+            }
+          : line,
+      ),
+    );
+    void message.info(
+      md.priceFilled(
+        code,
+        money(found.unit_price, found.currency),
+        md.priceSources[found.scope] ?? "",
+      ),
+    );
+  }
+
   function patchLine(key: string, patch: Partial<DraftLine>) {
     setLines((current) =>
       current.map((line) => (line.key === key ? { ...line, ...patch } : line)),
     );
   }
 
-  const revisable = ["pending_approval", "approved", "sent", "declined"].includes(status);
-  const cancellable = ["draft", "pending_approval", "approved", "sent"].includes(status);
+  const revisable = [
+    "pending_approval",
+    "approved",
+    "sent",
+    "declined",
+  ].includes(status);
+  const cancellable = [
+    "draft",
+    "pending_approval",
+    "approved",
+    "sent",
+  ].includes(status);
 
   const actionMeta: Record<
     ActionKind,
-    { title: string; ok: string; placeholder: string; required: boolean; hint?: string }
+    {
+      title: string;
+      ok: string;
+      placeholder: string;
+      required: boolean;
+      hint?: string;
+    }
   > = {
     submit: {
       title: md.submit,
@@ -288,9 +465,24 @@ export function QuotationDetailView({
       required: false,
       hint: `${md.submitHint} · ${md.reasonHint}`,
     },
-    accept: { title: md.acceptTitle, ok: md.accept, placeholder: md.acceptNote, required: false },
-    decline: { title: md.declineTitle, ok: md.decline, placeholder: md.declineReason, required: true },
-    cancel: { title: md.cancelTitle, ok: md.cancel, placeholder: md.cancelReason, required: true },
+    accept: {
+      title: md.acceptTitle,
+      ok: md.accept,
+      placeholder: md.acceptNote,
+      required: false,
+    },
+    decline: {
+      title: md.declineTitle,
+      ok: md.decline,
+      placeholder: md.declineReason,
+      required: true,
+    },
+    cancel: {
+      title: md.cancelTitle,
+      ok: md.cancel,
+      placeholder: md.cancelReason,
+      required: true,
+    },
   };
 
   // --- render --------------------------------------------------------------
@@ -298,6 +490,7 @@ export function QuotationDetailView({
     ? preview
     : {
         lineTotals: quotation.lines.map((line) => Number(line.lineTotal)),
+        lineCosts: quotation.lines.map((line) => Number(line.lineCost ?? 0)),
         subtotal: quotation.subtotal,
         discount: quotation.discountTotal,
         net: quotation.netTotal,
@@ -306,13 +499,40 @@ export function QuotationDetailView({
         cost: quotation.costTotal,
         margin: quotation.marginAmount,
         marginPct: quotation.marginPct,
+        monthly: Number(quotation.monthlyRecurring ?? 0),
       };
+
+  // CD-202 — the shown lines summed per work type, the untyped ones last.
+  const marginRows = canEditHeader ? lines : toDraftLines(quotation);
+  const typeMargins = [...WORK_TYPES, null]
+    .map((workType) => {
+      let net = 0;
+      let cost = 0;
+      let found = false;
+      marginRows.forEach((line, index) => {
+        const key =
+          line.workType && WORK_TYPES.includes(line.workType)
+            ? line.workType
+            : null;
+        if (key !== workType) return;
+        found = true;
+        net += shown.lineTotals[index] ?? 0;
+        cost += shown.lineCosts[index] ?? 0;
+      });
+      if (!found) return null;
+      const pct = net > 0 ? round2(((net - cost) / net) * 100) : null;
+      const min = minFor(workType);
+      return { workType, pct, min, low: pct === null || pct < min };
+    })
+    .filter((group) => group !== null);
 
   return (
     <div className="space-y-4">
       {error && <Alert type="error" showIcon title={error} />}
 
-      {quotation.expired && <Alert type="error" showIcon title={md.expiredBanner} />}
+      {quotation.expired && (
+        <Alert type="error" showIcon title={md.expiredBanner} />
+      )}
       {status === "pending_approval" && (
         <Alert
           type="warning"
@@ -342,9 +562,15 @@ export function QuotationDetailView({
       {["approved", "sent", "declined"].includes(status) && (
         <Alert type="info" showIcon title={md.lockedBanner} />
       )}
-      {status === "superseded" && <Alert type="info" showIcon title={md.supersededBanner} />}
+      {status === "superseded" && (
+        <Alert type="info" showIcon title={md.supersededBanner} />
+      )}
       {status === "cancelled" && (
-        <Alert type="warning" showIcon title={md.cancelledBanner(quotation.cancelReason ?? "")} />
+        <Alert
+          type="warning"
+          showIcon
+          title={md.cancelledBanner(quotation.cancelReason ?? "")}
+        />
       )}
       {status === "accepted" && (
         <Alert
@@ -364,7 +590,8 @@ export function QuotationDetailView({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <Title level={4} className="mb-1!">
-            {quotation.quotationNo} {mq.version(quotation.version)} · {quotation.title}
+            {quotation.quotationNo} {mq.version(quotation.version)} ·{" "}
+            {quotation.title}
           </Title>
           <QuotationStatusTags row={quotation} />
         </div>
@@ -382,47 +609,62 @@ export function QuotationDetailView({
             </Link>
           )}
           {canManage && (
-          <>
-            {isDraft && (
-              <>
-                <Button loading={busy} disabled={!dirty} onClick={() => void save()}>
-                  {md.save}
-                </Button>
+            <>
+              {isDraft && (
+                <>
+                  <Button
+                    loading={busy}
+                    disabled={!dirty}
+                    onClick={() => void save()}
+                  >
+                    {md.save}
+                  </Button>
+                  <Button
+                    type="primary"
+                    loading={busy}
+                    onClick={() =>
+                      dirty
+                        ? setError(md.submitDirtyFirst)
+                        : openAction("submit")
+                    }
+                  >
+                    {md.submit}
+                  </Button>
+                </>
+              )}
+              {status === "approved" && (
                 <Button
                   type="primary"
                   loading={busy}
-                  onClick={() =>
-                    dirty ? setError(md.submitDirtyFirst) : openAction("submit")
-                  }
+                  onClick={() => void send()}
                 >
-                  {md.submit}
+                  {md.send}
                 </Button>
-              </>
-            )}
-            {status === "approved" && (
-              <Button type="primary" loading={busy} onClick={() => void send()}>
-                {md.send}
-              </Button>
-            )}
-            {status === "sent" && (
-              <>
-                <Button type="primary" onClick={() => openAction("accept")}>
-                  {md.accept}
+              )}
+              {status === "sent" && (
+                <>
+                  <Button type="primary" onClick={() => openAction("accept")}>
+                    {md.accept}
+                  </Button>
+                  <Button onClick={() => openAction("decline")}>
+                    {md.decline}
+                  </Button>
+                </>
+              )}
+              {revisable && (
+                <Popconfirm
+                  title={md.reviseConfirm}
+                  onConfirm={() => void revise()}
+                >
+                  <Button loading={busy}>{md.revise}</Button>
+                </Popconfirm>
+              )}
+              {cancellable && (
+                <Button danger onClick={() => openAction("cancel")}>
+                  {md.cancel}
                 </Button>
-                <Button onClick={() => openAction("decline")}>{md.decline}</Button>
-              </>
-            )}
-            {revisable && (
-              <Popconfirm title={md.reviseConfirm} onConfirm={() => void revise()}>
-                <Button loading={busy}>{md.revise}</Button>
-              </Popconfirm>
-            )}
-            {cancellable && (
-              <Button danger onClick={() => openAction("cancel")}>
-                {md.cancel}
-              </Button>
-            )}
-          </>
+              )}
+            </>
           )}
         </Space>
       </div>
@@ -437,10 +679,27 @@ export function QuotationDetailView({
               label: md.fromOpportunity,
               children: (
                 <Link href={ROUTES.opportunityDetail(quotation.opportunity.id)}>
-                  {quotation.opportunity.opportunityCode} · {quotation.opportunity.title}
+                  {quotation.opportunity.opportunityCode} ·{" "}
+                  {quotation.opportunity.title}
                 </Link>
               ),
             },
+            // CD-198 — started from a Solution version (handoff 3).
+            ...(quotation.solutionId
+              ? [
+                  {
+                    key: "solution",
+                    label: md.fromSolution,
+                    children: (
+                      <Link
+                        href={`${ROUTES.solutionDetail(quotation.solutionId)}?v=${quotation.solutionVersionNo ?? ""}`}
+                      >
+                        {md.solutionVersion(quotation.solutionVersionNo ?? 0)}
+                      </Link>
+                    ),
+                  },
+                ]
+              : []),
             {
               key: "party",
               label: md.party,
@@ -453,16 +712,32 @@ export function QuotationDetailView({
               ),
             },
             ...(quotation.partyTaxId
-              ? [{ key: "tax", label: md.taxId, children: quotation.partyTaxId }]
+              ? [
+                  {
+                    key: "tax",
+                    label: md.taxId,
+                    children: quotation.partyTaxId,
+                  },
+                ]
               : []),
             ...(quotation.contactName
-              ? [{ key: "contact", label: md.contact, children: quotation.contactName }]
+              ? [
+                  {
+                    key: "contact",
+                    label: md.contact,
+                    children: quotation.contactName,
+                  },
+                ]
               : []),
             {
               key: "title",
               label: md.title,
               children: canEditHeader ? (
-                <Input value={title} maxLength={255} onChange={(e) => setTitle(e.target.value)} />
+                <Input
+                  value={title}
+                  maxLength={255}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
               ) : (
                 quotation.title
               ),
@@ -492,7 +767,7 @@ export function QuotationDetailView({
                   onChange={(e) => setPaymentTerms(e.target.value)}
                 />
               ) : (
-                quotation.paymentTerms ?? "—"
+                (quotation.paymentTerms ?? "—")
               ),
             },
             {
@@ -506,11 +781,17 @@ export function QuotationDetailView({
                   onChange={(e) => setNote(e.target.value)}
                 />
               ) : (
-                quotation.note ?? "—"
+                (quotation.note ?? "—")
               ),
             },
             ...(quotation.responseNote
-              ? [{ key: "response", label: md.responseNote, children: quotation.responseNote }]
+              ? [
+                  {
+                    key: "response",
+                    label: md.responseNote,
+                    children: quotation.responseNote,
+                  },
+                ]
               : []),
           ]}
         />
@@ -535,6 +816,12 @@ export function QuotationDetailView({
                     unitPrice: null,
                     unitCost: null,
                     discountPct: 0,
+                    priceId: null,
+                    priceModel: "unit",
+                    termMonths: null,
+                    costSource: null,
+                    workType: null,
+                    markupPct: null,
                   },
                 ])
               }
@@ -567,15 +854,19 @@ export function QuotationDetailView({
                 canEditLines ? (
                   <ProductPicker
                     value={value}
-                    onPick={(product) =>
+                    onPick={(product) => {
                       patchLine(row.key, {
                         productCode: product.code,
                         // Fill only what the user has not written yet.
                         description: row.description || product.name,
                         unit: row.unit || (product.unit ?? ""),
-                      })
+                        priceId: null,
+                      });
+                      void fillStandardPrice(row.key, product.code);
+                    }}
+                    onClear={() =>
+                      patchLine(row.key, { productCode: "", priceId: null })
                     }
-                    onClear={() => patchLine(row.key, { productCode: "" })}
                   />
                 ) : (
                   value || "—"
@@ -590,7 +881,9 @@ export function QuotationDetailView({
                     autoSize={{ minRows: 1, maxRows: 4 }}
                     value={value}
                     maxLength={1000}
-                    onChange={(e) => patchLine(row.key, { description: e.target.value })}
+                    onChange={(e) =>
+                      patchLine(row.key, { description: e.target.value })
+                    }
                   />
                 ) : (
                   value
@@ -606,11 +899,73 @@ export function QuotationDetailView({
                   <InputNumber
                     className="w-full"
                     min={0.001}
-                    value={value}
+                    // CD-196 — a lump sum is one job.
+                    disabled={row.priceModel === "lump_sum"}
+                    value={row.priceModel === "lump_sum" ? 1 : value}
                     onChange={(next) => patchLine(row.key, { quantity: next })}
                   />
                 ) : (
                   formatAmount(value)
+                ),
+            },
+            {
+              title: md.line.priceModel,
+              dataIndex: "priceModel",
+              width: 250,
+              render: (value: PriceModel, row) =>
+                canEditLines ? (
+                  <div className="flex flex-wrap gap-1">
+                    <Select<PriceModel>
+                      className="min-w-24 flex-1"
+                      value={value}
+                      onChange={(model) =>
+                        patchLine(row.key, {
+                          priceModel: model,
+                          priceId: null,
+                          quantity: model === "lump_sum" ? 1 : row.quantity,
+                          termMonths:
+                            model === "monthly"
+                              ? (row.termMonths ?? DEFAULT_TERM_MONTHS)
+                              : null,
+                        })
+                      }
+                      options={PRICE_MODELS.map((model) => ({
+                        value: model,
+                        label: md.priceModels[model],
+                      }))}
+                    />
+                    {value === "monthly" && (
+                      <InputNumber
+                        className="w-16"
+                        min={1}
+                        max={120}
+                        precision={0}
+                        aria-label={md.line.termMonths}
+                        title={md.line.termMonths}
+                        value={row.termMonths}
+                        onChange={(next) =>
+                          patchLine(row.key, { termMonths: next })
+                        }
+                      />
+                    )}
+                    <Select<WorkType>
+                      className="min-w-24"
+                      allowClear
+                      placeholder={md.line.workType}
+                      value={row.workType ?? undefined}
+                      onChange={(type) =>
+                        patchLine(row.key, { workType: type ?? null })
+                      }
+                      options={WORK_TYPES.map((type) => ({
+                        value: type,
+                        label: md.workTypes[type],
+                      }))}
+                    />
+                  </div>
+                ) : value === "monthly" ? (
+                  md.monthlyTerm(row.termMonths ?? 0)
+                ) : (
+                  md.priceModels[value]
                 ),
             },
             {
@@ -622,7 +977,9 @@ export function QuotationDetailView({
                   <Input
                     value={value}
                     maxLength={30}
-                    onChange={(e) => patchLine(row.key, { unit: e.target.value })}
+                    onChange={(e) =>
+                      patchLine(row.key, { unit: e.target.value })
+                    }
                   />
                 ) : (
                   value || "—"
@@ -639,10 +996,24 @@ export function QuotationDetailView({
                     className="w-full"
                     min={0}
                     value={value}
-                    onChange={(next) => patchLine(row.key, { unitPrice: next })}
+                    onChange={(next) =>
+                      // A price typed by hand no longer is the standard one.
+                      patchLine(row.key, {
+                        unitPrice: next,
+                        priceId: null,
+                        markupPct: null,
+                      })
+                    }
                   />
                 ) : (
-                  formatAmount(value)
+                  <>
+                    {formatAmount(value)}
+                    {row.markupPct !== null && (
+                      <div className="text-[11px] text-gray-500">
+                        {md.fromMarkup(row.markupPct)}
+                      </div>
+                    )}
+                  </>
                 ),
             },
             ...(costVisible
@@ -652,17 +1023,32 @@ export function QuotationDetailView({
                     dataIndex: "unitCost",
                     width: 130,
                     align: "right" as const,
-                    render: (value: number | null, row: DraftLine) =>
-                      canEditLines ? (
-                        <InputNumber
-                          className="w-full"
-                          min={0}
-                          value={value}
-                          onChange={(next) => patchLine(row.key, { unitCost: next })}
-                        />
-                      ) : (
-                        formatAmount(value)
-                      ),
+                    render: (value: number | null, row: DraftLine) => (
+                      <>
+                        {canEditLines ? (
+                          <InputNumber
+                            className="w-full"
+                            min={0}
+                            value={value}
+                            onChange={(next) =>
+                              // CD-200 — a new cost no longer is what the markup priced.
+                              patchLine(row.key, {
+                                unitCost: next,
+                                markupPct: null,
+                              })
+                            }
+                          />
+                        ) : (
+                          formatAmount(value)
+                        )}
+                        {/* CD-198 — where the cost came from (from a Solution). */}
+                        {row.costSource && (
+                          <div className="text-[11px] text-gray-500">
+                            {row.costSource}
+                          </div>
+                        )}
+                      </>
+                    ),
                   },
                 ]
               : []),
@@ -678,7 +1064,9 @@ export function QuotationDetailView({
                     min={0}
                     max={100}
                     value={value}
-                    onChange={(next) => patchLine(row.key, { discountPct: next })}
+                    onChange={(next) =>
+                      patchLine(row.key, { discountPct: next })
+                    }
                   />
                 ) : (
                   formatAmount(value)
@@ -692,6 +1080,34 @@ export function QuotationDetailView({
               render: (_: unknown, __: DraftLine, index: number) =>
                 formatAmount(shown.lineTotals[index] ?? null),
             },
+            // CD-199 — each line's margin, live, red under the minimum.
+            ...(costVisible
+              ? [
+                  {
+                    title: md.line.margin,
+                    key: "margin",
+                    width: 130,
+                    align: "right" as const,
+                    render: (_: unknown, row: DraftLine, index: number) => {
+                      const total = shown.lineTotals[index] ?? 0;
+                      const amount = round2(
+                        total - (shown.lineCosts[index] ?? 0),
+                      );
+                      const pct =
+                        total > 0 ? round2((amount / total) * 100) : null;
+                      const low = pct === null || pct < minFor(row.workType);
+                      return (
+                        <div className={low ? "text-red-600" : undefined}>
+                          <div>{formatAmount(amount)}</div>
+                          <div className="text-[11px]">
+                            {pct === null ? "—" : `${pct.toFixed(2)}%`}
+                          </div>
+                        </div>
+                      );
+                    },
+                  },
+                ]
+              : []),
             ...(canEditLines
               ? [
                   {
@@ -704,7 +1120,9 @@ export function QuotationDetailView({
                         type="text"
                         danger
                         onClick={() =>
-                          setLines((current) => current.filter((line) => line.key !== row.key))
+                          setLines((current) =>
+                            current.filter((line) => line.key !== row.key),
+                          )
                         }
                       >
                         {md.removeLine}
@@ -723,17 +1141,40 @@ export function QuotationDetailView({
                 {md.unsavedPreview}
               </Text>
             )}
-            <Row label={md.totals.subtotal} value={money(shown.subtotal, currency)} />
-            <Row label={md.totals.discount} value={money(shown.discount, currency)} />
-            <Row label={md.totals.net} value={money(shown.net, currency)} strong />
+            <Row
+              label={md.totals.subtotal}
+              value={money(shown.subtotal, currency)}
+            />
+            <Row
+              label={md.totals.discount}
+              value={money(shown.discount, currency)}
+            />
+            <Row
+              label={md.totals.net}
+              value={money(shown.net, currency)}
+              strong
+            />
             <Row
               label={md.totals.vat(String(Number(quotation.vatPct)))}
               value={money(shown.vat, currency)}
             />
-            <Row label={md.totals.grand} value={money(shown.grand, currency)} strong />
+            <Row
+              label={md.totals.grand}
+              value={money(shown.grand, currency)}
+              strong
+            />
+            {shown.monthly > 0 && (
+              <Row
+                label={md.totals.monthly}
+                value={money(shown.monthly, currency)}
+              />
+            )}
             {costVisible && (
               <>
-                <Row label={md.totals.cost} value={money(shown.cost, currency)} />
+                <Row
+                  label={md.totals.cost}
+                  value={money(shown.cost, currency)}
+                />
                 <Row
                   label={md.totals.margin}
                   value={`${money(shown.margin, currency)} · ${formatMargin(shown.marginPct)}`}
@@ -741,8 +1182,46 @@ export function QuotationDetailView({
                 />
                 {quotation.minMarginPct !== null && (
                   <Text type="secondary" className="block text-right text-xs">
-                    {md.totals.minMargin(String(Number(quotation.minMarginPct)))}
+                    {md.totals.minMargin(
+                      String(Number(quotation.minMarginPct)),
+                    )}
                   </Text>
+                )}
+                {/* CD-202 — each work type against its own minimum. */}
+                {typeMargins.length > 1 || Object.keys(minByType).length ? (
+                  <div className="mt-2">
+                    <Text type="secondary" className="block text-xs">
+                      {md.marginByWorkType}
+                    </Text>
+                    {typeMargins.map((group) => (
+                      <Row
+                        key={group.workType ?? "none"}
+                        label={
+                          group.workType
+                            ? (md.workTypes[group.workType] ?? group.workType)
+                            : md.noWorkType
+                        }
+                        value={
+                          <span
+                            className={group.low ? "text-red-600" : undefined}
+                          >
+                            {md.workTypeMargin(
+                              group.pct === null
+                                ? "—"
+                                : `${group.pct.toFixed(2)}%`,
+                              group.min,
+                            )}
+                          </span>
+                        }
+                      />
+                    ))}
+                  </div>
+                ) : null}
+                {/* CD-199 — the deal as a whole, saved versions only. */}
+                {dealMargin && dealMargin.quotations.length > 0 && (
+                  <div className="mt-2">
+                    <DealMarginLine margin={dealMargin} />
+                  </div>
                 )}
               </>
             )}
@@ -756,13 +1235,17 @@ export function QuotationDetailView({
             {quotation.versions.map((version) =>
               version.id === quotation.id ? (
                 <Tag key={version.id} color="blue">
-                  {mq.version(version.version)} · {mq.status[version.status]} · {md.current}
+                  {mq.version(version.version)} · {mq.status[version.status]} ·{" "}
+                  {md.current}
                 </Tag>
               ) : (
-                <Link key={version.id} href={ROUTES.quotationDetail(version.id)}>
+                <Link
+                  key={version.id}
+                  href={ROUTES.quotationDetail(version.id)}
+                >
                   <Tag>
-                    {mq.version(version.version)} · {mq.status[version.status]} ·{" "}
-                    {money(version.netTotal, currency)}
+                    {mq.version(version.version)} · {mq.status[version.status]}{" "}
+                    · {money(version.netTotal, currency)}
                   </Tag>
                 </Link>
               ),
@@ -775,7 +1258,10 @@ export function QuotationDetailView({
         <Card size="small" title={md.saleOrdersTitle}>
           <Space wrap>
             {quotation.saleOrders.map((order) => (
-              <Tag key={order.id} color={order.status === "open" ? "green" : "red"}>
+              <Tag
+                key={order.id}
+                color={order.status === "open" ? "green" : "red"}
+              >
                 {order.saleOrderCode}
               </Tag>
             ))}
@@ -789,7 +1275,9 @@ export function QuotationDetailView({
         okText={action ? actionMeta[action].ok : ""}
         okButtonProps={{
           danger: action === "cancel",
-          disabled: action ? actionMeta[action].required && !actionText.trim() : true,
+          disabled: action
+            ? actionMeta[action].required && !actionText.trim()
+            : true,
         }}
         confirmLoading={busy}
         onCancel={() => setAction(null)}
@@ -818,7 +1306,15 @@ export function QuotationDetailView({
   );
 }
 
-function Row({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
+function Row({
+  label,
+  value,
+  strong,
+}: {
+  label: string;
+  value: ReactNode;
+  strong?: boolean;
+}) {
   return (
     <div className="flex justify-between gap-4">
       <Text type="secondary">{label}</Text>

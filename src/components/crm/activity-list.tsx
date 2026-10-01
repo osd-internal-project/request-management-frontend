@@ -93,7 +93,9 @@ export function ActivityList({
   renderExtra?: (activity: SalesActivity) => ReactNode;
 }) {
   if (!activities.length) {
-    return <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={emptyText} />;
+    return (
+      <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={emptyText} />
+    );
   }
 
   const now = dayjs();
@@ -103,7 +105,9 @@ export function ActivityList({
       {activities.map((activity) => {
         const isDone = Boolean(activity.completedAt);
         const overdue =
-          !isDone && activity.dueAt !== null && dayjs(activity.dueAt).isBefore(now);
+          !isDone &&
+          activity.dueAt !== null &&
+          dayjs(activity.dueAt).isBefore(now);
 
         return (
           <div key={activity.id} className="flex items-start gap-2 py-2">
@@ -113,10 +117,16 @@ export function ActivityList({
                 onChange={(e) => void onToggle(activity, e.target.checked)}
               />
             ) : (
-              <span className="text-gray-400">{ACTIVITY_ICON[activity.type]}</span>
+              <span className="text-gray-400">
+                {ACTIVITY_ICON[activity.type]}
+              </span>
             )}
             <div className="min-w-0 grow text-xs">
-              <div className={isDone ? "text-gray-400 line-through" : "font-medium"}>
+              <div
+                className={
+                  isDone ? "text-gray-400 line-through" : "font-medium"
+                }
+              >
                 <Tag className="mr-1!">{ma.type[activity.type]}</Tag>
                 {activity.outcome && (
                   <Tag
@@ -250,7 +260,13 @@ export function ActivityModal({
         <Form.Item
           name="subject"
           label={ma.form.subject}
-          rules={[{ required: true, whitespace: true, message: ma.form.subjectRequired }]}
+          rules={[
+            {
+              required: true,
+              whitespace: true,
+              message: ma.form.subjectRequired,
+            },
+          ]}
         >
           <Input maxLength={255} />
         </Form.Item>

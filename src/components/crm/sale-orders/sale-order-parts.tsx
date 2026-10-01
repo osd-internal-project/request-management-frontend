@@ -4,7 +4,11 @@ import { Empty, Table, Tag, Tooltip } from "antd";
 import Text from "antd/es/typography/Text";
 import { formatAmount } from "@/components/crm/opportunities/opportunity-list";
 import { messages } from "@/lib/messages";
-import type { ErpSyncStatus, SaleOrderLine, SaleOrderRow } from "@/lib/api/types";
+import type {
+  ErpSyncStatus,
+  SaleOrderLine,
+  SaleOrderRow,
+} from "@/lib/api/types";
 
 const md = messages.sales.opportunities.detail;
 const ml = messages.sales.quotations.detail.line;
@@ -53,7 +57,12 @@ export function SaleOrderErpTag({ row }: { row: SaleOrderRow }) {
 /** CD-88 — รายการสินค้าของใบสั่งขาย (snapshot จากใบเสนอราคา), ใช้เป็นแถวที่กางออก. */
 export function SaleOrderLines({ row }: { row: SaleOrderRow }) {
   if (!row.lines?.length) {
-    return <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={md.saleOrderNoLines} />;
+    return (
+      <Empty
+        image={Empty.PRESENTED_IMAGE_SIMPLE}
+        description={md.saleOrderNoLines}
+      />
+    );
   }
 
   return (

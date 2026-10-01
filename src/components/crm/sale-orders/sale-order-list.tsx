@@ -85,12 +85,17 @@ export function SaleOrderList({
           placeholder={m.filterErp}
           value={filters.erpStatus}
           onChange={(value) => go({ erpStatus: value })}
-          options={Object.entries(md.saleOrderErpStatus).map(([value, label]) => ({
-            value,
-            label,
-          }))}
+          options={Object.entries(md.saleOrderErpStatus).map(
+            ([value, label]) => ({
+              value,
+              label,
+            }),
+          )}
         />
-        <Checkbox checked={filters.mineOnly} onChange={(e) => go({ mineOnly: e.target.checked })}>
+        <Checkbox
+          checked={filters.mineOnly}
+          onChange={(e) => go({ mineOnly: e.target.checked })}
+        >
           {m.mineOnly}
         </Checkbox>
       </div>
@@ -137,7 +142,8 @@ export function SaleOrderList({
             render: (quotation: SaleOrderRow["quotation"]) =>
               quotation ? (
                 <Link href={ROUTES.quotationDetail(quotation.id)}>
-                  {quotation.quotationNo} <Tag className="ml-1">{mq.version(quotation.version)}</Tag>
+                  {quotation.quotationNo}{" "}
+                  <Tag className="ml-1">{mq.version(quotation.version)}</Tag>
                 </Link>
               ) : (
                 "—"

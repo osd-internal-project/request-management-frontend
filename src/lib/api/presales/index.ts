@@ -224,6 +224,72 @@ export interface TorCounts {
   unanswered: number;
 }
 
+/** CD-135 — one BOQ line, SAP code and all. */
+export type BoqKind = "equipment" | "material" | "software" | "service";
+
+export interface BoqLine {
+  kind: BoqKind;
+  productCode: string;
+  name: string;
+  description: string;
+  model: string;
+  quantity: number;
+  unit: string;
+  refUnitCost: number | null;
+}
+
+export interface BoqSummary {
+  lines: number;
+  missing_code: number;
+  missing_cost: number;
+  ref_total: number;
+}
+
+/** CD-136 — the cost estimate of a version. */
+export interface LaborLine {
+  role: string;
+  mandays: number;
+  rate: number;
+  note: string;
+}
+
+export interface CostLine {
+  index: number;
+  productCode: string;
+  name: string;
+  quantity: number;
+  unitCost: number | null;
+  source: "quote" | "reference" | null;
+  quoteId: string | null;
+  vendorName: string | null;
+  expired: boolean;
+}
+
+export interface CostEstimate {
+  lines: CostLine[];
+  labor: LaborLine[];
+  materials_total: number;
+  labor_total: number;
+  total: number;
+  missing_cost: number;
+  expired_quotes: number;
+  complete: boolean;
+}
+
+export interface PartnerQuote {
+  id: string;
+  seq: number;
+  vendorName: string;
+  vendorCode: string;
+  quoteNo: string;
+  quoteDate: string | null;
+  validUntil: string | null;
+  requestId: string | null;
+  lines: { lineIndex: number; productCode: string; unitPrice: number }[];
+  fileName: string | null;
+  sizeBytes: number | null;
+}
+
 export interface SolutionDetail {
   id: string;
   companyId: string;
@@ -244,6 +310,17 @@ export interface SolutionDetail {
   /** CD-139 — oldest first. */
   demos: SolutionDemo[];
   demo_counts: DemoCounts;
+  /** CD-135 — the BOQ of the version shown. */
+  boq_summary: BoqSummary;
+  /** CD-135/136 — handoff 3: the newest approved version with a complete estimate. */
+  pricing_ready: { versionNo: number } | null;
+  /** CD-136 — the estimate of the version shown. */
+  cost: CostEstimate | null;
+  partner_quotes: PartnerQuote[];
+  cost_settings: {
+    labor_rates: { role: string; rate: number }[];
+    vendor_quote_configured: boolean;
+  };
   /** CD-138 — the TOR and its clauses. */
   tor: SolutionTor;
   tor_counts: TorCounts;
@@ -273,6 +350,8 @@ export interface SolutionDetail {
     deliverables: SolutionDeliverable[];
     feasibility: FeasibilityVerdict;
     feasibilityNote: string;
+    /** CD-135 — locked with the version. */
+    boq: BoqLine[];
     lockedBy: string | null;
     approvalRequestId: string | null;
     approvedAt: string | null;
@@ -308,6 +387,8 @@ export interface DealSolution {
   demo_counts: DemoCounts;
   /** CD-138 — mandatory TOR clauses still open. */
   tor_counts: TorCounts;
+  /** CD-135 — handoff 3: the newest approved version, if any. */
+  pricing_ready_version: number | null;
 }
 
 export async function getSolution(
@@ -345,4 +426,168 @@ export async function getContractAssumptions(
   return apiGet(
     `opportunities/${encodeURIComponent(dealRef)}/contract-assumptions`,
   );
+}
+
+/** CD-137 — the technical proposal of an approved version; no cost at all. */
+export interface SolutionProposalView {
+  letterhead: {
+    nameTh: string;
+    nameEn: string | null;
+    taxId: string | null;
+    branch: string | null;
+    address: string | null;
+    phone: string | null;
+    email: string | null;
+    website: string | null;
+    logo: string | null;
+  };
+  solution: { id: string; title: string };
+  deal: {
+    opportunityCode: string;
+    title: string;
+    partyName: string | null;
+    customerCode: string | null;
+    contactName: string | null;
+  } | null;
+  version: {
+    versionNo: number;
+    approvedAt: string | null;
+    lockedAt: string | null;
+    superseded: boolean;
+    summary: string;
+    design: string;
+    inScope: string[];
+    outOfScope: string[];
+    deliverables: SolutionDeliverable[];
+  };
+  boq: {
+    lineNo: number;
+    kind: BoqKind;
+    kindLabel: string;
+    productCode: string;
+    name: string;
+    description: string;
+    model: string;
+    quantity: number;
+    unit: string;
+  }[];
+  assumptions: (SolutionAssumption & { categoryLabel: string })[];
+  dependencies: (SolutionAssumption & { categoryLabel: string })[];
+}
+
+export async function getSolutionProposal(
+  id: string,
+  versionNo: number,
+): Promise<ApiResult<SolutionProposalView>> {
+  return apiGet(`presales/solutions/${id}/versions/${versionNo}/proposal`);
+}
+
+// --- CD-142 ข้อมูลคู่ค้า ---------------------------------------------------------
+
+export type ExpiryState = "expired" | "expiring" | "valid" | "none";
+export type PartnerFileCategory =
+  "certificate" | "datasheet" | "catalog" | "other";
+
+export interface PartnerBrand {
+  brand: string;
+  level: string;
+  /** YYYY-MM-DD, "" = no expiry. */
+  expiresOn: string;
+}
+
+export interface PartnerCertification {
+  name: string;
+  holders: number;
+  expiresOn: string;
+}
+
+export interface PartnerContact {
+  name: string;
+  role: string;
+  phone: string;
+  email: string;
+}
+
+export interface PartnerListItem {
+  code: string;
+  name: string;
+  taxId: string | null;
+  /** null when SAP could not be reached. */
+  active: boolean | null;
+  has_profile: boolean;
+  brands: PartnerBrand[];
+  certification_count: number;
+  expiry: { expired: number; expiring: number };
+}
+
+export interface PartnerList {
+  sap_available: boolean;
+  total: number;
+  items: PartnerListItem[];
+}
+
+export interface SapVendor {
+  code: string;
+  name: string;
+  taxId: string | null;
+  phone: string | null;
+  email: string | null;
+  currency: string | null;
+  paymentTerms: string | null;
+  active: boolean;
+}
+
+export interface PartnerDetail {
+  code: string;
+  sap_available: boolean;
+  vendor: SapVendor | null;
+  name: string;
+  can_manage: boolean;
+  profile: {
+    exists: boolean;
+    summary: string;
+    brands: (PartnerBrand & { expiry: ExpiryState })[];
+    certifications: (PartnerCertification & { expiry: ExpiryState })[];
+    contacts: PartnerContact[];
+    updatedAt: string | null;
+    updatedBy: string | null;
+  };
+  files: {
+    id: string;
+    category: PartnerFileCategory;
+    fileName: string;
+    mimeType: string;
+    sizeBytes: number;
+    uploadedBy: string;
+    uploadedAt: string;
+  }[];
+}
+
+export async function getPartners(q?: string): Promise<ApiResult<PartnerList>> {
+  return apiGet(
+    q ? `presales/partners?q=${encodeURIComponent(q)}` : "presales/partners",
+  );
+}
+
+export async function getPartner(
+  code: string,
+): Promise<ApiResult<PartnerDetail>> {
+  return apiGet(`presales/partners/${encodeURIComponent(code)}`);
+}
+
+/** CD-198 — a quotation started from a Solution version. */
+export interface SolutionQuotation {
+  id: string;
+  quotationNo: string;
+  version: number;
+  status: string;
+  solutionVersionNo: number | null;
+  netTotal: string;
+  currency: string;
+}
+
+export async function getSolutionQuotations(
+  id: string,
+): Promise<ApiResult<SolutionQuotation[]>> {
+  return apiGet(`presales/solutions/${id}/quotations`);
 }

@@ -118,6 +118,17 @@ export const ROUTES = {
   quotationDetail: (id: string) => `${HOME_PATH}/quotations/${id}`,
   /** ฉบับพิมพ์ A4 — นอก app shell, พิมพ์ / บันทึก PDF จากเบราว์เซอร์. */
   quotationPrint: (id: string) => `/print/quotations/${id}`,
+  /** CD-194 — ราคาขายมาตรฐานต่อรหัสสินค้า. */
+  pricingPrices: `${HOME_PATH}/pricing/prices`,
+  /** CD-200 — markup rules. */
+  pricingMarkup: `${HOME_PATH}/pricing/markup`,
+  /** CD-142 — SAP's suppliers with the technical profile Pre-Sales keeps. */
+  partners: `${HOME_PATH}/partners`,
+  partnerDetail: (code: string) =>
+    `${HOME_PATH}/partners/${encodeURIComponent(code)}`,
+  /** CD-137 — technical proposal of an approved Solution version. */
+  solutionProposalPrint: (id: string, versionNo: number) =>
+    `/print/solutions/${id}/${versionNo}`,
   /** หน้ารายละเอียดลูกค้า — จะโตเป็นมุมมอง 360° (C360). */
   customerDetail: (id: string) => `${HOME_PATH}/customers/${id}`,
   customerEdit: (id: string) => `${HOME_PATH}/customers/${id}/edit`,
@@ -149,11 +160,29 @@ export const ROUTES = {
   adminErpSync: `${HOME_PATH}/admin/erp-sync`,
   /** REQ-02 — รูปแบบเลขรันของทุกชนิดเอกสาร. */
   adminRunNumbers: `${HOME_PATH}/admin/run-numbers`,
+  /** CD-18 PM — โครงการ. */
+  projects: `${HOME_PATH}/projects`,
+  projectOpen: (contractId?: string) =>
+    `${HOME_PATH}/projects/open${contractId ? `?contract=${contractId}` : ""}`,
+  projectDetail: (id: string) => `${HOME_PATH}/projects/${id}`,
+  /** CD-181 — one task, and the tasks handed to me. */
+  projectTask: (projectId: string, taskId: string) =>
+    `${HOME_PATH}/projects/${projectId}/tasks/${taskId}`,
+  myTasks: `${HOME_PATH}/my-tasks`,
+  /** CD-183 — risks the executives should see, across projects. */
+  projectRisks: `${HOME_PATH}/projects/risks`,
+  /** CD-192 — every running project, the most at risk first. */
+  projectPortfolio: `${HOME_PATH}/projects/portfolio`,
   /** CD-161 — คลังสัญญา (ฝ่ายกฎหมาย). */
   contracts: `${HOME_PATH}/contracts`,
   contractDetail: (id: string) => `${HOME_PATH}/contracts/${id}`,
   /** CD-146 — แม่แบบสัญญา และร่างสัญญา (ฉบับล่าสุด หรือฉบับที่ระบุ). */
   contractTemplates: `${HOME_PATH}/contracts/templates`,
+  /** CD-14 — ลงนามอิเล็กทรอนิกส์. */
+  esignLayouts: `${HOME_PATH}/esign/layouts`,
+  esignAuthorities: `${HOME_PATH}/esign/authorities`,
+  esignMine: `${HOME_PATH}/esign`,
+  esignSign: (signerId: string) => `${HOME_PATH}/esign/sign/${signerId}`,
   contractDraft: (id: string, version?: number, compare?: number) => {
     const query = new URLSearchParams();
     if (version) query.set("version", String(version));

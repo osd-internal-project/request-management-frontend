@@ -72,6 +72,20 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     permissions: ["notification.read"],
     group: messages.nav.requestGroup,
   },
+  /** CD-181 — project tasks handed to me (anyone may be given one). */
+  {
+    label: messages.nav.myTasks,
+    href: ROUTES.myTasks,
+    permissions: ["notification.read"],
+    group: messages.nav.requestGroup,
+  },
+  /** CD-14 — documents I am asked to sign (anyone may be a signer). */
+  {
+    label: messages.nav.esignMine,
+    href: ROUTES.esignMine,
+    permissions: ["notification.read"],
+    group: messages.nav.requestGroup,
+  },
   {
     label: messages.nav.newRequest,
     href: ROUTES.newRequest,
@@ -216,12 +230,72 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     group: messages.nav.crmGroup,
   },
 
+  /** CD-142 — คู่ค้า: ผู้ขายจาก SAP + ข้อมูลทางเทคนิคที่ Pre-Sales เก็บ. */
+  {
+    label: messages.nav.partners,
+    href: ROUTES.partners,
+    permissions: ["presales.solution.read", "presales.solution.manage"],
+    group: messages.nav.presalesGroup,
+  },
+
+  /** CD-175 — โครงการ: ทั้งบริษัท (pm.project.read) หรือที่ฉันอยู่ในทีม. */
+  {
+    label: messages.nav.projects,
+    href: ROUTES.projects,
+    permissions: ["notification.read"],
+    group: messages.nav.pmGroup,
+  },
+
+  /** CD-194 — ราคาขายมาตรฐาน: Pricing เป็นเจ้าของราคาอ้างอิงแหล่งเดียว. */
+  {
+    label: messages.nav.pricingPrices,
+    href: ROUTES.pricingPrices,
+    permissions: ["pricing.price.read", "pricing.price.manage"],
+    group: messages.nav.pricingGroup,
+  } /** CD-200 — markup by work type, SAP item group and customer group. */,
+  {
+    label: messages.nav.pricingMarkup,
+    href: ROUTES.pricingMarkup,
+    permissions: ["pricing.price.read", "pricing.price.manage"],
+    group: messages.nav.pricingGroup,
+  },
+
+  /** CD-192 — ภาพรวมโครงการ เรียงโครงการที่เสี่ยงเกินเกณฑ์ขึ้นก่อน. */
+  {
+    label: messages.nav.projectPortfolio,
+    href: ROUTES.projectPortfolio,
+    permissions: ["pm.project.read"],
+    group: messages.nav.pmGroup,
+  },
+
+  /** CD-183 — ความเสี่ยงที่ผู้บริหารต้องเห็น ข้ามทุกโครงการ. */
+  {
+    label: messages.nav.projectRisks,
+    href: ROUTES.projectRisks,
+    permissions: ["pm.project.read"],
+    group: messages.nav.pmGroup,
+  },
+
   /** CD-161 — คลังสัญญา: สัญญาทุกฉบับของบริษัท (ลูกค้า NDA MSA คู่สัญญาอื่น). */
   {
     label: messages.nav.contracts,
     href: ROUTES.contracts,
     icon: "contract",
     permissions: ["legal.contract.read"],
+    group: messages.nav.legalGroup,
+  },
+  /** CD-165 — แม่แบบช่องลงนาม: ใครลงนาม หน้าใด ตำแหน่งใด ลำดับใด. */
+  {
+    label: messages.nav.esignLayouts,
+    href: ROUTES.esignLayouts,
+    permissions: ["esign.manage"],
+    group: messages.nav.legalGroup,
+  },
+  /** CD-172 — who may sign for the company, up to what amount. */
+  {
+    label: messages.nav.esignAuthorities,
+    href: ROUTES.esignAuthorities,
+    permissions: ["esign.manage"],
     group: messages.nav.legalGroup,
   },
   /** CD-146 — แม่แบบสัญญา: ข้อสัญญาพร้อมตัวแปรที่เติมจากดีลตอนเริ่มร่าง. */
