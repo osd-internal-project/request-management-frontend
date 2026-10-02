@@ -377,6 +377,9 @@ function ConfigSection({
   const [asBuiltList, setAsBuiltList] = useState<string[]>(
     config.projectAsBuiltDocuments ?? [],
   );
+  const [softwareDocList, setSoftwareDocList] = useState<string[]>(
+    config.projectSoftwareDocuments ?? [],
+  );
   const [solutionType, setSolutionType] = useState(
     config.solutionRequestTypeCode ?? "",
   );
@@ -409,6 +412,7 @@ function ConfigSection({
       project_health_red: healthRed,
       project_readiness_checklist: readinessList,
       project_as_built_documents: asBuiltList,
+      project_software_documents: softwareDocList,
       solution_request_type_code: solutionType,
       solution_approval_type_code: solutionApprovalType,
       demo_request_type_code: demoType,
@@ -759,6 +763,20 @@ function ConfigSection({
       </div>
       <Text type="secondary" className="mt-2 block text-xs">
         {m.projectAsBuiltHint}
+      </Text>
+      {/* CD-215 — เอกสารซอฟต์แวร์ที่ต้องมีต่อเวอร์ชัน */}
+      <div className="mt-3 max-w-xl">
+        <Text className="mb-1 block text-xs">{m.projectSoftwareDocuments}</Text>
+        <Select
+          mode="tags"
+          className="w-full"
+          value={softwareDocList}
+          open={false}
+          onChange={(values: string[]) => setSoftwareDocList(values)}
+        />
+      </div>
+      <Text type="secondary" className="mt-2 block text-xs">
+        {m.projectSoftwareDocumentsHint}
       </Text>
 
       {/* CD-130 — ประเภทคำขอ Solution (Sales → Pre-Sales) */}

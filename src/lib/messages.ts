@@ -5054,6 +5054,10 @@ export const messages = {
       projectHealthAmber: "คะแนนสุขภาพโครงการที่ขึ้นสีเหลือง",
       projectReadinessChecklist: "รายการตรวจความพร้อมก่อนส่งมอบมาตรฐาน",
       projectAsBuiltDocuments: "เอกสารสภาพจริง (As-built) ที่ทุกโครงการต้องมี",
+      projectSoftwareDocuments:
+        "เอกสารซอฟต์แวร์ที่โครงการซอฟต์แวร์ต้องมีต่อเวอร์ชัน",
+      projectSoftwareDocumentsHint:
+        "พิมพ์ชื่อเอกสารแล้วกด Enter ทีละรายการ · ใช้กับโครงการที่มีแผนพัฒนาหรือ environment เท่านั้น · ต้องแนบครบสำหรับเวอร์ชันที่อยู่บน production ก่อนผ่านการตรวจความพร้อม",
       projectAsBuiltHint:
         "พิมพ์ชื่อเอกสารแล้วกด Enter ทีละรายการ · ทุกโครงการต้องแนบไฟล์ตามชื่อนี้ครบ เป็นข้อหนึ่งของการตรวจความพร้อมก่อนส่งมอบ",
       projectReadinessHint:
@@ -5365,6 +5369,37 @@ export const messages = {
         addSetting: "เพิ่มค่าตั้งค่า",
         differs: "แบบนี้ต่างจาก Solution ที่อนุมัติ",
         differences: "ต่างตรงไหน",
+      },
+    },
+    softwareDocs: {
+      title: "เอกสารซอฟต์แวร์",
+      hint: "ข้อกำหนด คู่มือ และเอกสารจุดเชื่อมต่อ — As-built ของซอฟต์แวร์ แนบแยกตามเวอร์ชัน · ต้องครบสำหรับเวอร์ชันที่อยู่บน production (ถ้าไม่มี production ใช้เวอร์ชันล่าสุด) ก่อนผ่านการตรวจความพร้อม",
+      target: (version: string, production: boolean) =>
+        production
+          ? `เวอร์ชันที่ส่งมอบ (บน production): ${version}`
+          : `เวอร์ชันล่าสุด: ${version}`,
+      noTarget:
+        "ยังไม่มีเวอร์ชันที่ส่งมอบ — บันทึก release และ deploy ขึ้น production ก่อน",
+      complete: "ครบแล้ว",
+      missing: (n: number) => `ค้าง ${n} รายการ`,
+      have: "มีแล้ว",
+      none: "ยังไม่มี",
+      attach: "แนบเอกสาร",
+      carry: "ใช้กับเวอร์ชัน",
+      carryHint: "เนื้อหาไม่เปลี่ยน — ใช้ไฟล์เดิมกับเวอร์ชันอื่น",
+      remove: "นำออก",
+      removeConfirm: "นำเอกสารนี้ออก?",
+      empty: "ยังไม่มีเอกสาร",
+      noReleases: "ต้องบันทึกเวอร์ชันในการ์ด Release ก่อน",
+      saved: "บันทึกแล้ว",
+      form: {
+        title: "ชื่อเอกสาร",
+        release: "เวอร์ชัน",
+        note: "หมายเหตุ",
+        file: "ไฟล์",
+        pick: "เลือกไฟล์",
+        save: "บันทึก",
+        close: "ปิด",
       },
     },
     releases: {

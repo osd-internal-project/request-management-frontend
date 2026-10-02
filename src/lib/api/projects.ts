@@ -1400,3 +1400,42 @@ export function getProjectReleases(
 ): Promise<ApiResult<ProjectReleasesView>> {
   return apiGet(`/projects/${encodeURIComponent(id)}/releases`);
 }
+
+// --- CD-215 เอกสารซอฟต์แวร์ ---------------------------------------------------------
+
+export interface SoftwareDocumentRow {
+  id: string;
+  releaseId: string;
+  version: string;
+  title: string;
+  note: string | null;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  uploadedBy: string;
+  uploadedByName: string | null;
+  uploadedAt: string;
+  mayRemove: boolean;
+}
+
+export interface ProjectSoftwareDocsView {
+  software: boolean;
+  canEdit: boolean;
+  canWrite: boolean;
+  complete: boolean;
+  target: {
+    id: string;
+    version: string;
+    basis: "production" | "latest";
+  } | null;
+  missing: string[];
+  releases: { id: string; version: string }[];
+  required: { title: string; documentIds: string[] }[];
+  documents: SoftwareDocumentRow[];
+}
+
+export function getProjectSoftwareDocs(
+  id: string,
+): Promise<ApiResult<ProjectSoftwareDocsView>> {
+  return apiGet(`/projects/${encodeURIComponent(id)}/software-docs`);
+}
