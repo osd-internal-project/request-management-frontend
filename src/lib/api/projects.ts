@@ -1337,3 +1337,66 @@ export function getProjectDefects(
 ): Promise<ApiResult<ProjectDefectsView>> {
   return apiGet(`/projects/${encodeURIComponent(id)}/defects`);
 }
+
+// --- CD-214 Release และ Environment -------------------------------------------------
+
+export type EnvKind = "dev" | "uat" | "production";
+
+export interface ProjectEnvironmentView {
+  id: string;
+  kind: EnvKind;
+  name: string;
+  url: string | null;
+  note: string | null;
+  current: {
+    version: string;
+    deployedAt: string;
+    deployedByName: string | null;
+  } | null;
+}
+
+export interface ReleaseView {
+  id: string;
+  version: string;
+  notes: string | null;
+  createdAt: string;
+  runningOn: string[];
+  deployments: {
+    id: string;
+    environment: string;
+    kind: string;
+    deployedAt: string;
+    deployedByName: string | null;
+    note: string | null;
+    overrideReason: string | null;
+  }[];
+}
+
+export interface ProjectReleasesView {
+  canEdit: boolean;
+  canWrite: boolean;
+  blockers: number;
+  environments: ProjectEnvironmentView[];
+  releases: ReleaseView[];
+}
+
+/** CD-214 — what each of a customer's projects runs, per environment. */
+export interface CustomerVersionsRow {
+  projectId: string;
+  projectNo: string;
+  name: string;
+  status: string;
+  environments: {
+    name: string;
+    kind: EnvKind;
+    url: string | null;
+    version: string | null;
+    deployedAt: string | null;
+  }[];
+}
+
+export function getProjectReleases(
+  id: string,
+): Promise<ApiResult<ProjectReleasesView>> {
+  return apiGet(`/projects/${encodeURIComponent(id)}/releases`);
+}

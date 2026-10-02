@@ -86,6 +86,7 @@ export const CORE_SERVICE_PREFIXES = [
   "/project-risks",
   // CD-192 — the portfolio
   "/project-portfolio",
+  "/project-releases",
   "/sales-targets",
   "/campaigns",
   "/target-accounts",

@@ -33,6 +33,7 @@ import dayjs from "dayjs";
 import { CUSTOMER_STATUS_COLOR } from "@/components/crm/customers/customer-list";
 import { CustomerInvoicesTab } from "@/components/crm/customers/customer-invoices-tab";
 import { PricingExceptionsTable } from "@/components/pricing/pricing-exceptions-table";
+import { CustomerVersionsTab } from "@/components/crm/customers/customer-versions-tab";
 import { formatAmount } from "@/components/crm/opportunities/opportunity-list";
 import { QuotationStatusTags } from "@/components/crm/quotations/quotation-list";
 import { SearchSelect } from "@/components/ui/search-select";
@@ -516,6 +517,12 @@ export function CustomerDetailView({
                       query={{ customer_id: customer.id }}
                     />
                   ),
+                },
+                // CD-214 — which version the customer runs, project by project.
+                {
+                  key: "softwareVersions",
+                  label: messages.projects.releases.customerTab,
+                  children: <CustomerVersionsTab customerId={customer.id} />,
                 },
               ]
             : []),

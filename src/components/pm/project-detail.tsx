@@ -44,6 +44,7 @@ import type {
   ProjectSurveysView,
   ProjectDevPlanView,
   ProjectDefectsView,
+  ProjectReleasesView,
 } from "@/lib/api/projects";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
@@ -70,6 +71,7 @@ import { ProjectTechPlanCard } from "./project-tech-plan-card";
 import { ProjectSurveysCard } from "./project-surveys-card";
 import { ProjectDevPlanCard } from "./project-dev-plan-card";
 import { ProjectDefectsCard } from "./project-defects-card";
+import { ProjectReleasesCard } from "./project-releases-card";
 import {
   ProjectTeamFields,
   teamPayload,
@@ -107,6 +109,7 @@ export function ProjectDetailView({
   surveys,
   devPlan,
   defects,
+  releases,
   currentUserId,
   people,
 }: {
@@ -152,6 +155,7 @@ export function ProjectDetailView({
   readonly surveys: ProjectSurveysView | null;
   readonly devPlan: ProjectDevPlanView | null;
   readonly defects: ProjectDefectsView | null;
+  readonly releases: ProjectReleasesView | null;
   readonly currentUserId: string | null;
   /** The company's people, for the manager and team pickers. */
   readonly people: { id: string; name: string }[];
@@ -476,6 +480,13 @@ export function ProjectDetailView({
           people={pickable}
         />
       )}
+
+      {/* CD-214 — software projects: once it has environments, or a dev plan */}
+      {releases &&
+        (releases.environments.length > 0 ||
+          (devPlan?.iterations.length ?? 0) > 0) && (
+          <ProjectReleasesCard projectId={project.id} view={releases} />
+        )}
 
       {surveys && <ProjectSurveysCard projectId={project.id} view={surveys} />}
 
