@@ -1183,3 +1183,56 @@ export function getProjectTechPlan(
 ): Promise<ApiResult<ProjectTechPlanView>> {
   return apiGet(`/projects/${encodeURIComponent(id)}/tech-plan`);
 }
+
+// --- CD-210 สำรวจหน้างาน ------------------------------------------------------------
+
+export interface SurveyAssumptionView {
+  index: number;
+  text: string;
+  holds: boolean | null;
+  note: string | null;
+  changeRequestId: string | null;
+}
+
+export interface SurveyPhotoView {
+  id: string;
+  caption: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  takenAt: string | null;
+  fileName: string;
+  sizeBytes: number;
+}
+
+export interface SiteSurveyView {
+  id: string;
+  label: string;
+  site: string;
+  surveyedOn: string;
+  latitude: number | null;
+  longitude: number | null;
+  summary: string | null;
+  status: "draft" | "completed";
+  assumptions: SurveyAssumptionView[];
+  problems: string[];
+  createdByName: string | null;
+  completedAt: string | null;
+  completedByName: string | null;
+  mayEdit: boolean;
+  mayComplete: boolean;
+  photos: SurveyPhotoView[];
+}
+
+export interface ProjectSurveysView {
+  canEdit: boolean;
+  canWrite: boolean;
+  /** The Solution's assumptions from the baseline, in their order. */
+  assumptions: string[];
+  surveys: SiteSurveyView[];
+}
+
+export function getProjectSurveys(
+  id: string,
+): Promise<ApiResult<ProjectSurveysView>> {
+  return apiGet(`/projects/${encodeURIComponent(id)}/surveys`);
+}
