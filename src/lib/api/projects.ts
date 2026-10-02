@@ -856,6 +856,9 @@ export interface TestItemView {
   deliverable: string | null;
   text: string;
   steps: string | null;
+  /** CD-218 — the plan task it proves. */
+  taskId: string | null;
+  taskLabel: string | null;
   ownerUserId: string | null;
   ownerName: string | null;
   state: "untested" | "passed" | "failed" | "waived";
@@ -882,6 +885,7 @@ export interface ProjectTestsView {
     waived: number;
     complete: boolean;
   };
+  tasks: { id: string; label: string }[];
   items: TestItemView[];
 }
 
@@ -1065,6 +1069,9 @@ export interface InstallationPointView {
   location: string;
   boqIndex: number | null;
   boqLabel: string | null;
+  /** CD-218 — the plan task it delivers. */
+  taskId: string | null;
+  taskLabel: string | null;
   serialNo: string | null;
   note: string | null;
   installedOn: string | null;
@@ -1087,6 +1094,8 @@ export interface ProjectInstallationsView {
     matches: boolean;
   }[];
   choices: { index: number; label: string; equipment: boolean }[];
+  /** CD-218 — leaf tasks of the plan evidence may be linked to. */
+  tasks: { id: string; label: string }[];
   points: InstallationPointView[];
 }
 

@@ -13,6 +13,7 @@ import {
   Progress,
   Radio,
   Segmented,
+  Select,
   Tag,
 } from "antd";
 import Text from "antd/es/typography/Text";
@@ -28,6 +29,7 @@ interface Plan {
   item: TestItemView | null;
   text: string;
   steps: string;
+  taskId: string | null;
   ownerUserId: string | null;
   waivedReason: string;
 }
@@ -108,12 +110,14 @@ export function ProjectTestsCard({
       ? {
           ...(plan.item.source === "manual" ? { text: plan.text } : {}),
           steps: plan.steps,
+          task_id: plan.taskId ?? "",
           owner_user_id: plan.ownerUserId ?? "",
           waived_reason: plan.waivedReason,
         }
       : {
           text: plan.text,
           steps: plan.steps,
+          task_id: plan.taskId ?? undefined,
           owner_user_id: plan.ownerUserId ?? undefined,
         };
     const ok = await call(plan.item ? `${base}/${plan.item.id}` : base, {
@@ -141,6 +145,7 @@ export function ProjectTestsCard({
                 item: null,
                 text: "",
                 steps: "",
+                taskId: null,
                 ownerUserId: null,
                 waivedReason: "",
               });
@@ -232,6 +237,7 @@ export function ProjectTestsCard({
                             item,
                             text: item.text,
                             steps: item.steps ?? "",
+                            taskId: item.taskId,
                             ownerUserId: item.ownerUserId,
                             waivedReason: item.waivedReason ?? "",
                           });
@@ -250,6 +256,11 @@ export function ProjectTestsCard({
                 {item.ownerName && (
                   <Text type="secondary" className="block text-xs">
                     {m.owner(item.ownerName)}
+                  </Text>
+                )}
+                {item.taskLabel && (
+                  <Text type="secondary" className="block text-xs">
+                    {m.task(item.taskLabel)}
                   </Text>
                 )}
                 {item.waivedReason && (
@@ -381,6 +392,23 @@ export function ProjectTestsCard({
                 onChange={(event) =>
                   setPlan({ ...plan, steps: event.target.value })
                 }
+              />
+            </label>
+            <label className="block text-xs">
+              {m.form.task}
+              <Select
+                className="w-full"
+                allowClear
+                showSearch
+                optionFilterProp="label"
+                value={plan.taskId ?? undefined}
+                onChange={(value?: string) =>
+                  setPlan({ ...plan, taskId: value ?? null })
+                }
+                options={view.tasks.map((row) => ({
+                  value: row.id,
+                  label: row.label,
+                }))}
               />
             </label>
             <label className="block text-xs">

@@ -31,6 +31,7 @@ interface Draft {
   point: InstallationPointView | null;
   location: string;
   boqIndex: number | null;
+  taskId: string | null;
   serialNo: string;
   installedOn: Dayjs | null;
   note: string;
@@ -81,6 +82,7 @@ export function ProjectInstallationsCard({
       draft.boqIndex === null ? "" : String(draft.boqIndex),
     );
     form.append("serial_no", draft.serialNo);
+    form.append("task_id", draft.taskId ?? "");
     form.append("note", draft.note);
     form.append(
       "installed_on",
@@ -101,6 +103,7 @@ export function ProjectInstallationsCard({
       point,
       location: point?.location ?? "",
       boqIndex: point?.boqIndex ?? null,
+      taskId: point?.taskId ?? null,
       serialNo: point?.serialNo ?? "",
       installedOn: point?.installedOn ? dayjs(point.installedOn) : null,
       note: point?.note ?? "",
@@ -190,7 +193,11 @@ export function ProjectInstallationsCard({
                 )}
               </div>
               <Text type="secondary" className="block text-xs">
-                {[point.boqLabel, point.serialNo && m.serial(point.serialNo)]
+                {[
+                  point.boqLabel,
+                  point.serialNo && m.serial(point.serialNo),
+                  point.taskLabel && m.task(point.taskLabel),
+                ]
                   .filter(Boolean)
                   .join(" · ")}
               </Text>
@@ -261,6 +268,23 @@ export function ProjectInstallationsCard({
                 }
                 options={view.choices.map((row) => ({
                   value: row.index,
+                  label: row.label,
+                }))}
+              />
+            </label>
+            <label className="block text-xs">
+              {m.form.task}
+              <Select
+                className="w-full"
+                allowClear
+                showSearch
+                optionFilterProp="label"
+                value={draft.taskId ?? undefined}
+                onChange={(value?: string) =>
+                  setDraft({ ...draft, taskId: value ?? null })
+                }
+                options={view.tasks.map((row) => ({
+                  value: row.id,
                   label: row.label,
                 }))}
               />
