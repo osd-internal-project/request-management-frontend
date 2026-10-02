@@ -48,6 +48,7 @@ export type MenuIconKey =
   | "pricingPrice"
   | "pricingMarkup"
   | "pricingException"
+  | "pricingAnalytics"
   | "hrLaborRate"
   | "pricingVendorCost"
   | "projectPortfolio"
@@ -286,6 +287,14 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     icon: "hrLaborRate",
     permissions: ["hr.rate.read", "hr.rate.manage"],
     group: messages.nav.hrGroup,
+  },
+  /** CD-208 — margin and discount by customer, work type, salesperson, vendor. */
+  {
+    label: messages.nav.pricingAnalytics,
+    href: ROUTES.pricingAnalytics,
+    icon: "pricingAnalytics",
+    permissions: ["pricing.price.read"],
+    group: messages.nav.pricingGroup,
   },
   /** CD-205 — every case outside the pricing policy, with reason and approver. */
   {

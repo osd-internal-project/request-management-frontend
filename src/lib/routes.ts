@@ -124,6 +124,8 @@ export const ROUTES = {
   pricingMarkup: `${HOME_PATH}/pricing/markup`,
   /** CD-205 — ทะเบียนข้อยกเว้นด้านราคา. */
   pricingExceptions: `${HOME_PATH}/pricing/exceptions`,
+  /** CD-208 — วิเคราะห์ราคาและกำไร. */
+  pricingAnalytics: `${HOME_PATH}/pricing/analytics`,
   /** CD-207 — อัตราต้นทุนบุคลากร (HR). */
   hrLaborRates: `${HOME_PATH}/hr/labor-rates`,
   /** CD-206 — ต้นทุนคู่ค้าจาก SAP. */

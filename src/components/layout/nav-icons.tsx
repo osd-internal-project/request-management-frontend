@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  LineChartOutlined,
   ExceptionOutlined,
   AimOutlined,
   ApartmentOutlined,
@@ -99,6 +100,7 @@ const MENU_ICONS: Record<MenuIconKey, ComponentType> = {
   pricingPrice: DollarOutlined,
   pricingMarkup: PercentageOutlined,
   pricingException: ExceptionOutlined,
+  pricingAnalytics: LineChartOutlined,
   hrLaborRate: TeamOutlined,
   pricingVendorCost: ShoppingCartOutlined,
   projectPortfolio: FundProjectionScreenOutlined,
