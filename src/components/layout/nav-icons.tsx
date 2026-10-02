@@ -99,6 +99,7 @@ const MENU_ICONS: Record<MenuIconKey, ComponentType> = {
   pricingPrice: DollarOutlined,
   pricingMarkup: PercentageOutlined,
   pricingException: ExceptionOutlined,
+  pricingVendorCost: ShoppingCartOutlined,
   projectPortfolio: FundProjectionScreenOutlined,
   projectRisk: WarningOutlined,
   esignLayout: LayoutOutlined,

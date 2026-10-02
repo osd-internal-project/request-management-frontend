@@ -48,6 +48,7 @@ export type MenuIconKey =
   | "pricingPrice"
   | "pricingMarkup"
   | "pricingException"
+  | "pricingVendorCost"
   | "projectPortfolio"
   | "projectRisk"
   | "esignLayout"
@@ -282,6 +283,14 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     label: messages.nav.pricingExceptions,
     href: ROUTES.pricingExceptions,
     icon: "pricingException",
+    permissions: ["pricing.price.read"],
+    group: messages.nav.pricingGroup,
+  },
+  /** CD-206 — suppliers' costs from SAP, with their date. */
+  {
+    label: messages.nav.pricingVendorCosts,
+    href: ROUTES.pricingVendorCosts,
+    icon: "pricingVendorCost",
     permissions: ["pricing.price.read"],
     group: messages.nav.pricingGroup,
   },

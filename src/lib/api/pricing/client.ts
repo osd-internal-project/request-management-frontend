@@ -255,3 +255,36 @@ export async function listPricingExceptions(
   );
   return appApi(`pricing/exceptions?${params.toString()}`);
 }
+
+/** CD-206 — a supplier's cost SAP holds for a product, with its date. */
+export interface VendorCost {
+  productCode: string;
+  vendorCode: string;
+  vendorName: string | null;
+  source: "purchase_order" | "special_price";
+  /** Absent for a viewer who may not see cost. */
+  unitCost?: number;
+  currency: string;
+  docNo: string | null;
+  costDate: string;
+  validTo: string | null;
+  ageDays: number;
+  stale: boolean;
+}
+
+export async function lookupVendorCosts(
+  codes: string[],
+  currency: string,
+): Promise<ClientResult<{ maxAgeDays: number; items: VendorCost[] }>> {
+  const params = new URLSearchParams({ codes: codes.join(","), currency });
+  return appApi(`pricing/vendor-costs/lookup?${params.toString()}`);
+}
+
+/** Same words the server stores on the line's cost source. */
+export function vendorCostLabel(cost: VendorCost): string {
+  const doc =
+    cost.source === "purchase_order"
+      ? `ใบสั่งซื้อ ${cost.docNo ?? ""}`.trim()
+      : "ราคาพิเศษผู้ขาย";
+  return `SAP: ${doc} · ${cost.vendorName ?? cost.vendorCode}`;
+}

@@ -98,6 +98,7 @@ export const messages = {
     presalesGroup: "Pre-Sales",
     pricingGroup: "Pricing",
     pricingPrices: "ราคามาตรฐาน",
+    pricingVendorCosts: "ต้นทุนคู่ค้า (SAP)",
     pricingExceptions: "ทะเบียนข้อยกเว้นด้านราคา",
     pricingMarkup: "กำหนด Markup",
     partners: "คู่ค้า",
@@ -2985,6 +2986,31 @@ export const messages = {
   },
   /** CD-194 ราคามาตรฐาน */
   pricing: {
+    /** CD-206 ต้นทุนจากคู่ค้า */
+    vendorCosts: {
+      title: "ต้นทุนคู่ค้า (SAP)",
+      hint: (days: number) =>
+        `ราคาซื้อล่าสุดจากใบสั่งซื้อ และราคาพิเศษของผู้ขาย ดึงจาก SAP ทุก 6 ชั่วโมง · เก่ากว่า ${days} วันถูกเตือน (ตั้งได้ที่ตั้งค่า CRM)`,
+      syncedAt: (when: string) => `ดึงล่าสุด ${when}`,
+      neverSynced: "ยังไม่เคยดึง",
+      sync: "ดึงจาก SAP ตอนนี้",
+      synced: (total: number) => `ดึงแล้ว ${total} รายการ`,
+      search: "ค้นรหัสสินค้า / ผู้ขาย",
+      staleOnly: "เฉพาะที่เก่ากว่าเกณฑ์",
+      product: "สินค้า",
+      vendor: "ผู้ขาย",
+      source: "ที่มา",
+      sources: {
+        purchase_order: "ใบสั่งซื้อ",
+        special_price: "ราคาพิเศษผู้ขาย",
+      } as Record<string, string>,
+      cost: "ต้นทุนต่อหน่วย",
+      date: "วันที่ของต้นทุน",
+      age: "อายุ (วัน)",
+      validTo: "ใช้ได้ถึง",
+      stale: "เก่า",
+      empty: "ยังไม่มีต้นทุนจาก SAP",
+    },
     /** CD-205 ทะเบียนข้อยกเว้นด้านราคา */
     exceptions: {
       title: "ทะเบียนข้อยกเว้นด้านราคา",
@@ -4128,6 +4154,14 @@ export const messages = {
           service: "บริการ",
         } as Record<string, string>,
         fromMarkup: (pct: number) => `ราคาจาก markup ${pct}%`,
+        /** CD-206 */
+        costFilled: (code: string, cost: string) =>
+          `ต้นทุนของ ${code} จาก SAP: ${cost}`,
+        costFilledStale: (code: string, date: string, days: number) =>
+          `ต้นทุนของ ${code} จาก SAP เป็นของวันที่ ${date} (${days} วัน) — เก่ากว่าเกณฑ์ ตรวจสอบกับคู่ค้าก่อนเสนอราคา`,
+        costAsOf: (date: string) => `ต้นทุน ณ ${date}`,
+        costStale: (date: string, days: number) =>
+          `ต้นทุนเก่า: ${date} (${days} วัน)`,
         /** CD-204 */
         belowSystem: (price: string) => `ต่ำกว่าราคาในระบบ ${price}`,
         overrideReason: "เหตุผลที่ใส่ราคาต่ำกว่า (บังคับ)",
@@ -4886,6 +4920,8 @@ export const messages = {
       quotationHint:
         "ทุกใบเสนอราคาต้องผ่านคำขออนุมัติราคาก่อนส่งลูกค้า — ประเภทงานที่ margin ต่ำกว่าเกณฑ์จะเพิ่มผู้อนุมัติระดับผู้บริหาร · แก้ค่าที่นี่ไม่ตัดสินใบที่ยื่นแล้วใหม่ · ประเภทคำขอต้องเปิดให้บริษัทนี้ใช้",
       /* CD-202 */
+      /* CD-206 */
+      costMaxAgeDays: "อายุต้นทุนคู่ค้าสูงสุด (วัน)",
       minMarginByWorkType: "margin ขั้นต่ำตามประเภทงาน (%)",
       minMarginByWorkTypeHint:
         "เว้นว่าง = ใช้ margin ขั้นต่ำของบริษัท · ใบเสนอราคาที่มีหลายประเภทงานจะรวมบรรทัดของแต่ละประเภทแล้วเทียบกับเกณฑ์ของประเภทนั้น",
@@ -5101,7 +5137,12 @@ export const messages = {
     uat: {
       title: "ประเด็นจาก UAT",
       hint: "บันทึกสิ่งที่ลูกค้าพบระหว่างทดสอบพร้อมระดับความรุนแรง · ประเด็นระดับปิดกั้นการใช้งานต้องแก้และลูกค้ายืนยันก่อนขอตรวจรับ · ระดับสำคัญ/เล็กน้อยผู้จัดการโครงการเลื่อนไปหลังรับมอบได้พร้อมเหตุผล",
-      counts: (open: number, fixed: number, confirmed: number, deferred: number) =>
+      counts: (
+        open: number,
+        fixed: number,
+        confirmed: number,
+        deferred: number,
+      ) =>
         `เปิด ${open} · แก้แล้วรอยืนยัน ${fixed} · ยืนยันแล้ว ${confirmed} · เลื่อน ${deferred}`,
       blocking: (labels: string) => `ยังปิดกั้นการตรวจรับ: ${labels}`,
       add: "บันทึกประเด็น",

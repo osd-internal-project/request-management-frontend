@@ -329,6 +329,7 @@ function ConfigSection({
 }) {
   const [threshold, setThreshold] = useState(config.dedupThreshold);
   const [minMargin, setMinMargin] = useState(config.minMarginPct);
+  const [costMaxAge, setCostMaxAge] = useState(config.costMaxAgeDays ?? 90);
   const [minByType, setMinByType] = useState<Record<string, number | null>>(
     config.minMarginByWorkType ?? {},
   );
@@ -412,6 +413,7 @@ function ConfigSection({
       presales_labor_rates: laborRates.filter((rate) => rate.role.trim()),
       dedup_threshold: threshold,
       min_margin_pct: minMargin,
+      cost_max_age_days: costMaxAge,
       min_margin_by_work_type: Object.fromEntries(
         WORK_TYPES.map((type) => [type, minByType[type] ?? null]),
       ),
@@ -464,6 +466,17 @@ function ConfigSection({
             step={0.5}
             value={minMargin}
             onChange={(value) => setMinMargin(value ?? 15)}
+            className="w-full"
+          />
+        </div>
+        {/* CD-206 */}
+        <div>
+          <Text className="mb-1 block text-xs">{m.costMaxAgeDays}</Text>
+          <InputNumber
+            min={1}
+            max={3650}
+            value={costMaxAge}
+            onChange={(value) => setCostMaxAge(value ?? 90)}
             className="w-full"
           />
         </div>

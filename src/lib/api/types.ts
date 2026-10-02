@@ -1523,6 +1523,8 @@ export interface QuotationLine {
   /** CD-200 — work type, and the markup the price was filled from. */
   workType?: string | null;
   markupPct?: Money | null;
+  /** CD-206 — the date of an SAP cost (ISO); null when typed. */
+  costDate?: string | null;
   /** CD-204 — the system's price when quoted below it, why, and by whom. */
   systemPrice?: Money | null;
   overrideReason?: string | null;
@@ -1530,6 +1532,8 @@ export interface QuotationLine {
 }
 
 export interface QuotationDetail extends QuotationRow {
+  /** CD-206 — SAP costs older than this many days are flagged. */
+  costMaxAgeDays?: number;
   /** CD-202 — the company's minimum per work type (none = minMarginPct). */
   minMarginByWorkType?: Record<string, number>;
   /** CD-198 — the Solution version this quotation was started from. */
@@ -1787,6 +1791,8 @@ export interface CrmConfig {
   quotationApprovalTypeCode: string;
   /** CD-202 — margin ขั้นต่ำต่อประเภทงาน; ประเภทที่ไม่มี = minMarginPct. */
   minMarginByWorkType?: Record<string, number>;
+  /** CD-206 — ต้นทุนคู่ค้าจาก SAP ที่เก่ากว่านี้ (วัน) ถูกเตือน. */
+  costMaxAgeDays?: number;
   /** CD-82 — ประเภทคำขอสำหรับอนุมัติการปรับเป้าระหว่างงวด; null = ยังไม่ตั้ง. */
   targetApprovalTypeCode?: string | null;
   /** CD-81 — ประเภทคำขอที่ฝ่ายกฎหมายรับทำสัญญา; null = ไม่แสดงการ์ดสัญญา. */

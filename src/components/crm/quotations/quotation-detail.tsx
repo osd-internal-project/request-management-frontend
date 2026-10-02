@@ -29,7 +29,12 @@ import {
   QuotationStatusTags,
 } from "@/components/crm/quotations/quotation-list";
 import { ProductPicker } from "@/components/crm/quotations/product-picker";
-import { lookupPrices, suggestMarkup } from "@/lib/api/pricing/client";
+import {
+  lookupPrices,
+  lookupVendorCosts,
+  suggestMarkup,
+  vendorCostLabel,
+} from "@/lib/api/pricing/client";
 import { appApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
@@ -60,6 +65,8 @@ interface DraftLine {
   termMonths: number | null;
   /** CD-198 — display only; the server keeps it while product and cost stand. */
   costSource: string | null;
+  /** CD-206 — YYYY-MM-DD of an SAP cost; null = typed or from elsewhere. */
+  costDate: string | null;
   /** CD-200 — equipment · material · software · service. */
   workType: WorkType | null;
   /** CD-200 — the markup that priced the line; cleared by a hand edit. */
@@ -114,6 +121,7 @@ function toDraftLines(quotation: QuotationDetail): DraftLine[] {
     priceModel: (line.priceModel ?? "unit") as PriceModel,
     termMonths: line.termMonths ?? null,
     costSource: line.costSource ?? null,
+    costDate: line.costDate ? line.costDate.slice(0, 10) : null,
     workType: (line.workType ?? null) as WorkType | null,
     markupPct:
       line.markupPct === null || line.markupPct === undefined
@@ -222,6 +230,9 @@ export function QuotationDetailView({
       ? Number(minByType[workType])
       : minMargin;
   const isDraft = status === "draft";
+  // CD-206 — SAP costs older than this many days are flagged.
+  const costMaxAgeDays = quotation.costMaxAgeDays ?? 90;
+  const costAge = (date: string) => dayjs().diff(dayjs(date), "day");
   const canEditHeader = canManage && isDraft;
   const canEditLines = canEditHeader && costVisible;
 
@@ -392,9 +403,13 @@ export function QuotationDetailView({
    * CD-200 — no standard or special price: offer cost × (1 + markup) from the
    * rule that applies to this product, work type and deal.
    */
-  async function fillMarkupPrice(key: string, code: string) {
+  async function fillMarkupPrice(
+    key: string,
+    code: string,
+    knownCost?: number | null,
+  ) {
     const line = lines.find((row) => row.key === key);
-    const cost = line?.unitCost ?? 0;
+    const cost = knownCost ?? line?.unitCost ?? 0;
     if (!cost) return;
     const result = await suggestMarkup(
       [{ product_code: code, work_type: line?.workType ?? undefined }],
@@ -413,7 +428,36 @@ export function QuotationDetailView({
     );
   }
 
-  async function fillStandardPrice(key: string, code: string) {
+  /**
+   * CD-206 — the supplier's cost SAP holds for the product (the latest PO or
+   * special price) becomes the line's cost, with where and when it is from;
+   * an old one is flagged. Returns the cost, for the price fill after it.
+   */
+  async function fillVendorCost(key: string, code: string) {
+    const result = await lookupVendorCosts([code], currency);
+    const found = result.ok ? result.data.items[0] : undefined;
+    if (!found || found.unitCost === undefined) return null;
+    patchLine(key, {
+      unitCost: found.unitCost,
+      costSource: vendorCostLabel(found),
+      costDate: found.costDate,
+      markupPct: null,
+    });
+    if (found.stale) {
+      void message.warning(
+        md.costFilledStale(code, found.costDate, found.ageDays),
+      );
+    } else {
+      void message.info(md.costFilled(code, money(found.unitCost, currency)));
+    }
+    return found.unitCost;
+  }
+
+  async function fillStandardPrice(
+    key: string,
+    code: string,
+    knownCost?: number | null,
+  ) {
     const result = await lookupPrices(
       [code],
       currency,
@@ -427,7 +471,7 @@ export function QuotationDetailView({
         overrideReason: "",
         overridden: false,
       });
-      await fillMarkupPrice(key, code);
+      await fillMarkupPrice(key, code, knownCost);
       return;
     }
     const model = (found.price_model ?? "unit") as PriceModel;
@@ -850,6 +894,7 @@ export function QuotationDetailView({
                     priceModel: "unit",
                     termMonths: null,
                     costSource: null,
+                    costDate: null,
                     workType: null,
                     markupPct: null,
                     systemPrice: null,
@@ -895,7 +940,13 @@ export function QuotationDetailView({
                         unit: row.unit || (product.unit ?? ""),
                         priceId: null,
                       });
-                      void fillStandardPrice(row.key, product.code);
+                      void (async () => {
+                        // CD-206 — the cost first: a markup price needs it.
+                        const cost = costVisible
+                          ? await fillVendorCost(row.key, product.code)
+                          : null;
+                        await fillStandardPrice(row.key, product.code, cost);
+                      })();
                     }}
                     onClear={() =>
                       patchLine(row.key, { productCode: "", priceId: null })
@@ -1114,9 +1165,13 @@ export function QuotationDetailView({
                             value={value}
                             onChange={(next) =>
                               // CD-200 — a new cost no longer is what the markup priced.
+                              // CD-206 — nor the SAP cost it came from.
                               patchLine(row.key, {
                                 unitCost: next,
                                 markupPct: null,
+                                ...(row.costSource?.startsWith("SAP:")
+                                  ? { costSource: null, costDate: null }
+                                  : {}),
                               })
                             }
                           />
@@ -1127,6 +1182,25 @@ export function QuotationDetailView({
                         {row.costSource && (
                           <div className="text-[11px] text-gray-500">
                             {row.costSource}
+                          </div>
+                        )}
+                        {/* CD-206 — the date of an SAP cost, flagged when old. */}
+                        {row.costDate && (
+                          <div
+                            className={`text-[11px] ${
+                              costAge(row.costDate) > costMaxAgeDays
+                                ? "text-orange-600"
+                                : "text-gray-500"
+                            }`}
+                          >
+                            {costAge(row.costDate) > costMaxAgeDays
+                              ? md.costStale(
+                                  dayjs(row.costDate).format("DD/MM/YYYY"),
+                                  costAge(row.costDate),
+                                )
+                              : md.costAsOf(
+                                  dayjs(row.costDate).format("DD/MM/YYYY"),
+                                )}
                           </div>
                         )}
                       </>
