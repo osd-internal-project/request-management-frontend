@@ -1145,3 +1145,41 @@ export function getProjectDesigns(
 ): Promise<ApiResult<ProjectDesignsView>> {
   return apiGet(`/projects/${encodeURIComponent(id)}/designs`);
 }
+
+/** CD-209 — the technical plan: crew and equipment per task. */
+export interface TechPlanTaskView {
+  id: string;
+  label: string;
+  status: string;
+  start: string | null;
+  finish: string | null;
+  ownerUserId: string | null;
+  ownerName: string | null;
+  crew: { id: string; name: string }[];
+  needsEquipment: boolean;
+  equipment: {
+    id: string;
+    boqIndex: number | null;
+    name: string;
+    quantity: number;
+    unit: string | null;
+    note: string | null;
+  }[];
+}
+
+export interface ProjectTechPlanView {
+  canEdit: boolean;
+  handoff: { ready: boolean; blockers: string[] };
+  boq: { index: number; label: string }[];
+  tasks: TechPlanTaskView[];
+  weekly: {
+    week: string;
+    items: { name: string; unit: string | null; quantity: number }[];
+  }[];
+}
+
+export function getProjectTechPlan(
+  id: string,
+): Promise<ApiResult<ProjectTechPlanView>> {
+  return apiGet(`/projects/${encodeURIComponent(id)}/tech-plan`);
+}
