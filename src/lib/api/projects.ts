@@ -974,3 +974,47 @@ export function getProjectAsBuilt(
 ): Promise<ApiResult<ProjectAsBuiltView>> {
   return apiGet(`/projects/${encodeURIComponent(id)}/as-built`);
 }
+
+/** CD-189 — an acceptance round with the customer. */
+export interface AcceptanceRoundView {
+  id: string;
+  label: string;
+  milestone: { id: string; title: string; status: string } | null;
+  scheduledAt: string;
+  location: string | null;
+  customerPeople: string | null;
+  preparation: string | null;
+  status: "scheduled" | "accepted" | "conditional" | "rejected" | "cancelled";
+  decidedOn: string | null;
+  outcomeNote: string | null;
+  certificateName: string | null;
+  decidedByName: string | null;
+  followUp: { open: number; overdue: number; closed: boolean };
+  items: {
+    id: string;
+    seq: number;
+    text: string;
+    dueOn: string | null;
+    ownerUserId: string | null;
+    ownerName: string | null;
+    status: "open" | "done";
+    overdue: boolean;
+    doneNote: string | null;
+    doneAt: string | null;
+    doneByName: string | null;
+    mayClose: boolean;
+  }[];
+}
+
+export interface ProjectAcceptancesView {
+  canEdit: boolean;
+  readiness: { ready: boolean; blockers: string[] };
+  milestones: { id: string; label: string; status: string }[];
+  rounds: AcceptanceRoundView[];
+}
+
+export function getProjectAcceptances(
+  id: string,
+): Promise<ApiResult<ProjectAcceptancesView>> {
+  return apiGet(`/projects/${encodeURIComponent(id)}/acceptances`);
+}
