@@ -50,6 +50,8 @@ export type MenuIconKey =
   | "pricingException"
   | "pricingAnalytics"
   | "hrLaborRate"
+  | "hrEmployee"
+  | "hrMe"
   | "pricingVendorCost"
   | "projectPortfolio"
   | "projectRisk"
@@ -279,6 +281,21 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     icon: "pricingMarkup",
     permissions: ["pricing.price.read", "pricing.price.manage"],
     group: messages.nav.pricingGroup,
+  },
+  /** CD-229 — the employee register (HR's facts on top of the directory). */
+  {
+    label: messages.nav.hrEmployees,
+    href: ROUTES.hrEmployees,
+    icon: "hrEmployee",
+    permissions: ["hr.employee.read", "hr.employee.manage"],
+    group: messages.nav.hrGroup,
+  },
+  /** CD-229 — everyone's own profile. */
+  {
+    label: messages.nav.hrMe,
+    href: ROUTES.hrMe,
+    icon: "hrMe",
+    group: messages.nav.hrGroup,
   },
   /** CD-207 — people's cost per manday by level × work type (HR). */
   {
