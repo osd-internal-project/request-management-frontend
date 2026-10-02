@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { QuotationDetailView } from "@/components/crm/quotations/quotation-detail";
+import { PastPricingExceptions } from "@/components/pricing/pricing-exceptions-table";
 import { getQuotation } from "@/lib/api/sales";
 import { HOME_PATH } from "@/lib/routes";
 import { can, getSession } from "@/lib/session";
@@ -22,13 +23,17 @@ export default async function QuotationDetailPage({
   if (!result.ok) notFound();
 
   return (
-    <QuotationDetailView
-      // Remount on every version/refresh so the draft form starts from the
-      // saved row, not from what was typed before the save.
-      key={`${result.data.id}:${result.data.updatedAt}`}
-      quotation={result.data}
-      canManage={can(session, "crm.sales.manage")}
-      canOverridePrice={can(session, "pricing.price.override")}
-    />
+    <div className="space-y-4">
+      {/* CD-205 — this customer's past pricing exceptions, on other deals. */}
+      <PastPricingExceptions opportunityId={result.data.opportunityId} />
+      <QuotationDetailView
+        // Remount on every version/refresh so the draft form starts from the
+        // saved row, not from what was typed before the save.
+        key={`${result.data.id}:${result.data.updatedAt}`}
+        quotation={result.data}
+        canManage={can(session, "crm.sales.manage")}
+        canOverridePrice={can(session, "pricing.price.override")}
+      />
+    </div>
   );
 }

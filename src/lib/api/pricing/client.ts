@@ -201,3 +201,57 @@ export async function chooseDiscount(
     body: JSON.stringify({ caps, note }),
   });
 }
+
+/** CD-205 — one entry of the pricing exception register. */
+export interface PricingException {
+  id: string;
+  kind: "margin_below" | "price_override" | "discount_option";
+  requestId: string;
+  requestNo: string | null;
+  quotationId: string;
+  quotationNo: string;
+  version: number;
+  opportunityId: string;
+  customerId: string | null;
+  partyName: string;
+  currency: string;
+  netTotal: string;
+  workType: string | null;
+  /** Absent for a viewer who may not see cost. */
+  marginPct?: string | null;
+  minMarginPct: string | null;
+  productCode: string | null;
+  description: string | null;
+  systemPrice: string | null;
+  unitPrice: string | null;
+  caps: Record<string, number> | null;
+  reason: string | null;
+  requestedByName: string | null;
+  decision: string;
+  decidedAt: string | null;
+  approverNames: string[];
+  createdAt: string;
+}
+
+export interface PricingExceptionQuery {
+  kind?: string;
+  customer_id?: string;
+  for_opportunity?: string;
+  q?: string;
+  from?: string;
+  to?: string;
+}
+
+export async function listPricingExceptions(
+  query: PricingExceptionQuery,
+): Promise<
+  ClientResult<{ customerId: string | null; items: PricingException[] }>
+> {
+  const params = new URLSearchParams(
+    Object.entries(query).filter(([, value]) => Boolean(value)) as [
+      string,
+      string,
+    ][],
+  );
+  return appApi(`pricing/exceptions?${params.toString()}`);
+}

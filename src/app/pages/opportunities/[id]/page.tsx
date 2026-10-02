@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { OpportunityDetailView } from "@/components/crm/opportunities/opportunity-detail";
+import { PastPricingExceptions } from "@/components/pricing/pricing-exceptions-table";
 import {
   getOpportunity,
   getOpportunityActivities,
@@ -125,31 +126,35 @@ export default async function OpportunityDetailPage({
     null;
 
   return (
-    <OpportunityDetailView
-      opportunity={opportunityResult.data}
-      lostReasons={reasonsResult.ok ? reasonsResult.data : []}
-      relatedRequests={
-        requestsResult?.ok
-          ? requestsResult.data.data
-          : canReadRequests
-            ? []
-            : null
-      }
-      customers={customersResult?.ok ? customersResult.data.data : []}
-      quotations={quotationsResult.ok ? quotationsResult.data.data : []}
-      dealMargin={marginResult.ok ? marginResult.data : null}
-      activities={activitiesResult.ok ? activitiesResult.data : []}
-      canManage={canManage}
-      contractTypeName={contractTypeName}
-      solutionTypeName={solutionTypeName}
-      demoTypeName={demoTypeName}
-      solutions={solutionsResult?.ok ? solutionsResult.data : []}
-      currentUserId={session?.user.id ?? null}
-      negotiations={negotiationsResult.ok ? negotiationsResult.data : null}
-      phoneNumbers={phoneResult.ok ? phoneResult.data : null}
-      handover={handoverResult?.ok ? handoverResult.data : null}
-      handoverTeams={teamsResult?.ok ? teamsResult.data : []}
-      openSaleOrderOnLoad={action === "sale-order"}
-    />
+    <div className="space-y-4">
+      {/* CD-205 — this customer's past pricing exceptions, on other deals. */}
+      <PastPricingExceptions opportunityId={opportunityResult.data.id} />
+      <OpportunityDetailView
+        opportunity={opportunityResult.data}
+        lostReasons={reasonsResult.ok ? reasonsResult.data : []}
+        relatedRequests={
+          requestsResult?.ok
+            ? requestsResult.data.data
+            : canReadRequests
+              ? []
+              : null
+        }
+        customers={customersResult?.ok ? customersResult.data.data : []}
+        quotations={quotationsResult.ok ? quotationsResult.data.data : []}
+        dealMargin={marginResult.ok ? marginResult.data : null}
+        activities={activitiesResult.ok ? activitiesResult.data : []}
+        canManage={canManage}
+        contractTypeName={contractTypeName}
+        solutionTypeName={solutionTypeName}
+        demoTypeName={demoTypeName}
+        solutions={solutionsResult?.ok ? solutionsResult.data : []}
+        currentUserId={session?.user.id ?? null}
+        negotiations={negotiationsResult.ok ? negotiationsResult.data : null}
+        phoneNumbers={phoneResult.ok ? phoneResult.data : null}
+        handover={handoverResult?.ok ? handoverResult.data : null}
+        handoverTeams={teamsResult?.ok ? teamsResult.data : []}
+        openSaleOrderOnLoad={action === "sale-order"}
+      />
+    </div>
   );
 }

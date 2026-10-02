@@ -122,6 +122,8 @@ export const ROUTES = {
   pricingPrices: `${HOME_PATH}/pricing/prices`,
   /** CD-200 — markup rules. */
   pricingMarkup: `${HOME_PATH}/pricing/markup`,
+  /** CD-205 — ทะเบียนข้อยกเว้นด้านราคา. */
+  pricingExceptions: `${HOME_PATH}/pricing/exceptions`,
   /** CD-142 — SAP's suppliers with the technical profile Pre-Sales keeps. */
   partners: `${HOME_PATH}/partners`,
   partnerDetail: (code: string) =>

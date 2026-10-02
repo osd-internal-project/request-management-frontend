@@ -98,6 +98,7 @@ export const messages = {
     presalesGroup: "Pre-Sales",
     pricingGroup: "Pricing",
     pricingPrices: "ราคามาตรฐาน",
+    pricingExceptions: "ทะเบียนข้อยกเว้นด้านราคา",
     pricingMarkup: "กำหนด Markup",
     partners: "คู่ค้า",
     contracts: "คลังสัญญา",
@@ -2984,6 +2985,49 @@ export const messages = {
   },
   /** CD-194 ราคามาตรฐาน */
   pricing: {
+    /** CD-205 ทะเบียนข้อยกเว้นด้านราคา */
+    exceptions: {
+      title: "ทะเบียนข้อยกเว้นด้านราคา",
+      hint: "ทุกกรณีที่ใบเสนอราคาออกนอกนโยบายราคา พร้อมเหตุผลและผู้อนุมัติ — บันทึกเมื่อคำขออนุมัติราคาได้ผล",
+      kinds: {
+        margin_below: "margin ต่ำกว่าเกณฑ์",
+        price_override: "แก้ราคาด้วยมือ",
+        discount_option: "ผู้อนุมัติเลือกส่วนลด",
+      } as Record<string, string>,
+      decisions: {
+        pending: "รอผล",
+        approved: "อนุมัติ",
+        rejected: "ไม่อนุมัติ",
+        cancelled: "ยกเลิก",
+      } as Record<string, string>,
+      allKinds: "ทุกชนิด",
+      search: "ค้นชื่อลูกค้า / เลขใบเสนอราคา / รหัสสินค้า",
+      backfill: "เติมจากคำขอเดิม",
+      backfilled: (requests: number, rows: number) =>
+        `ตรวจคำขอ ${requests} ใบ · บันทึก ${rows} รายการ`,
+      date: "วันที่",
+      kind: "ชนิด",
+      customer: "ลูกค้า",
+      quotation: "ใบเสนอราคา",
+      detail: "รายละเอียด",
+      reason: "เหตุผล",
+      requestedBy: "ผู้ขอ/ผู้แก้",
+      approvers: "ผู้อนุมัติ",
+      decision: "ผล",
+      empty: "ยังไม่มีข้อยกเว้น",
+      marginDetail: (type: string, pct: string, min: string) =>
+        `${type}: margin ${pct} · เกณฑ์ ${min}%`,
+      marginHidden: (type: string, min: string) =>
+        `${type}: ต่ำกว่าเกณฑ์ ${min}%`,
+      overrideDetail: (product: string, system: string, price: string) =>
+        `${product}: ราคาในระบบ ${system} → ${price}`,
+      capsDetail: (text: string) => `จำกัดส่วนลด ${text}`,
+      noWorkType: "ไม่ระบุประเภทงาน",
+      tab: "ข้อยกเว้นด้านราคา",
+      notice: (count: number) =>
+        `ลูกค้ารายนี้เคยได้รับข้อยกเว้นด้านราคา ${count} รายการในดีลอื่น — ใช้อ้างอิงได้`,
+      noticeShow: "ดูรายการ",
+    },
     /** CD-203 บริหารส่วนลด — บนหน้าคำขออนุมัติราคา */
     discount: {
       title: (no: string, version: number) =>
@@ -5172,7 +5216,8 @@ export const messages = {
       ready: "พร้อมส่งมอบ — ขอนัดตรวจรับได้",
       notReady: (n: number) => `ยังไม่พร้อม — ค้าง ${n} ข้อ`,
       system: "ระบบตรวจเอง",
-      lines: (passed: number, total: number) => `รายการตรวจ ผ่าน ${passed}/${total}`,
+      lines: (passed: number, total: number) =>
+        `รายการตรวจ ผ่าน ${passed}/${total}`,
       add: "เพิ่มรายการ",
       result: {
         pass: "ผ่าน",

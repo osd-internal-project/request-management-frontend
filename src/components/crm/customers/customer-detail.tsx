@@ -32,6 +32,7 @@ import Title from "antd/es/typography/Title";
 import dayjs from "dayjs";
 import { CUSTOMER_STATUS_COLOR } from "@/components/crm/customers/customer-list";
 import { CustomerInvoicesTab } from "@/components/crm/customers/customer-invoices-tab";
+import { PricingExceptionsTable } from "@/components/pricing/pricing-exceptions-table";
 import { formatAmount } from "@/components/crm/opportunities/opportunity-list";
 import { QuotationStatusTags } from "@/components/crm/quotations/quotation-list";
 import { SearchSelect } from "@/components/ui/search-select";
@@ -505,6 +506,16 @@ export function CustomerDetailView({
                   key: "quotations",
                   label: `${m.detail.tabQuotations} · ${customerQuotations.length}`,
                   children: <CustomerQuotationsTab rows={customerQuotations} />,
+                },
+                // CD-205 — what this customer was allowed outside the policy.
+                {
+                  key: "pricingExceptions",
+                  label: messages.pricing.exceptions.tab,
+                  children: (
+                    <PricingExceptionsTable
+                      query={{ customer_id: customer.id }}
+                    />
+                  ),
                 },
               ]
             : []),

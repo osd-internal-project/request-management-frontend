@@ -47,6 +47,7 @@ export type MenuIconKey =
   | "project"
   | "pricingPrice"
   | "pricingMarkup"
+  | "pricingException"
   | "projectPortfolio"
   | "projectRisk"
   | "esignLayout"
@@ -274,6 +275,14 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     href: ROUTES.pricingMarkup,
     icon: "pricingMarkup",
     permissions: ["pricing.price.read", "pricing.price.manage"],
+    group: messages.nav.pricingGroup,
+  },
+  /** CD-205 — every case outside the pricing policy, with reason and approver. */
+  {
+    label: messages.nav.pricingExceptions,
+    href: ROUTES.pricingExceptions,
+    icon: "pricingException",
+    permissions: ["pricing.price.read"],
     group: messages.nav.pricingGroup,
   },
 
