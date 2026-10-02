@@ -185,6 +185,8 @@ export const ROUTES = {
   myTasks: `${HOME_PATH}/my-tasks`,
   /** CD-183 — risks the executives should see, across projects. */
   projectRisks: `${HOME_PATH}/projects/risks`,
+  /** CD-217 — configuration values across the projects one may see. */
+  projectConfigs: `${HOME_PATH}/projects/configs`,
   /** CD-192 — every running project, the most at risk first. */
   projectPortfolio: `${HOME_PATH}/projects/portfolio`,
   /** CD-161 — คลังสัญญา (ฝ่ายกฎหมาย). */

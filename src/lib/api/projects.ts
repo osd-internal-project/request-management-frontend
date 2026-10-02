@@ -1439,3 +1439,61 @@ export function getProjectSoftwareDocs(
 ): Promise<ApiResult<ProjectSoftwareDocsView>> {
   return apiGet(`/projects/${encodeURIComponent(id)}/software-docs`);
 }
+
+// --- CD-217 ตั้งค่าระบบ --------------------------------------------------------------
+
+export interface ConfigItemRow {
+  id: string;
+  label: string;
+  system: string;
+  installationId: string | null;
+  installationLabel: string | null;
+  environmentId: string | null;
+  environmentLabel: string | null;
+  key: string;
+  value: string | null;
+  isSecret: boolean;
+  note: string | null;
+  updatedAt: string;
+  updatedByName: string | null;
+  mayRemove: boolean;
+}
+
+export interface ProjectConfigsView {
+  canWrite: boolean;
+  canEdit: boolean;
+  installations: { id: string; label: string }[];
+  environments: { id: string; label: string }[];
+  items: ConfigItemRow[];
+}
+
+export interface ConfigHistoryView {
+  canRestore: boolean;
+  entries: {
+    id: string;
+    action: string;
+    oldValue: string | null;
+    newValue: string | null;
+    restorable: boolean;
+    reason: string | null;
+    actorName: string | null;
+    at: string;
+  }[];
+}
+
+export interface ConfigSearchRow {
+  projectId: string;
+  projectNo: string;
+  projectName: string;
+  label: string;
+  system: string;
+  key: string;
+  value: string | null;
+  isSecret: boolean;
+}
+
+export function getProjectConfigs(
+  id: string,
+): Promise<ApiResult<ProjectConfigsView>> {
+  return apiGet(`/projects/${encodeURIComponent(id)}/configs`);
+}

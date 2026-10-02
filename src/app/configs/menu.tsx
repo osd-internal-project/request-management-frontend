@@ -57,6 +57,7 @@ export type MenuIconKey =
   | "pricingVendorCost"
   | "projectPortfolio"
   | "projectRisk"
+  | "projectConfig"
   | "esignLayout"
   | "esignAuthority";
 
@@ -367,6 +368,15 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     href: ROUTES.projectRisks,
     icon: "projectRisk",
     permissions: ["pm.project.read"],
+    group: messages.nav.pmGroup,
+  },
+
+  /** CD-217 — ค้นหาค่าตั้งค่าข้ามโครงการที่ผู้ใช้เห็น (ไม่ค้นในค่าลับ). */
+  {
+    label: messages.nav.projectConfigs,
+    href: ROUTES.projectConfigs,
+    icon: "projectConfig",
+    permissions: ["notification.read"],
     group: messages.nav.pmGroup,
   },
 

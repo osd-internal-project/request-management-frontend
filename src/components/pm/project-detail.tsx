@@ -46,6 +46,7 @@ import type {
   ProjectDefectsView,
   ProjectReleasesView,
   ProjectSoftwareDocsView,
+  ProjectConfigsView,
 } from "@/lib/api/projects";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
@@ -74,6 +75,7 @@ import { ProjectDevPlanCard } from "./project-dev-plan-card";
 import { ProjectDefectsCard } from "./project-defects-card";
 import { ProjectReleasesCard } from "./project-releases-card";
 import { ProjectSoftwareDocsCard } from "./project-software-docs-card";
+import { ProjectConfigsCard } from "./project-configs-card";
 import {
   ProjectTeamFields,
   teamPayload,
@@ -113,6 +115,7 @@ export function ProjectDetailView({
   defects,
   releases,
   softwareDocs,
+  configs,
   currentUserId,
   people,
 }: {
@@ -160,6 +163,7 @@ export function ProjectDetailView({
   readonly defects: ProjectDefectsView | null;
   readonly releases: ProjectReleasesView | null;
   readonly softwareDocs: ProjectSoftwareDocsView | null;
+  readonly configs: ProjectConfigsView | null;
   readonly currentUserId: string | null;
   /** The company's people, for the manager and team pickers. */
   readonly people: { id: string; name: string }[];
@@ -495,6 +499,11 @@ export function ProjectDetailView({
       {/* CD-215 — the software's as-built, software projects only */}
       {softwareDocs?.software && (
         <ProjectSoftwareDocsCard projectId={project.id} view={softwareDocs} />
+      )}
+
+      {/* CD-217 — configuration as data; shown once there is any, or to the team */}
+      {configs && (configs.items.length > 0 || configs.canWrite) && (
+        <ProjectConfigsCard projectId={project.id} view={configs} />
       )}
 
       {surveys && <ProjectSurveysCard projectId={project.id} view={surveys} />}

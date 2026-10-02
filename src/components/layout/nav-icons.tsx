@@ -111,6 +111,7 @@ const MENU_ICONS: Record<MenuIconKey, ComponentType> = {
   pricingVendorCost: ShoppingCartOutlined,
   projectPortfolio: FundProjectionScreenOutlined,
   projectRisk: WarningOutlined,
+  projectConfig: ControlOutlined,
   esignLayout: LayoutOutlined,
   esignAuthority: SafetyOutlined,
 };
