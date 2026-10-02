@@ -1236,3 +1236,51 @@ export function getProjectSurveys(
 ): Promise<ApiResult<ProjectSurveysView>> {
   return apiGet(`/projects/${encodeURIComponent(id)}/surveys`);
 }
+
+// --- CD-212 แผนงานพัฒนาซอฟต์แวร์ ---------------------------------------------------
+
+export interface DevSourceView {
+  ref: string;
+  source: "scope" | "deliverable" | "change";
+  text: string;
+}
+
+export interface DevItemView {
+  id: string;
+  wbs: string;
+  title: string;
+  sowRef: string | null;
+  sowText: string | null;
+  ownerName: string | null;
+  durationDays: number;
+  status: string;
+  start: string | null;
+  finish: string | null;
+}
+
+export interface DevIterationView {
+  id: string;
+  wbs: string;
+  title: string;
+  ownerName: string | null;
+  start: string | null;
+  finish: string | null;
+  milestone: { id: string; title: string; status: string } | null;
+  done: number;
+  items: DevItemView[];
+}
+
+export interface ProjectDevPlanView {
+  canEdit: boolean;
+  total: number;
+  planned: number;
+  done: number;
+  unplanned: DevSourceView[];
+  iterations: DevIterationView[];
+}
+
+export function getProjectDevPlan(
+  id: string,
+): Promise<ApiResult<ProjectDevPlanView>> {
+  return apiGet(`/projects/${encodeURIComponent(id)}/dev-plan`);
+}
