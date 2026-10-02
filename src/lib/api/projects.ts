@@ -926,3 +926,51 @@ export function getProjectReadiness(
 ): Promise<ApiResult<ProjectReadinessView>> {
   return apiGet(`/projects/${encodeURIComponent(id)}/readiness`);
 }
+
+/** CD-226 — the project as built: documents and deviations. */
+export interface AsBuiltDocumentView {
+  id: string;
+  title: string;
+  note: string | null;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  uploadedAt: string;
+  uploadedByName: string | null;
+  mayRemove: boolean;
+}
+
+export interface AsBuiltDeviationView {
+  id: string;
+  seq: number;
+  label: string;
+  reference: string | null;
+  referenceLabel: string | null;
+  planned: string;
+  built: string;
+  reason: string | null;
+  affectsScope: boolean;
+  changeRequestId: string | null;
+  change: { id: string; label: string; status: string } | null;
+  createdByName: string | null;
+  mayEdit: boolean;
+}
+
+export interface ProjectAsBuiltView {
+  canEdit: boolean;
+  canWrite: boolean;
+  complete: boolean;
+  missingDocuments: string[];
+  openDeviations: string[];
+  required: { title: string; documentIds: string[] }[];
+  documents: AsBuiltDocumentView[];
+  deviations: AsBuiltDeviationView[];
+  refs: { ref: string; label: string }[];
+  changes: { id: string; label: string; status: string }[];
+}
+
+export function getProjectAsBuilt(
+  id: string,
+): Promise<ApiResult<ProjectAsBuiltView>> {
+  return apiGet(`/projects/${encodeURIComponent(id)}/as-built`);
+}

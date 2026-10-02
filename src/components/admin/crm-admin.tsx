@@ -370,6 +370,9 @@ function ConfigSection({
   const [readinessList, setReadinessList] = useState<string[]>(
     config.projectReadinessChecklist ?? [],
   );
+  const [asBuiltList, setAsBuiltList] = useState<string[]>(
+    config.projectAsBuiltDocuments ?? [],
+  );
   const [solutionType, setSolutionType] = useState(
     config.solutionRequestTypeCode ?? "",
   );
@@ -401,6 +404,7 @@ function ConfigSection({
       project_health_amber: healthAmber,
       project_health_red: healthRed,
       project_readiness_checklist: readinessList,
+      project_as_built_documents: asBuiltList,
       solution_request_type_code: solutionType,
       solution_approval_type_code: solutionApprovalType,
       demo_request_type_code: demoType,
@@ -713,6 +717,20 @@ function ConfigSection({
       </div>
       <Text type="secondary" className="mt-2 block text-xs">
         {m.projectReadinessHint}
+      </Text>
+      {/* CD-226 — เอกสารสภาพจริงที่ต้องมี */}
+      <div className="mt-3 max-w-xl">
+        <Text className="mb-1 block text-xs">{m.projectAsBuiltDocuments}</Text>
+        <Select
+          mode="tags"
+          className="w-full"
+          value={asBuiltList}
+          open={false}
+          onChange={(values: string[]) => setAsBuiltList(values)}
+        />
+      </div>
+      <Text type="secondary" className="mt-2 block text-xs">
+        {m.projectAsBuiltHint}
       </Text>
 
       {/* CD-130 — ประเภทคำขอ Solution (Sales → Pre-Sales) */}

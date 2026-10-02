@@ -1808,6 +1808,8 @@ export interface CrmConfig {
   projectHealthRed?: number;
   /** CD-225 — the company's readiness checklist. */
   projectReadinessChecklist?: string[];
+  /** CD-226 — the as-built documents every project must leave. */
+  projectAsBuiltDocuments?: string[];
   /** CD-130 — the type Pre-Sales takes solution requests on. */
   solutionRequestTypeCode?: string | null;
   /** CD-143 — the type a Solution version is sent for approval on. */

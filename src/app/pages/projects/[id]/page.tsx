@@ -15,6 +15,7 @@ import {
   getStatusReports,
   getProjectTests,
   getProjectReadiness,
+  getProjectAsBuilt,
 } from "@/lib/api/projects";
 import { getAllDirectoryUsers } from "@/lib/api/users";
 import { HOME_PATH } from "@/lib/routes";
@@ -50,6 +51,7 @@ export default async function ProjectPage({ params }: Params) {
     statusReports,
     tests,
     readiness,
+    asBuilt,
   ] = await Promise.all([
     getProjectMilestones(id),
     getProjectPlan(id),
@@ -75,6 +77,8 @@ export default async function ProjectPage({ params }: Params) {
     getProjectTests(id),
     // CD-225
     getProjectReadiness(id),
+    // CD-226
+    getProjectAsBuilt(id),
   ]);
   // the pickers only for who may change the manager or the team
   const users =
@@ -98,6 +102,7 @@ export default async function ProjectPage({ params }: Params) {
       statusReports={statusReports.ok ? statusReports.data : null}
       tests={tests.ok ? tests.data : null}
       readiness={readiness.ok ? readiness.data : null}
+      asBuilt={asBuilt.ok ? asBuilt.data : null}
       currentUserId={session?.user.id ?? null}
       people={(users?.ok ? users.data : []).map((user) => ({
         id: user.id,
