@@ -38,6 +38,7 @@ import type {
   ProjectAsBuiltView,
   ProjectAcceptancesView,
   ProjectUatView,
+  ProjectInstallationsView,
 } from "@/lib/api/projects";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
@@ -58,6 +59,7 @@ import { ProjectReadinessCard } from "./project-readiness-card";
 import { ProjectAsBuiltCard } from "./project-as-built-card";
 import { ProjectAcceptanceCard } from "./project-acceptance-card";
 import { ProjectUatCard } from "./project-uat-card";
+import { ProjectInstallationsCard } from "./project-installations-card";
 import {
   ProjectTeamFields,
   teamPayload,
@@ -89,6 +91,7 @@ export function ProjectDetailView({
   asBuilt,
   acceptances,
   uat,
+  installations,
   currentUserId,
   people,
 }: {
@@ -125,6 +128,8 @@ export function ProjectDetailView({
   readonly acceptances: ProjectAcceptancesView | null;
   /** CD-222 — null = could not load. */
   readonly uat: ProjectUatView | null;
+  /** CD-216 — null = could not load. */
+  readonly installations: ProjectInstallationsView | null;
   readonly currentUserId: string | null;
   /** The company's people, for the manager and team pickers. */
   readonly people: { id: string; name: string }[];
@@ -424,6 +429,10 @@ export function ProjectDetailView({
           view={tests}
           people={pickable}
         />
+      )}
+
+      {installations && (
+        <ProjectInstallationsCard projectId={project.id} view={installations} />
       )}
 
       {uat && (

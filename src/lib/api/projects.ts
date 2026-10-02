@@ -1057,3 +1057,41 @@ export interface ProjectUatView {
 export function getProjectUat(id: string): Promise<ApiResult<ProjectUatView>> {
   return apiGet(`/projects/${encodeURIComponent(id)}/uat`);
 }
+
+/** CD-216 — installation point by point, against the BOQ. */
+export interface InstallationPointView {
+  id: string;
+  label: string;
+  location: string;
+  boqIndex: number | null;
+  boqLabel: string | null;
+  serialNo: string | null;
+  note: string | null;
+  installedOn: string | null;
+  installedByName: string | null;
+  beforeName: string | null;
+  afterName: string | null;
+  mayRemove: boolean;
+}
+
+export interface ProjectInstallationsView {
+  canEdit: boolean;
+  canWrite: boolean;
+  installed: number;
+  boq: {
+    index: number;
+    ref: string;
+    label: string;
+    quantity: number;
+    installed: number;
+    matches: boolean;
+  }[];
+  choices: { index: number; label: string; equipment: boolean }[];
+  points: InstallationPointView[];
+}
+
+export function getProjectInstallations(
+  id: string,
+): Promise<ApiResult<ProjectInstallationsView>> {
+  return apiGet(`/projects/${encodeURIComponent(id)}/installations`);
+}
