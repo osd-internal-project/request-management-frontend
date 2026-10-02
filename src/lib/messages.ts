@@ -97,6 +97,8 @@ export const messages = {
     projectOpen: "เปิดโครงการ",
     presalesGroup: "Pre-Sales",
     pricingGroup: "Pricing",
+    hrGroup: "บุคลากร (HR)",
+    hrLaborRates: "อัตราต้นทุนบุคลากร",
     pricingPrices: "ราคามาตรฐาน",
     pricingVendorCosts: "ต้นทุนคู่ค้า (SAP)",
     pricingExceptions: "ทะเบียนข้อยกเว้นด้านราคา",
@@ -2293,7 +2295,14 @@ export const messages = {
       note: "หมายเหตุ",
       addLabor: "เพิ่มบรรทัด",
       saveLabor: "บันทึกแรงงาน",
-      noRates: "ยังไม่ได้ตั้งอัตราต้นทุนแรงงาน — ตั้งได้ที่ ตั้งค่า CRM",
+      noRates:
+        "ยังไม่มีระดับตำแหน่ง/ประเภทงานที่ HR — ตั้งได้ที่หน้า อัตราต้นทุนบุคลากร",
+      /** CD-207 */
+      level: "ระดับ",
+      workType: "ประเภทงาน",
+      hiddenAmount: "ปกปิด",
+      ratesHidden:
+        "อัตราต้นทุนคนและยอดแรงงานเห็นเฉพาะผู้มีสิทธิ์ (hr.rate.read) — ระบบคิดจากอัตราที่ HR ตั้งไว้เมื่อบันทึก",
       saved: "บันทึกแล้ว",
       quotes: "ใบเสนอราคาจากคู่ค้า",
       quotesEmpty: "ยังไม่มีใบเสนอราคาจากคู่ค้า",
@@ -2985,6 +2994,44 @@ export const messages = {
     monthlyRecurring: "ค่าบริการรายเดือน (รวมอยู่ในยอดแล้ว)",
   },
   /** CD-194 ราคามาตรฐาน */
+  /** CD-207 — ต้นทุนบุคลากร (ส่วนหนึ่งของ CD-17 HR) */
+  hr: {
+    rates: {
+      title: "อัตราต้นทุนบุคลากร",
+      hint: "อัตราต้นทุนต่อ manday ตามระดับตำแหน่ง × ประเภทงาน — แหล่งเดียวที่ประมาณต้นทุนแรงงานของ Solution ใช้ · เพิ่มอัตราใหม่จะปิดอัตราเดิมของคู่เดียวกันวันก่อนหน้า",
+      current: "อัตราที่มีผลวันนี้ (บาท/manday)",
+      history: "ประวัติอัตรา",
+      levels: "ระดับตำแหน่ง",
+      workTypes: "ประเภทงาน",
+      level: "ระดับ",
+      workType: "ประเภทงาน",
+      code: "รหัส",
+      name: "ชื่อ",
+      sortOrder: "ลำดับ",
+      active: "ใช้งาน",
+      inactive: "เลิกใช้",
+      add: "เพิ่ม",
+      edit: "แก้ไข",
+      save: "บันทึก",
+      saved: "บันทึกแล้ว",
+      addRate: "เพิ่มอัตรา",
+      cost: "ต้นทุน/manday",
+      sell: "ราคาขาย/manday",
+      validFrom: "มีผลตั้งแต่",
+      validTo: "ถึง",
+      note: "หมายเหตุ",
+      statusCurrent: "มีผลอยู่",
+      statusUpcoming: "รอมีผล",
+      statusPast: "สิ้นสุดแล้ว",
+      withdraw: "ถอน",
+      withdrawConfirm: "ถอนอัตราที่ยังไม่มีผลนี้? อัตราก่อนหน้าจะมีผลต่อไป",
+      withdrawn: "ถอนแล้ว",
+      none: "—",
+      upcomingTag: (cost: string, from: string) =>
+        `รอมีผล ${cost} ตั้งแต่ ${from}`,
+      empty: "ยังไม่มีข้อมูล",
+    },
+  },
   pricing: {
     /** CD-206 ต้นทุนจากคู่ค้า */
     vendorCosts: {
@@ -4869,6 +4916,10 @@ export const messages = {
         "หน้าดีลจะมีการ์ด “Solution” พร้อมปุ่มขอ Solution ด้วยประเภทนี้ — ช่องบังคับของฟอร์มประเภทนี้คือรายการตรวจความครบก่อนยื่น (แก้ได้ที่หน้าประเภทคำขอ) · เว้นว่าง = ไม่แสดงการ์ด",
       /* CD-136 */
       vendorQuoteTypeCode: 'ประเภทคำขอ "ขอราคาจากคู่ค้า"',
+      /* CD-207 */
+      laborRatesMoved:
+        "อัตราต้นทุนแรงงานย้ายไปอยู่ที่ทะเบียนอัตราต้นทุนบุคลากร (HR) — แหล่งเดียวของต้นทุนแรงงาน",
+      laborRatesLink: "เปิดหน้าอัตราต้นทุนบุคลากร",
       laborRates: "อัตราต้นทุนแรงงานต่อ manday (Pre-Sales)",
       laborRatesHint:
         "ใช้ประมาณต้นทุนแรงงานบน Solution — แทนที่ด้วยอัตราจากโมดูล HR เมื่อพร้อม (CD-17) · อัตราถูกคัดลอกลงประมาณการ ณ วันบันทึก",

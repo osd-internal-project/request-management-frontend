@@ -247,9 +247,14 @@ export interface BoqSummary {
 
 /** CD-136 — the cost estimate of a version. */
 export interface LaborLine {
+  /** What the line shows — "SE-2 วิศวกรอาวุโส · ติดตั้ง" (or an old role). */
   role: string;
+  /** CD-207 — HR's level and work type; absent on lines saved before it. */
+  levelCode?: string;
+  workTypeCode?: string;
   mandays: number;
-  rate: number;
+  /** CD-207 — null for a viewer without hr.rate.read. */
+  rate: number | null;
   note: string;
 }
 
@@ -269,8 +274,10 @@ export interface CostEstimate {
   lines: CostLine[];
   labor: LaborLine[];
   materials_total: number;
-  labor_total: number;
-  total: number;
+  /** CD-207 — null for a viewer without hr.rate.read (so is `total`). */
+  labor_total: number | null;
+  total: number | null;
+  labor_hidden?: boolean;
   missing_cost: number;
   expired_quotes: number;
   complete: boolean;
@@ -318,7 +325,12 @@ export interface SolutionDetail {
   cost: CostEstimate | null;
   partner_quotes: PartnerQuote[];
   cost_settings: {
-    labor_rates: { role: string; rate: number }[];
+    /** CD-207 — HR's levels and work types to pick from (no money). */
+    labor_options: {
+      levels: { code: string; name: string }[];
+      work_types: { code: string; name: string }[];
+    };
+    labor_rates_visible: boolean;
     vendor_quote_configured: boolean;
   };
   /** CD-138 — the TOR and its clauses. */

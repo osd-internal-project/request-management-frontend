@@ -48,6 +48,7 @@ export type MenuIconKey =
   | "pricingPrice"
   | "pricingMarkup"
   | "pricingException"
+  | "hrLaborRate"
   | "pricingVendorCost"
   | "projectPortfolio"
   | "projectRisk"
@@ -277,6 +278,14 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     icon: "pricingMarkup",
     permissions: ["pricing.price.read", "pricing.price.manage"],
     group: messages.nav.pricingGroup,
+  },
+  /** CD-207 — people's cost per manday by level × work type (HR). */
+  {
+    label: messages.nav.hrLaborRates,
+    href: ROUTES.hrLaborRates,
+    icon: "hrLaborRate",
+    permissions: ["hr.rate.read", "hr.rate.manage"],
+    group: messages.nav.hrGroup,
   },
   /** CD-205 — every case outside the pricing policy, with reason and approver. */
   {

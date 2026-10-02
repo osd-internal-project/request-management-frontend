@@ -60,7 +60,19 @@ export function CostCard({ solution }: { solution: SolutionDetail }) {
   const cost = solution.cost;
   const base = `presales/solutions/${solution.id}/versions/${version.versionNo}`;
   const editable = solution.can_manage && version.status !== "superseded";
-  const rates = solution.cost_settings.labor_rates;
+  // CD-207 — HR's levels × work types; rates only for hr.rate.read.
+  const options = solution.cost_settings.labor_options;
+  const ratesVisible = solution.cost_settings.labor_rates_visible;
+  const pickable = options.levels.length > 0 && options.work_types.length > 0;
+  // A line saved before HR (a role only) is matched to the level named alike.
+  const levelOf = (line: LaborLine) =>
+    line.levelCode ??
+    options.levels.find((level) => level.name === line.role)?.code;
+  const workTypeOf = (line: LaborLine) =>
+    line.workTypeCode ??
+    (line.levelCode
+      ? undefined
+      : options.work_types.find((type) => type.code === "GENERAL")?.code);
   const boq = version.boq;
   const fileInput = useRef<HTMLInputElement>(null);
   const [uploadFor, setUploadFor] = useState<string | null>(null);
@@ -91,7 +103,8 @@ export function CostCard({ solution }: { solution: SolutionDetail }) {
         method: "PUT",
         body: JSON.stringify({
           lines: labor.map((line) => ({
-            role: line.role,
+            level_code: levelOf(line) ?? "",
+            work_type_code: workTypeOf(line) ?? "",
             mandays: line.mandays,
             note: line.note,
           })),
@@ -179,7 +192,8 @@ export function CostCard({ solution }: { solution: SolutionDetail }) {
         cost ? (
           <Space>
             <Text strong>
-              {mc.total} {money(cost.total)}
+              {mc.total}{" "}
+              {cost.total === null ? mc.hiddenAmount : money(cost.total)}
             </Text>
             {cost.complete ? (
               <Tag color="green">{mc.complete}</Tag>
@@ -207,7 +221,10 @@ export function CostCard({ solution }: { solution: SolutionDetail }) {
               {mc.materials}: {money(cost.materials_total)}
             </Text>
             <Text>
-              {mc.labor}: {money(cost.labor_total)}
+              {mc.labor}:{" "}
+              {cost.labor_total === null
+                ? mc.hiddenAmount
+                : money(cost.labor_total)}
             </Text>
           </Space>
           <Table<CostLine>
@@ -279,8 +296,13 @@ export function CostCard({ solution }: { solution: SolutionDetail }) {
         <Text strong className="block">
           {mc.laborTitle}
         </Text>
-        {editable && !rates.length && (
+        {editable && !pickable && (
           <Alert type="warning" showIcon title={mc.noRates} className="my-1" />
+        )}
+        {cost?.labor_hidden && (
+          <Text type="secondary" className="my-1 block text-xs">
+            {mc.ratesHidden}
+          </Text>
         )}
         <Table<LaborLine & { index: number }>
           size="small"
@@ -296,32 +318,56 @@ export function CostCard({ solution }: { solution: SolutionDetail }) {
             {
               title: mc.role,
               dataIndex: "role",
-              width: 220,
+              width: 320,
               render: (role: string, row) =>
                 editable ? (
-                  <Select
-                    value={role || undefined}
-                    style={{ width: "100%" }}
-                    options={rates.map((rate) => ({
-                      value: rate.role,
-                      label: `${rate.role} · ${money(rate.rate)}`,
-                    }))}
-                    onChange={(value: string) =>
-                      setLabor((rows) =>
-                        rows.map((line, at) =>
-                          at === row.index
-                            ? {
-                                ...line,
-                                role: value,
-                                rate:
-                                  rates.find((rate) => rate.role === value)
-                                    ?.rate ?? 0,
-                              }
-                            : line,
-                        ),
-                      )
-                    }
-                  />
+                  // CD-207 — the level and the work type; HR has the rate.
+                  <Space.Compact style={{ width: "100%" }}>
+                    <Select
+                      value={levelOf(row)}
+                      placeholder={mc.level}
+                      style={{ width: "55%" }}
+                      options={options.levels.map((level) => ({
+                        value: level.code,
+                        label: `${level.code} ${level.name}`,
+                      }))}
+                      onChange={(value: string) =>
+                        setLabor((rows) =>
+                          rows.map((line, at) =>
+                            at === row.index
+                              ? {
+                                  ...line,
+                                  levelCode: value,
+                                  workTypeCode: workTypeOf(line),
+                                }
+                              : line,
+                          ),
+                        )
+                      }
+                    />
+                    <Select
+                      value={workTypeOf(row)}
+                      placeholder={mc.workType}
+                      style={{ width: "45%" }}
+                      options={options.work_types.map((type) => ({
+                        value: type.code,
+                        label: type.name,
+                      }))}
+                      onChange={(value: string) =>
+                        setLabor((rows) =>
+                          rows.map((line, at) =>
+                            at === row.index
+                              ? {
+                                  ...line,
+                                  levelCode: levelOf(line),
+                                  workTypeCode: value,
+                                }
+                              : line,
+                          ),
+                        )
+                      }
+                    />
+                  </Space.Compact>
                 ) : (
                   role
                 ),
@@ -349,12 +395,18 @@ export function CostCard({ solution }: { solution: SolutionDetail }) {
                   mandays
                 ),
             },
-            {
-              title: mc.rate,
-              dataIndex: "rate",
-              width: 120,
-              render: (rate: number) => money(rate),
-            },
+            // CD-207 — the rate only for hr.rate.read; HR sets it on save.
+            ...(ratesVisible
+              ? [
+                  {
+                    title: mc.rate,
+                    dataIndex: "rate",
+                    width: 120,
+                    render: (rate: number | null) =>
+                      rate === null ? "—" : money(rate),
+                  },
+                ]
+              : []),
             {
               title: mc.note,
               dataIndex: "note",
@@ -406,11 +458,11 @@ export function CostCard({ solution }: { solution: SolutionDetail }) {
               size="small"
               type="dashed"
               icon={<PlusOutlined />}
-              disabled={!rates.length}
+              disabled={!pickable}
               onClick={() =>
                 setLabor((rows) => [
                   ...rows,
-                  { role: "", mandays: 1, rate: 0, note: "" },
+                  { role: "", mandays: 1, rate: null, note: "" },
                 ])
               }
             >
