@@ -180,10 +180,10 @@ export function EmployeesRegister({ canManage }: { canManage: boolean }) {
       userId: row.userId,
       name: row.displayName,
       levelId: row.profile.levelId,
-      employmentType: row.profile.employmentType,
+      employmentType: row.profile.employmentType ?? "permanent",
       status: row.profile.status,
-      endDate: row.profile.endDate,
-      note: row.profile.note,
+      endDate: row.profile.endDate ?? null,
+      note: row.profile.note ?? "",
       skills: row.skills.map((skill) => ({
         skillId: skill.skillId,
         proficiency: skill.proficiency,
@@ -292,7 +292,7 @@ export function EmployeesRegister({ canManage }: { canManage: boolean }) {
               width: 130,
               render: (_: unknown, row) =>
                 row.profile.saved ? (
-                  (m.employmentTypes[row.profile.employmentType] ??
+                  (m.employmentTypes[row.profile.employmentType ?? ""] ??
                   row.profile.employmentType)
                 ) : (
                   <Text type="secondary">{m.notSaved}</Text>

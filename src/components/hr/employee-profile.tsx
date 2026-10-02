@@ -48,17 +48,31 @@ export function EmployeeProfile({ employee }: { employee: Employee }) {
           label: m.level,
           children: p.level ? `${p.level.code} ${p.level.name}` : m.none,
         },
-        {
-          key: "employment",
-          label: m.employmentType,
-          children: m.employmentTypes[p.employmentType] ?? p.employmentType,
-        },
+        // CD-230 — the employment terms only reach HR and the person.
+        ...(p.employmentType !== undefined
+          ? [
+              {
+                key: "employment",
+                label: m.employmentType,
+                children:
+                  m.employmentTypes[p.employmentType] ?? p.employmentType,
+              },
+            ]
+          : []),
         {
           key: "status",
           label: m.status,
           children: m.statuses[p.status] ?? p.status,
         },
-        { key: "endDate", label: m.endDate, children: thaiDate(p.endDate) },
+        ...(p.endDate !== undefined
+          ? [
+              {
+                key: "endDate",
+                label: m.endDate,
+                children: thaiDate(p.endDate),
+              },
+            ]
+          : []),
         {
           key: "skills",
           label: m.skills,

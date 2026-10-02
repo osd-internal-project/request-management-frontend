@@ -52,6 +52,8 @@ export type MenuIconKey =
   | "hrLaborRate"
   | "hrEmployee"
   | "hrMe"
+  | "hrTeam"
+  | "hrStaff"
   | "pricingVendorCost"
   | "projectPortfolio"
   | "projectRisk"
@@ -295,6 +297,26 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     label: messages.nav.hrMe,
     href: ROUTES.hrMe,
     icon: "hrMe",
+    group: messages.nav.hrGroup,
+  },
+  /** CD-230 — the people below me (supervisors). */
+  {
+    label: messages.nav.hrTeam,
+    href: ROUTES.hrTeam,
+    icon: "hrTeam",
+    group: messages.nav.hrGroup,
+  },
+  /** CD-230 — who is here, at what level, with which skills (staffing). */
+  {
+    label: messages.nav.hrStaff,
+    href: ROUTES.hrStaff,
+    icon: "hrStaff",
+    permissions: [
+      "hr.employee.read",
+      "hr.employee.manage",
+      "pm.project.manage",
+      "presales.solution.manage",
+    ],
     group: messages.nav.hrGroup,
   },
   /** CD-207 — people's cost per manday by level × work type (HR). */

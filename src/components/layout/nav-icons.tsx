@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  SolutionOutlined,
   IdcardOutlined,
   LineChartOutlined,
   ExceptionOutlined,
@@ -105,6 +106,8 @@ const MENU_ICONS: Record<MenuIconKey, ComponentType> = {
   hrLaborRate: TeamOutlined,
   hrEmployee: IdcardOutlined,
   hrMe: UserOutlined,
+  hrTeam: ApartmentOutlined,
+  hrStaff: SolutionOutlined,
   pricingVendorCost: ShoppingCartOutlined,
   projectPortfolio: FundProjectionScreenOutlined,
   projectRisk: WarningOutlined,
