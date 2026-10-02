@@ -28,6 +28,7 @@ export default async function QuotationDetailPage({
       key={`${result.data.id}:${result.data.updatedAt}`}
       quotation={result.data}
       canManage={can(session, "crm.sales.manage")}
+      canOverridePrice={can(session, "pricing.price.override")}
     />
   );
 }

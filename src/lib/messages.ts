@@ -4084,6 +4084,13 @@ export const messages = {
           service: "บริการ",
         } as Record<string, string>,
         fromMarkup: (pct: number) => `ราคาจาก markup ${pct}%`,
+        /** CD-204 */
+        belowSystem: (price: string) => `ต่ำกว่าราคาในระบบ ${price}`,
+        overrideReason: "เหตุผลที่ใส่ราคาต่ำกว่า (บังคับ)",
+        overrideForbidden:
+          "ต้องมีสิทธิ์แก้ราคาด้วยมือ — ใช้ราคาในระบบ หรือให้ผู้มีสิทธิ์แก้ให้",
+        overrideNote: (price: string, reason: string) =>
+          `แก้ราคาด้วยมือ (ราคาในระบบ ${price}) — ${reason}`,
         /** CD-202 */
         noWorkType: "ไม่ระบุประเภทงาน",
         marginByWorkType: "margin ตามประเภทงาน",
@@ -5121,7 +5128,8 @@ export const messages = {
       steps: (text: string) => `วิธีทดสอบ: ${text}`,
       owner: (name: string) => `ผู้ทดสอบ: ${name}`,
       waivedBecause: (reason: string) => `ยกเว้น: ${reason}`,
-      run: (result: string, by: string, at: string) => `${result} · ${by} · ${at}`,
+      run: (result: string, by: string, at: string) =>
+        `${result} · ${by} · ${at}`,
       issue: (label: string) => `เปิดปัญหา ${label}`,
       history: (n: number) => `ประวัติ ${n} ครั้ง`,
       saved: "บันทึกแล้ว",

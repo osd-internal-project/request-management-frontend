@@ -1523,6 +1523,10 @@ export interface QuotationLine {
   /** CD-200 — work type, and the markup the price was filled from. */
   workType?: string | null;
   markupPct?: Money | null;
+  /** CD-204 — the system's price when quoted below it, why, and by whom. */
+  systemPrice?: Money | null;
+  overrideReason?: string | null;
+  overriddenBy?: string | null;
 }
 
 export interface QuotationDetail extends QuotationRow {

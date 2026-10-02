@@ -64,6 +64,15 @@ interface DraftLine {
   workType: WorkType | null;
   /** CD-200 — the markup that priced the line; cleared by a hand edit. */
   markupPct: number | null;
+  /**
+   * CD-204 — the price the system holds for this product on the deal, when
+   * known here (picked from the price list, or saved as an override). A price
+   * below it needs `pricing.price.override` and a reason; the server decides.
+   */
+  systemPrice: number | null;
+  overrideReason: string;
+  /** Saved as an override already — kept as is, without the permission. */
+  overridden: boolean;
 }
 
 type WorkType = "equipment" | "material" | "software" | "service";
@@ -110,6 +119,14 @@ function toDraftLines(quotation: QuotationDetail): DraftLine[] {
       line.markupPct === null || line.markupPct === undefined
         ? null
         : Number(line.markupPct),
+    systemPrice:
+      line.systemPrice !== null && line.systemPrice !== undefined
+        ? Number(line.systemPrice)
+        : line.priceId
+          ? Number(line.unitPrice)
+          : null,
+    overrideReason: line.overrideReason ?? "",
+    overridden: Boolean(line.overriddenBy),
   }));
 }
 
@@ -169,9 +186,12 @@ const money = (value: number | string | null | undefined, currency: string) =>
 export function QuotationDetailView({
   quotation,
   canManage,
+  canOverridePrice = false,
 }: {
   quotation: QuotationDetail;
   canManage: boolean;
+  /** CD-204 — may quote below the system's price. */
+  canOverridePrice?: boolean;
 }) {
   const router = useRouter();
   const { message } = App.useApp();
@@ -281,6 +301,7 @@ export function QuotationDetailView({
               price_model: line.priceModel,
               work_type: line.workType ?? undefined,
               markup_pct: line.markupPct ?? undefined,
+              override_reason: line.overrideReason.trim() || undefined,
               term_months:
                 line.priceModel === "monthly"
                   ? (line.termMonths ?? undefined)
@@ -400,6 +421,12 @@ export function QuotationDetailView({
     );
     const found = result.ok ? result.data[code] : undefined;
     if (!found) {
+      // CD-204 — no system price for this product: any price is the user's.
+      patchLine(key, {
+        systemPrice: null,
+        overrideReason: "",
+        overridden: false,
+      });
       await fillMarkupPrice(key, code);
       return;
     }
@@ -411,6 +438,9 @@ export function QuotationDetailView({
               ...line,
               unitPrice: found.unit_price,
               priceId: found.price_id,
+              systemPrice: found.unit_price,
+              overrideReason: "",
+              overridden: false,
               priceModel: model,
               termMonths:
                 model === "monthly"
@@ -822,6 +852,9 @@ export function QuotationDetailView({
                     costSource: null,
                     workType: null,
                     markupPct: null,
+                    systemPrice: null,
+                    overrideReason: "",
+                    overridden: false,
                   },
                 ])
               }
@@ -988,23 +1021,63 @@ export function QuotationDetailView({
             {
               title: md.line.unitPrice,
               dataIndex: "unitPrice",
-              width: 130,
+              width: canEditLines ? 180 : 130,
               align: "right" as const,
-              render: (value: number | null, row) =>
-                canEditLines ? (
-                  <InputNumber
-                    className="w-full"
-                    min={0}
-                    value={value}
-                    onChange={(next) =>
-                      // A price typed by hand no longer is the standard one.
-                      patchLine(row.key, {
-                        unitPrice: next,
-                        priceId: null,
-                        markupPct: null,
-                      })
-                    }
-                  />
+              render: (value: number | null, row) => {
+                // CD-204 — below the system's price is an override.
+                const below =
+                  row.systemPrice !== null &&
+                  value !== null &&
+                  value < row.systemPrice;
+                return canEditLines ? (
+                  <>
+                    <InputNumber
+                      className="w-full"
+                      min={0}
+                      value={value}
+                      status={
+                        below && !row.overridden && !canOverridePrice
+                          ? "error"
+                          : below
+                            ? "warning"
+                            : undefined
+                      }
+                      onChange={(next) =>
+                        // A price typed by hand no longer is the standard one.
+                        patchLine(row.key, {
+                          unitPrice: next,
+                          priceId: null,
+                          markupPct: null,
+                          overridden: false,
+                        })
+                      }
+                    />
+                    {below && (
+                      <div className="mt-1 text-left text-[11px]">
+                        <div className="text-orange-600">
+                          {md.belowSystem(formatAmount(row.systemPrice))}
+                        </div>
+                        {row.overridden || canOverridePrice ? (
+                          <Input
+                            size="small"
+                            maxLength={500}
+                            placeholder={md.overrideReason}
+                            value={row.overrideReason}
+                            disabled={row.overridden && !canOverridePrice}
+                            onChange={(event) =>
+                              patchLine(row.key, {
+                                overrideReason: event.target.value,
+                              })
+                            }
+                          />
+                        ) : (
+                          <div className="text-red-600">
+                            {md.overrideForbidden}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <>
                     {formatAmount(value)}
@@ -1013,8 +1086,17 @@ export function QuotationDetailView({
                         {md.fromMarkup(row.markupPct)}
                       </div>
                     )}
+                    {row.overridden && row.systemPrice !== null && (
+                      <div className="text-left text-[11px] text-orange-600">
+                        {md.overrideNote(
+                          formatAmount(row.systemPrice),
+                          row.overrideReason,
+                        )}
+                      </div>
+                    )}
                   </>
-                ),
+                );
+              },
             },
             ...(costVisible
               ? [
