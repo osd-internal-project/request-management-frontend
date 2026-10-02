@@ -37,6 +37,7 @@ import type {
   ProjectReadinessView,
   ProjectAsBuiltView,
   ProjectAcceptancesView,
+  ProjectUatView,
 } from "@/lib/api/projects";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
@@ -56,6 +57,7 @@ import { ProjectTestsCard } from "./project-tests-card";
 import { ProjectReadinessCard } from "./project-readiness-card";
 import { ProjectAsBuiltCard } from "./project-as-built-card";
 import { ProjectAcceptanceCard } from "./project-acceptance-card";
+import { ProjectUatCard } from "./project-uat-card";
 import {
   ProjectTeamFields,
   teamPayload,
@@ -86,6 +88,7 @@ export function ProjectDetailView({
   readiness,
   asBuilt,
   acceptances,
+  uat,
   currentUserId,
   people,
 }: {
@@ -120,6 +123,8 @@ export function ProjectDetailView({
   readonly asBuilt: ProjectAsBuiltView | null;
   /** CD-189 — null = could not load. */
   readonly acceptances: ProjectAcceptancesView | null;
+  /** CD-222 — null = could not load. */
+  readonly uat: ProjectUatView | null;
   readonly currentUserId: string | null;
   /** The company's people, for the manager and team pickers. */
   readonly people: { id: string; name: string }[];
@@ -419,6 +424,10 @@ export function ProjectDetailView({
           view={tests}
           people={pickable}
         />
+      )}
+
+      {uat && (
+        <ProjectUatCard projectId={project.id} view={uat} people={pickable} />
       )}
 
       {asBuilt && <ProjectAsBuiltCard projectId={project.id} view={asBuilt} />}

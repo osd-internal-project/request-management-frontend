@@ -1018,3 +1018,42 @@ export function getProjectAcceptances(
 ): Promise<ApiResult<ProjectAcceptancesView>> {
   return apiGet(`/projects/${encodeURIComponent(id)}/acceptances`);
 }
+
+/** CD-222 — a point the customer raised in UAT. */
+export interface UatFindingView {
+  id: string;
+  label: string;
+  title: string;
+  description: string | null;
+  severity: "blocker" | "major" | "minor";
+  testItem: { id: string; label: string } | null;
+  reportedBy: string | null;
+  reportedOn: string | null;
+  ownerUserId: string | null;
+  ownerName: string | null;
+  status: "open" | "fixed" | "confirmed" | "deferred";
+  fixNote: string | null;
+  fixedAt: string | null;
+  fixedByName: string | null;
+  confirmedByName: string | null;
+  confirmedOn: string | null;
+  deferReason: string | null;
+  reopenNote: string | null;
+}
+
+export interface ProjectUatView {
+  canEdit: boolean;
+  canWrite: boolean;
+  total: number;
+  open: number;
+  fixed: number;
+  confirmed: number;
+  deferred: number;
+  blocking: string[];
+  tests: { id: string; label: string }[];
+  findings: UatFindingView[];
+}
+
+export function getProjectUat(id: string): Promise<ApiResult<ProjectUatView>> {
+  return apiGet(`/projects/${encodeURIComponent(id)}/uat`);
+}
