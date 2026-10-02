@@ -1284,3 +1284,56 @@ export function getProjectDevPlan(
 ): Promise<ApiResult<ProjectDevPlanView>> {
   return apiGet(`/projects/${encodeURIComponent(id)}/dev-plan`);
 }
+
+// --- CD-213 ติดตามงานพัฒนาและข้อบกพร่อง ----------------------------------------------
+
+export type DefectSeverity = "blocker" | "major" | "minor";
+export type DefectStatus = "open" | "fixed" | "verified" | "cancelled";
+
+export interface DevLineView {
+  ref: string;
+  text: string;
+  task: { id: string; title: string; status: string } | null;
+  tests: number;
+  passed: number;
+  openDefects: number;
+  pending: boolean;
+}
+
+export interface DefectView {
+  id: string;
+  label: string;
+  title: string;
+  description: string | null;
+  severity: DefectSeverity;
+  sowRef: string;
+  sowText: string | null;
+  foundOn: string | null;
+  assigneeUserId: string | null;
+  assigneeName: string | null;
+  status: DefectStatus;
+  fixNote: string | null;
+  fixedAt: string | null;
+  fixedByName: string | null;
+  verifyNote: string | null;
+  verifiedAt: string | null;
+  verifiedByName: string | null;
+  reopenNote: string | null;
+  cancelNote: string | null;
+}
+
+export interface ProjectDefectsView {
+  canEdit: boolean;
+  canWrite: boolean;
+  choices: { ref: string; text: string }[];
+  lines: DevLineView[];
+  pending: number;
+  open: number;
+  defects: DefectView[];
+}
+
+export function getProjectDefects(
+  id: string,
+): Promise<ApiResult<ProjectDefectsView>> {
+  return apiGet(`/projects/${encodeURIComponent(id)}/defects`);
+}

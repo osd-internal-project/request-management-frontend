@@ -43,6 +43,7 @@ import type {
   ProjectTechPlanView,
   ProjectSurveysView,
   ProjectDevPlanView,
+  ProjectDefectsView,
 } from "@/lib/api/projects";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
@@ -68,6 +69,7 @@ import { ProjectDesignsCard } from "./project-designs-card";
 import { ProjectTechPlanCard } from "./project-tech-plan-card";
 import { ProjectSurveysCard } from "./project-surveys-card";
 import { ProjectDevPlanCard } from "./project-dev-plan-card";
+import { ProjectDefectsCard } from "./project-defects-card";
 import {
   ProjectTeamFields,
   teamPayload,
@@ -104,6 +106,7 @@ export function ProjectDetailView({
   techPlan,
   surveys,
   devPlan,
+  defects,
   currentUserId,
   people,
 }: {
@@ -148,6 +151,7 @@ export function ProjectDetailView({
   readonly techPlan: ProjectTechPlanView | null;
   readonly surveys: ProjectSurveysView | null;
   readonly devPlan: ProjectDevPlanView | null;
+  readonly defects: ProjectDefectsView | null;
   readonly currentUserId: string | null;
   /** The company's people, for the manager and team pickers. */
   readonly people: { id: string; name: string }[];
@@ -461,6 +465,14 @@ export function ProjectDetailView({
         <ProjectDevPlanCard
           projectId={project.id}
           view={devPlan}
+          people={pickable}
+        />
+      )}
+
+      {defects && (defects.lines.length > 0 || defects.defects.length > 0) && (
+        <ProjectDefectsCard
+          projectId={project.id}
+          view={defects}
           people={pickable}
         />
       )}

@@ -23,6 +23,7 @@ import {
   getProjectTechPlan,
   getProjectSurveys,
   getProjectDevPlan,
+  getProjectDefects,
 } from "@/lib/api/projects";
 import { getAllDirectoryUsers } from "@/lib/api/users";
 import { HOME_PATH } from "@/lib/routes";
@@ -66,6 +67,7 @@ export default async function ProjectPage({ params }: Params) {
     techPlan,
     surveys,
     devPlan,
+    defects,
   ] = await Promise.all([
     getProjectMilestones(id),
     getProjectPlan(id),
@@ -107,6 +109,8 @@ export default async function ProjectPage({ params }: Params) {
     getProjectSurveys(id),
     // CD-212
     getProjectDevPlan(id),
+    // CD-213
+    getProjectDefects(id),
   ]);
   // the pickers only for who may change the manager or the team
   const users =
@@ -138,6 +142,7 @@ export default async function ProjectPage({ params }: Params) {
       techPlan={techPlan.ok ? techPlan.data : null}
       surveys={surveys.ok ? surveys.data : null}
       devPlan={devPlan.ok ? devPlan.data : null}
+      defects={defects.ok ? defects.data : null}
       currentUserId={session?.user.id ?? null}
       people={(users?.ok ? users.data : []).map((user) => ({
         id: user.id,
