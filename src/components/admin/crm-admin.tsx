@@ -361,6 +361,9 @@ function ConfigSection({
   const [projectCloseType, setProjectCloseType] = useState(
     config.projectCloseTypeCode ?? "",
   );
+  const [projectDesignType, setProjectDesignType] = useState(
+    config.projectDesignTypeCode ?? "",
+  );
   const [closeDocuments, setCloseDocuments] = useState<string[]>(
     config.projectCloseDocuments ?? [],
   );
@@ -400,6 +403,7 @@ function ConfigSection({
       contract_approval_type_code: contractApprovalType,
       project_change_type_code: projectChangeType,
       project_close_type_code: projectCloseType,
+      project_design_type_code: projectDesignType,
       project_close_documents: closeDocuments,
       project_health_amber: healthAmber,
       project_health_red: healthRed,
@@ -675,6 +679,19 @@ function ConfigSection({
       </div>
       <Text type="secondary" className="mt-2 block text-xs">
         {m.projectCloseHint}
+      </Text>
+      {/* CD-211 — คำขออนุมัติแบบรายละเอียด */}
+      <div className="mt-3 max-w-xs">
+        <Text className="mb-1 block text-xs">{m.projectDesignTypeCode}</Text>
+        <Input
+          value={projectDesignType}
+          maxLength={20}
+          allowClear
+          onChange={(e) => setProjectDesignType(e.target.value.toUpperCase())}
+        />
+      </div>
+      <Text type="secondary" className="mt-2 block text-xs">
+        {m.projectDesignHint}
       </Text>
       <div className="mt-3 max-w-xl">
         <Text className="mb-1 block text-xs">{m.projectCloseDocuments}</Text>

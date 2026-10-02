@@ -39,6 +39,7 @@ import type {
   ProjectAcceptancesView,
   ProjectUatView,
   ProjectInstallationsView,
+  ProjectDesignsView,
 } from "@/lib/api/projects";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
@@ -60,6 +61,7 @@ import { ProjectAsBuiltCard } from "./project-as-built-card";
 import { ProjectAcceptanceCard } from "./project-acceptance-card";
 import { ProjectUatCard } from "./project-uat-card";
 import { ProjectInstallationsCard } from "./project-installations-card";
+import { ProjectDesignsCard } from "./project-designs-card";
 import {
   ProjectTeamFields,
   teamPayload,
@@ -92,6 +94,7 @@ export function ProjectDetailView({
   acceptances,
   uat,
   installations,
+  designs,
   currentUserId,
   people,
 }: {
@@ -130,6 +133,8 @@ export function ProjectDetailView({
   readonly uat: ProjectUatView | null;
   /** CD-216 — null = could not load. */
   readonly installations: ProjectInstallationsView | null;
+  /** CD-211 — null = could not load. */
+  readonly designs: ProjectDesignsView | null;
   readonly currentUserId: string | null;
   /** The company's people, for the manager and team pickers. */
   readonly people: { id: string; name: string }[];
@@ -428,6 +433,14 @@ export function ProjectDetailView({
           projectId={project.id}
           view={tests}
           people={pickable}
+        />
+      )}
+
+      {designs && (
+        <ProjectDesignsCard
+          key={`${designs.openId ?? "none"}-${designs.versions.length}`}
+          projectId={project.id}
+          view={designs}
         />
       )}
 

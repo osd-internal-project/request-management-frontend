@@ -1104,3 +1104,44 @@ export function getProjectInstallations(
 ): Promise<ApiResult<ProjectInstallationsView>> {
   return apiGet(`/projects/${encodeURIComponent(id)}/installations`);
 }
+
+/** CD-211 — a version of the detailed design. */
+export interface DesignVersionView {
+  id: string;
+  label: string;
+  versionNo: number;
+  title: string;
+  summary: string | null;
+  configuration: { key: string; value: string }[];
+  differsFromSolution: boolean;
+  differences: string | null;
+  status: "draft" | "submitted" | "approved" | "rejected" | "superseded";
+  inForce: boolean;
+  request: { id: string; requestNo: string | null } | null;
+  error: string | null;
+  submittedAt: string | null;
+  submittedByName: string | null;
+  decidedAt: string | null;
+  files: {
+    id: string;
+    fileName: string;
+    sizeBytes: number;
+    uploadedAt: string;
+    uploadedByName: string | null;
+  }[];
+}
+
+export interface ProjectDesignsView {
+  canEdit: boolean;
+  canWrite: boolean;
+  typeConfigured: boolean;
+  inForce: { id: string; label: string } | null;
+  openId: string | null;
+  versions: DesignVersionView[];
+}
+
+export function getProjectDesigns(
+  id: string,
+): Promise<ApiResult<ProjectDesignsView>> {
+  return apiGet(`/projects/${encodeURIComponent(id)}/designs`);
+}
