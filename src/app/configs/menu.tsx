@@ -81,6 +81,7 @@ export type MenuIconKey =
   | "serviceProblem"
   | "serviceReport"
   | "serviceSurvey"
+  | "servicePortal"
   | "esignLayout"
   | "esignAuthority";
 
@@ -581,6 +582,15 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     label: messages.nav.serviceSurveys,
     href: ROUTES.serviceSurveys,
     icon: "serviceSurvey",
+    permissions: ["service.asset.read"],
+    group: messages.nav.serviceGroup,
+  },
+
+  /** CD-249 — เชิญผู้ติดต่อลูกค้าเข้า Customer Portal. */
+  {
+    label: messages.nav.servicePortal,
+    href: ROUTES.servicePortal,
+    icon: "servicePortal",
     permissions: ["service.asset.read"],
     group: messages.nav.serviceGroup,
   },

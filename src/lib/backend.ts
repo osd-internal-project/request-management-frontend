@@ -115,6 +115,8 @@ export const CORE_SERVICE_PREFIXES = [
   "/service-reports",
   // CD-248 — satisfaction surveys (and their public routes)
   "/service-surveys",
+  // CD-249 — Customer Portal (and its public routes)
+  "/service-portal",
   "/sales-targets",
   "/campaigns",
   "/target-accounts",

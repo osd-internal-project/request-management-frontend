@@ -54,6 +54,7 @@ export function CrmAdmin({
   kycWatchlist = [],
   handoverItems = [],
   teams = [],
+  people = [],
 }: {
   dimensions: SegmentDimension[];
   config: CrmConfig;
@@ -66,6 +67,8 @@ export function CrmAdmin({
   handoverItems?: HandoverChecklistItem[];
   /** CD-84 — teams for the default handover receiver. */
   teams?: OrgUnitShape[];
+  /** CD-249 — who a Customer Portal case is raised under. */
+  people?: { id: string; name: string }[];
 }) {
   const router = useRouter();
   const { message } = App.useApp();
@@ -94,7 +97,7 @@ export function CrmAdmin({
 
       <SegmentSection dimensions={dimensions} onCall={call} />
       <KycProductSection rows={kycProducts} onCall={call} />
-      <ConfigSection config={config} onCall={call} />
+      <ConfigSection config={config} onCall={call} people={people} />
       <CustomerApprovalSection config={config} onCall={call} />
       <TradeTermsSection terms={tradeTerms} onCall={call} />
       <HandoverSection
@@ -323,9 +326,12 @@ function SegmentSection({
 function ConfigSection({
   config,
   onCall,
+  people,
 }: {
   config: CrmConfig;
   onCall: (path: string, method: string, body?: unknown) => Promise<boolean>;
+  /** CD-249 — who a Customer Portal case is raised under. */
+  people: { id: string; name: string }[];
 }) {
   const [threshold, setThreshold] = useState(config.dedupThreshold);
   const [minMargin, setMinMargin] = useState(config.minMarginPct);
@@ -388,6 +394,9 @@ function ConfigSection({
   const [onCallMinutes, setOnCallMinutes] = useState(
     config.serviceOnCallEscalateMinutes ?? 30,
   );
+  const [portalUser, setPortalUser] = useState<string | null>(
+    config.servicePortalUserId ?? null,
+  );
   const [repeat, setRepeat] = useState({
     days: config.serviceRepeatDays ?? 90,
     asset: config.serviceRepeatAsset ?? 3,
@@ -443,6 +452,7 @@ function ConfigSection({
       project_cost_warn_pct: costWarn,
       project_cost_alert_pct: costAlert,
       service_on_call_escalate_minutes: onCallMinutes,
+      service_portal_user_id: portalUser ?? "",
       service_repeat_days: repeat.days,
       service_repeat_asset: repeat.asset,
       service_repeat_model: repeat.model,
@@ -807,6 +817,23 @@ function ConfigSection({
           max={1440}
           value={onCallMinutes}
           onChange={(value) => setOnCallMinutes(Number(value ?? 30))}
+        />
+      </div>
+      {/* CD-249 — ผู้ใช้ที่เคสจาก Customer Portal เปิดในนาม */}
+      <div className="mt-3 max-w-xl">
+        <Text className="mb-1 block text-xs">
+          {messages.service.assets.portal.settingsUser}
+        </Text>
+        <Select
+          className="w-full"
+          allowClear
+          showSearch={{ optionFilterProp: "label" }}
+          value={portalUser ?? undefined}
+          options={people.map((person) => ({
+            value: person.id,
+            label: person.name,
+          }))}
+          onChange={(value?: string) => setPortalUser(value ?? null)}
         />
       </div>
       {/* CD-246 — เกณฑ์เสนอปัญหาที่เกิดซ้ำ */}

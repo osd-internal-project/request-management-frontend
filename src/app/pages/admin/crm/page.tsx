@@ -6,6 +6,7 @@ import { CrmAdmin } from "@/components/admin/crm-admin";
 import { apiGet } from "@/lib/api/core";
 import customers from "@/lib/api/customers";
 import { getOrgUnitShapes } from "@/lib/api/org-units";
+import { getAllDirectoryUsers } from "@/lib/api/users";
 import { messages } from "@/lib/messages";
 import { HOME_PATH } from "@/lib/routes";
 import { can, canAny, getSession } from "@/lib/session";
@@ -34,6 +35,7 @@ export default async function CrmAdminPage() {
     kycWatchlistResult,
     handoverItemsResult,
     teamsResult,
+    usersResult,
   ] = await Promise.all([
     customers.getSegmentDimensions(),
     apiGet<CrmConfig>("/admin/crm/config"),
@@ -47,6 +49,8 @@ export default async function CrmAdminPage() {
     canAny(session, ["user.read", "request.create"])
       ? getOrgUnitShapes()
       : Promise.resolve(null),
+    // CD-249 — the Customer Portal's user
+    can(session, "user.read") ? getAllDirectoryUsers() : Promise.resolve(null),
   ]);
 
   const failed = !dimensionsResult.ok
@@ -80,10 +84,12 @@ export default async function CrmAdminPage() {
         kycProducts={kycProductsResult.ok ? kycProductsResult.data : []}
         tradeTerms={tradeTermsResult.ok ? tradeTermsResult.data : []}
         kycWatchlist={kycWatchlistResult.ok ? kycWatchlistResult.data : []}
-        handoverItems={
-          handoverItemsResult.ok ? handoverItemsResult.data : []
-        }
+        handoverItems={handoverItemsResult.ok ? handoverItemsResult.data : []}
         teams={teamsResult?.ok ? teamsResult.data : []}
+        people={(usersResult?.ok ? usersResult.data : []).map((user) => ({
+          id: user.id,
+          name: user.displayName,
+        }))}
         config={
           configResult.ok
             ? configResult.data
