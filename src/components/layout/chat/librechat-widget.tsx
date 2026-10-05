@@ -1,6 +1,11 @@
 "use client";
 
 import { useEffect, useId, useRef } from "react";
+import {
+  attachChatWidget,
+  clearChatContext,
+  detachChatWidget,
+} from "@/components/layout/chat/chat-context";
 
 export interface ChatWidgetConfig {
   /** Origin of the LibreChat host, no path. */
@@ -9,6 +14,7 @@ export interface ChatWidgetConfig {
 }
 
 const SSO_LOGOUT_EVENT = "librechat-widget:sso-logout";
+const AVAILABLE_EVENT = "librechat-widget:available";
 const STORAGE_PREFIX = "librechat-widget:";
 
 /** Long enough for an open widget's iframe to receive the logout message. */
@@ -26,11 +32,26 @@ function clearStoredWidgetTokens() {
   }
 }
 
+/** The instance v1.js just registered — read while its `available` event is dispatching. */
+function announcedWidget(publicId: string): unknown {
+  const widgets: unknown = Reflect.get(window, "LibreChatWidgets");
+  if (typeof widgets !== "object" || widgets === null) return null;
+  return Reflect.get(widgets, publicId);
+}
+
+/** Cancels an instance's bootstrap and removes its iframe. */
+function destroyWidget(widget: unknown) {
+  if (typeof widget !== "object" || widget === null) return;
+  const destroy: unknown = Reflect.get(widget, "destroy");
+  if (typeof destroy === "function") Reflect.apply(destroy, widget, []);
+}
+
 /**
  * Tells every mounted widget to revoke its session, then resolves once the
  * message has had time to land. Await it before navigating to logout.
  */
 export function signOutChatWidget() {
+  clearChatContext();
   window.dispatchEvent(new Event(SSO_LOGOUT_EVENT));
   clearStoredWidgetTokens();
   return new Promise<void>((resolve) => setTimeout(resolve, LOGOUT_GRACE_MS));
@@ -71,7 +92,32 @@ export function LibreChatWidget({ widget }: { widget: ChatWidgetConfig }) {
     };
     window.addEventListener(SSO_LOGOUT_EVENT, onLogout);
 
+    // A removed script still runs once fetched (StrictMode remounts at once), so each
+    // mount keeps its own instance and destroys one whose mount is already gone.
+    let instance: unknown = null;
+    let retired = false;
+    const stopListening = () =>
+      document.removeEventListener(AVAILABLE_EVENT, onAvailable);
+    function onAvailable() {
+      if (document.currentScript !== script) return;
+      stopListening();
+      const announced = announcedWidget(widget.publicId);
+      if (retired) {
+        destroyWidget(announced);
+        return;
+      }
+      instance = announced;
+      attachChatWidget(announced);
+    }
+    document.addEventListener(AVAILABLE_EVENT, onAvailable);
+    script.addEventListener("error", stopListening);
+
     return () => {
+      retired = true;
+      if (instance) {
+        detachChatWidget(instance);
+        destroyWidget(instance);
+      }
       window.removeEventListener(SSO_LOGOUT_EVENT, onLogout);
       script.remove();
       container.querySelectorAll(instanceSelector).forEach((frame) => frame.remove());

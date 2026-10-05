@@ -864,6 +864,21 @@ export const messages = {
     expand: "ขยายเต็มจอ",
     dock: "ย่อเป็นแผงข้าง",
     snapHint: "ปล่อยเพื่อขยายผู้ช่วย AI เต็มจอ",
+    /* Lines of the context sent to the assistant — it reads them, the user does not. */
+    context: {
+      page: (label: string) => `หน้า: ${label}`,
+      group: (group: string) => `หมวด: ${group}`,
+      url: (path: string) => `URL: ${path}`,
+      requestTitle: (requestNo: string) => `คำขอ ${requestNo}`,
+      requestType: (name: string) => `ประเภท: ${name}`,
+      status: (status: string) => `สถานะ: ${status}`,
+      currentStep: (stepNo: number, role: string) =>
+        `ขั้นอนุมัติปัจจุบัน: ขั้นที่ ${stepNo} (${role})`,
+      dueAt: (date: string) => `กำหนดเสร็จ: ${date}`,
+      requester: (name: string) => `ผู้ยื่น: ${name}`,
+      receiver: (name: string) => `ผู้รับเรื่อง: ${name}`,
+      assignee: (name: string) => `ผู้รับผิดชอบ: ${name}`,
+    },
   },
 
   pending: {

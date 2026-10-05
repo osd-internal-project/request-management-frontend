@@ -89,3 +89,10 @@ a tab that can only ever read `· 0` looks like a page that failed to load.
 Swapping `<Sider>` for a custom element (e.g. `NavRail`) silently flips antd `Layout` to a
 column, pushing the header, content and chat below the viewport → antd only detects a real
 `Sider` child → pass `hasSider` on the root `Layout` in `app-shell.tsx`, and walk every chat mode on screen.
+
+## Third-party widget scripts
+
+Page context sent through `window.LibreChatWidgets[publicId]` never reached the visible chat →
+App Router StrictMode mounts effects twice and a removed `<script>` still executes, so two v1.js
+instances exist → bind to the instance whose `document.currentScript` is this mount's script
+(`librechat-widget.tsx`) and `destroy()` the rest; read the vendor script before wiring its API.

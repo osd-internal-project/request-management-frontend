@@ -38,6 +38,7 @@ import {
 } from "@/lib/api/contracts";
 import { ContractDraftCard } from "@/components/legal/contract-draft-card";
 import { WorkOrderPanel } from "@/components/service/work-order-panel";
+import { ChatRecordContext } from "@/components/layout/chat/chat-record-context";
 import { ContractRequestPackageCard } from "@/components/legal/contract-request-package-card";
 import { messages } from "@/lib/messages";
 import { STATUS_COLOR } from "@/components/requests/status";
@@ -260,8 +261,47 @@ export default async function RequestDetailPage({
     (entry) => !entry.deletedAt,
   );
 
+  // Only what the header already shows: no form values, prices or comments go to the assistant.
+  const chatTitle = messages.chat.context.requestTitle(
+    request.requestNo ?? messages.myWork.status.draft,
+  );
+  const dueAt = request.slaClock?.dueAt ?? request.dueAt;
+  const chatLines = [
+    chatTitle,
+    messages.chat.context.requestType(
+      request.requestType?.name ?? request.typeCode,
+    ),
+    messages.chat.context.status(
+      messages.myWork.status[request.status] ?? request.status,
+    ),
+    currentStep
+      ? messages.chat.context.currentStep(
+          currentStep.stepNo,
+          currentStep.approverRole,
+        )
+      : null,
+    dueAt ? messages.chat.context.dueAt(dueAt) : null,
+    request.requester
+      ? messages.chat.context.requester(request.requester.displayName)
+      : null,
+    request.receiver
+      ? messages.chat.context.receiver(request.receiver.displayName)
+      : null,
+    request.assignee
+      ? messages.chat.context.assignee(request.assignee.displayName)
+      : null,
+  ];
+
   return (
     <div className="space-y-4">
+      <ChatRecordContext
+        context={{
+          id: request.id,
+          type: "request",
+          title: chatTitle,
+          content: chatLines.filter((line) => line !== null).join("\n"),
+        }}
+      />
       {/*
         The buttons that move the ticket. Rendered above the detail because a
         request open on this page is usually open in order to do something to

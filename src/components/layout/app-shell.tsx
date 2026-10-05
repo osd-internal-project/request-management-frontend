@@ -12,8 +12,9 @@ import {
 } from "antd";
 import { MenuOutlined } from "@ant-design/icons";
 import { usePathname, useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { MenuEntry } from "@/app/configs/menu";
+import { updateChatContext } from "@/components/layout/chat/chat-context";
 import { ChatPanel } from "@/components/layout/chat/chat-panel";
 import { ChatToggleButton } from "@/components/layout/chat/chat-toggle-button";
 import {
@@ -26,6 +27,7 @@ import { NavRail } from "@/components/layout/nav-rail";
 import { CompanySwitcher } from "@/components/layout/company-switcher";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { messages } from "@/lib/messages";
+import { HOME_PATH } from "@/lib/routes";
 
 const { Header, Content, Footer, Sider } = Layout;
 
@@ -39,6 +41,19 @@ function toMenuItem(entry: MenuEntry) {
     label: entry.label,
     icon: <MenuIcon name={entry.icon} />,
   };
+}
+
+/** The entry whose href is the longest prefix of `pathname`, so a detail page maps to its list. */
+function menuEntryFor(pathname: string, menus: readonly MenuEntry[]) {
+  let best: MenuEntry | null = null;
+  for (const entry of menus) {
+    // Home is the prefix of every route, so it only ever matches itself.
+    const matches =
+      pathname === entry.href ||
+      (entry.href !== HOME_PATH && pathname.startsWith(`${entry.href}/`));
+    if (matches && entry.href.length > (best?.href.length ?? -1)) best = entry;
+  }
+  return best;
 }
 
 export interface ShellCompany {
@@ -78,6 +93,25 @@ export function AppShell({
   const screens = Grid.useBreakpoint();
   const [navOpen, setNavOpen] = useState(false);
   const chat = useChatDock();
+
+  useEffect(() => {
+    const entry = menuEntryFor(pathname, menus);
+    const title = entry?.label ?? pathname;
+    const lines = [
+      messages.chat.context.page(title),
+      entry?.group ? messages.chat.context.group(entry.group) : null,
+      messages.chat.context.url(pathname),
+    ];
+    updateChatContext(
+      {
+        id: entry?.href ?? pathname,
+        type: "page",
+        title,
+        content: lines.filter((line) => line !== null).join("\n"),
+      },
+      "page",
+    );
+  }, [pathname, menus]);
 
   // Below `lg` the Sider is already collapsed — two panes would leave neither
   // usable, so the panel covers the screen instead.
