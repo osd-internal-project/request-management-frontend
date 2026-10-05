@@ -60,6 +60,7 @@ export type MenuIconKey =
   | "hrLeaveApproval"
   | "hrLeaveSettings"
   | "hrAvailability"
+  | "hrMandays"
   | "pricingVendorCost"
   | "projectPortfolio"
   | "projectRisk"
@@ -346,6 +347,21 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     label: messages.nav.hrAvailability,
     href: ROUTES.hrAvailability,
     icon: "hrAvailability",
+    group: messages.nav.hrGroup,
+  },
+  /** CD-233 — manday plan against actual (PM, Pricing, HR). */
+  {
+    label: messages.nav.hrMandays,
+    href: ROUTES.hrMandays,
+    icon: "hrMandays",
+    permissions: [
+      "pm.project.read",
+      "pm.project.manage",
+      "pricing.price.read",
+      "pricing.price.manage",
+      "hr.employee.read",
+      "hr.employee.manage",
+    ],
     group: messages.nav.hrGroup,
   },
   /** CD-232 — kinds of leave and allowances (HR). */

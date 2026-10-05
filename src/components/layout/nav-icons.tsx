@@ -119,6 +119,7 @@ const MENU_ICONS: Record<MenuIconKey, ComponentType> = {
   hrLeaveApproval: CheckCircleOutlined,
   hrLeaveSettings: SettingOutlined,
   hrAvailability: CalendarOutlined,
+  hrMandays: BarChartOutlined,
   pricingVendorCost: ShoppingCartOutlined,
   projectPortfolio: FundProjectionScreenOutlined,
   projectRisk: WarningOutlined,

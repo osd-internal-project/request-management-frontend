@@ -142,6 +142,8 @@ export const ROUTES = {
   hrLeaveApprovals: `${HOME_PATH}/hr/leave/approvals`,
   hrLeaveSettings: `${HOME_PATH}/hr/leave/settings`,
   hrAvailability: `${HOME_PATH}/hr/availability`,
+  /** CD-233 — manday แผนเทียบจริง. */
+  hrMandays: `${HOME_PATH}/hr/mandays`,
   /** CD-206 — ต้นทุนคู่ค้าจาก SAP. */
   pricingVendorCosts: `${HOME_PATH}/pricing/vendor-costs`,
   /** CD-142 — SAP's suppliers with the technical profile Pre-Sales keeps. */
