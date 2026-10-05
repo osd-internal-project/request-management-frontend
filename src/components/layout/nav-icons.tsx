@@ -145,6 +145,7 @@ const MENU_ICONS: Record<MenuIconKey, ComponentType> = {
   servicePm: CalendarOutlined,
   serviceClaim: RollbackOutlined,
   serviceProblem: BugOutlined,
+  serviceReport: FileDoneOutlined,
   esignLayout: LayoutOutlined,
   esignAuthority: SafetyOutlined,
 };

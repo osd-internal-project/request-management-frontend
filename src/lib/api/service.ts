@@ -418,3 +418,89 @@ export interface ProblemSuggestions {
     jobs: ProblemJob[];
   }[];
 }
+
+/** CD-247 — a period's figures for one cover. */
+export interface SeverityFigures {
+  severity: string;
+  jobs: number;
+  responseMet: number;
+  responseMissed: number;
+  resolutionMet: number;
+  resolutionMissed: number;
+  open: number;
+  responsePct: number | null;
+  resolutionPct: number | null;
+}
+
+export interface ServiceReportPreview {
+  entitlement: {
+    id: string;
+    title: string;
+    kind: string;
+    coverage: string | null;
+    startOn: string | null;
+    endOn: string | null;
+  };
+  customer: { id: string; code: string; name: string } | null;
+  contract: { contractNo: string; title: string } | null;
+  period: { from: string; to: string };
+  generatedAt: string;
+  figures: SeverityFigures[];
+  jobs: {
+    requestId: string;
+    requestNo: string | null;
+    subject: string;
+    severity: string | null;
+    workKind: string;
+    status: string;
+    openedAt: string;
+    respondedAt: string | null;
+    doneAt: string | null;
+    response: "met" | "missed" | "pending" | "none";
+    resolution: "met" | "missed" | "pending" | "none";
+    lateHours: number;
+  }[];
+  pm: {
+    due: number;
+    done: number;
+    skipped: number;
+    overdue: number;
+    rounds: { roundNo: number; dueOn: string | null; status: string }[];
+  };
+  penalty: {
+    terms: {
+      ratePct: number | null;
+      period: string | null;
+      basis: string | null;
+      capPct: number | null;
+      capAmount: number | null;
+      contractValue: number | null;
+    };
+    basisAmount: number | null;
+    estimate: {
+      amount: number | null;
+      units: number;
+      capped: boolean;
+      cap: number | null;
+    };
+  };
+}
+
+/** CD-247 — an issued report. */
+export interface ServiceReportRow {
+  id: string;
+  reportNo: string;
+  entitlementId: string;
+  entitlementTitle: string;
+  customer: { code: string; name: string } | null;
+  periodFrom: string;
+  periodTo: string;
+  jobs: number;
+  responsePct: number | null;
+  resolutionPct: number | null;
+  penaltyAmount: number | null;
+  penaltyNote: string | null;
+  issuedAt: string;
+  sentOn: string | null;
+  sentTo: string | null;
+}

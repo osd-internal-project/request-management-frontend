@@ -111,6 +111,8 @@ export const CORE_SERVICE_PREFIXES = [
   "/service-claims",
   // CD-246 — problems behind repeated faults
   "/service-problems",
+  // CD-247 — service reports
+  "/service-reports",
   "/sales-targets",
   "/campaigns",
   "/target-accounts",
