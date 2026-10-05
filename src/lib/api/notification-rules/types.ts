@@ -1,7 +1,7 @@
 /** CD-53 — one reminder rule: what it is (catalog, in code) and the company's setting. */
 export interface NotificationRuleRow {
   code: string;
-  module: "crm" | "finance";
+  module: "crm" | "finance" | "pm";
   label: string;
   description: string;
   recipients: string;
@@ -9,7 +9,7 @@ export interface NotificationRuleRow {
   params: {
     key: string;
     label: string;
-    kind: "days" | "days_list";
+    kind: "days" | "days_list" | "percent_list";
     min: number;
     max: number;
     max_items: number | null;

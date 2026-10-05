@@ -124,6 +124,8 @@ export function ErpSyncAdmin() {
             render: (_: unknown, row) =>
               row.resource.type === "customer" ? (
                 <Link href={ROUTES.customerDetail(row.resource.id)}>{row.resource.code}</Link>
+              ) : row.resource.type === "service_billing" ? (
+                <Link href={ROUTES.serviceBilling}>{row.resource.code}</Link>
               ) : (
                 row.resource.code
               ),

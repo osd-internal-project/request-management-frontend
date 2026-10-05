@@ -37,6 +37,7 @@ import {
   getDraftForRequest,
 } from "@/lib/api/contracts";
 import { ContractDraftCard } from "@/components/legal/contract-draft-card";
+import { WorkOrderPanel } from "@/components/service/work-order-panel";
 import { ContractRequestPackageCard } from "@/components/legal/contract-request-package-card";
 import { messages } from "@/lib/messages";
 import { STATUS_COLOR } from "@/components/requests/status";
@@ -284,6 +285,15 @@ export default async function RequestDetailPage({
         }}
         session={session}
       />
+
+      {/* CD-239 — a case's service side: in contract or billed, cause and fix */}
+      {request.severity && can(session, "service.asset.read") && (
+        <WorkOrderPanel
+          requestId={id}
+          status={request.status}
+          canManage={can(session, "service.asset.manage")}
+        />
+      )}
 
       {discountResult?.ok && <DiscountImpactCard view={discountResult.data} />}
 

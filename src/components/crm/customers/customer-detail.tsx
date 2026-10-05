@@ -34,6 +34,8 @@ import { CUSTOMER_STATUS_COLOR } from "@/components/crm/customers/customer-list"
 import { CustomerInvoicesTab } from "@/components/crm/customers/customer-invoices-tab";
 import { PricingExceptionsTable } from "@/components/pricing/pricing-exceptions-table";
 import { CustomerVersionsTab } from "@/components/crm/customers/customer-versions-tab";
+import { AssetRegister } from "@/components/service/asset-register";
+import { Entitlements } from "@/components/service/entitlements";
 import { formatAmount } from "@/components/crm/opportunities/opportunity-list";
 import { QuotationStatusTags } from "@/components/crm/quotations/quotation-list";
 import { SearchSelect } from "@/components/ui/search-select";
@@ -99,6 +101,8 @@ export function CustomerDetailView({
   customerSaleOrders,
   canManageSales = false,
   canMerge = false,
+  canReadAssets = false,
+  canManageAssets = false,
   approval = null,
 }: {
   customer: CustomerDetail;
@@ -130,6 +134,9 @@ export function CustomerDetailView({
   canManageSales?: boolean;
   /** CD-122 — admin.customer.merge: may fold this duplicate into another. */
   canMerge?: boolean;
+  /** CD-236 — the installed base tab. */
+  canReadAssets?: boolean;
+  canManageAssets?: boolean;
   /** CD-62 — only fetched for a customer not yet approved. */
   approval?: CustomerApprovalView | null;
 }) {
@@ -523,6 +530,32 @@ export function CustomerDetailView({
                   key: "softwareVersions",
                   label: messages.projects.releases.customerTab,
                   children: <CustomerVersionsTab customerId={customer.id} />,
+                },
+              ]
+            : []),
+          // CD-236 — what the customer has installed (the service team)
+          ...(canReadAssets
+            ? [
+                {
+                  key: "installedBase",
+                  label: messages.service.assets.tab,
+                  children: (
+                    <AssetRegister
+                      canManage={canManageAssets}
+                      customerId={customer.id}
+                    />
+                  ),
+                },
+                // CD-237 — what covers it: warranties and service contracts
+                {
+                  key: "entitlements",
+                  label: messages.service.assets.entitlements.title,
+                  children: (
+                    <Entitlements
+                      canManage={canManageAssets}
+                      customerId={customer.id}
+                    />
+                  ),
                 },
               ]
             : []),

@@ -137,6 +137,15 @@ export const ROUTES = {
   /** CD-231 — Timesheet รายสัปดาห์ และหน้าอนุมัติของหัวหน้า. */
   hrTimesheet: `${HOME_PATH}/hr/timesheet`,
   hrTimesheetApprovals: `${HOME_PATH}/hr/timesheet/approvals`,
+  /** CD-232 — การลา และความพร้อมของทีม. */
+  hrLeave: `${HOME_PATH}/hr/leave`,
+  hrLeaveApprovals: `${HOME_PATH}/hr/leave/approvals`,
+  hrLeaveSettings: `${HOME_PATH}/hr/leave/settings`,
+  hrAvailability: `${HOME_PATH}/hr/availability`,
+  /** CD-233 — manday แผนเทียบจริง. */
+  hrMandays: `${HOME_PATH}/hr/mandays`,
+  /** CD-234 — ต้นทุนแรงงานงานบริการ. */
+  hrLaborCosts: `${HOME_PATH}/hr/labor-costs`,
   /** CD-206 — ต้นทุนคู่ค้าจาก SAP. */
   pricingVendorCosts: `${HOME_PATH}/pricing/vendor-costs`,
   /** CD-142 — SAP's suppliers with the technical profile Pre-Sales keeps. */
@@ -179,6 +188,8 @@ export const ROUTES = {
   adminRunNumbers: `${HOME_PATH}/admin/run-numbers`,
   /** CD-18 PM — โครงการ. */
   projects: `${HOME_PATH}/projects`,
+  /** CD-250 — the delivery team's board. */
+  delivery: `${HOME_PATH}/delivery`,
   projectOpen: (contractId?: string) =>
     `${HOME_PATH}/projects/open${contractId ? `?contract=${contractId}` : ""}`,
   projectDetail: (id: string) => `${HOME_PATH}/projects/${id}`,
@@ -190,6 +201,23 @@ export const ROUTES = {
   projectRisks: `${HOME_PATH}/projects/risks`,
   /** CD-217 — configuration values across the projects one may see. */
   projectConfigs: `${HOME_PATH}/projects/configs`,
+  /** CD-180 — the team's load, week by week, across projects. */
+  projectWorkload: `${HOME_PATH}/projects/workload`,
+  /** CD-236 — what customers have installed. */
+  serviceAssets: `${HOME_PATH}/service/assets`,
+  serviceAssetImport: `${HOME_PATH}/service/assets/import`,
+  /** CD-237 — warranties and service contracts. */
+  serviceEntitlements: `${HOME_PATH}/service/entitlements`,
+  /** CD-239 — service jobs. */
+  serviceWorkOrders: `${HOME_PATH}/service/work-orders`,
+  /** CD-241 — who answers out of hours. */
+  serviceOnCall: `${HOME_PATH}/service/on-call`,
+  /** CD-242 — billed service jobs sent to SAP. */
+  serviceBilling: `${HOME_PATH}/service/billing`,
+  /** CD-243 — selling rates of service labour. */
+  serviceLabourRates: `${HOME_PATH}/service/labour-rates`,
+  /** CD-244 — PM rounds of every service contract. */
+  servicePm: `${HOME_PATH}/service/pm`,
   /** CD-192 — every running project, the most at risk first. */
   projectPortfolio: `${HOME_PATH}/projects/portfolio`,
   /** CD-161 — คลังสัญญา (ฝ่ายกฎหมาย). */

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Alert,
+  Checkbox,
   App,
   Button,
   Card,
@@ -52,6 +53,8 @@ interface Result {
   decidedOn: Dayjs | null;
   note: string;
   file: File | null;
+  /** CD-252 — no certificate now: drawn up and e-signed afterwards. */
+  esignLater?: boolean;
   items: Item[];
 }
 
@@ -133,6 +136,7 @@ export function ProjectAcceptanceCard({
       );
     }
     if (result.file) form.append("file", result.file);
+    else if (result.esignLater) form.append("certificate_via", "esign");
     const ok = await call(`${base}/${result.round.id}/result`, {
       method: "POST",
       body: form,
@@ -492,6 +496,17 @@ export function ProjectAcceptanceCard({
                 }
               />
             </label>
+            {/* CD-252 — the certificate is drawn up and e-signed afterwards */}
+            {result.result !== "rejected" && !result.file ? (
+              <Checkbox
+                checked={result.esignLater ?? false}
+                onChange={(event) =>
+                  setResult({ ...result, esignLater: event.target.checked })
+                }
+              >
+                <span className="text-xs">{m.form.esignLater}</span>
+              </Checkbox>
+            ) : null}
             <div>
               <Text className="block text-xs">{m.form.items}</Text>
               {result.items.map((item, index) => (

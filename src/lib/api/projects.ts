@@ -1590,3 +1590,127 @@ export function getProjectTechChanges(
 ): Promise<ApiResult<ProjectTechChangesView>> {
   return apiGet(`/projects/${encodeURIComponent(id)}/tech-changes`);
 }
+
+// --- CD-190 ติดตามต้นทุนโครงการ ------------------------------------------------------
+
+export interface ProjectCostRow {
+  category: "material" | "labor" | "other" | "total";
+  budget: number;
+  actual: number;
+  pct: number | null;
+  level: "ok" | "warn" | "over";
+}
+
+export interface ProjectCostEntry {
+  id: string;
+  category: string;
+  source: "erp" | "manual";
+  docNo: string | null;
+  description: string;
+  amount: number;
+  incurredOn: string;
+  vendorName: string | null;
+  evidenceName: string | null;
+  createdByName: string | null;
+}
+
+export interface ProjectCostsView {
+  canEdit: boolean;
+  budget: { versionNo: number } | null;
+  thresholds: { warnPct: number; alertPct: number };
+  rows: ProjectCostRow[];
+  labor: {
+    amount: number;
+    hours: number;
+    mandays: number;
+    unpricedHours: number;
+  };
+  lastErpSyncAt: string | null;
+  entries: ProjectCostEntry[];
+}
+
+export function getProjectCosts(
+  id: string,
+): Promise<ApiResult<ProjectCostsView>> {
+  return apiGet(`/projects/${encodeURIComponent(id)}/costs`);
+}
+
+// --- CD-180 จัดสรรทรัพยากร ------------------------------------------------------------
+
+export interface ResourceBooking {
+  id: string;
+  userId: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  hoursPerDay: number;
+  note: string;
+  past: boolean;
+  overbookedDays: number;
+  priority: { priority: string; reason: string; conflicts: string[] } | null;
+}
+
+export interface ResourceRequestRow {
+  id: string;
+  label: string;
+  role: string;
+  skillId: string | null;
+  headcount: number;
+  startDate: string;
+  endDate: string;
+  hoursPerDay: number;
+  note: string | null;
+  status: string;
+  requestNo: string | null;
+  error: string | null;
+  submittedByName: string | null;
+  decidedAt: string | null;
+  fulfilledAt: string | null;
+}
+
+export interface ProjectResourcesView {
+  canEdit: boolean;
+  typeSet: boolean;
+  bookings: ResourceBooking[];
+  requests: ResourceRequestRow[];
+}
+
+export interface BookingPreview {
+  overbooked: { day: string; free: number; short: number; onLeave: boolean }[];
+  conflicts: {
+    projectId: string;
+    label: string;
+    managerUserId: string;
+    managerName: string | null;
+  }[];
+}
+
+export interface WorkloadWeek {
+  week: string;
+  capacity: number;
+  leave: number;
+  booked: number;
+  free: number;
+  pct: number | null;
+  overbookedDays: number;
+  projects: { projectId: string; hours: number }[];
+}
+
+export interface WorkloadView {
+  from: string;
+  to: string;
+  weeks: string[];
+  projects: Record<string, string>;
+  people: {
+    userId: string;
+    name?: string;
+    displayName?: string;
+    weeks: WorkloadWeek[];
+  }[];
+}
+
+export function getProjectResources(
+  id: string,
+): Promise<ApiResult<ProjectResourcesView>> {
+  return apiGet(`/projects/${encodeURIComponent(id)}/resources`);
+}

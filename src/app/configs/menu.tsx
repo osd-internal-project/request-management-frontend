@@ -54,12 +54,27 @@ export type MenuIconKey =
   | "hrMe"
   | "hrTeam"
   | "hrStaff"
+  | "delivery"
   | "hrTimesheet"
   | "hrTimesheetApproval"
+  | "hrLeave"
+  | "hrLeaveApproval"
+  | "hrLeaveSettings"
+  | "hrAvailability"
+  | "hrMandays"
+  | "hrLaborCost"
   | "pricingVendorCost"
   | "projectPortfolio"
   | "projectRisk"
   | "projectConfig"
+  | "projectWorkload"
+  | "serviceAsset"
+  | "serviceEntitlement"
+  | "serviceWorkOrder"
+  | "serviceOnCall"
+  | "serviceBilling"
+  | "serviceLabourRate"
+  | "servicePm"
   | "esignLayout"
   | "esignAuthority";
 
@@ -287,6 +302,14 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     permissions: ["pricing.price.read", "pricing.price.manage"],
     group: messages.nav.pricingGroup,
   },
+  /** CD-250 — the delivery team's board across projects. */
+  {
+    label: messages.nav.delivery,
+    href: ROUTES.delivery,
+    icon: "delivery",
+    permissions: ["delivery.read", "delivery.manage", "pm.project.read"],
+    group: messages.nav.deliveryGroup,
+  },
   /** CD-229 — the employee register (HR's facts on top of the directory). */
   {
     label: messages.nav.hrEmployees,
@@ -321,6 +344,58 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     label: messages.nav.hrTimesheetApprovals,
     href: ROUTES.hrTimesheetApprovals,
     icon: "hrTimesheetApproval",
+    group: messages.nav.hrGroup,
+  },
+  /** CD-232 — everyone asks for leave and sees what is left. */
+  {
+    label: messages.nav.hrLeave,
+    href: ROUTES.hrLeave,
+    icon: "hrLeave",
+    group: messages.nav.hrGroup,
+  },
+  /** CD-232 — supervisors (and HR) decide on leave. */
+  {
+    label: messages.nav.hrLeaveApprovals,
+    href: ROUTES.hrLeaveApprovals,
+    icon: "hrLeaveApproval",
+    group: messages.nav.hrGroup,
+  },
+  /** CD-232 — who is free when (the backend decides whom one sees). */
+  {
+    label: messages.nav.hrAvailability,
+    href: ROUTES.hrAvailability,
+    icon: "hrAvailability",
+    group: messages.nav.hrGroup,
+  },
+  /** CD-233 — manday plan against actual (PM, Pricing, HR). */
+  {
+    label: messages.nav.hrMandays,
+    href: ROUTES.hrMandays,
+    icon: "hrMandays",
+    permissions: [
+      "pm.project.read",
+      "pm.project.manage",
+      "pricing.price.read",
+      "pricing.price.manage",
+      "hr.employee.read",
+      "hr.employee.manage",
+    ],
+    group: messages.nav.hrGroup,
+  },
+  /** CD-234 — service labour cost (pay-derived). */
+  {
+    label: messages.nav.hrLaborCosts,
+    href: ROUTES.hrLaborCosts,
+    icon: "hrLaborCost",
+    permissions: ["hr.rate.read"],
+    group: messages.nav.hrGroup,
+  },
+  /** CD-232 — kinds of leave and allowances (HR). */
+  {
+    label: messages.nav.hrLeaveSettings,
+    href: ROUTES.hrLeaveSettings,
+    icon: "hrLeaveSettings",
+    permissions: ["hr.employee.read", "hr.employee.manage"],
     group: messages.nav.hrGroup,
   },
   /** CD-230 — who is here, at what level, with which skills (staffing). */
@@ -384,6 +459,78 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     href: ROUTES.projectRisks,
     icon: "projectRisk",
     permissions: ["pm.project.read"],
+    group: messages.nav.pmGroup,
+  },
+
+  /** CD-236 — ทะเบียนอุปกรณ์ที่ติดตั้งของลูกค้า. */
+  {
+    label: messages.nav.serviceAssets,
+    href: ROUTES.serviceAssets,
+    icon: "serviceAsset",
+    permissions: ["service.asset.read"],
+    group: messages.nav.serviceGroup,
+  },
+
+  /** CD-239 — ใบสั่งงานบริการ (เคส + อยู่ในสัญญา/เก็บเงิน). */
+  {
+    label: messages.nav.serviceWorkOrders,
+    href: ROUTES.serviceWorkOrders,
+    icon: "serviceWorkOrder",
+    permissions: ["service.asset.read"],
+    group: messages.nav.serviceGroup,
+  },
+
+  /** CD-241 — ตารางเวรนอกเวลา. */
+  {
+    label: messages.nav.serviceOnCall,
+    href: ROUTES.serviceOnCall,
+    icon: "serviceOnCall",
+    permissions: ["service.asset.read"],
+    group: messages.nav.serviceGroup,
+  },
+
+  /** CD-242 — ใบเรียกเก็บงานบริการที่ส่ง SAP. */
+  {
+    label: messages.nav.serviceBilling,
+    href: ROUTES.serviceBilling,
+    icon: "serviceBilling",
+    permissions: ["service.asset.read"],
+    group: messages.nav.serviceGroup,
+  },
+
+  /** CD-243 — อัตราค่าแรงเรียกเก็บงานบริการ. */
+  {
+    label: messages.nav.serviceLabourRates,
+    href: ROUTES.serviceLabourRates,
+    icon: "serviceLabourRate",
+    permissions: ["service.asset.manage"],
+    group: messages.nav.serviceGroup,
+  },
+
+  /** CD-244 — รอบบำรุงรักษาตามแผนของสัญญาบริการ. */
+  {
+    label: messages.nav.servicePm,
+    href: ROUTES.servicePm,
+    icon: "servicePm",
+    permissions: ["service.asset.read"],
+    group: messages.nav.serviceGroup,
+  },
+
+  /** CD-237 — ประกันและสัญญาบริการที่คุ้มครองอุปกรณ์. */
+  {
+    label: messages.nav.serviceEntitlements,
+    href: ROUTES.serviceEntitlements,
+    icon: "serviceEntitlement",
+    permissions: ["service.asset.read"],
+    group: messages.nav.serviceGroup,
+  },
+
+  /** CD-180 — ภาระงานทีมรายสัปดาห์ข้ามโครงการ (ผู้จัดคน / หัวหน้าทีม). */
+  {
+    label: messages.nav.projectWorkload,
+    href: ROUTES.projectWorkload,
+    icon: "projectWorkload",
+    permissions: ["notification.read"],
     group: messages.nav.pmGroup,
   },
 

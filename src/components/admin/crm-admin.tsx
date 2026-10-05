@@ -367,6 +367,12 @@ function ConfigSection({
   const [projectTechChangeType, setProjectTechChangeType] = useState(
     config.projectTechChangeTypeCode ?? "",
   );
+  const [projectResourceType, setProjectResourceType] = useState(
+    config.projectResourceTypeCode ?? "",
+  );
+  const [serviceWorkOrderType, setServiceWorkOrderType] = useState(
+    config.serviceWorkOrderTypeCode ?? "",
+  );
   const [closeDocuments, setCloseDocuments] = useState<string[]>(
     config.projectCloseDocuments ?? [],
   );
@@ -374,6 +380,11 @@ function ConfigSection({
     config.projectHealthAmber ?? 20,
   );
   const [healthRed, setHealthRed] = useState(config.projectHealthRed ?? 40);
+  const [costWarn, setCostWarn] = useState(config.projectCostWarnPct ?? 90);
+  const [costAlert, setCostAlert] = useState(config.projectCostAlertPct ?? 100);
+  const [onCallMinutes, setOnCallMinutes] = useState(
+    config.serviceOnCallEscalateMinutes ?? 30,
+  );
   const [readinessList, setReadinessList] = useState<string[]>(
     config.projectReadinessChecklist ?? [],
   );
@@ -382,6 +393,9 @@ function ConfigSection({
   );
   const [softwareDocList, setSoftwareDocList] = useState<string[]>(
     config.projectSoftwareDocuments ?? [],
+  );
+  const [deliveryDocs, setDeliveryDocs] = useState<Record<string, string[]>>(
+    config.deliveryDocuments ?? {},
   );
   const [solutionType, setSolutionType] = useState(
     config.solutionRequestTypeCode ?? "",
@@ -411,12 +425,18 @@ function ConfigSection({
       project_close_type_code: projectCloseType,
       project_design_type_code: projectDesignType,
       project_tech_change_type_code: projectTechChangeType,
+      project_resource_type_code: projectResourceType,
+      service_work_order_type_code: serviceWorkOrderType,
       project_close_documents: closeDocuments,
       project_health_amber: healthAmber,
       project_health_red: healthRed,
+      project_cost_warn_pct: costWarn,
+      project_cost_alert_pct: costAlert,
+      service_on_call_escalate_minutes: onCallMinutes,
       project_readiness_checklist: readinessList,
       project_as_built_documents: asBuiltList,
       project_software_documents: softwareDocList,
+      delivery_documents: deliveryDocs,
       solution_request_type_code: solutionType,
       solution_approval_type_code: solutionApprovalType,
       demo_request_type_code: demoType,
@@ -718,6 +738,46 @@ function ConfigSection({
       <Text type="secondary" className="mt-2 block text-xs">
         {m.projectTechChangeHint}
       </Text>
+      {/* CD-180 — คำขอทีมเพิ่ม */}
+      <div className="mt-3 max-w-xs">
+        <Text className="mb-1 block text-xs">{m.projectResourceTypeCode}</Text>
+        <Input
+          value={projectResourceType}
+          maxLength={20}
+          allowClear
+          onChange={(e) => setProjectResourceType(e.target.value.toUpperCase())}
+        />
+      </div>
+      <Text type="secondary" className="mt-2 block text-xs">
+        {m.projectResourceHint}
+      </Text>
+      {/* CD-239 — ใบสั่งงานบริการ */}
+      <div className="mt-3 max-w-xs">
+        <Text className="mb-1 block text-xs">{m.serviceWorkOrderTypeCode}</Text>
+        <Input
+          value={serviceWorkOrderType}
+          maxLength={20}
+          allowClear
+          onChange={(e) =>
+            setServiceWorkOrderType(e.target.value.toUpperCase())
+          }
+        />
+      </div>
+      <Text type="secondary" className="mt-2 block text-xs">
+        {m.serviceWorkOrderHint}
+      </Text>
+      {/* CD-241 — ส่งต่อเวรสำรองเมื่อเวรหลักไม่กดรับ */}
+      <div className="mt-3 max-w-xl">
+        <Text className="mb-1 block text-xs">
+          {m.serviceOnCallEscalateMinutes}
+        </Text>
+        <InputNumber
+          min={0}
+          max={1440}
+          value={onCallMinutes}
+          onChange={(value) => setOnCallMinutes(Number(value ?? 30))}
+        />
+      </div>
       <div className="mt-3 max-w-xl">
         <Text className="mb-1 block text-xs">{m.projectCloseDocuments}</Text>
         <Select
@@ -754,6 +814,32 @@ function ConfigSection({
       </div>
       <Text type="secondary" className="mt-2 block text-xs">
         {m.projectHealthHint}
+      </Text>
+      {/* CD-190 — เกณฑ์ต้นทุนโครงการเทียบงบ */}
+      <div className="mt-3 flex flex-wrap gap-4">
+        <div>
+          <Text className="mb-1 block text-xs">{m.projectCostWarnPct}</Text>
+          <InputNumber
+            min={1}
+            max={500}
+            suffix="%"
+            value={costWarn}
+            onChange={(value) => setCostWarn(Number(value ?? 90))}
+          />
+        </div>
+        <div>
+          <Text className="mb-1 block text-xs">{m.projectCostAlertPct}</Text>
+          <InputNumber
+            min={1}
+            max={500}
+            suffix="%"
+            value={costAlert}
+            onChange={(value) => setCostAlert(Number(value ?? 100))}
+          />
+        </div>
+      </div>
+      <Text type="secondary" className="mt-2 block text-xs">
+        {m.projectCostHint}
       </Text>
       {/* CD-225 — รายการตรวจความพร้อมก่อนส่งมอบ */}
       <div className="mt-3 max-w-xl">
@@ -798,6 +884,31 @@ function ConfigSection({
       </div>
       <Text type="secondary" className="mt-2 block text-xs">
         {m.projectSoftwareDocumentsHint}
+      </Text>
+      {/* CD-251 — เอกสารส่งมอบบังคับต่อประเภทงาน */}
+      <Text className="mt-3 block text-xs">{m.deliveryDocuments}</Text>
+      <div className="mt-1 grid max-w-3xl grid-cols-1 gap-2 md:grid-cols-2">
+        {(["equipment", "material", "software", "service"] as const).map(
+          (type) => (
+            <div key={type}>
+              <Text type="secondary" className="mb-1 block text-xs">
+                {m.deliveryWorkTypes[type]}
+              </Text>
+              <Select
+                mode="tags"
+                className="w-full"
+                value={deliveryDocs[type] ?? []}
+                open={false}
+                onChange={(values: string[]) =>
+                  setDeliveryDocs((current) => ({ ...current, [type]: values }))
+                }
+              />
+            </div>
+          ),
+        )}
+      </div>
+      <Text type="secondary" className="mt-2 block text-xs">
+        {m.deliveryDocumentsHint}
       </Text>
 
       {/* CD-130 — ประเภทคำขอ Solution (Sales → Pre-Sales) */}

@@ -88,6 +88,25 @@ export const CORE_SERVICE_PREFIXES = [
   "/project-portfolio",
   "/project-releases",
   "/project-configs",
+  // CD-180 — the team's load across projects
+  "/project-resources",
+  // CD-20 Delivery (CD-250)
+  "/delivery",
+  // CD-236 — the installed base
+  "/service-assets",
+  // CD-237 — what covers them
+  "/service-entitlements",
+  // CD-239 — service jobs
+  "/service-work-orders",
+  // CD-241 — the out-of-hours rota
+  "/service-on-call",
+  // CD-242 — billed service jobs to SAP
+  "/service-billings",
+  // CD-243 — time, materials and selling rates
+  "/service-time-materials",
+  "/service-labour-rates",
+  // CD-244 — PM plans and rounds
+  "/service-pm",
   "/sales-targets",
   "/campaigns",
   "/target-accounts",

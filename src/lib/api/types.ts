@@ -1810,16 +1810,24 @@ export interface CrmConfig {
   /** CD-211 — a detailed design version is approved as this type. */
   projectDesignTypeCode?: string | null;
   projectTechChangeTypeCode?: string | null;
+  projectResourceTypeCode?: string | null;
+  serviceWorkOrderTypeCode?: string | null;
   /** CD-191 — the documents every project must attach before closing. */
   projectCloseDocuments?: string[];
   /** CD-192 — the health scores at which a project turns amber, and red. */
   projectHealthAmber?: number;
   projectHealthRed?: number;
+  projectCostWarnPct?: number;
+  projectCostAlertPct?: number;
+  /** CD-241 — minutes before an unreceived out-of-hours case goes to the backup. */
+  serviceOnCallEscalateMinutes?: number;
   /** CD-225 — the company's readiness checklist. */
   projectReadinessChecklist?: string[];
   /** CD-226 — the as-built documents every project must leave. */
   projectAsBuiltDocuments?: string[];
   projectSoftwareDocuments?: string[];
+  /** CD-251 — delivery documents required per work type (saved or standard). */
+  deliveryDocuments?: Record<string, string[]>;
   /** CD-130 — the type Pre-Sales takes solution requests on. */
   solutionRequestTypeCode?: string | null;
   /** CD-143 — the type a Solution version is sent for approval on. */

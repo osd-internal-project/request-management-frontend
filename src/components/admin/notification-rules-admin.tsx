@@ -27,6 +27,7 @@ const m = messages.notificationRules;
 const MODULE_LABEL: Record<NotificationRuleRow["module"], string> = {
   crm: m.moduleCrm,
   finance: m.moduleFinance,
+  pm: m.modulePm,
 };
 
 /**
@@ -162,6 +163,11 @@ function RuleCard({
                 </span>
               ) : (
                 <DaysList
+                  suffix={
+                    param.kind === "percent_list"
+                      ? m.percentSuffix
+                      : m.daysSuffix
+                  }
                   value={(values[param.key] as number[]) ?? []}
                   min={param.min}
                   max={param.max}
@@ -171,7 +177,14 @@ function RuleCard({
                 />
               )}
               <Text type="secondary" className="mt-1 block text-xs">
-                {m.standardIs(describe(row.standard.params[param.key]))}
+                {m.standardIs(
+                  describe(
+                    row.standard.params[param.key],
+                    param.kind === "percent_list"
+                      ? m.percentSuffix
+                      : m.daysSuffix,
+                  ),
+                )}
               </Text>
             </div>
           ))}
@@ -227,6 +240,7 @@ function RuleCard({
 
 /** Steps such as "60, 30 days" — each its own box, largest first once saved. */
 function DaysList({
+  suffix,
   value,
   min,
   max,
@@ -234,6 +248,7 @@ function DaysList({
   disabled,
   onChange,
 }: {
+  suffix: string;
   value: number[];
   min: number;
   max: number;
@@ -283,13 +298,16 @@ function DaysList({
         </Button>
       )}
       <Text type="secondary" className="text-xs">
-        {m.daysSuffix}
+        {suffix}
       </Text>
     </div>
   );
 }
 
-function describe(value: number | number[] | undefined): string {
+function describe(
+  value: number | number[] | undefined,
+  suffix: string,
+): string {
   if (value === undefined) return "-";
-  return `${Array.isArray(value) ? value.join(", ") : value} ${m.daysSuffix}`;
+  return `${Array.isArray(value) ? value.join(", ") : value} ${suffix}`;
 }

@@ -49,6 +49,8 @@ import type {
   ProjectConfigsView,
   ProjectIntegrationsView,
   ProjectTechChangesView,
+  ProjectCostsView,
+  ProjectResourcesView,
 } from "@/lib/api/projects";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
@@ -66,6 +68,9 @@ import { ProjectCloseoutCard } from "./project-closeout-card";
 import { ProjectStatusCard } from "./project-status-card";
 import { ProjectTestsCard } from "./project-tests-card";
 import { ProjectReadinessCard } from "./project-readiness-card";
+import { ProjectDeliveryCard } from "@/components/delivery/project-delivery-card";
+import { DeliveryDocsCard } from "@/components/delivery/delivery-docs-card";
+import { AcceptanceCertificatesCard } from "@/components/delivery/acceptance-certificates-card";
 import { ProjectAsBuiltCard } from "./project-as-built-card";
 import { ProjectAcceptanceCard } from "./project-acceptance-card";
 import { ProjectUatCard } from "./project-uat-card";
@@ -80,6 +85,8 @@ import { ProjectSoftwareDocsCard } from "./project-software-docs-card";
 import { ProjectConfigsCard } from "./project-configs-card";
 import { ProjectIntegrationsCard } from "./project-integrations-card";
 import { ProjectTechChangesCard } from "./project-tech-changes-card";
+import { ProjectCostsCard } from "./project-costs-card";
+import { ProjectResourcesCard } from "./project-resources-card";
 import {
   ProjectTeamFields,
   teamPayload,
@@ -122,6 +129,8 @@ export function ProjectDetailView({
   configs,
   integrations,
   techChanges,
+  costs,
+  resources,
   currentUserId,
   people,
 }: {
@@ -172,6 +181,8 @@ export function ProjectDetailView({
   readonly configs: ProjectConfigsView | null;
   readonly integrations: ProjectIntegrationsView | null;
   readonly techChanges: ProjectTechChangesView | null;
+  readonly costs: ProjectCostsView | null;
+  readonly resources: ProjectResourcesView | null;
   readonly currentUserId: string | null;
   /** The company's people, for the manager and team pickers. */
   readonly people: { id: string; name: string }[];
@@ -461,6 +472,18 @@ export function ProjectDetailView({
         />
       )}
 
+      {/* CD-180 — who works on it and when, checked across projects */}
+      {resources && (
+        <ProjectResourcesCard
+          projectId={project.id}
+          view={resources}
+          people={pickable}
+        />
+      )}
+
+      {/* CD-190 — actual against the budget above */}
+      {costs && <ProjectCostsCard projectId={project.id} view={costs} />}
+
       {payments && (
         <ProjectPaymentsCard projectId={project.id} view={payments} />
       )}
@@ -546,6 +569,11 @@ export function ProjectDetailView({
 
       {asBuilt && <ProjectAsBuiltCard projectId={project.id} view={asBuilt} />}
 
+      {/* CD-250 — the delivery plan (loads itself) */}
+      <ProjectDeliveryCard projectId={project.id} />
+      {/* CD-251 — each phase's delivery documents (loads itself) */}
+      <DeliveryDocsCard projectId={project.id} />
+
       {readiness && (
         <ProjectReadinessCard
           projectId={project.id}
@@ -561,6 +589,9 @@ export function ProjectDetailView({
           people={pickable}
         />
       )}
+
+      {/* CD-252 — the certificates of accepted rounds (loads itself) */}
+      <AcceptanceCertificatesCard projectId={project.id} />
 
       {customerLogs && (
         <CustomerLogsCard projectId={project.id} view={customerLogs} />
