@@ -68,6 +68,7 @@ export type MenuIconKey =
   | "projectConfig"
   | "projectWorkload"
   | "serviceAsset"
+  | "serviceEntitlement"
   | "esignLayout"
   | "esignAuthority";
 
@@ -452,6 +453,15 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     label: messages.nav.serviceAssets,
     href: ROUTES.serviceAssets,
     icon: "serviceAsset",
+    permissions: ["service.asset.read"],
+    group: messages.nav.serviceGroup,
+  },
+
+  /** CD-237 — ประกันและสัญญาบริการที่คุ้มครองอุปกรณ์. */
+  {
+    label: messages.nav.serviceEntitlements,
+    href: ROUTES.serviceEntitlements,
+    icon: "serviceEntitlement",
     permissions: ["service.asset.read"],
     group: messages.nav.serviceGroup,
   },

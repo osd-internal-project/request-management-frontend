@@ -35,6 +35,7 @@ import { CustomerInvoicesTab } from "@/components/crm/customers/customer-invoice
 import { PricingExceptionsTable } from "@/components/pricing/pricing-exceptions-table";
 import { CustomerVersionsTab } from "@/components/crm/customers/customer-versions-tab";
 import { AssetRegister } from "@/components/service/asset-register";
+import { Entitlements } from "@/components/service/entitlements";
 import { formatAmount } from "@/components/crm/opportunities/opportunity-list";
 import { QuotationStatusTags } from "@/components/crm/quotations/quotation-list";
 import { SearchSelect } from "@/components/ui/search-select";
@@ -540,6 +541,17 @@ export function CustomerDetailView({
                   label: messages.service.assets.tab,
                   children: (
                     <AssetRegister
+                      canManage={canManageAssets}
+                      customerId={customer.id}
+                    />
+                  ),
+                },
+                // CD-237 — what covers it: warranties and service contracts
+                {
+                  key: "entitlements",
+                  label: messages.service.assets.entitlements.title,
+                  children: (
+                    <Entitlements
                       canManage={canManageAssets}
                       customerId={customer.id}
                     />

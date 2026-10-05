@@ -92,6 +92,8 @@ export const CORE_SERVICE_PREFIXES = [
   "/project-resources",
   // CD-236 — the installed base
   "/service-assets",
+  // CD-237 — what covers them
+  "/service-entitlements",
   "/sales-targets",
   "/campaigns",
   "/target-accounts",

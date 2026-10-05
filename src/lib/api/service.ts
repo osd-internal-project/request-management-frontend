@@ -18,9 +18,19 @@ export interface ServiceAssetRow {
   status: "active" | "replaced" | "removed";
   note: string | null;
   updatedAt: string;
+  /** CD-237 — the cover in force today (list rows only). */
+  coverage?: {
+    kind: string;
+    title: string;
+    endOn: string;
+    coverage: string | null;
+  } | null;
 }
 
 export interface ServiceAssetDetail extends ServiceAssetRow {
+  /** CD-237 — what covers it now, and every entitlement it has had. */
+  coverage: Entitlement | null;
+  entitlements: Entitlement[];
   history: {
     id: string;
     action: string;
@@ -47,5 +57,49 @@ export interface AssetImportResult {
     action: "create" | "skip_duplicate" | "error";
     reasons: string[];
     assetId?: string;
+  }[];
+}
+
+/** CD-237 — what covers an asset. */
+export interface Entitlement {
+  id: string;
+  kind: "warranty" | "service_contract";
+  title: string;
+  contractId: string | null;
+  projectId: string | null;
+  startOn: string;
+  endOn: string;
+  state: "upcoming" | "active" | "expired" | "cancelled";
+  coverage: "H24X7" | "H8X7" | "H8X5" | null;
+  severityTargets: Record<
+    string,
+    { responseHours: number; resolutionHours: number }
+  > | null;
+  correctiveQuota: number | null;
+  preventiveQuota: number | null;
+  correctiveUsed: number;
+  preventiveUsed: number;
+  correctiveLeft: number | null;
+  preventiveLeft: number | null;
+  source: string | null;
+}
+
+export interface EntitlementListRow extends Entitlement {
+  customer: { id: string; code: string; name: string } | null;
+  assetCount: number;
+}
+
+export interface EntitlementDetail extends Entitlement {
+  customer: { id: string; code: string; name: string } | null;
+  contract: { id: string; contractNo: string; title: string } | null;
+  note: string | null;
+  cancelReason: string | null;
+  assets: {
+    id: string;
+    name: string;
+    model: string | null;
+    serialNo: string | null;
+    location: string | null;
+    status: string;
   }[];
 }

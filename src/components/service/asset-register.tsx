@@ -28,6 +28,7 @@ import type {
 } from "@/lib/api/service";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
+import { EntitlementFacts } from "./entitlements";
 
 const m = messages.service.assets;
 
@@ -312,6 +313,22 @@ export function AssetRegister({
               value ? dayjs(value).format("DD/MM/YY") : "",
           },
           {
+            title: m.coverageColumn,
+            width: 170,
+            render: (_: unknown, row: ServiceAssetRow) =>
+              row.coverage ? (
+                <Tag color="green">
+                  {m.coveredUntil(
+                    m.entitlements.kinds[row.coverage.kind] ??
+                      row.coverage.kind,
+                    dayjs(row.coverage.endOn).format("DD/MM/YY"),
+                  )}
+                </Tag>
+              ) : (
+                <Tag>{m.notCovered}</Tag>
+              ),
+          },
+          {
             title: m.columns.status,
             dataIndex: "status",
             width: 110,
@@ -420,6 +437,30 @@ export function AssetRegister({
                 </Descriptions.Item>
               )}
             </Descriptions>
+            <Text strong className="mt-4 mb-1 block">
+              {m.coverageNow}
+            </Text>
+            {detail.coverage ? (
+              <>
+                <Text className="block text-sm">{detail.coverage.title}</Text>
+                <EntitlementFacts row={detail.coverage} />
+              </>
+            ) : (
+              <Tag>{m.notCovered}</Tag>
+            )}
+            {detail.entitlements.length > 1 && (
+              <>
+                <Text strong className="mt-3 mb-1 block text-xs">
+                  {m.allEntitlements}
+                </Text>
+                {detail.entitlements.map((row) => (
+                  <div key={row.id} className="mb-1">
+                    <Text className="text-xs">{row.title}</Text>
+                    <EntitlementFacts row={row} />
+                  </div>
+                ))}
+              </>
+            )}
             <Text strong className="mt-4 mb-2 block">
               {m.history}
             </Text>
