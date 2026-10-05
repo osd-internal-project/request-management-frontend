@@ -103,3 +103,41 @@ export interface EntitlementDetail extends Entitlement {
     status: string;
   }[];
 }
+
+/** CD-239 — the service side of a case. */
+export interface WorkOrder {
+  id: string;
+  requestId: string;
+  request: {
+    requestNo: string | null;
+    status: string;
+    severity: string | null;
+    subject: string | null;
+  } | null;
+  customer: { id: string; code: string; name: string } | null;
+  asset: {
+    id: string;
+    name: string;
+    serialNo: string | null;
+    location: string | null;
+  } | null;
+  workKind: "corrective" | "preventive";
+  suggestedBilling: "in_contract" | "billable";
+  suggestedEntitlement: { id: string; title: string | null } | null;
+  suggestionNote: string | null;
+  billing: "in_contract" | "billable" | null;
+  entitlement: { id: string; title: string | null } | null;
+  billingReason: string | null;
+  confirmedAt: string | null;
+  ack: {
+    name: string | null;
+    on: string | null;
+    estimate: number | null;
+  } | null;
+  cause: string | null;
+  resolution: string | null;
+  startBlocker: string | null;
+  closeBlocker: string | null;
+  createdAt: string;
+  cover?: Entitlement[];
+}

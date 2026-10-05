@@ -363,6 +363,19 @@ export function AssetRegister({
           detail &&
           canManage && (
             <Space>
+              {detail.customer && detail.status === "active" && (
+                <Link
+                  href={`${ROUTES.serviceWorkOrders}?${new URLSearchParams({
+                    customer: detail.customer.id,
+                    label: `${detail.customer.code} · ${detail.customer.name}`,
+                    asset: detail.id,
+                  }).toString()}`}
+                >
+                  <Button size="small" type="primary">
+                    {m.workOrders.open}
+                  </Button>
+                </Link>
+              )}
               <Button size="small" onClick={() => startEdit(detail)}>
                 {m.edit}
               </Button>

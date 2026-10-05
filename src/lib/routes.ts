@@ -208,6 +208,8 @@ export const ROUTES = {
   serviceAssetImport: `${HOME_PATH}/service/assets/import`,
   /** CD-237 — warranties and service contracts. */
   serviceEntitlements: `${HOME_PATH}/service/entitlements`,
+  /** CD-239 — service jobs. */
+  serviceWorkOrders: `${HOME_PATH}/service/work-orders`,
   /** CD-192 — every running project, the most at risk first. */
   projectPortfolio: `${HOME_PATH}/projects/portfolio`,
   /** CD-161 — คลังสัญญา (ฝ่ายกฎหมาย). */

@@ -70,6 +70,7 @@ export type MenuIconKey =
   | "projectWorkload"
   | "serviceAsset"
   | "serviceEntitlement"
+  | "serviceWorkOrder"
   | "esignLayout"
   | "esignAuthority";
 
@@ -462,6 +463,15 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     label: messages.nav.serviceAssets,
     href: ROUTES.serviceAssets,
     icon: "serviceAsset",
+    permissions: ["service.asset.read"],
+    group: messages.nav.serviceGroup,
+  },
+
+  /** CD-239 — ใบสั่งงานบริการ (เคส + อยู่ในสัญญา/เก็บเงิน). */
+  {
+    label: messages.nav.serviceWorkOrders,
+    href: ROUTES.serviceWorkOrders,
+    icon: "serviceWorkOrder",
     permissions: ["service.asset.read"],
     group: messages.nav.serviceGroup,
   },

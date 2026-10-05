@@ -1811,6 +1811,7 @@ export interface CrmConfig {
   projectDesignTypeCode?: string | null;
   projectTechChangeTypeCode?: string | null;
   projectResourceTypeCode?: string | null;
+  serviceWorkOrderTypeCode?: string | null;
   /** CD-191 — the documents every project must attach before closing. */
   projectCloseDocuments?: string[];
   /** CD-192 — the health scores at which a project turns amber, and red. */

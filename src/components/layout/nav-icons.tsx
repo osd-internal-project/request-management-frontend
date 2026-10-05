@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ToolOutlined,
   SafetyCertificateOutlined,
   HddOutlined,
   SolutionOutlined,
@@ -132,6 +133,7 @@ const MENU_ICONS: Record<MenuIconKey, ComponentType> = {
   projectWorkload: TeamOutlined,
   serviceAsset: HddOutlined,
   serviceEntitlement: SafetyCertificateOutlined,
+  serviceWorkOrder: ToolOutlined,
   esignLayout: LayoutOutlined,
   esignAuthority: SafetyOutlined,
 };
