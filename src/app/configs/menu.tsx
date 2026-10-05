@@ -55,6 +55,7 @@ export type MenuIconKey =
   | "hrTeam"
   | "hrStaff"
   | "delivery"
+  | "deliveryHandover"
   | "hrTimesheet"
   | "hrTimesheetApproval"
   | "hrLeave"
@@ -310,6 +311,19 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     href: ROUTES.delivery,
     icon: "delivery",
     permissions: ["delivery.read", "delivery.manage", "pm.project.read"],
+    group: messages.nav.deliveryGroup,
+  },
+  /** CD-255 — what the delivery team handed the service team. */
+  {
+    label: messages.nav.deliveryHandovers,
+    href: ROUTES.deliveryHandovers,
+    icon: "deliveryHandover",
+    permissions: [
+      "service.asset.read",
+      "service.asset.manage",
+      "delivery.read",
+      "delivery.manage",
+    ],
     group: messages.nav.deliveryGroup,
   },
   /** CD-229 — the employee register (HR's facts on top of the directory). */

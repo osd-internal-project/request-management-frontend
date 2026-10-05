@@ -128,6 +128,7 @@ const MENU_ICONS: Record<MenuIconKey, ComponentType> = {
   hrLeaveSettings: SettingOutlined,
   hrAvailability: CalendarOutlined,
   delivery: CarOutlined,
+  deliveryHandover: InboxOutlined,
   hrMandays: BarChartOutlined,
   hrLaborCost: DollarOutlined,
   pricingVendorCost: ShoppingCartOutlined,
