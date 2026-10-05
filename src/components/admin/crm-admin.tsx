@@ -391,6 +391,9 @@ function ConfigSection({
   const [softwareDocList, setSoftwareDocList] = useState<string[]>(
     config.projectSoftwareDocuments ?? [],
   );
+  const [deliveryDocs, setDeliveryDocs] = useState<Record<string, string[]>>(
+    config.deliveryDocuments ?? {},
+  );
   const [solutionType, setSolutionType] = useState(
     config.solutionRequestTypeCode ?? "",
   );
@@ -429,6 +432,7 @@ function ConfigSection({
       project_readiness_checklist: readinessList,
       project_as_built_documents: asBuiltList,
       project_software_documents: softwareDocList,
+      delivery_documents: deliveryDocs,
       solution_request_type_code: solutionType,
       solution_approval_type_code: solutionApprovalType,
       demo_request_type_code: demoType,
@@ -864,6 +868,31 @@ function ConfigSection({
       </div>
       <Text type="secondary" className="mt-2 block text-xs">
         {m.projectSoftwareDocumentsHint}
+      </Text>
+      {/* CD-251 — เอกสารส่งมอบบังคับต่อประเภทงาน */}
+      <Text className="mt-3 block text-xs">{m.deliveryDocuments}</Text>
+      <div className="mt-1 grid max-w-3xl grid-cols-1 gap-2 md:grid-cols-2">
+        {(["equipment", "material", "software", "service"] as const).map(
+          (type) => (
+            <div key={type}>
+              <Text type="secondary" className="mb-1 block text-xs">
+                {m.deliveryWorkTypes[type]}
+              </Text>
+              <Select
+                mode="tags"
+                className="w-full"
+                value={deliveryDocs[type] ?? []}
+                open={false}
+                onChange={(values: string[]) =>
+                  setDeliveryDocs((current) => ({ ...current, [type]: values }))
+                }
+              />
+            </div>
+          ),
+        )}
+      </div>
+      <Text type="secondary" className="mt-2 block text-xs">
+        {m.deliveryDocumentsHint}
       </Text>
 
       {/* CD-130 — ประเภทคำขอ Solution (Sales → Pre-Sales) */}

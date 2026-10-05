@@ -69,6 +69,7 @@ import { ProjectStatusCard } from "./project-status-card";
 import { ProjectTestsCard } from "./project-tests-card";
 import { ProjectReadinessCard } from "./project-readiness-card";
 import { ProjectDeliveryCard } from "@/components/delivery/project-delivery-card";
+import { DeliveryDocsCard } from "@/components/delivery/delivery-docs-card";
 import { ProjectAsBuiltCard } from "./project-as-built-card";
 import { ProjectAcceptanceCard } from "./project-acceptance-card";
 import { ProjectUatCard } from "./project-uat-card";
@@ -569,6 +570,8 @@ export function ProjectDetailView({
 
       {/* CD-250 — the delivery plan (loads itself) */}
       <ProjectDeliveryCard projectId={project.id} />
+      {/* CD-251 — each phase's delivery documents (loads itself) */}
+      <DeliveryDocsCard projectId={project.id} />
 
       {readiness && (
         <ProjectReadinessCard

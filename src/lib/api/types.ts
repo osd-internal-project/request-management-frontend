@@ -1824,6 +1824,8 @@ export interface CrmConfig {
   /** CD-226 — the as-built documents every project must leave. */
   projectAsBuiltDocuments?: string[];
   projectSoftwareDocuments?: string[];
+  /** CD-251 — delivery documents required per work type (saved or standard). */
+  deliveryDocuments?: Record<string, string[]>;
   /** CD-130 — the type Pre-Sales takes solution requests on. */
   solutionRequestTypeCode?: string | null;
   /** CD-143 — the type a Solution version is sent for approval on. */

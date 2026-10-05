@@ -3304,6 +3304,33 @@ export const messages = {
     } as Record<string, string>,
     project: "โครงการ",
     lines: "สินค้า",
+    /** CD-251 ชุดเอกสารส่งมอบ */
+    docs: {
+      title: "ชุดเอกสารส่งมอบ",
+      elsewhere: "เก็บไว้ที่ส่วนวิศวกรรม (ไม่ต้องแนบซ้ำ):",
+      noPhase:
+        "ยังไม่มีเฟสที่มีรอบส่งของ — วางแผนส่งมอบก่อน แล้วเอกสารบังคับจะขึ้นตามประเภทงาน",
+      complete: "ครบ",
+      missingCount: "ขาด {n} รายการ",
+      nextPhase: "เฟสที่ตรวจก่อนนัดตรวจรับ",
+      noneRequired: "ประเภทงานของเฟสนี้ไม่มีเอกสารบังคับ",
+      extras: "เอกสารเพิ่มเติม",
+      attach: "แนบ",
+      attachOther: "แนบเอกสารอื่น",
+      attachTitle: "แนบเอกสารส่งมอบ",
+      attached: "แนบเอกสารแล้ว",
+      docTitle: "ชื่อเอกสาร",
+      note: "หมายเหตุ (ถ้ามี)",
+      pickFile: "เลือกไฟล์ (PDF รูป Word Excel ไม่เกิน 25 MB)",
+      remove: "ลบ",
+      removeConfirm: "ลบเอกสารนี้?",
+      workTypes: {
+        equipment: "อุปกรณ์",
+        material: "วัสดุ",
+        software: "ซอฟต์แวร์",
+        service: "บริการ",
+      } as Record<string, string>,
+    },
   },
   hr: {
     /** CD-229 ทะเบียนพนักงาน */
@@ -5618,6 +5645,15 @@ export const messages = {
       projectAsBuiltDocuments: "เอกสารสภาพจริง (As-built) ที่ทุกโครงการต้องมี",
       projectSoftwareDocuments:
         "เอกสารซอฟต์แวร์ที่โครงการซอฟต์แวร์ต้องมีต่อเวอร์ชัน",
+      deliveryDocuments: "เอกสารส่งมอบบังคับต่อประเภทงาน (CD-251)",
+      deliveryDocumentsHint:
+        "เฟสหนึ่งต้องมีเอกสารของทุกประเภทงานที่อยู่ในรอบส่งของเฟสนั้น · เอกสารบังคับที่ขาดของเฟสถัดไปขวางการนัดตรวจรับ (ผ่านการตรวจความพร้อม) · ลบหมดทุกชื่อ = ประเภทนั้นไม่บังคับเอกสาร",
+      deliveryWorkTypes: {
+        equipment: "อุปกรณ์",
+        material: "วัสดุ",
+        software: "ซอฟต์แวร์",
+        service: "บริการ",
+      } as Record<string, string>,
       projectSoftwareDocumentsHint:
         "พิมพ์ชื่อเอกสารแล้วกด Enter ทีละรายการ · ใช้กับโครงการที่มีแผนพัฒนาหรือ environment เท่านั้น · ต้องแนบครบสำหรับเวอร์ชันที่อยู่บน production ก่อนผ่านการตรวจความพร้อม",
       projectAsBuiltHint:
