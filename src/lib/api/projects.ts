@@ -1541,3 +1541,52 @@ export function getProjectIntegrations(
 ): Promise<ApiResult<ProjectIntegrationsView>> {
   return apiGet(`/projects/${encodeURIComponent(id)}/integrations`);
 }
+
+// --- CD-224 ปรับแก้ทางเทคนิค ---------------------------------------------------------
+
+export interface TechChangeLine {
+  ref: string | null;
+  name: string;
+  unit: string;
+  quantityFrom: number;
+  quantityTo: number;
+  unitCost: number;
+}
+
+export interface TechChangeRow {
+  id: string;
+  label: string;
+  title: string;
+  reason: string | null;
+  description: string | null;
+  lines: TechChangeLine[];
+  costChange: number;
+  affectsScope: boolean;
+  scopeAdded: string | null;
+  scopeRemoved: string | null;
+  change: { id: string; label: string; status: string } | null;
+  status: string;
+  inForce: boolean;
+  applied: boolean;
+  requestNo: string | null;
+  error: string | null;
+  submittedAt: string | null;
+  submittedByName: string | null;
+  decidedAt: string | null;
+  createdByName: string | null;
+  mayEdit: boolean;
+}
+
+export interface ProjectTechChangesView {
+  canWrite: boolean;
+  canEdit: boolean;
+  typeSet: boolean;
+  boq: { ref: string; label: string }[];
+  changes: TechChangeRow[];
+}
+
+export function getProjectTechChanges(
+  id: string,
+): Promise<ApiResult<ProjectTechChangesView>> {
+  return apiGet(`/projects/${encodeURIComponent(id)}/tech-changes`);
+}

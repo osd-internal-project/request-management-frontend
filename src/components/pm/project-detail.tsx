@@ -48,6 +48,7 @@ import type {
   ProjectSoftwareDocsView,
   ProjectConfigsView,
   ProjectIntegrationsView,
+  ProjectTechChangesView,
 } from "@/lib/api/projects";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
@@ -78,6 +79,7 @@ import { ProjectReleasesCard } from "./project-releases-card";
 import { ProjectSoftwareDocsCard } from "./project-software-docs-card";
 import { ProjectConfigsCard } from "./project-configs-card";
 import { ProjectIntegrationsCard } from "./project-integrations-card";
+import { ProjectTechChangesCard } from "./project-tech-changes-card";
 import {
   ProjectTeamFields,
   teamPayload,
@@ -119,6 +121,7 @@ export function ProjectDetailView({
   softwareDocs,
   configs,
   integrations,
+  techChanges,
   currentUserId,
   people,
 }: {
@@ -168,6 +171,7 @@ export function ProjectDetailView({
   readonly softwareDocs: ProjectSoftwareDocsView | null;
   readonly configs: ProjectConfigsView | null;
   readonly integrations: ProjectIntegrationsView | null;
+  readonly techChanges: ProjectTechChangesView | null;
   readonly currentUserId: string | null;
   /** The company's people, for the manager and team pickers. */
   readonly people: { id: string; name: string }[];
@@ -504,6 +508,12 @@ export function ProjectDetailView({
       {softwareDocs?.software && (
         <ProjectSoftwareDocsCard projectId={project.id} view={softwareDocs} />
       )}
+
+      {/* CD-224 — technical changes, their BOQ, cost and scope impact */}
+      {techChanges &&
+        (techChanges.changes.length > 0 || techChanges.canWrite) && (
+          <ProjectTechChangesCard projectId={project.id} view={techChanges} />
+        )}
 
       {/* CD-219 — the customer's systems the delivery connects to */}
       {integrations &&
