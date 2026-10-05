@@ -287,3 +287,35 @@ export interface LabourRateRow {
   productCode: string | null;
   note: string | null;
 }
+
+/** CD-244 — one PM round. */
+export interface PmRound {
+  id: string;
+  entitlementId: string;
+  entitlementTitle: string;
+  customer: { id: string; code: string; name: string } | null;
+  roundNo: number;
+  dueOn: string;
+  status: "planned" | "opening" | "opened" | "done" | "skipped" | "failed";
+  overdue: boolean;
+  workOrderId: string | null;
+  requestId: string | null;
+  request: { requestNo: string | null; status: string } | null;
+  openedAt: string | null;
+  openError: string | null;
+  doneAt: string | null;
+  skippedReason: string | null;
+}
+
+/** CD-244 — a service contract's PM plan and rounds. */
+export interface PmPlanView {
+  entitlementId: string;
+  plan: {
+    interval: string;
+    leadDays: number;
+    ownerUserId: string;
+    ownerName: string;
+    active: boolean;
+  } | null;
+  rounds: PmRound[];
+}

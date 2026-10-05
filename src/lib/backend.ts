@@ -105,6 +105,8 @@ export const CORE_SERVICE_PREFIXES = [
   // CD-243 — time, materials and selling rates
   "/service-time-materials",
   "/service-labour-rates",
+  // CD-244 — PM plans and rounds
+  "/service-pm",
   "/sales-targets",
   "/campaigns",
   "/target-accounts",

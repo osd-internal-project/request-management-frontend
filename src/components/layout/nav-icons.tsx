@@ -139,6 +139,7 @@ const MENU_ICONS: Record<MenuIconKey, ComponentType> = {
   serviceOnCall: PhoneOutlined,
   serviceBilling: AccountBookOutlined,
   serviceLabourRate: FieldTimeOutlined,
+  servicePm: CalendarOutlined,
   esignLayout: LayoutOutlined,
   esignAuthority: SafetyOutlined,
 };

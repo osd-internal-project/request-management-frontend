@@ -74,6 +74,7 @@ export type MenuIconKey =
   | "serviceOnCall"
   | "serviceBilling"
   | "serviceLabourRate"
+  | "servicePm"
   | "esignLayout"
   | "esignAuthority";
 
@@ -503,6 +504,15 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     href: ROUTES.serviceLabourRates,
     icon: "serviceLabourRate",
     permissions: ["service.asset.manage"],
+    group: messages.nav.serviceGroup,
+  },
+
+  /** CD-244 — รอบบำรุงรักษาตามแผนของสัญญาบริการ. */
+  {
+    label: messages.nav.servicePm,
+    href: ROUTES.servicePm,
+    icon: "servicePm",
+    permissions: ["service.asset.read"],
     group: messages.nav.serviceGroup,
   },
 

@@ -28,6 +28,7 @@ import type {
   ServiceAssetList,
 } from "@/lib/api/service";
 import { messages } from "@/lib/messages";
+import { PmPlanCard } from "./pm-plan";
 
 const m = messages.service.assets.entitlements;
 
@@ -92,9 +93,12 @@ export function EntitlementFacts({ row }: { readonly row: Entitlement }) {
 export function Entitlements({
   canManage,
   customerId,
+  people = [],
 }: {
   readonly canManage: boolean;
   readonly customerId?: string;
+  /** CD-244 — who may own a PM plan; empty = the plan is read-only. */
+  readonly people?: readonly { id: string; name: string }[];
 }) {
   const { message } = App.useApp();
   const [state, setState] = useState("active");
@@ -489,6 +493,14 @@ export function Entitlements({
                 </Text>
               </div>
             ))}
+            {/* CD-244 — a service contract's PM plan */}
+            {detail.kind === "service_contract" && (
+              <PmPlanCard
+                entitlementId={detail.id}
+                canManage={canManage && detail.state !== "cancelled"}
+                people={people}
+              />
+            )}
           </>
         )}
       </Drawer>
