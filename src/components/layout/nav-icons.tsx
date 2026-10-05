@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  AccountBookOutlined,
   PhoneOutlined,
   ToolOutlined,
   SafetyCertificateOutlined,
@@ -136,6 +137,7 @@ const MENU_ICONS: Record<MenuIconKey, ComponentType> = {
   serviceEntitlement: SafetyCertificateOutlined,
   serviceWorkOrder: ToolOutlined,
   serviceOnCall: PhoneOutlined,
+  serviceBilling: AccountBookOutlined,
   esignLayout: LayoutOutlined,
   esignAuthority: SafetyOutlined,
 };

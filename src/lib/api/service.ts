@@ -180,3 +180,44 @@ export interface OnCallDispatch {
   escalatedFromName: string | null;
   watching: boolean;
 }
+
+/** CD-242 — a billed service job's charge, and where it stands in SAP. */
+export interface ServiceBilling {
+  id: string;
+  workOrderId: string;
+  requestId: string;
+  reference: string;
+  status: "draft" | "confirmed" | "cancelled";
+  currency: string;
+  netTotal: number;
+  note: string | null;
+  request: { requestNo: string | null; status: string; subject: string } | null;
+  customer: { id: string; code: string; name: string } | null;
+  lines: {
+    lineNo: number;
+    productCode: string | null;
+    description: string;
+    quantity: number;
+    unit: string | null;
+    unitPrice: number;
+    discountPct: number;
+    lineTotal: number;
+    source: string;
+  }[];
+  confirmedAt: string | null;
+  confirmedByName: string | null;
+  cancelledAt: string | null;
+  cancelReason: string | null;
+  erp: {
+    status: string;
+    draftNo: string | null;
+    lastError: string | null;
+    syncedAt: string | null;
+    invoiceStatus: string | null;
+    invoiceNo: string | null;
+    invoiceTotal: number | null;
+    paid: number | null;
+    checkedAt: string | null;
+  };
+  createdAt: string;
+}

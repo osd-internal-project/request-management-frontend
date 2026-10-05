@@ -72,6 +72,7 @@ export type MenuIconKey =
   | "serviceEntitlement"
   | "serviceWorkOrder"
   | "serviceOnCall"
+  | "serviceBilling"
   | "esignLayout"
   | "esignAuthority";
 
@@ -482,6 +483,15 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     label: messages.nav.serviceOnCall,
     href: ROUTES.serviceOnCall,
     icon: "serviceOnCall",
+    permissions: ["service.asset.read"],
+    group: messages.nav.serviceGroup,
+  },
+
+  /** CD-242 — ใบเรียกเก็บงานบริการที่ส่ง SAP. */
+  {
+    label: messages.nav.serviceBilling,
+    href: ROUTES.serviceBilling,
+    icon: "serviceBilling",
     permissions: ["service.asset.read"],
     group: messages.nav.serviceGroup,
   },

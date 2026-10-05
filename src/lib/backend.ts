@@ -100,6 +100,8 @@ export const CORE_SERVICE_PREFIXES = [
   "/service-work-orders",
   // CD-241 — the out-of-hours rota
   "/service-on-call",
+  // CD-242 — billed service jobs to SAP
+  "/service-billings",
   "/sales-targets",
   "/campaigns",
   "/target-accounts",
