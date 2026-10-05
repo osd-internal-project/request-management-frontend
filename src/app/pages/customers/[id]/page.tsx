@@ -1,7 +1,11 @@
 import { notFound, redirect } from "next/navigation";
 import { CustomerDetailView } from "@/components/crm/customers/customer-detail";
 import customers from "@/lib/api/customers";
-import { getOpportunities, getQuotations, getSaleOrders } from "@/lib/api/sales";
+import {
+  getOpportunities,
+  getQuotations,
+  getSaleOrders,
+} from "@/lib/api/sales";
 import { HOME_PATH } from "@/lib/routes";
 import { can, getSession } from "@/lib/session";
 
@@ -38,32 +42,31 @@ export default async function CustomerDetailPage({
     opportunitiesResult,
     quotationsResult,
     saleOrdersResult,
-  ] =
-    await Promise.all([
-      customers.getCustomer(id),
-      customers.getCustomerHistory(id),
-      customers.getCustomerTimeline(id),
-      customers.getSegmentOptions(),
-      customers.getCustomerSummary(id),
-      customers.getContactConsents(id),
-      // C360-04: gate-before-fetch — a viewer without request.read never
-      // triggers this call, so no guaranteed-403 lands in the logs.
-      canReadRequests
-        ? // CD-68 — direct, and via the customer's deals and quotations
-          customers.getCustomerRequests(id)
-        : Promise.resolve(null),
-      // C360-04: no crm.sales.read → no call, tab hidden.
-      canReadSales
-        ? getOpportunities({ customer_id: id, page_size: 50 })
-        : Promise.resolve(null),
-      // ฉบับที่ถูกเวอร์ชันใหม่แทนแล้วไม่นับ — ดูประวัติเวอร์ชันได้ในหน้าใบเสนอราคา
-      canReadSales
-        ? getQuotations({ customer_id: id, current: true, page_size: 50 })
-        : Promise.resolve(null),
-      canReadSales
-        ? getSaleOrders({ customer_id: id, page_size: 50 })
-        : Promise.resolve(null),
-    ]);
+  ] = await Promise.all([
+    customers.getCustomer(id),
+    customers.getCustomerHistory(id),
+    customers.getCustomerTimeline(id),
+    customers.getSegmentOptions(),
+    customers.getCustomerSummary(id),
+    customers.getContactConsents(id),
+    // C360-04: gate-before-fetch — a viewer without request.read never
+    // triggers this call, so no guaranteed-403 lands in the logs.
+    canReadRequests
+      ? // CD-68 — direct, and via the customer's deals and quotations
+        customers.getCustomerRequests(id)
+      : Promise.resolve(null),
+    // C360-04: no crm.sales.read → no call, tab hidden.
+    canReadSales
+      ? getOpportunities({ customer_id: id, page_size: 50 })
+      : Promise.resolve(null),
+    // ฉบับที่ถูกเวอร์ชันใหม่แทนแล้วไม่นับ — ดูประวัติเวอร์ชันได้ในหน้าใบเสนอราคา
+    canReadSales
+      ? getQuotations({ customer_id: id, current: true, page_size: 50 })
+      : Promise.resolve(null),
+    canReadSales
+      ? getSaleOrders({ customer_id: id, page_size: 50 })
+      : Promise.resolve(null),
+  ]);
 
   // SCOPE-03: outside the caller's reach the backend answers 404 — render the
   // same, not an error page that admits the row exists.
@@ -86,8 +89,7 @@ export default async function CustomerDetailPage({
               ...approvalResult.data,
               // raising it makes a request as this viewer
               can_raise:
-                approvalResult.data.can_raise &&
-                can(session, "request.create"),
+                approvalResult.data.can_raise && can(session, "request.create"),
             }
           : null
       }
@@ -96,23 +98,41 @@ export default async function CustomerDetailPage({
       segmentOptions={optionsResult.ok ? optionsResult.data : []}
       canManage={can(session, "crm.customer.manage")}
       canMerge={can(session, "admin.customer.merge")}
+      canReadAssets={can(session, "service.asset.read")}
+      canManageAssets={can(session, "service.asset.manage")}
       canReadFinancials={canReadFinancials}
       summary={summaryResult.ok ? summaryResult.data : null}
       consents={consentsResult.ok ? consentsResult.data : []}
       relatedRequests={
-        requestsResult?.ok ? requestsResult.data.rows : canReadRequests ? [] : null
+        requestsResult?.ok
+          ? requestsResult.data.rows
+          : canReadRequests
+            ? []
+            : null
       }
       contractRequestTypeCode={
         requestsResult?.ok ? requestsResult.data.contractRequestTypeCode : null
       }
       customerOpportunities={
-        opportunitiesResult?.ok ? opportunitiesResult.data.data : canReadSales ? [] : null
+        opportunitiesResult?.ok
+          ? opportunitiesResult.data.data
+          : canReadSales
+            ? []
+            : null
       }
       customerQuotations={
-        quotationsResult?.ok ? quotationsResult.data.data : canReadSales ? [] : null
+        quotationsResult?.ok
+          ? quotationsResult.data.data
+          : canReadSales
+            ? []
+            : null
       }
       customerSaleOrders={
-        saleOrdersResult?.ok ? saleOrdersResult.data.data : canReadSales ? [] : null
+        saleOrdersResult?.ok
+          ? saleOrdersResult.data.data
+          : canReadSales
+            ? []
+            : null
       }
       canManageSales={can(session, "crm.sales.manage")}
     />

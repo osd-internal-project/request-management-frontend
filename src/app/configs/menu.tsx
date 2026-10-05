@@ -67,6 +67,7 @@ export type MenuIconKey =
   | "projectRisk"
   | "projectConfig"
   | "projectWorkload"
+  | "serviceAsset"
   | "esignLayout"
   | "esignAuthority";
 
@@ -444,6 +445,15 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     icon: "projectRisk",
     permissions: ["pm.project.read"],
     group: messages.nav.pmGroup,
+  },
+
+  /** CD-236 — ทะเบียนอุปกรณ์ที่ติดตั้งของลูกค้า. */
+  {
+    label: messages.nav.serviceAssets,
+    href: ROUTES.serviceAssets,
+    icon: "serviceAsset",
+    permissions: ["service.asset.read"],
+    group: messages.nav.serviceGroup,
   },
 
   /** CD-180 — ภาระงานทีมรายสัปดาห์ข้ามโครงการ (ผู้จัดคน / หัวหน้าทีม). */

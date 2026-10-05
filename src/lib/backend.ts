@@ -88,6 +88,10 @@ export const CORE_SERVICE_PREFIXES = [
   "/project-portfolio",
   "/project-releases",
   "/project-configs",
+  // CD-180 — the team's load across projects
+  "/project-resources",
+  // CD-236 — the installed base
+  "/service-assets",
   "/sales-targets",
   "/campaigns",
   "/target-accounts",

@@ -201,6 +201,9 @@ export const ROUTES = {
   projectConfigs: `${HOME_PATH}/projects/configs`,
   /** CD-180 — the team's load, week by week, across projects. */
   projectWorkload: `${HOME_PATH}/projects/workload`,
+  /** CD-236 — what customers have installed. */
+  serviceAssets: `${HOME_PATH}/service/assets`,
+  serviceAssetImport: `${HOME_PATH}/service/assets/import`,
   /** CD-192 — every running project, the most at risk first. */
   projectPortfolio: `${HOME_PATH}/projects/portfolio`,
   /** CD-161 — คลังสัญญา (ฝ่ายกฎหมาย). */
