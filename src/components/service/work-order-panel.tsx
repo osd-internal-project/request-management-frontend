@@ -25,6 +25,7 @@ import { ServiceBillingCard } from "./service-billing-card";
 import { TimeMaterialsCard } from "./time-materials-card";
 import { Claims, ReplaceUnitButton } from "./claims";
 import { ProblemBanner } from "./problems";
+import { SurveyCard } from "./surveys";
 
 const m = messages.service.assets.workOrders;
 
@@ -400,6 +401,11 @@ export function WorkOrderPanel({
         workOrderId={order.id}
         billable={order.billing === "billable"}
       />
+
+      {/* CD-248 — the customer's rating, once the job is done */}
+      {["completed", "approved", "closed"].includes(status) && (
+        <SurveyCard workOrderId={order.id} canManage={canManage} />
+      )}
 
       {/* CD-242 — a billed job, once done: its charge to SAP */}
       {order.billing === "billable" &&

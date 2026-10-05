@@ -113,6 +113,8 @@ export const CORE_SERVICE_PREFIXES = [
   "/service-problems",
   // CD-247 — service reports
   "/service-reports",
+  // CD-248 — satisfaction surveys (and their public routes)
+  "/service-surveys",
   "/sales-targets",
   "/campaigns",
   "/target-accounts",

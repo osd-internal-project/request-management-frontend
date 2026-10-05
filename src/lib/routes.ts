@@ -228,6 +228,8 @@ export const ROUTES = {
   serviceProblems: `${HOME_PATH}/service/problems`,
   /** CD-247 — service reports per cover and period. */
   serviceReports: `${HOME_PATH}/service/reports`,
+  /** CD-248 — satisfaction after service jobs. */
+  serviceSurveys: `${HOME_PATH}/service/surveys`,
   /** CD-192 — every running project, the most at risk first. */
   projectPortfolio: `${HOME_PATH}/projects/portfolio`,
   /** CD-161 — คลังสัญญา (ฝ่ายกฎหมาย). */

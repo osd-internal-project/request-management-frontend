@@ -80,6 +80,7 @@ export type MenuIconKey =
   | "serviceClaim"
   | "serviceProblem"
   | "serviceReport"
+  | "serviceSurvey"
   | "esignLayout"
   | "esignAuthority";
 
@@ -571,6 +572,15 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     label: messages.nav.serviceReports,
     href: ROUTES.serviceReports,
     icon: "serviceReport",
+    permissions: ["service.asset.read"],
+    group: messages.nav.serviceGroup,
+  },
+
+  /** CD-248 — ความพึงพอใจหลังปิดงานบริการ. */
+  {
+    label: messages.nav.serviceSurveys,
+    href: ROUTES.serviceSurveys,
+    icon: "serviceSurvey",
     permissions: ["service.asset.read"],
     group: messages.nav.serviceGroup,
   },

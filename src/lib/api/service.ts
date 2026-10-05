@@ -504,3 +504,44 @@ export interface ServiceReportRow {
   sentOn: string | null;
   sentTo: string | null;
 }
+
+/** CD-248 — a job's survey as the team sees it. */
+export interface ServiceSurvey {
+  id: string;
+  workOrderId: string;
+  requestId: string;
+  requestNo: string | null;
+  subject: string;
+  technicianName: string | null;
+  state: "open" | "answered" | "expired";
+  sentVia: string;
+  sentTo: string | null;
+  sentAt: string | null;
+  expiresAt: string;
+  answeredAt: string | null;
+  overall: number | null;
+  speed: number | null;
+  technician: number | null;
+  outcome: number | null;
+  comment: string | null;
+}
+
+export interface SurveyFigureRow {
+  key: string;
+  name?: string;
+  sent: number;
+  answered: number;
+  responsePct: number | null;
+  overall: number | null;
+  speed: number | null;
+  technician: number | null;
+  outcome: number | null;
+  low: number;
+}
+
+export interface SurveyFigures {
+  total: Omit<SurveyFigureRow, "key">;
+  byMonth: SurveyFigureRow[];
+  byTechnician: SurveyFigureRow[];
+  answers: ServiceSurvey[];
+}

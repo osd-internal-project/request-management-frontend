@@ -2180,6 +2180,7 @@ export interface HealthSignal {
     | "contract_ending"
     | "renewal_lost"
     | "low_satisfaction"
+    | "service_csat_low"
     | "no_contact";
   level: "amber" | "red";
   values: Record<string, number | string>;
