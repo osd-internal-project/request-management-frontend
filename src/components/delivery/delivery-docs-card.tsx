@@ -39,6 +39,8 @@ interface Doc {
 interface Phase {
   milestone: { id: string; seq: number; title: string; status: string };
   next: boolean;
+  /** CD-254 — the phase's installation confirmed complete. */
+  installed: { confirmedAt: string; confirmedBy: string; note: string } | null;
   workTypes: string[];
   complete: boolean;
   missing: string[];
@@ -48,6 +50,7 @@ interface Phase {
 
 interface View {
   canAttach: boolean;
+  canConfirmInstall: boolean;
   phases: Phase[];
   next: string | null;
 }
@@ -84,6 +87,13 @@ export function DeliveryDocsCard({ projectId }: { projectId: string }) {
     file: File | null;
   } | null>(null);
   const [busy, setBusy] = useState(false);
+  // CD-254 — confirm (with what still blocks it) or take back
+  const [installing, setInstalling] = useState<{
+    phase: Phase;
+    mode: "confirm" | "revoke";
+    text: string;
+    blockers: string[] | null;
+  } | null>(null);
   const base = `delivery/projects/${projectId}/documents`;
 
   useEffect(() => {
@@ -125,6 +135,45 @@ export function DeliveryDocsCard({ projectId }: { projectId: string }) {
     }
     void message.success(m.attached);
     setAttaching(null);
+    reload();
+  };
+
+  const openConfirm = async (phase: Phase) => {
+    setInstalling({ phase, mode: "confirm", text: "", blockers: null });
+    const result = await appApi<{ blockers: string[] }>(
+      `delivery/projects/${projectId}/install-gate`,
+    );
+    setInstalling((current) =>
+      current && current.phase.milestone.id === phase.milestone.id
+        ? { ...current, blockers: result.ok ? result.data.blockers : [] }
+        : current,
+    );
+  };
+
+  const submitInstall = async () => {
+    if (!installing) return;
+    const path = `delivery/projects/${projectId}/phases/${installing.phase.milestone.id}/install`;
+    setBusy(true);
+    const result = await appApi<unknown>(
+      installing.mode === "confirm" ? path : `${path}/revoke`,
+      {
+        method: "POST",
+        body: JSON.stringify(
+          installing.mode === "confirm"
+            ? { note: installing.text.trim() }
+            : { reason: installing.text.trim() },
+        ),
+      },
+    );
+    setBusy(false);
+    if (!result.ok) {
+      void message.error(result.message);
+      return;
+    }
+    void message.success(
+      installing.mode === "confirm" ? m.installConfirmed : m.installRevoked,
+    );
+    setInstalling(null);
     reload();
   };
 
@@ -215,6 +264,47 @@ export function DeliveryDocsCard({ projectId }: { projectId: string }) {
                 {phase.next ? (
                   <Tag color="processing">{m.nextPhase}</Tag>
                 ) : null}
+                {phase.installed ? (
+                  <Tag color="success" icon={<CheckCircleFilled />}>
+                    {m.installedOn.replace(
+                      "{d}",
+                      new Date(phase.installed.confirmedAt).toLocaleDateString(
+                        "th-TH",
+                      ),
+                    )}
+                  </Tag>
+                ) : (
+                  <Tag>{m.notInstalled}</Tag>
+                )}
+                {view.canConfirmInstall &&
+                phase.milestone.status !== "achieved" ? (
+                  phase.installed ? (
+                    <Button
+                      size="small"
+                      type="link"
+                      danger
+                      onClick={() =>
+                        setInstalling({
+                          phase,
+                          mode: "revoke",
+                          text: "",
+                          blockers: [],
+                        })
+                      }
+                    >
+                      {m.revokeInstall}
+                    </Button>
+                  ) : (
+                    <Button
+                      size="small"
+                      type="primary"
+                      ghost
+                      onClick={() => void openConfirm(phase)}
+                    >
+                      {m.confirmInstall}
+                    </Button>
+                  )
+                ) : null}
               </div>
               <div className="space-y-1">
                 {phase.required.map((row) => (
@@ -291,6 +381,65 @@ export function DeliveryDocsCard({ projectId }: { projectId: string }) {
           ))}
         </div>
       )}
+      <Modal
+        open={!!installing}
+        title={
+          installing
+            ? `${installing.mode === "confirm" ? m.confirmInstall : m.revokeInstall} — ${installing.phase.milestone.seq}. ${installing.phase.milestone.title}`
+            : ""
+        }
+        okText={
+          installing?.mode === "confirm" ? m.confirmInstall : m.revokeInstall
+        }
+        okButtonProps={{
+          loading: busy,
+          danger: installing?.mode === "revoke",
+          disabled:
+            !installing ||
+            (installing.mode === "confirm"
+              ? installing.blockers === null || installing.blockers.length > 0
+              : !installing.text.trim()),
+        }}
+        onOk={() => void submitInstall()}
+        onCancel={() => setInstalling(null)}
+        destroyOnHidden
+      >
+        {installing ? (
+          <div className="space-y-2">
+            {installing.mode === "confirm" ? (
+              installing.blockers === null ? (
+                <Skeleton active paragraph={{ rows: 1 }} />
+              ) : installing.blockers.length ? (
+                <Alert
+                  type="warning"
+                  showIcon
+                  title={m.installBlocked}
+                  description={
+                    <ul className="m-0 pl-4">
+                      {installing.blockers.map((b) => (
+                        <li key={b}>{b}</li>
+                      ))}
+                    </ul>
+                  }
+                />
+              ) : (
+                <Alert type="success" showIcon title={m.installReady} />
+              )
+            ) : null}
+            <Input.TextArea
+              rows={2}
+              maxLength={1000}
+              placeholder={
+                installing.mode === "confirm" ? m.note : m.revokeReason
+              }
+              value={installing.text}
+              onChange={(event) =>
+                setInstalling({ ...installing, text: event.target.value })
+              }
+            />
+          </div>
+        ) : null}
+      </Modal>
       <Modal
         open={!!attaching}
         title={m.attachTitle}
