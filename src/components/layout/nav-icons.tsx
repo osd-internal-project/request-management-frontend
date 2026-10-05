@@ -2,6 +2,8 @@
 
 import {
   SolutionOutlined,
+  ScheduleOutlined,
+  FileDoneOutlined,
   IdcardOutlined,
   LineChartOutlined,
   ExceptionOutlined,
@@ -108,6 +110,8 @@ const MENU_ICONS: Record<MenuIconKey, ComponentType> = {
   hrMe: UserOutlined,
   hrTeam: ApartmentOutlined,
   hrStaff: SolutionOutlined,
+  hrTimesheet: ScheduleOutlined,
+  hrTimesheetApproval: FileDoneOutlined,
   pricingVendorCost: ShoppingCartOutlined,
   projectPortfolio: FundProjectionScreenOutlined,
   projectRisk: WarningOutlined,

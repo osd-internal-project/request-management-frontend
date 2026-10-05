@@ -134,6 +134,9 @@ export const ROUTES = {
   /** CD-230 — ลูกทีมของฉัน และรายชื่อทีมงานสำหรับจัดคน. */
   hrTeam: `${HOME_PATH}/hr/team`,
   hrStaff: `${HOME_PATH}/hr/staff`,
+  /** CD-231 — Timesheet รายสัปดาห์ และหน้าอนุมัติของหัวหน้า. */
+  hrTimesheet: `${HOME_PATH}/hr/timesheet`,
+  hrTimesheetApprovals: `${HOME_PATH}/hr/timesheet/approvals`,
   /** CD-206 — ต้นทุนคู่ค้าจาก SAP. */
   pricingVendorCosts: `${HOME_PATH}/pricing/vendor-costs`,
   /** CD-142 — SAP's suppliers with the technical profile Pre-Sales keeps. */

@@ -54,6 +54,8 @@ export type MenuIconKey =
   | "hrMe"
   | "hrTeam"
   | "hrStaff"
+  | "hrTimesheet"
+  | "hrTimesheetApproval"
   | "pricingVendorCost"
   | "projectPortfolio"
   | "projectRisk"
@@ -305,6 +307,20 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     label: messages.nav.hrTeam,
     href: ROUTES.hrTeam,
     icon: "hrTeam",
+    group: messages.nav.hrGroup,
+  },
+  /** CD-231 — everyone logs their week. */
+  {
+    label: messages.nav.hrTimesheet,
+    href: ROUTES.hrTimesheet,
+    icon: "hrTimesheet",
+    group: messages.nav.hrGroup,
+  },
+  /** CD-231 — supervisors (and HR) approve or return submitted weeks. */
+  {
+    label: messages.nav.hrTimesheetApprovals,
+    href: ROUTES.hrTimesheetApprovals,
+    icon: "hrTimesheetApproval",
     group: messages.nav.hrGroup,
   },
   /** CD-230 — who is here, at what level, with which skills (staffing). */
