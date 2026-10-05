@@ -188,6 +188,8 @@ export const ROUTES = {
   adminRunNumbers: `${HOME_PATH}/admin/run-numbers`,
   /** CD-18 PM — โครงการ. */
   projects: `${HOME_PATH}/projects`,
+  /** CD-250 — the delivery team's board. */
+  delivery: `${HOME_PATH}/delivery`,
   projectOpen: (contractId?: string) =>
     `${HOME_PATH}/projects/open${contractId ? `?contract=${contractId}` : ""}`,
   projectDetail: (id: string) => `${HOME_PATH}/projects/${id}`,

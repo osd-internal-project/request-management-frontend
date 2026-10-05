@@ -90,6 +90,8 @@ export const CORE_SERVICE_PREFIXES = [
   "/project-configs",
   // CD-180 — the team's load across projects
   "/project-resources",
+  // CD-20 Delivery (CD-250)
+  "/delivery",
   // CD-236 — the installed base
   "/service-assets",
   // CD-237 — what covers them

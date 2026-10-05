@@ -68,6 +68,7 @@ import { ProjectCloseoutCard } from "./project-closeout-card";
 import { ProjectStatusCard } from "./project-status-card";
 import { ProjectTestsCard } from "./project-tests-card";
 import { ProjectReadinessCard } from "./project-readiness-card";
+import { ProjectDeliveryCard } from "@/components/delivery/project-delivery-card";
 import { ProjectAsBuiltCard } from "./project-as-built-card";
 import { ProjectAcceptanceCard } from "./project-acceptance-card";
 import { ProjectUatCard } from "./project-uat-card";
@@ -565,6 +566,9 @@ export function ProjectDetailView({
       )}
 
       {asBuilt && <ProjectAsBuiltCard projectId={project.id} view={asBuilt} />}
+
+      {/* CD-250 — the delivery plan (loads itself) */}
+      <ProjectDeliveryCard projectId={project.id} />
 
       {readiness && (
         <ProjectReadinessCard
