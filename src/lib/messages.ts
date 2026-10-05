@@ -5245,6 +5245,10 @@ export const messages = {
       projectReadinessHint:
         "พิมพ์รายการแล้วกด Enter ทีละข้อ · คัดลอกเข้าโครงการเมื่อผู้จัดการโครงการกดเริ่มตรวจ แล้วแก้เพิ่มลดในโครงการได้ · ระบบตรวจเองเพิ่ม: ทดสอบผ่านครบ และไม่มีปัญหาค้าง",
       projectHealthRed: "คะแนนสุขภาพโครงการที่ขึ้นสีแดง",
+      projectCostWarnPct: "ต้นทุนจริงถึง % ของงบ — เตือนใกล้เกินงบ",
+      projectCostAlertPct: "ต้นทุนจริงเกิน % ของงบ — แจ้งเกินงบ",
+      projectCostHint:
+        "คิดต่อหมวด (วัสดุ/แรงงาน/อื่น ๆ) และยอดรวม เทียบงบอ้างอิงที่ยืนยันแล้ว · แจ้งผู้จัดการโครงการและผู้มีสิทธิ์ดูราคา ครั้งเดียวต่อระดับต่องบแต่ละฉบับ",
       projectHealthHint:
         "คะแนนรวมจาก: งานช้ากว่าแผน (≥5 จุด = 5, ≥10 = 15, ≥20 = 30) · milestone ล่าช้า 15/รายการ (สูงสุด 30) · ความเสี่ยงวิกฤติ 20 สูง 10 (สูงสุด 30) · ปัญหาเลยกำหนด 5/ข้อ (สูงสุด 20) · งบเพิ่ม ≥10% = 10, ≥20% = 20 · งวดชำระเลยกำหนด 10/งวด (สูงสุด 20) — ถึงเกณฑ์เหลือง/แดงตามค่าที่ตั้ง",
       projectCloseDocumentsHint:
@@ -5551,6 +5555,58 @@ export const messages = {
         addSetting: "เพิ่มค่าตั้งค่า",
         differs: "แบบนี้ต่างจาก Solution ที่อนุมัติ",
         differences: "ต่างตรงไหน",
+      },
+    },
+    costs: {
+      title: "ต้นทุนจริงเทียบงบ",
+      hint: "แรงงานจาก Timesheet ที่อนุมัติแล้ว × อัตราต้นทุนของวันนั้น · วัสดุ/อื่น ๆ จาก ERP ตามรหัสโครงการ และที่ผู้จัดการบันทึกเองพร้อมหลักฐาน · เตือนเมื่อถึงเกณฑ์ในตั้งค่า CRM",
+      noBudget: "ยังไม่มีงบอ้างอิงที่ยืนยันแล้ว — ยังเทียบไม่ได้",
+      budgetVersion: (n: number) => `งบฉบับที่ ${n}`,
+      thresholds: (warn: number, alert: number) =>
+        `เตือนที่ ${warn}% · เกินงบเมื่อเกิน ${alert}%`,
+      category: {
+        material: "วัสดุ/อุปกรณ์",
+        labor: "แรงงาน",
+        other: "อื่น ๆ",
+        total: "รวม",
+      } as Record<string, string>,
+      level: { ok: "ปกติ", warn: "ใกล้เกินงบ", over: "เกินงบ" } as Record<
+        string,
+        string
+      >,
+      columns: {
+        category: "หมวด",
+        budget: "งบ",
+        actual: "ต้นทุนจริง",
+        pct: "% ของงบ",
+        level: "สถานะ",
+      },
+      noBudgetLine: "ไม่มีงบ",
+      labor: (mandays: string, hours: string) =>
+        `แรงงาน ${mandays} man-day (${hours} ชม.)`,
+      unpriced: (hours: string) =>
+        `${hours} ชม. ยังไม่มีอัตรา (ไม่มีระดับหรืออัตราของวันนั้น) — ไม่นับ`,
+      lastSync: (at: string) => `อ่านจาก ERP ล่าสุด ${at}`,
+      neverSynced: "ยังไม่เคยอ่านจาก ERP",
+      sync: "อ่านจาก ERP ตอนนี้",
+      add: "บันทึกต้นทุน",
+      entries: "รายการต้นทุน (ไม่รวมแรงงาน)",
+      noEntries: "ยังไม่มีรายการ",
+      source: { erp: "ERP", manual: "บันทึกเอง" } as Record<string, string>,
+      evidence: "หลักฐาน",
+      remove: "นำออก",
+      removeConfirm: "นำรายการนี้ออก?",
+      saved: "บันทึกแล้ว",
+      form: {
+        category: "หมวด",
+        description: "รายการ",
+        amount: "จำนวนเงิน (บาท)",
+        incurredOn: "วันที่เกิดค่าใช้จ่าย",
+        vendor: "ผู้ขาย/ผู้รับเงิน",
+        docNo: "เลขที่เอกสาร",
+        file: "หลักฐาน",
+        save: "บันทึก",
+        close: "ปิด",
       },
     },
     techChanges: {

@@ -1815,6 +1815,8 @@ export interface CrmConfig {
   /** CD-192 — the health scores at which a project turns amber, and red. */
   projectHealthAmber?: number;
   projectHealthRed?: number;
+  projectCostWarnPct?: number;
+  projectCostAlertPct?: number;
   /** CD-225 — the company's readiness checklist. */
   projectReadinessChecklist?: string[];
   /** CD-226 — the as-built documents every project must leave. */

@@ -374,6 +374,8 @@ function ConfigSection({
     config.projectHealthAmber ?? 20,
   );
   const [healthRed, setHealthRed] = useState(config.projectHealthRed ?? 40);
+  const [costWarn, setCostWarn] = useState(config.projectCostWarnPct ?? 90);
+  const [costAlert, setCostAlert] = useState(config.projectCostAlertPct ?? 100);
   const [readinessList, setReadinessList] = useState<string[]>(
     config.projectReadinessChecklist ?? [],
   );
@@ -414,6 +416,8 @@ function ConfigSection({
       project_close_documents: closeDocuments,
       project_health_amber: healthAmber,
       project_health_red: healthRed,
+      project_cost_warn_pct: costWarn,
+      project_cost_alert_pct: costAlert,
       project_readiness_checklist: readinessList,
       project_as_built_documents: asBuiltList,
       project_software_documents: softwareDocList,
@@ -754,6 +758,32 @@ function ConfigSection({
       </div>
       <Text type="secondary" className="mt-2 block text-xs">
         {m.projectHealthHint}
+      </Text>
+      {/* CD-190 — เกณฑ์ต้นทุนโครงการเทียบงบ */}
+      <div className="mt-3 flex flex-wrap gap-4">
+        <div>
+          <Text className="mb-1 block text-xs">{m.projectCostWarnPct}</Text>
+          <InputNumber
+            min={1}
+            max={500}
+            suffix="%"
+            value={costWarn}
+            onChange={(value) => setCostWarn(Number(value ?? 90))}
+          />
+        </div>
+        <div>
+          <Text className="mb-1 block text-xs">{m.projectCostAlertPct}</Text>
+          <InputNumber
+            min={1}
+            max={500}
+            suffix="%"
+            value={costAlert}
+            onChange={(value) => setCostAlert(Number(value ?? 100))}
+          />
+        </div>
+      </div>
+      <Text type="secondary" className="mt-2 block text-xs">
+        {m.projectCostHint}
       </Text>
       {/* CD-225 — รายการตรวจความพร้อมก่อนส่งมอบ */}
       <div className="mt-3 max-w-xl">

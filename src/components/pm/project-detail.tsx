@@ -49,6 +49,7 @@ import type {
   ProjectConfigsView,
   ProjectIntegrationsView,
   ProjectTechChangesView,
+  ProjectCostsView,
 } from "@/lib/api/projects";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
@@ -80,6 +81,7 @@ import { ProjectSoftwareDocsCard } from "./project-software-docs-card";
 import { ProjectConfigsCard } from "./project-configs-card";
 import { ProjectIntegrationsCard } from "./project-integrations-card";
 import { ProjectTechChangesCard } from "./project-tech-changes-card";
+import { ProjectCostsCard } from "./project-costs-card";
 import {
   ProjectTeamFields,
   teamPayload,
@@ -122,6 +124,7 @@ export function ProjectDetailView({
   configs,
   integrations,
   techChanges,
+  costs,
   currentUserId,
   people,
 }: {
@@ -172,6 +175,7 @@ export function ProjectDetailView({
   readonly configs: ProjectConfigsView | null;
   readonly integrations: ProjectIntegrationsView | null;
   readonly techChanges: ProjectTechChangesView | null;
+  readonly costs: ProjectCostsView | null;
   readonly currentUserId: string | null;
   /** The company's people, for the manager and team pickers. */
   readonly people: { id: string; name: string }[];
@@ -460,6 +464,9 @@ export function ProjectDetailView({
           view={budget}
         />
       )}
+
+      {/* CD-190 — actual against the budget above */}
+      {costs && <ProjectCostsCard projectId={project.id} view={costs} />}
 
       {payments && (
         <ProjectPaymentsCard projectId={project.id} view={payments} />

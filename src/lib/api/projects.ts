@@ -1590,3 +1590,47 @@ export function getProjectTechChanges(
 ): Promise<ApiResult<ProjectTechChangesView>> {
   return apiGet(`/projects/${encodeURIComponent(id)}/tech-changes`);
 }
+
+// --- CD-190 ติดตามต้นทุนโครงการ ------------------------------------------------------
+
+export interface ProjectCostRow {
+  category: "material" | "labor" | "other" | "total";
+  budget: number;
+  actual: number;
+  pct: number | null;
+  level: "ok" | "warn" | "over";
+}
+
+export interface ProjectCostEntry {
+  id: string;
+  category: string;
+  source: "erp" | "manual";
+  docNo: string | null;
+  description: string;
+  amount: number;
+  incurredOn: string;
+  vendorName: string | null;
+  evidenceName: string | null;
+  createdByName: string | null;
+}
+
+export interface ProjectCostsView {
+  canEdit: boolean;
+  budget: { versionNo: number } | null;
+  thresholds: { warnPct: number; alertPct: number };
+  rows: ProjectCostRow[];
+  labor: {
+    amount: number;
+    hours: number;
+    mandays: number;
+    unpricedHours: number;
+  };
+  lastErpSyncAt: string | null;
+  entries: ProjectCostEntry[];
+}
+
+export function getProjectCosts(
+  id: string,
+): Promise<ApiResult<ProjectCostsView>> {
+  return apiGet(`/projects/${encodeURIComponent(id)}/costs`);
+}
