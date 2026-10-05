@@ -2,6 +2,7 @@
 
 import {
   AccountBookOutlined,
+  BugOutlined,
   RollbackOutlined,
   PhoneOutlined,
   ToolOutlined,
@@ -142,6 +143,7 @@ const MENU_ICONS: Record<MenuIconKey, ComponentType> = {
   serviceLabourRate: FieldTimeOutlined,
   servicePm: CalendarOutlined,
   serviceClaim: RollbackOutlined,
+  serviceProblem: BugOutlined,
   esignLayout: LayoutOutlined,
   esignAuthority: SafetyOutlined,
 };

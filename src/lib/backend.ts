@@ -109,6 +109,8 @@ export const CORE_SERVICE_PREFIXES = [
   "/service-pm",
   // CD-245 — claims to suppliers
   "/service-claims",
+  // CD-246 — problems behind repeated faults
+  "/service-problems",
   "/sales-targets",
   "/campaigns",
   "/target-accounts",

@@ -363,3 +363,58 @@ export interface ErpVendorRow {
   code: string;
   name: string;
 }
+
+/** CD-246 — a job as a problem sees it. */
+export interface ProblemJob {
+  workOrderId: string;
+  requestId: string;
+  requestNo: string | null;
+  status: string | null;
+  subject: string;
+  asset: string | null;
+  customer: string | null;
+  cause: string | null;
+  resolution: string | null;
+  createdAt: string;
+}
+
+/** CD-246 — a problem behind repeated faults. */
+export interface ServiceProblem {
+  id: string;
+  problemNo: string;
+  title: string;
+  scope: "asset" | "model" | "customer_model";
+  assetId: string | null;
+  asset: string | null;
+  productCode: string | null;
+  customerId: string | null;
+  customer: string | null;
+  ownerUserId: string;
+  ownerName: string;
+  status: "open" | "investigating" | "known_error" | "resolved" | "closed";
+  workaround: string | null;
+  rootCause: string | null;
+  permanentFix: string | null;
+  techChangeRef: string | null;
+  resolvedAt: string | null;
+  closedAt: string | null;
+  createdAt: string;
+  jobCount?: number;
+  jobs?: ProblemJob[];
+}
+
+/** CD-246 — repeated jobs that look like one problem. */
+export interface ProblemSuggestions {
+  days: number;
+  groups: {
+    key: string;
+    scope: "asset" | "model" | "customer_model";
+    assetId: string | null;
+    productCode: string | null;
+    customerId: string | null;
+    asset: string | null;
+    customer: string | null;
+    jobIds: string[];
+    jobs: ProblemJob[];
+  }[];
+}

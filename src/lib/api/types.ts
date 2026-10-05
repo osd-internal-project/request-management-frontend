@@ -1823,6 +1823,11 @@ export interface CrmConfig {
   projectCostAlertPct?: number;
   /** CD-241 — minutes before an unreceived out-of-hours case goes to the backup. */
   serviceOnCallEscalateMinutes?: number;
+  /** CD-246 — repeated faults that suggest one problem. */
+  serviceRepeatDays?: number;
+  serviceRepeatAsset?: number;
+  serviceRepeatModel?: number;
+  serviceRepeatCustomerModel?: number;
   /** CD-225 — the company's readiness checklist. */
   projectReadinessChecklist?: string[];
   /** CD-226 — the as-built documents every project must leave. */

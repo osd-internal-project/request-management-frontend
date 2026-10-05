@@ -220,6 +220,8 @@ export const ROUTES = {
   servicePm: `${HOME_PATH}/service/pm`,
   /** CD-245 — claims to suppliers. */
   serviceClaims: `${HOME_PATH}/service/claims`,
+  /** CD-246 — problems behind repeated faults. */
+  serviceProblems: `${HOME_PATH}/service/problems`,
   /** CD-192 — every running project, the most at risk first. */
   projectPortfolio: `${HOME_PATH}/projects/portfolio`,
   /** CD-161 — คลังสัญญา (ฝ่ายกฎหมาย). */

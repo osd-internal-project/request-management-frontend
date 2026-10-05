@@ -76,6 +76,7 @@ export type MenuIconKey =
   | "serviceLabourRate"
   | "servicePm"
   | "serviceClaim"
+  | "serviceProblem"
   | "esignLayout"
   | "esignAuthority";
 
@@ -522,6 +523,15 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     label: messages.nav.serviceClaims,
     href: ROUTES.serviceClaims,
     icon: "serviceClaim",
+    permissions: ["service.asset.read"],
+    group: messages.nav.serviceGroup,
+  },
+
+  /** CD-246 — ปัญหาที่เกิดซ้ำ. */
+  {
+    label: messages.nav.serviceProblems,
+    href: ROUTES.serviceProblems,
+    icon: "serviceProblem",
     permissions: ["service.asset.read"],
     group: messages.nav.serviceGroup,
   },

@@ -24,6 +24,7 @@ import { EntitlementFacts } from "./entitlements";
 import { ServiceBillingCard } from "./service-billing-card";
 import { TimeMaterialsCard } from "./time-materials-card";
 import { Claims, ReplaceUnitButton } from "./claims";
+import { ProblemBanner } from "./problems";
 
 const m = messages.service.assets.workOrders;
 
@@ -181,6 +182,8 @@ export function WorkOrderPanel({
       }
     >
       {error && <Alert className="mb-2" type="error" showIcon title={error} />}
+      {/* CD-246 — the problem it is under, or open ones it matches */}
+      <ProblemBanner workOrderId={order.id} canManage={canManage} />
       {onCall && (
         <Text type="secondary" className="mb-2 block text-xs">
           {m.onCallSent(
