@@ -75,6 +75,7 @@ export type MenuIconKey =
   | "serviceBilling"
   | "serviceLabourRate"
   | "servicePm"
+  | "serviceClaim"
   | "esignLayout"
   | "esignAuthority";
 
@@ -512,6 +513,15 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     label: messages.nav.servicePm,
     href: ROUTES.servicePm,
     icon: "servicePm",
+    permissions: ["service.asset.read"],
+    group: messages.nav.serviceGroup,
+  },
+
+  /** CD-245 — เคลมเครื่อง/อะไหล่เสียคืนคู่ค้า. */
+  {
+    label: messages.nav.serviceClaims,
+    href: ROUTES.serviceClaims,
+    icon: "serviceClaim",
     permissions: ["service.asset.read"],
     group: messages.nav.serviceGroup,
   },

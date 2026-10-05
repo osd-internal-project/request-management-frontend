@@ -218,6 +218,8 @@ export const ROUTES = {
   serviceLabourRates: `${HOME_PATH}/service/labour-rates`,
   /** CD-244 — PM rounds of every service contract. */
   servicePm: `${HOME_PATH}/service/pm`,
+  /** CD-245 — claims to suppliers. */
+  serviceClaims: `${HOME_PATH}/service/claims`,
   /** CD-192 — every running project, the most at risk first. */
   projectPortfolio: `${HOME_PATH}/projects/portfolio`,
   /** CD-161 — คลังสัญญา (ฝ่ายกฎหมาย). */

@@ -254,6 +254,12 @@ export interface TimeMaterials {
     usedOn: string;
     note: string | null;
     createdByName: string;
+    /** CD-245 — out of stock: its goods issue in SAP */
+    fromStock: boolean;
+    warehouseCode: string | null;
+    erpStatus: string;
+    erpDocNo: string | null;
+    erpLastError: string | null;
   }[];
   charge: {
     lines: {
@@ -318,4 +324,42 @@ export interface PmPlanView {
     active: boolean;
   } | null;
   rounds: PmRound[];
+}
+
+/** CD-245 — on hand per warehouse, from SAP. */
+export interface StockRow {
+  itemCode: string;
+  warehouseCode: string;
+  onHand: number;
+}
+
+/** CD-245 — a faulty unit sent back to its supplier. */
+export interface ServiceClaim {
+  id: string;
+  workOrderId: string | null;
+  requestId: string | null;
+  requestNo: string | null;
+  assetId: string | null;
+  productCode: string | null;
+  description: string;
+  serialNo: string | null;
+  vendorCode: string;
+  vendorName: string;
+  rmaNo: string | null;
+  status:
+    "pending" | "sent" | "replaced" | "credited" | "rejected" | "cancelled";
+  overdue: boolean;
+  sentOn: string | null;
+  expectedOn: string | null;
+  resolvedOn: string | null;
+  replacementSerial: string | null;
+  creditAmount: number | null;
+  outcomeNote: string | null;
+  createdAt: string;
+  createdByName: string;
+}
+
+export interface ErpVendorRow {
+  code: string;
+  name: string;
 }
