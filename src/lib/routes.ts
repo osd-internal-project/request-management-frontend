@@ -192,6 +192,8 @@ export const ROUTES = {
   delivery: `${HOME_PATH}/delivery`,
   /** CD-255 — the service team's inbox of handovers. */
   deliveryHandovers: `${HOME_PATH}/delivery/handovers`,
+  /** CD-256 — the delivery report. */
+  deliveryReport: `${HOME_PATH}/delivery/report`,
   projectOpen: (contractId?: string) =>
     `${HOME_PATH}/projects/open${contractId ? `?contract=${contractId}` : ""}`,
   projectDetail: (id: string) => `${HOME_PATH}/projects/${id}`,

@@ -56,6 +56,7 @@ export type MenuIconKey =
   | "hrStaff"
   | "delivery"
   | "deliveryHandover"
+  | "deliveryReport"
   | "hrTimesheet"
   | "hrTimesheetApproval"
   | "hrLeave"
@@ -312,6 +313,20 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     href: ROUTES.delivery,
     icon: "delivery",
     permissions: ["delivery.read", "delivery.manage", "pm.project.read"],
+    group: messages.nav.deliveryGroup,
+  },
+  /** CD-256 — phases, on-time acceptance and installments past due. */
+  {
+    label: messages.nav.deliveryReport,
+    href: ROUTES.deliveryReport,
+    icon: "deliveryReport",
+    permissions: [
+      "delivery.read",
+      "delivery.manage",
+      "delivery.receivable.read",
+      "pm.project.read",
+      "crm.sales.read",
+    ],
     group: messages.nav.deliveryGroup,
   },
   /** CD-255 — what the delivery team handed the service team. */

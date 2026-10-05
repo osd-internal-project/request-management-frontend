@@ -35,6 +35,9 @@ export function notificationHref(notification: AppNotification): string | null {
     // CD-175 — put on a project
     case "project":
       return ROUTES.projectDetail(notification.resourceId);
+    // CD-256 — the overdue-installments digest
+    case "delivery_report":
+      return `${ROUTES.deliveryReport}?tab=${notification.resourceId}`;
     case "sales_handover":
       return `${ROUTES.handovers}?id=${notification.resourceId}`;
     default:
