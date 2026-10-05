@@ -47,6 +47,7 @@ import type {
   ProjectReleasesView,
   ProjectSoftwareDocsView,
   ProjectConfigsView,
+  ProjectIntegrationsView,
 } from "@/lib/api/projects";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
@@ -76,6 +77,7 @@ import { ProjectDefectsCard } from "./project-defects-card";
 import { ProjectReleasesCard } from "./project-releases-card";
 import { ProjectSoftwareDocsCard } from "./project-software-docs-card";
 import { ProjectConfigsCard } from "./project-configs-card";
+import { ProjectIntegrationsCard } from "./project-integrations-card";
 import {
   ProjectTeamFields,
   teamPayload,
@@ -116,6 +118,7 @@ export function ProjectDetailView({
   releases,
   softwareDocs,
   configs,
+  integrations,
   currentUserId,
   people,
 }: {
@@ -164,6 +167,7 @@ export function ProjectDetailView({
   readonly releases: ProjectReleasesView | null;
   readonly softwareDocs: ProjectSoftwareDocsView | null;
   readonly configs: ProjectConfigsView | null;
+  readonly integrations: ProjectIntegrationsView | null;
   readonly currentUserId: string | null;
   /** The company's people, for the manager and team pickers. */
   readonly people: { id: string; name: string }[];
@@ -500,6 +504,12 @@ export function ProjectDetailView({
       {softwareDocs?.software && (
         <ProjectSoftwareDocsCard projectId={project.id} view={softwareDocs} />
       )}
+
+      {/* CD-219 — the customer's systems the delivery connects to */}
+      {integrations &&
+        (integrations.integrations.length > 0 || integrations.canWrite) && (
+          <ProjectIntegrationsCard projectId={project.id} view={integrations} />
+        )}
 
       {/* CD-217 — configuration as data; shown once there is any, or to the team */}
       {configs && (configs.items.length > 0 || configs.canWrite) && (

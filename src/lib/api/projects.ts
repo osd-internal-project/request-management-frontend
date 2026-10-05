@@ -1497,3 +1497,47 @@ export function getProjectConfigs(
 ): Promise<ApiResult<ProjectConfigsView>> {
   return apiGet(`/projects/${encodeURIComponent(id)}/configs`);
 }
+
+// --- CD-219 เชื่อมต่อระบบ ------------------------------------------------------------
+
+export interface IntegrationRow {
+  id: string;
+  label: string;
+  name: string;
+  targetSystem: string;
+  direction: string;
+  protocol: string | null;
+  endpoint: string | null;
+  description: string | null;
+  contactId: string | null;
+  contact: {
+    name: string | null;
+    phone: string | null;
+    email: string | null;
+    fromCrm: boolean;
+  };
+  contactName: string | null;
+  contactPhone: string | null;
+  contactEmail: string | null;
+  test: {
+    label: string;
+    state: string;
+    testedAt: string | null;
+    note: string | null;
+  } | null;
+  configCount: number;
+  mayRemove: boolean;
+}
+
+export interface ProjectIntegrationsView {
+  canWrite: boolean;
+  canEdit: boolean;
+  contacts: { id: string; label: string }[];
+  integrations: IntegrationRow[];
+}
+
+export function getProjectIntegrations(
+  id: string,
+): Promise<ApiResult<ProjectIntegrationsView>> {
+  return apiGet(`/projects/${encodeURIComponent(id)}/integrations`);
+}
