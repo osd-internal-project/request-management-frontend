@@ -20,6 +20,7 @@ import dayjs, { type Dayjs } from "dayjs";
 import { appApi } from "@/lib/api/client";
 import type { WorkOrder } from "@/lib/api/service";
 import { messages } from "@/lib/messages";
+import { EntitlementFacts } from "./entitlements";
 
 const m = messages.service.assets.workOrders;
 
@@ -187,6 +188,26 @@ export function WorkOrderPanel({
           </Text>
         )}
       </Text>
+
+      {/* CD-240 — the levels the case's clock runs on */}
+      {(() => {
+        const used =
+          order.billing === "billable"
+            ? null
+            : (order.cover ?? []).find(
+                (row) =>
+                  row.id ===
+                  (order.entitlement?.id ?? order.suggestedEntitlement?.id),
+              );
+        return (
+          <div className="mb-3">
+            <Text type="secondary" className="block text-xs">
+              {used ? m.clockLevels : m.clockType}
+            </Text>
+            {used && <EntitlementFacts row={used} />}
+          </div>
+        );
+      })()}
 
       {canManage && !started && (
         <div className="mb-3 space-y-2">

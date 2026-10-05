@@ -175,6 +175,8 @@ export const messages = {
         cause: "สาเหตุ",
         resolution: "วิธีแก้",
         saveOutcome: "บันทึกสาเหตุ/วิธีแก้",
+        clockLevels: "ระดับบริการที่ใช้จับเวลา",
+        clockType: "จับเวลาตาม SLA ของประเภทคำขอ (ไม่อยู่ใต้สิทธิ์)",
         startBlocked: "ยังเริ่มงานไม่ได้",
         closeBlocked: "ยังปิดงานไม่ได้",
         saved: "บันทึกแล้ว",
