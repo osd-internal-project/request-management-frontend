@@ -83,7 +83,9 @@ export type MenuIconKey =
   | "serviceSurvey"
   | "servicePortal"
   | "esignLayout"
-  | "esignAuthority";
+  | "esignAuthority"
+  | "kb"
+  | "kbCategory";
 
 export interface MenuEntry {
   label: string;
@@ -602,6 +604,22 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     icon: "serviceEntitlement",
     permissions: ["service.asset.read"],
     group: messages.nav.serviceGroup,
+  },
+
+  /** CD-259 — the knowledge base: every member of staff searches and writes drafts. */
+  {
+    label: messages.nav.kb,
+    href: ROUTES.kb,
+    icon: "kb",
+    group: messages.nav.kbGroup,
+  },
+  /** CD-259 — process categories, kept by the knowledge owners. */
+  {
+    label: messages.nav.kbCategories,
+    href: ROUTES.kbCategories,
+    icon: "kbCategory",
+    permissions: ["kb.article.manage"],
+    group: messages.nav.kbGroup,
   },
 
   /** CD-180 — ภาระงานทีมรายสัปดาห์ข้ามโครงการ (ผู้จัดคน / หัวหน้าทีม). */

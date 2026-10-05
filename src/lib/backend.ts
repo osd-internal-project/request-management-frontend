@@ -92,6 +92,8 @@ export const CORE_SERVICE_PREFIXES = [
   "/project-resources",
   // CD-20 Delivery (CD-250)
   "/delivery",
+  // CD-259 — คลังความรู้ (KBMS)
+  "/kb",
   // CD-236 — the installed base
   "/service-assets",
   // CD-237 — what covers them

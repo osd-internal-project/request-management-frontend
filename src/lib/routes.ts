@@ -194,6 +194,12 @@ export const ROUTES = {
   deliveryHandovers: `${HOME_PATH}/delivery/handovers`,
   /** CD-256 — the delivery report. */
   deliveryReport: `${HOME_PATH}/delivery/report`,
+  /** CD-259 — the knowledge base (CD-22 KBMS). */
+  kb: `${HOME_PATH}/kb`,
+  kbNew: `${HOME_PATH}/kb/new`,
+  kbCategories: `${HOME_PATH}/kb/categories`,
+  kbArticle: (id: string) => `${HOME_PATH}/kb/${id}`,
+  kbEdit: (id: string) => `${HOME_PATH}/kb/${id}/edit`,
   projectOpen: (contractId?: string) =>
     `${HOME_PATH}/projects/open${contractId ? `?contract=${contractId}` : ""}`,
   projectDetail: (id: string) => `${HOME_PATH}/projects/${id}`,

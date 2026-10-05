@@ -2,6 +2,8 @@
 
 import {
   AccountBookOutlined,
+  ReadOutlined,
+  TagsOutlined,
   SmileOutlined,
   BugOutlined,
   RollbackOutlined,
@@ -131,6 +133,8 @@ const MENU_ICONS: Record<MenuIconKey, ComponentType> = {
   delivery: CarOutlined,
   deliveryHandover: InboxOutlined,
   deliveryReport: BarChartOutlined,
+  kb: ReadOutlined,
+  kbCategory: TagsOutlined,
   hrMandays: BarChartOutlined,
   hrLaborCost: DollarOutlined,
   pricingVendorCost: ShoppingCartOutlined,
