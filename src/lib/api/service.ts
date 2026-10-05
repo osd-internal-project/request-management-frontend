@@ -254,6 +254,12 @@ export interface TimeMaterials {
     usedOn: string;
     note: string | null;
     createdByName: string;
+    /** CD-245 — out of stock: its goods issue in SAP */
+    fromStock: boolean;
+    warehouseCode: string | null;
+    erpStatus: string;
+    erpDocNo: string | null;
+    erpLastError: string | null;
   }[];
   charge: {
     lines: {
@@ -318,4 +324,224 @@ export interface PmPlanView {
     active: boolean;
   } | null;
   rounds: PmRound[];
+}
+
+/** CD-245 — on hand per warehouse, from SAP. */
+export interface StockRow {
+  itemCode: string;
+  warehouseCode: string;
+  onHand: number;
+}
+
+/** CD-245 — a faulty unit sent back to its supplier. */
+export interface ServiceClaim {
+  id: string;
+  workOrderId: string | null;
+  requestId: string | null;
+  requestNo: string | null;
+  assetId: string | null;
+  productCode: string | null;
+  description: string;
+  serialNo: string | null;
+  vendorCode: string;
+  vendorName: string;
+  rmaNo: string | null;
+  status:
+    "pending" | "sent" | "replaced" | "credited" | "rejected" | "cancelled";
+  overdue: boolean;
+  sentOn: string | null;
+  expectedOn: string | null;
+  resolvedOn: string | null;
+  replacementSerial: string | null;
+  creditAmount: number | null;
+  outcomeNote: string | null;
+  createdAt: string;
+  createdByName: string;
+}
+
+export interface ErpVendorRow {
+  code: string;
+  name: string;
+}
+
+/** CD-246 — a job as a problem sees it. */
+export interface ProblemJob {
+  workOrderId: string;
+  requestId: string;
+  requestNo: string | null;
+  status: string | null;
+  subject: string;
+  asset: string | null;
+  customer: string | null;
+  cause: string | null;
+  resolution: string | null;
+  createdAt: string;
+}
+
+/** CD-246 — a problem behind repeated faults. */
+export interface ServiceProblem {
+  id: string;
+  problemNo: string;
+  title: string;
+  scope: "asset" | "model" | "customer_model";
+  assetId: string | null;
+  asset: string | null;
+  productCode: string | null;
+  customerId: string | null;
+  customer: string | null;
+  ownerUserId: string;
+  ownerName: string;
+  status: "open" | "investigating" | "known_error" | "resolved" | "closed";
+  workaround: string | null;
+  rootCause: string | null;
+  permanentFix: string | null;
+  techChangeRef: string | null;
+  resolvedAt: string | null;
+  closedAt: string | null;
+  createdAt: string;
+  jobCount?: number;
+  jobs?: ProblemJob[];
+}
+
+/** CD-246 — repeated jobs that look like one problem. */
+export interface ProblemSuggestions {
+  days: number;
+  groups: {
+    key: string;
+    scope: "asset" | "model" | "customer_model";
+    assetId: string | null;
+    productCode: string | null;
+    customerId: string | null;
+    asset: string | null;
+    customer: string | null;
+    jobIds: string[];
+    jobs: ProblemJob[];
+  }[];
+}
+
+/** CD-247 — a period's figures for one cover. */
+export interface SeverityFigures {
+  severity: string;
+  jobs: number;
+  responseMet: number;
+  responseMissed: number;
+  resolutionMet: number;
+  resolutionMissed: number;
+  open: number;
+  responsePct: number | null;
+  resolutionPct: number | null;
+}
+
+export interface ServiceReportPreview {
+  entitlement: {
+    id: string;
+    title: string;
+    kind: string;
+    coverage: string | null;
+    startOn: string | null;
+    endOn: string | null;
+  };
+  customer: { id: string; code: string; name: string } | null;
+  contract: { contractNo: string; title: string } | null;
+  period: { from: string; to: string };
+  generatedAt: string;
+  figures: SeverityFigures[];
+  jobs: {
+    requestId: string;
+    requestNo: string | null;
+    subject: string;
+    severity: string | null;
+    workKind: string;
+    status: string;
+    openedAt: string;
+    respondedAt: string | null;
+    doneAt: string | null;
+    response: "met" | "missed" | "pending" | "none";
+    resolution: "met" | "missed" | "pending" | "none";
+    lateHours: number;
+  }[];
+  pm: {
+    due: number;
+    done: number;
+    skipped: number;
+    overdue: number;
+    rounds: { roundNo: number; dueOn: string | null; status: string }[];
+  };
+  penalty: {
+    terms: {
+      ratePct: number | null;
+      period: string | null;
+      basis: string | null;
+      capPct: number | null;
+      capAmount: number | null;
+      contractValue: number | null;
+    };
+    basisAmount: number | null;
+    estimate: {
+      amount: number | null;
+      units: number;
+      capped: boolean;
+      cap: number | null;
+    };
+  };
+}
+
+/** CD-247 — an issued report. */
+export interface ServiceReportRow {
+  id: string;
+  reportNo: string;
+  entitlementId: string;
+  entitlementTitle: string;
+  customer: { code: string; name: string } | null;
+  periodFrom: string;
+  periodTo: string;
+  jobs: number;
+  responsePct: number | null;
+  resolutionPct: number | null;
+  penaltyAmount: number | null;
+  penaltyNote: string | null;
+  issuedAt: string;
+  sentOn: string | null;
+  sentTo: string | null;
+}
+
+/** CD-248 — a job's survey as the team sees it. */
+export interface ServiceSurvey {
+  id: string;
+  workOrderId: string;
+  requestId: string;
+  requestNo: string | null;
+  subject: string;
+  technicianName: string | null;
+  state: "open" | "answered" | "expired";
+  sentVia: string;
+  sentTo: string | null;
+  sentAt: string | null;
+  expiresAt: string;
+  answeredAt: string | null;
+  overall: number | null;
+  speed: number | null;
+  technician: number | null;
+  outcome: number | null;
+  comment: string | null;
+}
+
+export interface SurveyFigureRow {
+  key: string;
+  name?: string;
+  sent: number;
+  answered: number;
+  responsePct: number | null;
+  overall: number | null;
+  speed: number | null;
+  technician: number | null;
+  outcome: number | null;
+  low: number;
+}
+
+export interface SurveyFigures {
+  total: Omit<SurveyFigureRow, "key">;
+  byMonth: SurveyFigureRow[];
+  byTechnician: SurveyFigureRow[];
+  answers: ServiceSurvey[];
 }

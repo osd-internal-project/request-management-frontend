@@ -55,6 +55,8 @@ export type MenuIconKey =
   | "hrTeam"
   | "hrStaff"
   | "delivery"
+  | "deliveryHandover"
+  | "deliveryReport"
   | "hrTimesheet"
   | "hrTimesheetApproval"
   | "hrLeave"
@@ -75,6 +77,10 @@ export type MenuIconKey =
   | "serviceBilling"
   | "serviceLabourRate"
   | "servicePm"
+  | "serviceClaim"
+  | "serviceProblem"
+  | "serviceReport"
+  | "serviceSurvey"
   | "esignLayout"
   | "esignAuthority";
 
@@ -310,6 +316,33 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     permissions: ["delivery.read", "delivery.manage", "pm.project.read"],
     group: messages.nav.deliveryGroup,
   },
+  /** CD-256 — phases, on-time acceptance and installments past due. */
+  {
+    label: messages.nav.deliveryReport,
+    href: ROUTES.deliveryReport,
+    icon: "deliveryReport",
+    permissions: [
+      "delivery.read",
+      "delivery.manage",
+      "delivery.receivable.read",
+      "pm.project.read",
+      "crm.sales.read",
+    ],
+    group: messages.nav.deliveryGroup,
+  },
+  /** CD-255 — what the delivery team handed the service team. */
+  {
+    label: messages.nav.deliveryHandovers,
+    href: ROUTES.deliveryHandovers,
+    icon: "deliveryHandover",
+    permissions: [
+      "service.asset.read",
+      "service.asset.manage",
+      "delivery.read",
+      "delivery.manage",
+    ],
+    group: messages.nav.deliveryGroup,
+  },
   /** CD-229 — the employee register (HR's facts on top of the directory). */
   {
     label: messages.nav.hrEmployees,
@@ -512,6 +545,42 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     label: messages.nav.servicePm,
     href: ROUTES.servicePm,
     icon: "servicePm",
+    permissions: ["service.asset.read"],
+    group: messages.nav.serviceGroup,
+  },
+
+  /** CD-245 — เคลมเครื่อง/อะไหล่เสียคืนคู่ค้า. */
+  {
+    label: messages.nav.serviceClaims,
+    href: ROUTES.serviceClaims,
+    icon: "serviceClaim",
+    permissions: ["service.asset.read"],
+    group: messages.nav.serviceGroup,
+  },
+
+  /** CD-246 — ปัญหาที่เกิดซ้ำ. */
+  {
+    label: messages.nav.serviceProblems,
+    href: ROUTES.serviceProblems,
+    icon: "serviceProblem",
+    permissions: ["service.asset.read"],
+    group: messages.nav.serviceGroup,
+  },
+
+  /** CD-247 — รายงานผลการให้บริการต่อสัญญาและงวด. */
+  {
+    label: messages.nav.serviceReports,
+    href: ROUTES.serviceReports,
+    icon: "serviceReport",
+    permissions: ["service.asset.read"],
+    group: messages.nav.serviceGroup,
+  },
+
+  /** CD-248 — ความพึงพอใจหลังปิดงานบริการ. */
+  {
+    label: messages.nav.serviceSurveys,
+    href: ROUTES.serviceSurveys,
+    icon: "serviceSurvey",
     permissions: ["service.asset.read"],
     group: messages.nav.serviceGroup,
   },

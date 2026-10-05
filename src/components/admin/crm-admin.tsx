@@ -361,6 +361,9 @@ function ConfigSection({
   const [projectCloseType, setProjectCloseType] = useState(
     config.projectCloseTypeCode ?? "",
   );
+  const [billingExceptionType, setBillingExceptionType] = useState(
+    config.deliveryBillingExceptionTypeCode ?? "",
+  );
   const [projectDesignType, setProjectDesignType] = useState(
     config.projectDesignTypeCode ?? "",
   );
@@ -385,6 +388,12 @@ function ConfigSection({
   const [onCallMinutes, setOnCallMinutes] = useState(
     config.serviceOnCallEscalateMinutes ?? 30,
   );
+  const [repeat, setRepeat] = useState({
+    days: config.serviceRepeatDays ?? 90,
+    asset: config.serviceRepeatAsset ?? 3,
+    model: config.serviceRepeatModel ?? 5,
+    customerModel: config.serviceRepeatCustomerModel ?? 3,
+  });
   const [readinessList, setReadinessList] = useState<string[]>(
     config.projectReadinessChecklist ?? [],
   );
@@ -423,6 +432,7 @@ function ConfigSection({
       contract_approval_type_code: contractApprovalType,
       project_change_type_code: projectChangeType,
       project_close_type_code: projectCloseType,
+      delivery_billing_exception_type_code: billingExceptionType,
       project_design_type_code: projectDesignType,
       project_tech_change_type_code: projectTechChangeType,
       project_resource_type_code: projectResourceType,
@@ -433,6 +443,10 @@ function ConfigSection({
       project_cost_warn_pct: costWarn,
       project_cost_alert_pct: costAlert,
       service_on_call_escalate_minutes: onCallMinutes,
+      service_repeat_days: repeat.days,
+      service_repeat_asset: repeat.asset,
+      service_repeat_model: repeat.model,
+      service_repeat_customer_model: repeat.customerModel,
       project_readiness_checklist: readinessList,
       project_as_built_documents: asBuiltList,
       project_software_documents: softwareDocList,
@@ -708,6 +722,23 @@ function ConfigSection({
       <Text type="secondary" className="mt-2 block text-xs">
         {m.projectCloseHint}
       </Text>
+      {/* CD-253 — คำขอยกเว้นวางบิลก่อนปิดรายการค้าง */}
+      <div className="mt-3 max-w-xs">
+        <Text className="mb-1 block text-xs">
+          {m.deliveryBillingExceptionTypeCode}
+        </Text>
+        <Input
+          value={billingExceptionType}
+          maxLength={20}
+          allowClear
+          onChange={(e) =>
+            setBillingExceptionType(e.target.value.toUpperCase())
+          }
+        />
+      </div>
+      <Text type="secondary" className="mt-2 block text-xs">
+        {m.deliveryBillingExceptionHint}
+      </Text>
       {/* CD-211 — คำขออนุมัติแบบรายละเอียด */}
       <div className="mt-3 max-w-xs">
         <Text className="mb-1 block text-xs">{m.projectDesignTypeCode}</Text>
@@ -777,6 +808,34 @@ function ConfigSection({
           value={onCallMinutes}
           onChange={(value) => setOnCallMinutes(Number(value ?? 30))}
         />
+      </div>
+      {/* CD-246 — เกณฑ์เสนอปัญหาที่เกิดซ้ำ */}
+      <div className="mt-3 grid max-w-xl grid-cols-2 gap-2">
+        {(
+          [
+            ["days", messages.service.assets.problems.settings.days, 7, 730],
+            ["asset", messages.service.assets.problems.settings.asset, 2, 100],
+            ["model", messages.service.assets.problems.settings.model, 2, 1000],
+            [
+              "customerModel",
+              messages.service.assets.problems.settings.customerModel,
+              2,
+              100,
+            ],
+          ] as const
+        ).map(([field, label, min, max]) => (
+          <div key={field}>
+            <Text className="mb-1 block text-xs">{label}</Text>
+            <InputNumber
+              min={min}
+              max={max}
+              value={repeat[field]}
+              onChange={(value) =>
+                setRepeat({ ...repeat, [field]: Number(value ?? min) })
+              }
+            />
+          </div>
+        ))}
       </div>
       <div className="mt-3 max-w-xl">
         <Text className="mb-1 block text-xs">{m.projectCloseDocuments}</Text>

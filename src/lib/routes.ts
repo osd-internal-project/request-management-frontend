@@ -190,6 +190,10 @@ export const ROUTES = {
   projects: `${HOME_PATH}/projects`,
   /** CD-250 — the delivery team's board. */
   delivery: `${HOME_PATH}/delivery`,
+  /** CD-255 — the service team's inbox of handovers. */
+  deliveryHandovers: `${HOME_PATH}/delivery/handovers`,
+  /** CD-256 — the delivery report. */
+  deliveryReport: `${HOME_PATH}/delivery/report`,
   projectOpen: (contractId?: string) =>
     `${HOME_PATH}/projects/open${contractId ? `?contract=${contractId}` : ""}`,
   projectDetail: (id: string) => `${HOME_PATH}/projects/${id}`,
@@ -218,6 +222,14 @@ export const ROUTES = {
   serviceLabourRates: `${HOME_PATH}/service/labour-rates`,
   /** CD-244 — PM rounds of every service contract. */
   servicePm: `${HOME_PATH}/service/pm`,
+  /** CD-245 — claims to suppliers. */
+  serviceClaims: `${HOME_PATH}/service/claims`,
+  /** CD-246 — problems behind repeated faults. */
+  serviceProblems: `${HOME_PATH}/service/problems`,
+  /** CD-247 — service reports per cover and period. */
+  serviceReports: `${HOME_PATH}/service/reports`,
+  /** CD-248 — satisfaction after service jobs. */
+  serviceSurveys: `${HOME_PATH}/service/surveys`,
   /** CD-192 — every running project, the most at risk first. */
   projectPortfolio: `${HOME_PATH}/projects/portfolio`,
   /** CD-161 — คลังสัญญา (ฝ่ายกฎหมาย). */

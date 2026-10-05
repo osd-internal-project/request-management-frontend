@@ -1807,6 +1807,8 @@ export interface CrmConfig {
   projectChangeTypeCode?: string | null;
   /** CD-191 — a project is asked to be closed as this type. */
   projectCloseTypeCode?: string | null;
+  /** CD-253 — the exception request to bill before open points close. */
+  deliveryBillingExceptionTypeCode?: string | null;
   /** CD-211 — a detailed design version is approved as this type. */
   projectDesignTypeCode?: string | null;
   projectTechChangeTypeCode?: string | null;
@@ -1821,6 +1823,11 @@ export interface CrmConfig {
   projectCostAlertPct?: number;
   /** CD-241 — minutes before an unreceived out-of-hours case goes to the backup. */
   serviceOnCallEscalateMinutes?: number;
+  /** CD-246 — repeated faults that suggest one problem. */
+  serviceRepeatDays?: number;
+  serviceRepeatAsset?: number;
+  serviceRepeatModel?: number;
+  serviceRepeatCustomerModel?: number;
   /** CD-225 — the company's readiness checklist. */
   projectReadinessChecklist?: string[];
   /** CD-226 — the as-built documents every project must leave. */
@@ -2173,6 +2180,7 @@ export interface HealthSignal {
     | "contract_ending"
     | "renewal_lost"
     | "low_satisfaction"
+    | "service_csat_low"
     | "no_contact";
   level: "amber" | "red";
   values: Record<string, number | string>;

@@ -107,6 +107,14 @@ export const CORE_SERVICE_PREFIXES = [
   "/service-labour-rates",
   // CD-244 — PM plans and rounds
   "/service-pm",
+  // CD-245 — claims to suppliers
+  "/service-claims",
+  // CD-246 — problems behind repeated faults
+  "/service-problems",
+  // CD-247 — service reports
+  "/service-reports",
+  // CD-248 — satisfaction surveys (and their public routes)
+  "/service-surveys",
   "/sales-targets",
   "/campaigns",
   "/target-accounts",

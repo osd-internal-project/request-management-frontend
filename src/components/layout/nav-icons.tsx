@@ -2,6 +2,9 @@
 
 import {
   AccountBookOutlined,
+  SmileOutlined,
+  BugOutlined,
+  RollbackOutlined,
   PhoneOutlined,
   ToolOutlined,
   SafetyCertificateOutlined,
@@ -126,6 +129,8 @@ const MENU_ICONS: Record<MenuIconKey, ComponentType> = {
   hrLeaveSettings: SettingOutlined,
   hrAvailability: CalendarOutlined,
   delivery: CarOutlined,
+  deliveryHandover: InboxOutlined,
+  deliveryReport: BarChartOutlined,
   hrMandays: BarChartOutlined,
   hrLaborCost: DollarOutlined,
   pricingVendorCost: ShoppingCartOutlined,
@@ -140,6 +145,10 @@ const MENU_ICONS: Record<MenuIconKey, ComponentType> = {
   serviceBilling: AccountBookOutlined,
   serviceLabourRate: FieldTimeOutlined,
   servicePm: CalendarOutlined,
+  serviceClaim: RollbackOutlined,
+  serviceProblem: BugOutlined,
+  serviceReport: FileDoneOutlined,
+  serviceSurvey: SmileOutlined,
   esignLayout: LayoutOutlined,
   esignAuthority: SafetyOutlined,
 };

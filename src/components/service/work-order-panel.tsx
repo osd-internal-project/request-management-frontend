@@ -23,6 +23,9 @@ import { messages } from "@/lib/messages";
 import { EntitlementFacts } from "./entitlements";
 import { ServiceBillingCard } from "./service-billing-card";
 import { TimeMaterialsCard } from "./time-materials-card";
+import { Claims, ReplaceUnitButton } from "./claims";
+import { ProblemBanner } from "./problems";
+import { SurveyCard } from "./surveys";
 
 const m = messages.service.assets.workOrders;
 
@@ -54,6 +57,7 @@ export function WorkOrderPanel({
   const router = useRouter();
   const { message } = App.useApp();
   const [order, setOrder] = useState<WorkOrder | null | undefined>(undefined);
+  const [version, setVersion] = useState(0);
   const [onCall, setOnCall] = useState<OnCallDispatch | null>(null);
   const [billing, setBilling] = useState<string | null>(null);
   const [entitlementId, setEntitlementId] = useState<string | null>(null);
@@ -96,7 +100,7 @@ export function WorkOrderPanel({
     return () => {
       live = false;
     };
-  }, [requestId]);
+  }, [requestId, version]);
 
   async function send(path: string, method: string, body: unknown) {
     setBusy(true);
@@ -164,10 +168,23 @@ export function WorkOrderPanel({
                 .join(" · ")}
             </Text>
           )}
+          {/* CD-245 — swap the unit, the faulty one onto a claim */}
+          {order.asset && canManage && (
+            <span className="ml-2">
+              <ReplaceUnitButton
+                assetId={order.asset.id}
+                oldSerial={order.asset.serialNo}
+                workOrderId={order.id}
+                onDone={() => setVersion((n) => n + 1)}
+              />
+            </span>
+          )}
         </span>
       }
     >
       {error && <Alert className="mb-2" type="error" showIcon title={error} />}
+      {/* CD-246 — the problem it is under, or open ones it matches */}
+      <ProblemBanner workOrderId={order.id} canManage={canManage} />
       {onCall && (
         <Text type="secondary" className="mb-2 block text-xs">
           {m.onCallSent(
@@ -376,11 +393,19 @@ export function WorkOrderPanel({
         {m.saveOutcome}
       </Button>
 
+      {/* CD-245 — this job's claims to suppliers */}
+      <Claims canManage={canManage} workOrderId={order.id} reload={version} />
+
       {/* CD-243 — the job's time (timesheets) and materials */}
       <TimeMaterialsCard
         workOrderId={order.id}
         billable={order.billing === "billable"}
       />
+
+      {/* CD-248 — the customer's rating, once the job is done */}
+      {["completed", "approved", "closed"].includes(status) && (
+        <SurveyCard workOrderId={order.id} canManage={canManage} />
+      )}
 
       {/* CD-242 — a billed job, once done: its charge to SAP */}
       {order.billing === "billable" &&

@@ -25,7 +25,12 @@ export interface ErpJobRow {
   createdAt: string;
   updatedAt: string;
   resource: {
-    type: "customer" | "sale_order" | "service_billing";
+    type:
+      | "customer"
+      | "sale_order"
+      | "service_billing"
+      | "service_material"
+      | "installment_invoice";
     id: string;
     code: string;
     name: string;
@@ -47,7 +52,9 @@ export async function listErpJobs(
  * เริ่มนับรอบใหม่และส่งทันที — backend รอผลไม่เกิน ~5 วินาทีแล้วตอบสถานะจริง:
  * succeeded = ถึง SAP แล้ว, มี lastError ใหม่ = ยังไม่ผ่าน, pending = ยังส่งอยู่.
  */
-export async function retryErpJob(id: string): Promise<ClientResult<ErpJobRow>> {
+export async function retryErpJob(
+  id: string,
+): Promise<ClientResult<ErpJobRow>> {
   return adminApi<ErpJobRow>(`erp-sync/jobs/${encodeURIComponent(id)}/retry`, {
     method: "POST",
   });
@@ -74,7 +81,9 @@ export async function getCatalogStatus(): Promise<ClientResult<CatalogStatus>> {
 
 /** ดึงจาก SAP ตอนนี้ — รอผล (ขึ้นกับขนาดรายการใน SAP). */
 export async function syncCatalog(): Promise<ClientResult<CatalogSyncResult>> {
-  return adminApi<CatalogSyncResult>("erp-sync/products/sync", { method: "POST" });
+  return adminApi<CatalogSyncResult>("erp-sync/products/sync", {
+    method: "POST",
+  });
 }
 
 /** Grouped for `import erpSync from …` at call sites. */
