@@ -137,6 +137,11 @@ export const ROUTES = {
   /** CD-231 — Timesheet รายสัปดาห์ และหน้าอนุมัติของหัวหน้า. */
   hrTimesheet: `${HOME_PATH}/hr/timesheet`,
   hrTimesheetApprovals: `${HOME_PATH}/hr/timesheet/approvals`,
+  /** CD-232 — การลา และความพร้อมของทีม. */
+  hrLeave: `${HOME_PATH}/hr/leave`,
+  hrLeaveApprovals: `${HOME_PATH}/hr/leave/approvals`,
+  hrLeaveSettings: `${HOME_PATH}/hr/leave/settings`,
+  hrAvailability: `${HOME_PATH}/hr/availability`,
   /** CD-206 — ต้นทุนคู่ค้าจาก SAP. */
   pricingVendorCosts: `${HOME_PATH}/pricing/vendor-costs`,
   /** CD-142 — SAP's suppliers with the technical profile Pre-Sales keeps. */

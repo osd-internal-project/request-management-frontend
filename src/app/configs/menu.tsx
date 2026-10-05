@@ -56,6 +56,10 @@ export type MenuIconKey =
   | "hrStaff"
   | "hrTimesheet"
   | "hrTimesheetApproval"
+  | "hrLeave"
+  | "hrLeaveApproval"
+  | "hrLeaveSettings"
+  | "hrAvailability"
   | "pricingVendorCost"
   | "projectPortfolio"
   | "projectRisk"
@@ -321,6 +325,35 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     label: messages.nav.hrTimesheetApprovals,
     href: ROUTES.hrTimesheetApprovals,
     icon: "hrTimesheetApproval",
+    group: messages.nav.hrGroup,
+  },
+  /** CD-232 — everyone asks for leave and sees what is left. */
+  {
+    label: messages.nav.hrLeave,
+    href: ROUTES.hrLeave,
+    icon: "hrLeave",
+    group: messages.nav.hrGroup,
+  },
+  /** CD-232 — supervisors (and HR) decide on leave. */
+  {
+    label: messages.nav.hrLeaveApprovals,
+    href: ROUTES.hrLeaveApprovals,
+    icon: "hrLeaveApproval",
+    group: messages.nav.hrGroup,
+  },
+  /** CD-232 — who is free when (the backend decides whom one sees). */
+  {
+    label: messages.nav.hrAvailability,
+    href: ROUTES.hrAvailability,
+    icon: "hrAvailability",
+    group: messages.nav.hrGroup,
+  },
+  /** CD-232 — kinds of leave and allowances (HR). */
+  {
+    label: messages.nav.hrLeaveSettings,
+    href: ROUTES.hrLeaveSettings,
+    icon: "hrLeaveSettings",
+    permissions: ["hr.employee.read", "hr.employee.manage"],
     group: messages.nav.hrGroup,
   },
   /** CD-230 — who is here, at what level, with which skills (staffing). */
