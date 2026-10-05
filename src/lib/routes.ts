@@ -144,6 +144,8 @@ export const ROUTES = {
   hrAvailability: `${HOME_PATH}/hr/availability`,
   /** CD-233 — manday แผนเทียบจริง. */
   hrMandays: `${HOME_PATH}/hr/mandays`,
+  /** CD-234 — ต้นทุนแรงงานงานบริการ. */
+  hrLaborCosts: `${HOME_PATH}/hr/labor-costs`,
   /** CD-206 — ต้นทุนคู่ค้าจาก SAP. */
   pricingVendorCosts: `${HOME_PATH}/pricing/vendor-costs`,
   /** CD-142 — SAP's suppliers with the technical profile Pre-Sales keeps. */

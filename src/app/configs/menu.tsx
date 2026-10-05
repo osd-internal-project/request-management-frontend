@@ -61,6 +61,7 @@ export type MenuIconKey =
   | "hrLeaveSettings"
   | "hrAvailability"
   | "hrMandays"
+  | "hrLaborCost"
   | "pricingVendorCost"
   | "projectPortfolio"
   | "projectRisk"
@@ -363,6 +364,14 @@ const MENU_ITEMS: readonly MenuEntry[] = [
       "hr.employee.read",
       "hr.employee.manage",
     ],
+    group: messages.nav.hrGroup,
+  },
+  /** CD-234 — service labour cost (pay-derived). */
+  {
+    label: messages.nav.hrLaborCosts,
+    href: ROUTES.hrLaborCosts,
+    icon: "hrLaborCost",
+    permissions: ["hr.rate.read"],
     group: messages.nav.hrGroup,
   },
   /** CD-232 — kinds of leave and allowances (HR). */
