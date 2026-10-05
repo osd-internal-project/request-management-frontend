@@ -3372,6 +3372,8 @@ export const messages = {
       service_billing_create: "ส่งใบเรียกเก็บงานบริการ",
       service_billing_cancel: "ลบร่างใบเรียกเก็บงานบริการ",
       service_goods_issue: "ส่งใบเบิกอะไหล่",
+      installment_invoice_create: "ส่งวางบิลงวดสัญญา",
+      installment_invoice_cancel: "ลบร่างวางบิลงวดสัญญา",
     } as Record<string, string>,
     status: {
       failed: "ส่งไม่สำเร็จ",
@@ -3574,6 +3576,50 @@ export const messages = {
     } as Record<string, string>,
     project: "โครงการ",
     lines: "สินค้า",
+    /** CD-253 วางบิลรายงวด */
+    billing: {
+      title: "วางบิลรายงวด (SAP)",
+      empty: "สัญญานี้ยังไม่มีงวดชำระ",
+      installment: "งวด",
+      milestone: "หมุดหมาย",
+      amount: "จำนวน (ก่อน VAT)",
+      state: "สถานะ",
+      ready: "พร้อมวางบิล",
+      blocked: "ยังวางบิลไม่ได้ ({n})",
+      cancelled: "ถอนแล้ว",
+      draftInSap: "ร่างใบแจ้งหนี้ใน SAP รอการเงิน",
+      posted: "ออกใบแจ้งหนี้แล้ว {n}",
+      paid: "รับชำระแล้ว {n}",
+      sapPending: "รอส่งเข้า SAP",
+      sapProblem: "ส่งเข้า SAP ไม่สำเร็จ",
+      send: "ส่งวางบิล",
+      cancel: "ถอนการวางบิล",
+      requestException: "ขอยกเว้น",
+      noExceptionType:
+        "ยังไม่ได้ตั้งประเภทคำขอยกเว้นวางบิลในหน้าตั้งค่า CRM — งวดที่ติดรายการค้างขอยกเว้นไม่ได้",
+      exceptionStatus: {
+        submitted: "ขอยกเว้นรายการค้างแล้ว — รอผู้บริหารอนุมัติ",
+        approved: "ผู้บริหารอนุมัติให้วางบิลก่อนปิดรายการค้าง",
+        rejected: "คำขอยกเว้นไม่ได้รับอนุมัติ",
+      } as Record<string, string>,
+      titles: {
+        send: "ส่งวางบิลเข้า SAP",
+        cancel: "ถอนการวางบิล",
+        exception: "ขอยกเว้นวางบิลก่อนปิดรายการค้าง",
+      } as Record<string, string>,
+      placeholders: {
+        send: "หมายเหตุถึงฝ่ายการเงิน (ถ้ามี)",
+        cancel: "เหตุผลที่ถอน",
+        exception: "เหตุผลที่ต้องวางบิลก่อนปิดรายการค้าง",
+      } as Record<string, string>,
+      done: {
+        send: "ส่งวางบิลแล้ว — สร้างร่างใบแจ้งหนี้ใน SAP",
+        cancel: "ถอนการวางบิลแล้ว",
+        exception: "ส่งคำขอยกเว้นแล้ว",
+      } as Record<string, string>,
+      sendInfo:
+        "สร้างร่างใบแจ้งหนี้ {a} ใน SAP (อ้างอิง {r}) ให้ฝ่ายการเงินออกใบแจ้งหนี้ — SAP คิด VAT เอง · ถอนได้จนกว่าการเงินจะออกใบ",
+    },
     /** CD-252 ใบรับรองการตรวจรับ */
     certificates: {
       title: "ใบรับรองการตรวจรับ",
@@ -5945,6 +5991,10 @@ export const messages = {
       contractApprovalTypeCode: "ประเภทคำขออนุมัติสัญญา",
       projectChangeTypeCode: "ประเภทคำขอเปลี่ยนแปลงโครงการ",
       projectCloseTypeCode: "ประเภทคำขอปิดโครงการ",
+      deliveryBillingExceptionTypeCode:
+        "ประเภทคำขอยกเว้นวางบิลก่อนปิดรายการค้าง (CD-253)",
+      deliveryBillingExceptionHint:
+        "รับมอบมีเงื่อนไขแล้วรายการค้างยังไม่ปิด วางบิลงวดนั้นได้เมื่อคำขอประเภทนี้อนุมัติ (ตั้งผู้อนุมัติระดับผู้บริหารในตารางอำนาจ) · ว่าง = ขอยกเว้นไม่ได้",
       projectDesignTypeCode: "ประเภทคำขออนุมัติแบบรายละเอียด",
       projectTechChangeTypeCode: "ประเภทคำขออนุมัติปรับแก้ทางเทคนิค",
       projectResourceTypeCode: "ประเภทคำขอทีมเพิ่ม (PM → Engineer)",

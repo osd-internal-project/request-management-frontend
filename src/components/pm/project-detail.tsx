@@ -71,6 +71,7 @@ import { ProjectReadinessCard } from "./project-readiness-card";
 import { ProjectDeliveryCard } from "@/components/delivery/project-delivery-card";
 import { DeliveryDocsCard } from "@/components/delivery/delivery-docs-card";
 import { AcceptanceCertificatesCard } from "@/components/delivery/acceptance-certificates-card";
+import { InstallmentBillingCard } from "@/components/delivery/installment-billing-card";
 import { ProjectAsBuiltCard } from "./project-as-built-card";
 import { ProjectAcceptanceCard } from "./project-acceptance-card";
 import { ProjectUatCard } from "./project-uat-card";
@@ -592,6 +593,9 @@ export function ProjectDetailView({
 
       {/* CD-252 — the certificates of accepted rounds (loads itself) */}
       <AcceptanceCertificatesCard projectId={project.id} />
+
+      {/* CD-253 — billing each installment into SAP (loads itself) */}
+      <InstallmentBillingCard projectId={project.id} />
 
       {customerLogs && (
         <CustomerLogsCard projectId={project.id} view={customerLogs} />

@@ -1807,6 +1807,8 @@ export interface CrmConfig {
   projectChangeTypeCode?: string | null;
   /** CD-191 — a project is asked to be closed as this type. */
   projectCloseTypeCode?: string | null;
+  /** CD-253 — the exception request to bill before open points close. */
+  deliveryBillingExceptionTypeCode?: string | null;
   /** CD-211 — a detailed design version is approved as this type. */
   projectDesignTypeCode?: string | null;
   projectTechChangeTypeCode?: string | null;

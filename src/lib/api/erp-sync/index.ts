@@ -25,7 +25,12 @@ export interface ErpJobRow {
   createdAt: string;
   updatedAt: string;
   resource: {
-    type: "customer" | "sale_order" | "service_billing" | "service_material";
+    type:
+      | "customer"
+      | "sale_order"
+      | "service_billing"
+      | "service_material"
+      | "installment_invoice";
     id: string;
     code: string;
     name: string;

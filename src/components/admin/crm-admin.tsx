@@ -361,6 +361,9 @@ function ConfigSection({
   const [projectCloseType, setProjectCloseType] = useState(
     config.projectCloseTypeCode ?? "",
   );
+  const [billingExceptionType, setBillingExceptionType] = useState(
+    config.deliveryBillingExceptionTypeCode ?? "",
+  );
   const [projectDesignType, setProjectDesignType] = useState(
     config.projectDesignTypeCode ?? "",
   );
@@ -423,6 +426,7 @@ function ConfigSection({
       contract_approval_type_code: contractApprovalType,
       project_change_type_code: projectChangeType,
       project_close_type_code: projectCloseType,
+      delivery_billing_exception_type_code: billingExceptionType,
       project_design_type_code: projectDesignType,
       project_tech_change_type_code: projectTechChangeType,
       project_resource_type_code: projectResourceType,
@@ -707,6 +711,23 @@ function ConfigSection({
       </div>
       <Text type="secondary" className="mt-2 block text-xs">
         {m.projectCloseHint}
+      </Text>
+      {/* CD-253 — คำขอยกเว้นวางบิลก่อนปิดรายการค้าง */}
+      <div className="mt-3 max-w-xs">
+        <Text className="mb-1 block text-xs">
+          {m.deliveryBillingExceptionTypeCode}
+        </Text>
+        <Input
+          value={billingExceptionType}
+          maxLength={20}
+          allowClear
+          onChange={(e) =>
+            setBillingExceptionType(e.target.value.toUpperCase())
+          }
+        />
+      </div>
+      <Text type="secondary" className="mt-2 block text-xs">
+        {m.deliveryBillingExceptionHint}
       </Text>
       {/* CD-211 — คำขออนุมัติแบบรายละเอียด */}
       <div className="mt-3 max-w-xs">
