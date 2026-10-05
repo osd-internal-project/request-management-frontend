@@ -18,7 +18,7 @@ import {
 import Text from "antd/es/typography/Text";
 import dayjs, { type Dayjs } from "dayjs";
 import { appApi } from "@/lib/api/client";
-import type { WorkOrder } from "@/lib/api/service";
+import type { OnCallDispatch, WorkOrder } from "@/lib/api/service";
 import { messages } from "@/lib/messages";
 import { EntitlementFacts } from "./entitlements";
 
@@ -52,6 +52,7 @@ export function WorkOrderPanel({
   const router = useRouter();
   const { message } = App.useApp();
   const [order, setOrder] = useState<WorkOrder | null | undefined>(undefined);
+  const [onCall, setOnCall] = useState<OnCallDispatch | null>(null);
   const [billing, setBilling] = useState<string | null>(null);
   const [entitlementId, setEntitlementId] = useState<string | null>(null);
   const [reason, setReason] = useState("");
@@ -83,6 +84,12 @@ export function WorkOrderPanel({
           resolution: data.resolution ?? "",
         });
       }
+    });
+    // CD-241 — sent to the out-of-hours rota
+    void appApi<OnCallDispatch | null>(
+      `service-on-call/by-request/${requestId}`,
+    ).then((result) => {
+      if (live && result.ok) setOnCall(result.data);
     });
     return () => {
       live = false;
@@ -159,6 +166,20 @@ export function WorkOrderPanel({
       }
     >
       {error && <Alert className="mb-2" type="error" showIcon title={error} />}
+      {onCall && (
+        <Text type="secondary" className="mb-2 block text-xs">
+          {m.onCallSent(
+            onCall.name,
+            messages.service.assets.onCall.levels[onCall.level],
+            dayjs(onCall.sentAt).format("DD/MM/YYYY HH:mm"),
+          )}
+          {onCall.escalatedAt &&
+            ` · ${m.onCallEscalated(
+              onCall.escalatedFromName ?? "",
+              dayjs(onCall.escalatedAt).format("DD/MM/YYYY HH:mm"),
+            )}`}
+        </Text>
+      )}
       {order.startBlocker && !started && (
         <Alert
           className="mb-2"

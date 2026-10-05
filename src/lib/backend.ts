@@ -98,6 +98,8 @@ export const CORE_SERVICE_PREFIXES = [
   "/service-entitlements",
   // CD-239 — service jobs
   "/service-work-orders",
+  // CD-241 — the out-of-hours rota
+  "/service-on-call",
   "/sales-targets",
   "/campaigns",
   "/target-accounts",

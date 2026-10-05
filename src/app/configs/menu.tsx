@@ -71,6 +71,7 @@ export type MenuIconKey =
   | "serviceAsset"
   | "serviceEntitlement"
   | "serviceWorkOrder"
+  | "serviceOnCall"
   | "esignLayout"
   | "esignAuthority";
 
@@ -472,6 +473,15 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     label: messages.nav.serviceWorkOrders,
     href: ROUTES.serviceWorkOrders,
     icon: "serviceWorkOrder",
+    permissions: ["service.asset.read"],
+    group: messages.nav.serviceGroup,
+  },
+
+  /** CD-241 — ตารางเวรนอกเวลา. */
+  {
+    label: messages.nav.serviceOnCall,
+    href: ROUTES.serviceOnCall,
+    icon: "serviceOnCall",
     permissions: ["service.asset.read"],
     group: messages.nav.serviceGroup,
   },

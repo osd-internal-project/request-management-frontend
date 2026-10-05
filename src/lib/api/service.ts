@@ -141,3 +141,42 @@ export interface WorkOrder {
   createdAt: string;
   cover?: Entitlement[];
 }
+
+/** CD-241 — a span of the out-of-hours rota. */
+export interface OnCallShift {
+  id: string;
+  startOn: string;
+  endOn: string;
+  primaryUserId: string;
+  primaryName: string;
+  backupUserId: string | null;
+  backupName: string | null;
+  note: string | null;
+}
+
+export interface OnCallRota {
+  from: string;
+  to: string;
+  now: {
+    outOfHours: boolean;
+    date: string;
+    shift: OnCallShift | null;
+    onCall: {
+      userId: string;
+      level: "primary" | "backup";
+      name: string;
+    } | null;
+  };
+  items: OnCallShift[];
+}
+
+/** CD-241 — a case's trip to the rota. */
+export interface OnCallDispatch {
+  userId: string;
+  name: string;
+  level: "primary" | "backup";
+  sentAt: string;
+  escalatedAt: string | null;
+  escalatedFromName: string | null;
+  watching: boolean;
+}

@@ -382,6 +382,9 @@ function ConfigSection({
   const [healthRed, setHealthRed] = useState(config.projectHealthRed ?? 40);
   const [costWarn, setCostWarn] = useState(config.projectCostWarnPct ?? 90);
   const [costAlert, setCostAlert] = useState(config.projectCostAlertPct ?? 100);
+  const [onCallMinutes, setOnCallMinutes] = useState(
+    config.serviceOnCallEscalateMinutes ?? 30,
+  );
   const [readinessList, setReadinessList] = useState<string[]>(
     config.projectReadinessChecklist ?? [],
   );
@@ -429,6 +432,7 @@ function ConfigSection({
       project_health_red: healthRed,
       project_cost_warn_pct: costWarn,
       project_cost_alert_pct: costAlert,
+      service_on_call_escalate_minutes: onCallMinutes,
       project_readiness_checklist: readinessList,
       project_as_built_documents: asBuiltList,
       project_software_documents: softwareDocList,
@@ -762,6 +766,18 @@ function ConfigSection({
       <Text type="secondary" className="mt-2 block text-xs">
         {m.serviceWorkOrderHint}
       </Text>
+      {/* CD-241 — ส่งต่อเวรสำรองเมื่อเวรหลักไม่กดรับ */}
+      <div className="mt-3 max-w-xl">
+        <Text className="mb-1 block text-xs">
+          {m.serviceOnCallEscalateMinutes}
+        </Text>
+        <InputNumber
+          min={0}
+          max={1440}
+          value={onCallMinutes}
+          onChange={(value) => setOnCallMinutes(Number(value ?? 30))}
+        />
+      </div>
       <div className="mt-3 max-w-xl">
         <Text className="mb-1 block text-xs">{m.projectCloseDocuments}</Text>
         <Select

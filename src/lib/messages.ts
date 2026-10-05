@@ -177,6 +177,10 @@ export const messages = {
         saveOutcome: "บันทึกสาเหตุ/วิธีแก้",
         clockLevels: "ระดับบริการที่ใช้จับเวลา",
         clockType: "จับเวลาตาม SLA ของประเภทคำขอ (ไม่อยู่ใต้สิทธิ์)",
+        onCallSent: (name: string, level: string, at: string) =>
+          `ส่งถึงเวรนอกเวลา: ${name} (${level}) · ${at}`,
+        onCallEscalated: (from: string, at: string) =>
+          `${from} ไม่ได้รับเรื่องในเวลา — ส่งต่อเวรสำรองเมื่อ ${at}`,
         startBlocked: "ยังเริ่มงานไม่ได้",
         closeBlocked: "ยังปิดงานไม่ได้",
         saved: "บันทึกแล้ว",
@@ -200,6 +204,42 @@ export const messages = {
           save: "เปิดงาน",
           close: "ปิด",
         },
+      },
+      onCall: {
+        title: "ตารางเวรนอกเวลา",
+        hint: "ใบสั่งงานที่เปิดนอกเวลาทำการ (ก่อนเข้างาน หลังเลิกงาน วันหยุดตามปฏิทินทำงานของบริษัท) ส่งถึงเวรหลักเป็นผู้รับเรื่องพร้อมแจ้งเตือนในระบบและ Teams · เวรหลักลา → ส่งเวรสำรอง · ไม่กดรับภายในเวลาที่ตั้งในหน้าตั้งค่า CRM → ส่งต่อเวรสำรอง · นาฬิกา SLA เดินจนกว่าจะมีคนรับเรื่อง",
+        nowOut: "ตอนนี้นอกเวลาทำการ",
+        nowIn: "ตอนนี้อยู่ในเวลาทำการ",
+        onCallNow: (name: string, level: string) =>
+          `เคสที่เข้ามานอกเวลาวันนี้จะส่งถึง ${name} (${level})`,
+        nobody:
+          "วันนี้ยังไม่มีเวร — เคสนอกเวลาจะอยู่กับผู้รับเรื่องตามประเภทคำขอ",
+        add: "ลงเวร",
+        edit: "แก้เวร",
+        remove: "ลบ",
+        removeConfirm: "ลบเวรช่วงนี้?",
+        empty: "ยังไม่มีเวรในช่วงนี้",
+        levels: { primary: "เวรหลัก", backup: "เวรสำรอง" } as Record<
+          string,
+          string
+        >,
+        columns: {
+          period: "ช่วงวันที่",
+          primary: "เวรหลัก",
+          backup: "เวรสำรอง",
+          note: "หมายเหตุ",
+        },
+        form: {
+          period: "ช่วงวันที่ (รวมวันสุดท้าย)",
+          primary: "เวรหลัก",
+          backup: "เวรสำรอง",
+          note: "หมายเหตุ",
+          save: "บันทึก",
+          close: "ปิด",
+        },
+        saved: "บันทึกแล้ว",
+        noPeople:
+          "ไม่มีสิทธิ์ดูรายชื่อพนักงาน (user.read) — เลือกคนลงเวรไม่ได้",
       },
       importer: {
         title: "นำเข้าทะเบียนอุปกรณ์จาก Excel",
@@ -336,6 +376,7 @@ export const messages = {
     serviceAssets: "ทะเบียนอุปกรณ์ที่ติดตั้ง",
     serviceEntitlements: "สิทธิ์บริการ",
     serviceWorkOrders: "ใบสั่งงานบริการ",
+    serviceOnCall: "ตารางเวรนอกเวลา",
     hrLaborRates: "อัตราต้นทุนบุคลากร",
     hrEmployees: "ทะเบียนพนักงาน",
     hrMe: "โปรไฟล์ของฉัน",
@@ -1108,6 +1149,8 @@ export const messages = {
       "request.resumed": "กลับมาดำเนินการ",
       "approval.decided": "ผลการอนุมัติ",
       "sla.escalated": "เกินกำหนด — เร่งงานอัตโนมัติ",
+      "service.oncall.dispatched": "นอกเวลา — ส่งถึงเวร",
+      "service.oncall.escalated": "เวรหลักไม่ได้รับ — ส่งต่อเวรสำรอง",
     } as Record<string, string>,
   },
 
@@ -5629,6 +5672,8 @@ export const messages = {
       projectTechChangeTypeCode: "ประเภทคำขออนุมัติปรับแก้ทางเทคนิค",
       projectResourceTypeCode: "ประเภทคำขอทีมเพิ่ม (PM → Engineer)",
       serviceWorkOrderTypeCode: "ประเภทคำขอใบสั่งงานบริการ",
+      serviceOnCallEscalateMinutes:
+        "นาทีที่เวรหลักมีให้กดรับเคสนอกเวลา ก่อนส่งต่อเวรสำรอง (0 = ไม่ส่งต่อ)",
       serviceWorkOrderHint:
         "ทีมบริการเปิดงานบริการเป็นคำขอประเภทนี้ (ควรเป็นประเภทเคสที่มีความรุนแรง) · form มี subject, detail, customer_code, work_kind · ว่าง = เปิดงานไม่ได้",
       projectResourceHint:
