@@ -1810,6 +1810,7 @@ export interface CrmConfig {
   /** CD-211 — a detailed design version is approved as this type. */
   projectDesignTypeCode?: string | null;
   projectTechChangeTypeCode?: string | null;
+  projectResourceTypeCode?: string | null;
   /** CD-191 — the documents every project must attach before closing. */
   projectCloseDocuments?: string[];
   /** CD-192 — the health scores at which a project turns amber, and red. */

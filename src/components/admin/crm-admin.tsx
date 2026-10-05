@@ -367,6 +367,9 @@ function ConfigSection({
   const [projectTechChangeType, setProjectTechChangeType] = useState(
     config.projectTechChangeTypeCode ?? "",
   );
+  const [projectResourceType, setProjectResourceType] = useState(
+    config.projectResourceTypeCode ?? "",
+  );
   const [closeDocuments, setCloseDocuments] = useState<string[]>(
     config.projectCloseDocuments ?? [],
   );
@@ -413,6 +416,7 @@ function ConfigSection({
       project_close_type_code: projectCloseType,
       project_design_type_code: projectDesignType,
       project_tech_change_type_code: projectTechChangeType,
+      project_resource_type_code: projectResourceType,
       project_close_documents: closeDocuments,
       project_health_amber: healthAmber,
       project_health_red: healthRed,
@@ -721,6 +725,19 @@ function ConfigSection({
       </div>
       <Text type="secondary" className="mt-2 block text-xs">
         {m.projectTechChangeHint}
+      </Text>
+      {/* CD-180 — คำขอทีมเพิ่ม */}
+      <div className="mt-3 max-w-xs">
+        <Text className="mb-1 block text-xs">{m.projectResourceTypeCode}</Text>
+        <Input
+          value={projectResourceType}
+          maxLength={20}
+          allowClear
+          onChange={(e) => setProjectResourceType(e.target.value.toUpperCase())}
+        />
+      </div>
+      <Text type="secondary" className="mt-2 block text-xs">
+        {m.projectResourceHint}
       </Text>
       <div className="mt-3 max-w-xl">
         <Text className="mb-1 block text-xs">{m.projectCloseDocuments}</Text>

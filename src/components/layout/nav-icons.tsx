@@ -124,6 +124,7 @@ const MENU_ICONS: Record<MenuIconKey, ComponentType> = {
   projectPortfolio: FundProjectionScreenOutlined,
   projectRisk: WarningOutlined,
   projectConfig: ControlOutlined,
+  projectWorkload: TeamOutlined,
   esignLayout: LayoutOutlined,
   esignAuthority: SafetyOutlined,
 };

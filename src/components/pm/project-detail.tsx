@@ -50,6 +50,7 @@ import type {
   ProjectIntegrationsView,
   ProjectTechChangesView,
   ProjectCostsView,
+  ProjectResourcesView,
 } from "@/lib/api/projects";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
@@ -82,6 +83,7 @@ import { ProjectConfigsCard } from "./project-configs-card";
 import { ProjectIntegrationsCard } from "./project-integrations-card";
 import { ProjectTechChangesCard } from "./project-tech-changes-card";
 import { ProjectCostsCard } from "./project-costs-card";
+import { ProjectResourcesCard } from "./project-resources-card";
 import {
   ProjectTeamFields,
   teamPayload,
@@ -125,6 +127,7 @@ export function ProjectDetailView({
   integrations,
   techChanges,
   costs,
+  resources,
   currentUserId,
   people,
 }: {
@@ -176,6 +179,7 @@ export function ProjectDetailView({
   readonly integrations: ProjectIntegrationsView | null;
   readonly techChanges: ProjectTechChangesView | null;
   readonly costs: ProjectCostsView | null;
+  readonly resources: ProjectResourcesView | null;
   readonly currentUserId: string | null;
   /** The company's people, for the manager and team pickers. */
   readonly people: { id: string; name: string }[];
@@ -462,6 +466,15 @@ export function ProjectDetailView({
           key={`${budget.current?.id ?? "none"}-${budget.current?.status ?? ""}`}
           projectId={project.id}
           view={budget}
+        />
+      )}
+
+      {/* CD-180 — who works on it and when, checked across projects */}
+      {resources && (
+        <ProjectResourcesCard
+          projectId={project.id}
+          view={resources}
+          people={pickable}
         />
       )}
 

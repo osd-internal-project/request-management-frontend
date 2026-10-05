@@ -65,6 +65,7 @@ export type MenuIconKey =
   | "projectPortfolio"
   | "projectRisk"
   | "projectConfig"
+  | "projectWorkload"
   | "esignLayout"
   | "esignAuthority";
 
@@ -433,6 +434,15 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     href: ROUTES.projectRisks,
     icon: "projectRisk",
     permissions: ["pm.project.read"],
+    group: messages.nav.pmGroup,
+  },
+
+  /** CD-180 — ภาระงานทีมรายสัปดาห์ข้ามโครงการ (ผู้จัดคน / หัวหน้าทีม). */
+  {
+    label: messages.nav.projectWorkload,
+    href: ROUTES.projectWorkload,
+    icon: "projectWorkload",
+    permissions: ["notification.read"],
     group: messages.nav.pmGroup,
   },
 
