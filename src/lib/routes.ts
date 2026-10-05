@@ -214,6 +214,8 @@ export const ROUTES = {
   serviceOnCall: `${HOME_PATH}/service/on-call`,
   /** CD-242 — billed service jobs sent to SAP. */
   serviceBilling: `${HOME_PATH}/service/billing`,
+  /** CD-243 — selling rates of service labour. */
+  serviceLabourRates: `${HOME_PATH}/service/labour-rates`,
   /** CD-192 — every running project, the most at risk first. */
   projectPortfolio: `${HOME_PATH}/projects/portfolio`,
   /** CD-161 — คลังสัญญา (ฝ่ายกฎหมาย). */

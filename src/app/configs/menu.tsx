@@ -73,6 +73,7 @@ export type MenuIconKey =
   | "serviceWorkOrder"
   | "serviceOnCall"
   | "serviceBilling"
+  | "serviceLabourRate"
   | "esignLayout"
   | "esignAuthority";
 
@@ -493,6 +494,15 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     href: ROUTES.serviceBilling,
     icon: "serviceBilling",
     permissions: ["service.asset.read"],
+    group: messages.nav.serviceGroup,
+  },
+
+  /** CD-243 — อัตราค่าแรงเรียกเก็บงานบริการ. */
+  {
+    label: messages.nav.serviceLabourRates,
+    href: ROUTES.serviceLabourRates,
+    icon: "serviceLabourRate",
+    permissions: ["service.asset.manage"],
     group: messages.nav.serviceGroup,
   },
 

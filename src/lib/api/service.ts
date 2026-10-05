@@ -221,3 +221,69 @@ export interface ServiceBilling {
   };
   createdAt: string;
 }
+
+/** CD-243 — a service job's time (timesheets), materials and their charge. */
+export interface TimeMaterials {
+  workOrderId: string;
+  billing: string | null;
+  locked: boolean;
+  canEdit: boolean;
+  time: {
+    approved: number;
+    pending: number;
+    billable: number;
+    people: {
+      name: string;
+      workType: string;
+      approved: number;
+      pending: number;
+      billable: boolean;
+    }[];
+  };
+  materials: {
+    id: string;
+    productCode: string;
+    description: string;
+    quantity: number;
+    unit: string | null;
+    serialNo: string | null;
+    billable: boolean;
+    unitPrice: number | null;
+    priceSource: string | null;
+    unitCost: number | null;
+    usedOn: string;
+    note: string | null;
+    createdByName: string;
+  }[];
+  charge: {
+    lines: {
+      productCode: string | null;
+      description: string;
+      quantity: number;
+      unit: string | null;
+      unitPrice: number;
+      source: string;
+    }[];
+    unratedWorkTypes: string[];
+    unpricedMaterials: string[];
+  };
+  costs: {
+    revenue: number;
+    labour: { cost: number; unpricedHours: number };
+    materials: { cost: number; unknownCost: number };
+    cost: number;
+    profit: number;
+    marginPct: number | null;
+  } | null;
+}
+
+/** CD-243 — a work type's selling rate per hour. */
+export interface LabourRateRow {
+  workTypeId: string;
+  code: string;
+  name: string;
+  rateId: string | null;
+  hourlyRate: number | null;
+  productCode: string | null;
+  note: string | null;
+}

@@ -22,6 +22,7 @@ import type { OnCallDispatch, WorkOrder } from "@/lib/api/service";
 import { messages } from "@/lib/messages";
 import { EntitlementFacts } from "./entitlements";
 import { ServiceBillingCard } from "./service-billing-card";
+import { TimeMaterialsCard } from "./time-materials-card";
 
 const m = messages.service.assets.workOrders;
 
@@ -374,6 +375,12 @@ export function WorkOrderPanel({
       >
         {m.saveOutcome}
       </Button>
+
+      {/* CD-243 — the job's time (timesheets) and materials */}
+      <TimeMaterialsCard
+        workOrderId={order.id}
+        billable={order.billing === "billable"}
+      />
 
       {/* CD-242 — a billed job, once done: its charge to SAP */}
       {order.billing === "billable" &&

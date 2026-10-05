@@ -102,6 +102,9 @@ export const CORE_SERVICE_PREFIXES = [
   "/service-on-call",
   // CD-242 — billed service jobs to SAP
   "/service-billings",
+  // CD-243 — time, materials and selling rates
+  "/service-time-materials",
+  "/service-labour-rates",
   "/sales-targets",
   "/campaigns",
   "/target-accounts",

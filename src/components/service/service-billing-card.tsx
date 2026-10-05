@@ -273,6 +273,16 @@ export function ServiceBillingCard({
               {m.save}
             </Button>
             <Popconfirm
+              title={messages.service.assets.timeMaterials.pullHint}
+              onConfirm={() =>
+                void send(`service-billings/${billing.id}/pull`, "POST")
+              }
+            >
+              <Button loading={busy}>
+                {messages.service.assets.timeMaterials.pull}
+              </Button>
+            </Popconfirm>
+            <Popconfirm
               title={m.confirmAsk}
               onConfirm={() =>
                 void send(`service-billings/${billing.id}/confirm`, "POST")
