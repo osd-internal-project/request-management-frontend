@@ -200,6 +200,10 @@ export const ROUTES = {
   kbCategories: `${HOME_PATH}/kb/categories`,
   kbArticle: (id: string) => `${HOME_PATH}/kb/${id}`,
   kbEdit: (id: string) => `${HOME_PATH}/kb/${id}/edit`,
+  /** CD-260 — reworking a published article, and what waits for review. */
+  kbRevision: (id: string, revisionId: string) =>
+    `${HOME_PATH}/kb/${id}/revisions/${revisionId}`,
+  kbReview: `${HOME_PATH}/kb/review`,
   projectOpen: (contractId?: string) =>
     `${HOME_PATH}/projects/open${contractId ? `?contract=${contractId}` : ""}`,
   projectDetail: (id: string) => `${HOME_PATH}/projects/${id}`,

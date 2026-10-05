@@ -1,7 +1,7 @@
 /** CD-53 — one reminder rule: what it is (catalog, in code) and the company's setting. */
 export interface NotificationRuleRow {
   code: string;
-  module: "crm" | "finance" | "pm";
+  module: "crm" | "finance" | "pm" | "kb";
   label: string;
   description: string;
   recipients: string;

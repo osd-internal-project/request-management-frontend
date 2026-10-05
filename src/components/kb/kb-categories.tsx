@@ -28,6 +28,7 @@ interface Editing {
   parentId: string | null;
   sortOrder: number;
   active: boolean;
+  reviewMonths: number | null;
 }
 
 /** CD-259 — the knowledge owners keep the process categories (two levels). */
@@ -56,6 +57,7 @@ export function KbCategories() {
           parent_id: editing.parentId,
           sort_order: editing.sortOrder,
           active: editing.active,
+          review_months: editing.reviewMonths,
         }),
       },
     );
@@ -93,6 +95,7 @@ export function KbCategories() {
             parentId: null,
             sortOrder: 0,
             active: true,
+            reviewMonths: null,
           })
         }
       >
@@ -115,6 +118,12 @@ export function KbCategories() {
               ),
           },
           { title: m.order, dataIndex: "sortOrder", width: 80 },
+          {
+            title: messages.kb.review.reviewMonths,
+            dataIndex: "reviewMonths",
+            width: 140,
+            render: (v: number | null) => v ?? "—",
+          },
           { title: m.articles, dataIndex: "articles", width: 90 },
           {
             title: m.active,
@@ -136,6 +145,7 @@ export function KbCategories() {
                     parentId: c.parentId,
                     sortOrder: c.sortOrder,
                     active: c.active,
+                    reviewMonths: c.reviewMonths,
                   })
                 }
               >
@@ -185,6 +195,19 @@ export function KbCategories() {
                 max={9999}
                 value={editing.sortOrder}
                 onChange={(v) => setEditing({ ...editing, sortOrder: v ?? 0 })}
+              />
+            </Form.Item>
+            <Form.Item
+              label={messages.kb.review.reviewMonths}
+              extra={messages.kb.review.reviewMonthsHint}
+            >
+              <InputNumber
+                min={1}
+                max={60}
+                value={editing.reviewMonths ?? undefined}
+                onChange={(v) =>
+                  setEditing({ ...editing, reviewMonths: v ?? null })
+                }
               />
             </Form.Item>
             <Form.Item label={m.active}>

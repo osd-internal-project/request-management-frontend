@@ -28,6 +28,7 @@ const MODULE_LABEL: Record<NotificationRuleRow["module"], string> = {
   crm: m.moduleCrm,
   finance: m.moduleFinance,
   pm: m.modulePm,
+  kb: m.moduleKb,
 };
 
 /**

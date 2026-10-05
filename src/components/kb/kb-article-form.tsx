@@ -8,6 +8,7 @@ import {
   Card,
   Form,
   Input,
+  Popconfirm,
   Select,
   Skeleton,
   Space,
@@ -28,10 +29,12 @@ import {
   fill,
   type KbArticle,
   type KbCategory,
+  type KbRevision,
 } from "./kb-types";
 
 const m = messages.kb;
 const f = m.form;
+const r = m.review;
 
 interface Draft {
   title: string;
@@ -41,6 +44,8 @@ interface Draft {
   tags: string[];
   productCodes: string[];
   productGroups: string[];
+  /** CD-260 — a revision's "what changed". */
+  changeNote: string;
 }
 
 const EMPTY: Draft = {
@@ -50,16 +55,28 @@ const EMPTY: Draft = {
   tags: [],
   productCodes: [],
   productGroups: [],
+  changeNote: "",
 };
 
-/** CD-259 — write or edit an article (Markdown, with a preview and files). */
-export function KbArticleForm({ id }: { id?: string }) {
+/**
+ * CD-259 — write or edit an article (Markdown, with a preview and files);
+ * CD-260 — or a revision of a published one (`revisionId`), sent for review
+ * from here while the published text stays up.
+ */
+export function KbArticleForm({
+  id,
+  revisionId,
+}: {
+  id?: string;
+  revisionId?: string;
+}) {
   const { message } = App.useApp();
   const router = useRouter();
   const [draft, setDraft] = useState<Draft | null>(id ? null : EMPTY);
   const [articleNo, setArticleNo] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [revision, setRevision] = useState<KbRevision | null>(null);
   const [categories, setCategories] = useState<KbCategory[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const body = useRef<HTMLTextAreaElement | null>(null);
@@ -73,6 +90,28 @@ export function KbArticleForm({ id }: { id?: string }) {
       (r) => r.ok && setTags(r.data.map((t) => t.tag)),
     );
     if (!id) return;
+    if (revisionId) {
+      void appApi<KbArticle>(`kb/articles/${id}`).then(
+        (res) => res.ok && setArticleNo(res.data.articleNo),
+      );
+      void appApi<KbRevision>(`kb/articles/${id}/revisions/${revisionId}`).then(
+        (res) => {
+          if (!res.ok) return setError(res.message);
+          setRevision(res.data);
+          setDraft({
+            title: res.data.title,
+            summary: res.data.summary ?? "",
+            body: res.data.body,
+            categoryId: res.data.categoryId ?? undefined,
+            tags: res.data.tags,
+            productCodes: res.data.productCodes,
+            productGroups: res.data.productGroups,
+            changeNote: res.data.changeNote,
+          });
+        },
+      );
+      return;
+    }
     void appApi<KbArticle>(`kb/articles/${id}`).then((r) => {
       if (!r.ok) return setError(r.message);
       if (!r.data.canEdit) return setError(f.cannotEdit);
@@ -85,43 +124,91 @@ export function KbArticleForm({ id }: { id?: string }) {
         tags: r.data.tags,
         productCodes: r.data.productCodes,
         productGroups: r.data.productGroups,
+        changeNote: "",
       });
     });
-  }, [id]);
+  }, [id, revisionId]);
 
   if (error) return <Alert type="error" showIcon title={error} />;
   if (!draft) return <Skeleton active />;
   const d = draft;
   const set = (change: Partial<Draft>) => setDraft({ ...d, ...change });
 
-  async function save() {
+  const payload = () => ({
+    title: d.title,
+    summary: d.summary || null,
+    body: d.body,
+    category_id: d.categoryId ?? null,
+    tags: d.tags,
+    product_codes: d.productCodes,
+    product_groups: d.productGroups,
+    ...(revisionId ? { change_note: d.changeNote } : {}),
+  });
+
+  async function save(then?: "submit") {
     if (!d.title.trim()) {
       void message.error(f.required);
       return;
     }
     setBusy(true);
-    const r = await appApi<KbArticle>(
+    if (revisionId && id) {
+      const base = `kb/articles/${id}/revisions/${revisionId}`;
+      const saved = await appApi<KbRevision>(base, {
+        method: "PUT",
+        body: JSON.stringify(payload()),
+      });
+      if (saved.ok && then === "submit") {
+        const sent = await appApi<KbRevision>(`${base}/submit`, {
+          method: "POST",
+          body: "{}",
+        });
+        setBusy(false);
+        if (!sent.ok) {
+          void message.error(sent.message);
+          return;
+        }
+        void message.success(r.submitted);
+        router.push(ROUTES.kbArticle(id));
+        return;
+      }
+      setBusy(false);
+      if (!saved.ok) {
+        void message.error(saved.message);
+        return;
+      }
+      setRevision(saved.data);
+      void message.success(f.saved);
+      return;
+    }
+    const res = await appApi<KbArticle>(
       id ? `kb/articles/${id}` : "kb/articles",
       {
         method: id ? "PUT" : "POST",
-        body: JSON.stringify({
-          title: d.title,
-          summary: d.summary || null,
-          body: d.body,
-          category_id: d.categoryId ?? null,
-          tags: d.tags,
-          product_codes: d.productCodes,
-          product_groups: d.productGroups,
-        }),
+        body: JSON.stringify(payload()),
       },
     );
     setBusy(false);
-    if (!r.ok) {
-      void message.error(r.message);
+    if (!res.ok) {
+      void message.error(res.message);
       return;
     }
     void message.success(id ? f.saved : f.created);
-    router.push(id ? ROUTES.kbArticle(r.data.id) : ROUTES.kbEdit(r.data.id));
+    router.push(
+      id ? ROUTES.kbArticle(res.data.id) : ROUTES.kbEdit(res.data.id),
+    );
+  }
+
+  async function discard() {
+    if (!id || !revisionId) return;
+    const res = await appApi(`kb/articles/${id}/revisions/${revisionId}`, {
+      method: "DELETE",
+    });
+    if (!res.ok) {
+      void message.error(res.message);
+      return;
+    }
+    void message.success(r.discarded);
+    router.push(ROUTES.kbArticle(id));
   }
 
   /** Puts the uploaded file's Markdown where the cursor is (or at the end). */
@@ -157,8 +244,33 @@ export function KbArticleForm({ id }: { id?: string }) {
   return (
     <Space orientation="vertical" className="w-full" size="middle">
       <Title level={3} className="!mb-0">
-        {id ? fill(f.editTitle, { n: articleNo ?? "" }) : f.newTitle}
+        {revisionId
+          ? fill(r.revisionTitle, { n: articleNo ?? "" })
+          : id
+            ? fill(f.editTitle, { n: articleNo ?? "" })
+            : f.newTitle}
       </Title>
+      {revisionId ? (
+        revision?.status === "returned" && revision.reviewNote ? (
+          <Alert
+            type="warning"
+            showIcon
+            title={fill(r.returnedNote, {
+              n: revision.reviewedBy ?? "",
+              t: revision.reviewNote,
+            })}
+          />
+        ) : (
+          <Alert type="info" showIcon title={r.revisionHint} />
+        )
+      ) : null}
+      {revision && !revision.canEdit ? (
+        <Alert
+          type="info"
+          showIcon
+          title={r.revisionStatuses[revision.status] ?? revision.status}
+        />
+      ) : null}
       <Card>
         <Form layout="vertical">
           <Form.Item label={f.title} required>
@@ -221,6 +333,16 @@ export function KbArticleForm({ id }: { id?: string }) {
               />
             </Form.Item>
           </div>
+          {revisionId ? (
+            <Form.Item label={r.changeNote} required>
+              <Input.TextArea
+                rows={2}
+                maxLength={1000}
+                value={d.changeNote}
+                onChange={(e) => set({ changeNote: e.target.value })}
+              />
+            </Form.Item>
+          ) : null}
           <Form.Item label={f.body} extra={f.bodyHint}>
             <Tabs
               items={[
@@ -270,15 +392,37 @@ export function KbArticleForm({ id }: { id?: string }) {
           </Space>
         </Form>
       </Card>
-      <Space>
-        <Button type="primary" loading={busy} onClick={() => void save()}>
+      <Space wrap>
+        <Button
+          type={revisionId ? "default" : "primary"}
+          loading={busy}
+          disabled={!!revision && !revision.canEdit}
+          onClick={() => void save()}
+        >
           {f.save}
         </Button>
+        {revisionId ? (
+          <Button
+            type="primary"
+            loading={busy}
+            disabled={!revision?.canEdit || !d.changeNote.trim()}
+            onClick={() => void save("submit")}
+          >
+            {r.submit}
+          </Button>
+        ) : null}
         <Button
           onClick={() => router.push(id ? ROUTES.kbArticle(id) : ROUTES.kb)}
         >
           {f.cancel}
         </Button>
+        {revisionId && revision?.canEdit ? (
+          <Popconfirm title={r.discardConfirm} onConfirm={() => void discard()}>
+            <Button danger type="text">
+              {r.discard}
+            </Button>
+          </Popconfirm>
+        ) : null}
       </Space>
     </Space>
   );

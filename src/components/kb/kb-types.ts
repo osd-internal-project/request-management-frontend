@@ -5,13 +5,16 @@ export interface KbCard {
   articleNo: string;
   title: string;
   summary: string | null;
-  status: "draft" | "published" | "archived";
+  status: "draft" | "in_review" | "published" | "archived";
   category: { id: string; name: string | null } | null;
   tags: string[];
   productCodes: string[];
   productGroups: string[];
   source: string;
   author: string;
+  owner: string | null;
+  nextReviewOn: string | null;
+  reviewState: "none" | "ok" | "due_soon" | "overdue";
   publishedAt: string | null;
   updatedAt: string;
   views: number;
@@ -34,9 +37,47 @@ export interface KbArticle extends KbCard {
     url: string;
   }[];
   myRating: { helpful: boolean; comment: string | null } | null;
+  version: number;
+  ownerId: string | null;
+  submittedAt: string | null;
+  reviewNote: string | null;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  lastReviewedAt: string | null;
+  mergedInto: { id: string; articleNo: string; title: string } | null;
+  openRevision: { id: string | null; status: string; mine: boolean } | null;
   canEdit: boolean;
-  canPublish: boolean;
+  canSubmit: boolean;
+  canWithdraw: boolean;
+  canApprove: boolean;
+  canSendBack: boolean;
+  canRevise: boolean;
+  canConfirmReview: boolean;
+  canSetOwner: boolean;
+  canMerge: boolean;
   canArchive: boolean;
+  canReopen: boolean;
+}
+
+/** CD-260 — a reworking of a published article. */
+export interface KbRevision {
+  id: string;
+  articleId: string;
+  status: "draft" | "in_review" | "returned" | "approved" | "discarded";
+  title: string;
+  summary: string | null;
+  body: string;
+  categoryId: string | null;
+  tags: string[];
+  productCodes: string[];
+  productGroups: string[];
+  changeNote: string;
+  createdBy: string;
+  submittedAt: string | null;
+  reviewedBy: string | null;
+  reviewNote: string | null;
+  canEdit: boolean;
+  canReview: boolean;
 }
 
 export interface KbCategory {
@@ -45,11 +86,13 @@ export interface KbCategory {
   parentId: string | null;
   sortOrder: number;
   active: boolean;
+  reviewMonths: number | null;
   articles: number;
 }
 
 export const STATUS_COLOR: Record<string, string> = {
   draft: "default",
+  in_review: "processing",
   published: "success",
   archived: "warning",
 };
@@ -80,4 +123,50 @@ export function categoryOptions(items: KbCategory[], activeOnly = true) {
           : c.name,
     }))
     .sort((a, b) => a.label.localeCompare(b.label, "th"));
+}
+
+export const REVIEW_COLOR: Record<string, string> = {
+  due_soon: "warning",
+  overdue: "error",
+};
+
+/**
+ * CD-260 — a line diff (longest common subsequence) between two texts, for
+ * comparing versions. Articles are short; n×m is fine up to a few thousand.
+ */
+export function lineDiff(before: string, after: string) {
+  const a = before.split("\n");
+  const b = after.split("\n");
+  if (a.length * b.length > 4_000_000) {
+    return [
+      ...a.map((text) => ({ kind: "del" as const, text })),
+      ...b.map((text) => ({ kind: "add" as const, text })),
+    ];
+  }
+  const lcs: number[][] = Array.from({ length: a.length + 1 }, () =>
+    new Array<number>(b.length + 1).fill(0),
+  );
+  for (let i = a.length - 1; i >= 0; i--)
+    for (let j = b.length - 1; j >= 0; j--)
+      lcs[i][j] =
+        a[i] === b[j]
+          ? lcs[i + 1][j + 1] + 1
+          : Math.max(lcs[i + 1][j], lcs[i][j + 1]);
+  const out: { kind: "same" | "add" | "del"; text: string }[] = [];
+  let i = 0;
+  let j = 0;
+  while (i < a.length && j < b.length) {
+    if (a[i] === b[j]) {
+      out.push({ kind: "same", text: a[i] });
+      i++;
+      j++;
+    } else if (lcs[i + 1][j] >= lcs[i][j + 1]) {
+      out.push({ kind: "del", text: a[i++] });
+    } else {
+      out.push({ kind: "add", text: b[j++] });
+    }
+  }
+  while (i < a.length) out.push({ kind: "del", text: a[i++] });
+  while (j < b.length) out.push({ kind: "add", text: b[j++] });
+  return out;
 }

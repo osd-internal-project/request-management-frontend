@@ -22,6 +22,7 @@ import { ROUTES } from "@/lib/routes";
 import {
   categoryOptions,
   fill,
+  REVIEW_COLOR,
   shortDate,
   STATUS_COLOR,
   type KbCard,
@@ -129,7 +130,7 @@ export function KbSearch() {
           value={status}
           onChange={(v) => setStatus(String(v))}
           options={(result?.canManage
-            ? ["published", "draft", "archived", "mine"]
+            ? ["published", "in_review", "draft", "archived", "mine"]
             : ["published", "mine"]
           ).map((s) => ({ value: s, label: m.statuses[s] }))}
         />
@@ -189,6 +190,11 @@ export function KbSearch() {
                   {a.status !== "published" ? (
                     <Tag color={STATUS_COLOR[a.status]}>
                       {m.statuses[a.status]}
+                    </Tag>
+                  ) : null}
+                  {REVIEW_COLOR[a.reviewState] ? (
+                    <Tag color={REVIEW_COLOR[a.reviewState]}>
+                      {m.review.reviewStates[a.reviewState]}
                     </Tag>
                   ) : null}
                 </Space>

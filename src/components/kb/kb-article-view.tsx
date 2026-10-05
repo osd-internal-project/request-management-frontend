@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Alert,
   App,
@@ -9,14 +9,17 @@ import {
   Input,
   Modal,
   Popconfirm,
+  Select,
   Skeleton,
   Space,
+  Spin,
   Table,
   Tag,
 } from "antd";
 import {
   DislikeOutlined,
   EditOutlined,
+  HistoryOutlined,
   LikeOutlined,
   PaperClipOutlined,
 } from "@ant-design/icons";
@@ -25,14 +28,47 @@ import Text from "antd/es/typography/Text";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { appApi } from "@/lib/api/client";
+import { searchUsers } from "@/lib/api/client-roles";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import { KbMarkdown } from "./kb-markdown";
-import { fill, shortDate, STATUS_COLOR, type KbArticle } from "./kb-types";
+import {
+  fill,
+  lineDiff,
+  REVIEW_COLOR,
+  shortDate,
+  STATUS_COLOR,
+  type KbArticle,
+  type KbCard,
+} from "./kb-types";
 
 const m = messages.kb;
+const r = m.review;
 
-/** CD-259 — one article: read it, say whether it helped, and (owners) act on it. */
+interface VersionRow {
+  version: number;
+  title: string;
+  changeNote: string;
+  writtenBy: string;
+  approvedBy: string;
+  approvedAt: string;
+}
+
+type Dialog =
+  | { kind: "approve" | "sendBack" | "archive"; note: string }
+  | {
+      kind: "owner";
+      userId?: string;
+      options: { value: string; label: string }[];
+    }
+  | {
+      kind: "merge";
+      intoId?: string;
+      options: { value: string; label: string }[];
+    }
+  | null;
+
+/** CD-259/260 — one article: read it, rate it, and move it through review. */
 export function KbArticleView({ id }: { id: string }) {
   const { message } = App.useApp();
   const router = useRouter();
@@ -41,46 +77,151 @@ export function KbArticleView({ id }: { id: string }) {
   const [busy, setBusy] = useState(false);
   const [comment, setComment] = useState("");
   const [voting, setVoting] = useState<boolean | null>(null);
-  const [archiving, setArchiving] = useState<string | null>(null);
+  const [dialog, setDialog] = useState<Dialog>(null);
+  const [lookup, setLookup] = useState(false);
+  const [versions, setVersions] = useState<VersionRow[] | null>(null);
+  const [compare, setCompare] = useState<{
+    version: number;
+    body: string;
+  } | null>(null);
   const [feedback, setFeedback] = useState<
     | { user: string; helpful: boolean; comment: string | null; at: string }[]
     | null
   >(null);
 
-  useEffect(() => {
-    void appApi<KbArticle>(`kb/articles/${id}`).then((r) =>
-      r.ok ? setArticle(r.data) : setError(r.message),
+  const load = useCallback(() => {
+    void appApi<KbArticle>(`kb/articles/${id}`).then((res) =>
+      res.ok ? setArticle(res.data) : setError(res.message),
     );
   }, [id]);
 
-  async function act(path: string, body: object, done: string) {
+  useEffect(() => load(), [load]);
+
+  // A merged duplicate sends its readers on to the main article.
+  useEffect(() => {
+    if (!article?.mergedInto) return;
+    void message.info(
+      fill(r.mergedNotice, { n: article.mergedInto.articleNo }),
+    );
+    router.replace(ROUTES.kbArticle(article.mergedInto.id));
+  }, [article, message, router]);
+
+  async function post<T>(
+    path: string,
+    body: object,
+    done: string,
+    method = "POST",
+  ) {
     setBusy(true);
-    const r = await appApi<KbArticle>(`kb/articles/${id}/${path}`, {
-      method: "POST",
+    const res = await appApi<T>(`kb/articles/${id}/${path}`, {
+      method,
       body: JSON.stringify(body),
     });
     setBusy(false);
-    if (!r.ok) {
-      void message.error(r.message);
-      return false;
+    if (!res.ok) {
+      void message.error(res.message);
+      return null;
     }
-    setArticle(r.data);
-    void message.success(done);
-    return true;
+    if (done) void message.success(done);
+    load();
+    return res.data;
   }
 
   async function remove() {
-    const r = await appApi(`kb/articles/${id}`, { method: "DELETE" });
-    if (!r.ok) {
-      void message.error(r.message);
+    const res = await appApi(`kb/articles/${id}`, { method: "DELETE" });
+    if (!res.ok) {
+      void message.error(res.message);
       return;
     }
     void message.success(m.removed);
     router.push(ROUTES.kb);
   }
 
+  async function revise() {
+    setBusy(true);
+    const res = await appApi<{ id: string }>(`kb/articles/${id}/revisions`, {
+      method: "POST",
+      body: "{}",
+    });
+    setBusy(false);
+    if (!res.ok) {
+      void message.error(res.message);
+      return;
+    }
+    router.push(ROUTES.kbRevision(id, res.data.id));
+  }
+
+  async function findPeople(term: string) {
+    if (dialog?.kind !== "owner") return;
+    setLookup(true);
+    const res = await searchUsers(term);
+    setLookup(false);
+    setDialog({
+      ...dialog,
+      options: res.ok
+        ? res.data.data.map((p) => ({
+            value: p.id,
+            label: `${p.displayName} · ${p.username}`,
+          }))
+        : [],
+    });
+  }
+
+  async function findArticles(term: string) {
+    if (dialog?.kind !== "merge") return;
+    setLookup(true);
+    const res = await appApi<{ items: KbCard[] }>(
+      `kb/articles?limit=20${term.trim() ? `&q=${encodeURIComponent(term.trim())}` : ""}`,
+    );
+    setLookup(false);
+    setDialog({
+      ...dialog,
+      options: res.ok
+        ? res.data.items
+            .filter((a) => a.id !== id)
+            .map((a) => ({ value: a.id, label: `${a.articleNo} · ${a.title}` }))
+        : [],
+    });
+  }
+
+  async function confirmDialog() {
+    if (!dialog) return;
+    let ok: unknown = null;
+    if (dialog.kind === "approve") {
+      const res = await post<{ version: number }>(
+        "approve",
+        { note: dialog.note || undefined },
+        "",
+      );
+      if (res) void message.success(fill(r.approved, { v: res.version }));
+      ok = res;
+    } else if (dialog.kind === "sendBack") {
+      ok = await post("send-back", { note: dialog.note }, r.sentBack);
+    } else if (dialog.kind === "archive") {
+      ok = await post("archive", { reason: dialog.note }, m.archived);
+    } else if (dialog.kind === "owner" && dialog.userId) {
+      ok = await post(
+        "owner",
+        { user_id: dialog.userId },
+        r.ownerChanged,
+        "PUT",
+      );
+    } else if (dialog.kind === "merge" && dialog.intoId) {
+      ok = await post("merge", { into_id: dialog.intoId }, r.merged);
+    }
+    if (ok) setDialog(null);
+  }
+
+  async function openCompare(version: number) {
+    const res = await appApi<{ body: string }>(
+      `kb/articles/${id}/versions/${version}`,
+    );
+    if (res.ok) setCompare({ version, body: res.data.body });
+    else void message.error(res.message);
+  }
+
   if (error) return <Alert type="error" showIcon title={error} />;
-  if (!article) return <Skeleton active />;
+  if (!article || article.mergedInto) return <Skeleton active />;
   const a = article;
 
   return (
@@ -90,9 +231,15 @@ export function KbArticleView({ id }: { id: string }) {
         <Space wrap size={6}>
           <Text type="secondary">{a.articleNo}</Text>
           <Tag color={STATUS_COLOR[a.status]}>{m.statuses[a.status]}</Tag>
+          {a.version ? <Tag>{fill(r.version, { v: a.version })}</Tag> : null}
           {a.category?.name ? <Tag>{a.category.name}</Tag> : null}
           {a.source !== "manual" ? (
             <Tag>{m.sources[a.source] ?? a.source}</Tag>
+          ) : null}
+          {REVIEW_COLOR[a.reviewState] ? (
+            <Tag color={REVIEW_COLOR[a.reviewState]}>
+              {r.reviewStates[a.reviewState]}
+            </Tag>
           ) : null}
         </Space>
         <Title level={3} className="!mb-1 !mt-1">
@@ -101,11 +248,15 @@ export function KbArticleView({ id }: { id: string }) {
         {a.summary ? <Text type="secondary">{a.summary}</Text> : null}
         <div className="mt-1">
           <Text type="secondary" className="text-xs">
-            {fill(m.by, { n: a.author })} ·{" "}
+            {fill(m.by, { n: a.author })}
+            {a.owner ? ` · ${r.owner}: ${a.owner}` : ""} ·{" "}
             {a.publishedAt
               ? fill(m.published, { d: shortDate(a.publishedAt) })
               : fill(m.updated, { d: shortDate(a.updatedAt) })}{" "}
             · {fill(m.views, { n: a.views })}
+            {a.nextReviewOn && a.status === "published"
+              ? ` · ${fill(r.nextReview, { d: shortDate(a.nextReviewOn) })}`
+              : ""}
           </Text>
         </div>
         <Space wrap size={4} className="mt-2">
@@ -120,11 +271,45 @@ export function KbArticleView({ id }: { id: string }) {
         </Space>
       </div>
 
-      {a.status === "draft" ? (
+      {a.status === "draft" && a.reviewNote ? (
+        <Alert
+          type="warning"
+          showIcon
+          title={fill(r.returnedNote, {
+            n: a.reviewedBy ?? "",
+            t: a.reviewNote,
+          })}
+        />
+      ) : a.status === "draft" ? (
         <Alert type="info" showIcon title={m.draftNote} />
+      ) : null}
+      {a.status === "in_review" ? (
+        <Alert
+          type="info"
+          showIcon
+          title={fill(r.inReviewNote, { d: shortDate(a.submittedAt) })}
+        />
       ) : null}
       {a.status === "archived" ? (
         <Alert type="warning" showIcon title={m.archivedNote} />
+      ) : null}
+      {a.openRevision ? (
+        <Alert
+          type="info"
+          showIcon
+          title={fill(r.revisionPending, {
+            s:
+              r.revisionStatuses[a.openRevision.status] ??
+              a.openRevision.status,
+          })}
+          action={
+            a.openRevision.id ? (
+              <Link href={ROUTES.kbRevision(a.id, a.openRevision.id)}>
+                <Button size="small">{r.continueRevision}</Button>
+              </Link>
+            ) : null
+          }
+        />
       ) : null}
 
       <Space wrap>
@@ -133,26 +318,108 @@ export function KbArticleView({ id }: { id: string }) {
             <Button icon={<EditOutlined />}>{m.edit}</Button>
           </Link>
         ) : null}
-        {a.canPublish ? (
+        {a.canSubmit ? (
           <Button
             type="primary"
             loading={busy}
-            onClick={() => void act("publish", {}, m.published_)}
+            onClick={() => void post("submit", {}, r.submitted)}
           >
-            {m.publish}
+            {r.submit}
+          </Button>
+        ) : null}
+        {a.canWithdraw ? (
+          <Button
+            loading={busy}
+            onClick={() => void post("withdraw", {}, r.withdrawn)}
+          >
+            {r.withdraw}
+          </Button>
+        ) : null}
+        {a.canApprove ? (
+          <Button
+            type="primary"
+            onClick={() => setDialog({ kind: "approve", note: "" })}
+          >
+            {r.approve}
+          </Button>
+        ) : null}
+        {a.canSendBack ? (
+          <Button
+            danger
+            onClick={() => setDialog({ kind: "sendBack", note: "" })}
+          >
+            {r.sendBack}
+          </Button>
+        ) : null}
+        {a.canRevise ? (
+          <Button
+            icon={<EditOutlined />}
+            loading={busy}
+            onClick={() => void revise()}
+          >
+            {r.revise}
+          </Button>
+        ) : null}
+        {a.canConfirmReview && a.reviewState !== "ok" ? (
+          <Button
+            loading={busy}
+            onClick={() =>
+              void post<{ nextReviewOn: string }>("reviewed", {}, "").then(
+                (res) =>
+                  res &&
+                  void message.success(
+                    fill(r.confirmed, { d: shortDate(res.nextReviewOn) }),
+                  ),
+              )
+            }
+          >
+            {r.confirmReview}
+          </Button>
+        ) : null}
+        {a.version ? (
+          <Button
+            icon={<HistoryOutlined />}
+            onClick={() =>
+              void appApi<VersionRow[]>(`kb/articles/${id}/versions`).then(
+                (res) => res.ok && setVersions(res.data),
+              )
+            }
+          >
+            {r.versions}
+          </Button>
+        ) : null}
+        {a.canSetOwner ? (
+          <Button
+            type="link"
+            onClick={() => setDialog({ kind: "owner", options: [] })}
+          >
+            {r.changeOwner}
+          </Button>
+        ) : null}
+        {a.canMerge ? (
+          <Button
+            type="link"
+            onClick={() => setDialog({ kind: "merge", options: [] })}
+          >
+            {r.merge}
           </Button>
         ) : null}
         {a.canArchive ? (
-          <Button danger onClick={() => setArchiving("")}>
+          <Button
+            danger
+            type="link"
+            onClick={() => setDialog({ kind: "archive", note: "" })}
+          >
             {m.archive}
           </Button>
         ) : null}
-        {a.status !== "draft" && (a.canPublish || a.canArchive) ? (
+        {a.canReopen ? (
           <Button
+            type="link"
             loading={busy}
-            onClick={() => void act("reopen", {}, m.reopened)}
+            onClick={() => void post("reopen", {}, m.reopened)}
           >
-            {m.reopen}
+            {r.reopen}
           </Button>
         ) : null}
         {a.status === "draft" && a.canEdit && !a.publishedAt ? (
@@ -162,12 +429,12 @@ export function KbArticleView({ id }: { id: string }) {
             </Button>
           </Popconfirm>
         ) : null}
-        {a.canEdit || a.canPublish || a.canArchive ? (
+        {a.canEdit || a.canApprove || a.canArchive || a.canConfirmReview ? (
           <Button
             type="link"
             onClick={() =>
               void appApi<typeof feedback>(`kb/articles/${id}/ratings`).then(
-                (r) => r.ok && setFeedback(r.data),
+                (res) => res.ok && setFeedback(res.data),
               )
             }
           >
@@ -208,7 +475,7 @@ export function KbArticleView({ id }: { id: string }) {
                 loading={busy && voting === true}
                 onClick={() => {
                   setVoting(true);
-                  void act("rate", { helpful: true }, m.thanks);
+                  void post("rate", { helpful: true }, m.thanks);
                 }}
               >
                 {m.yes}
@@ -241,7 +508,7 @@ export function KbArticleView({ id }: { id: string }) {
                   type="primary"
                   loading={busy}
                   onClick={() =>
-                    void act(
+                    void post(
                       "rate",
                       { helpful: false, comment },
                       m.thanks,
@@ -257,25 +524,162 @@ export function KbArticleView({ id }: { id: string }) {
       ) : null}
 
       <Modal
-        open={archiving !== null}
-        title={m.archiveTitle}
-        okText={m.archive}
-        okButtonProps={{ danger: true, disabled: !archiving?.trim() }}
-        confirmLoading={busy}
-        onCancel={() => setArchiving(null)}
-        onOk={() =>
-          void act("archive", { reason: archiving }, m.archived).then(
-            (ok) => ok && setArchiving(null),
-          )
+        open={!!dialog}
+        title={
+          dialog?.kind === "approve"
+            ? r.approveTitle
+            : dialog?.kind === "sendBack"
+              ? r.sendBackTitle
+              : dialog?.kind === "archive"
+                ? m.archiveTitle
+                : dialog?.kind === "owner"
+                  ? r.changeOwner
+                  : r.mergeTitle
         }
+        confirmLoading={busy}
+        okButtonProps={{
+          danger: dialog?.kind === "sendBack" || dialog?.kind === "archive",
+          disabled:
+            ((dialog?.kind === "sendBack" || dialog?.kind === "archive") &&
+              !dialog.note.trim()) ||
+            (dialog?.kind === "owner" && !dialog.userId) ||
+            (dialog?.kind === "merge" && !dialog.intoId),
+        }}
+        onCancel={() => setDialog(null)}
+        onOk={() => void confirmDialog()}
       >
-        <Input.TextArea
-          rows={3}
-          maxLength={500}
-          placeholder={m.archiveReason}
-          value={archiving ?? ""}
-          onChange={(e) => setArchiving(e.target.value)}
+        {dialog && "note" in dialog ? (
+          <Input.TextArea
+            rows={3}
+            maxLength={1000}
+            placeholder={
+              dialog.kind === "approve"
+                ? r.approveNote
+                : dialog.kind === "sendBack"
+                  ? r.sendBackNote
+                  : m.archiveReason
+            }
+            value={dialog.note}
+            onChange={(e) => setDialog({ ...dialog, note: e.target.value })}
+          />
+        ) : dialog?.kind === "owner" ? (
+          <Select
+            className="w-full"
+            showSearch
+            filterOption={false}
+            placeholder={r.pickPerson}
+            value={dialog.userId}
+            onChange={(v) => setDialog({ ...dialog, userId: v })}
+            onSearch={(t) => void findPeople(t)}
+            onFocus={() => !dialog.options.length && void findPeople("")}
+            notFoundContent={lookup ? <Spin size="small" /> : null}
+            options={dialog.options}
+          />
+        ) : dialog?.kind === "merge" ? (
+          <Space orientation="vertical" className="w-full">
+            <Text type="secondary">{r.mergeHint}</Text>
+            <Select
+              className="w-full"
+              showSearch
+              filterOption={false}
+              placeholder={r.mergeTarget}
+              value={dialog.intoId}
+              onChange={(v) => setDialog({ ...dialog, intoId: v })}
+              onSearch={(t) => void findArticles(t)}
+              onFocus={() => !dialog.options.length && void findArticles("")}
+              notFoundContent={lookup ? <Spin size="small" /> : null}
+              options={dialog.options}
+            />
+          </Space>
+        ) : null}
+      </Modal>
+
+      <Modal
+        open={versions !== null}
+        title={r.versions}
+        footer={null}
+        width={860}
+        onCancel={() => setVersions(null)}
+      >
+        <Table<VersionRow>
+          rowKey="version"
+          size="small"
+          pagination={false}
+          dataSource={versions ?? []}
+          columns={[
+            { title: r.versionCols.version, dataIndex: "version", width: 80 },
+            {
+              title: r.versionCols.changeNote,
+              dataIndex: "changeNote",
+              render: (v: string) => v || "—",
+            },
+            {
+              title: r.versionCols.writtenBy,
+              dataIndex: "writtenBy",
+              width: 130,
+            },
+            {
+              title: r.versionCols.approvedBy,
+              dataIndex: "approvedBy",
+              width: 130,
+            },
+            {
+              title: r.versionCols.approvedAt,
+              dataIndex: "approvedAt",
+              width: 100,
+              render: shortDate,
+            },
+            {
+              key: "compare",
+              width: 150,
+              render: (_, row) =>
+                row.version === a.version ? null : (
+                  <Button
+                    size="small"
+                    onClick={() => void openCompare(row.version)}
+                  >
+                    {r.compare}
+                  </Button>
+                ),
+            },
+          ]}
         />
+      </Modal>
+
+      <Modal
+        open={!!compare}
+        title={
+          compare
+            ? fill(r.compareTitle, { a: compare.version, b: a.version })
+            : ""
+        }
+        footer={null}
+        width={900}
+        onCancel={() => setCompare(null)}
+      >
+        {compare ? (
+          <pre className="max-h-[60vh] overflow-auto rounded bg-black/[.03] p-3 text-xs leading-5 whitespace-pre-wrap">
+            {(() => {
+              const diff = lineDiff(compare.body, a.body);
+              if (diff.every((d) => d.kind === "same")) return r.noChange;
+              return diff.map((d, i) => (
+                <div
+                  key={i}
+                  className={
+                    d.kind === "add"
+                      ? "bg-green-100 text-green-900"
+                      : d.kind === "del"
+                        ? "bg-red-100 text-red-900 line-through"
+                        : ""
+                  }
+                >
+                  {d.kind === "add" ? "+ " : d.kind === "del" ? "− " : "  "}
+                  {d.text || " "}
+                </div>
+              ));
+            })()}
+          </pre>
+        ) : null}
       </Modal>
 
       <Modal
@@ -286,7 +690,7 @@ export function KbArticleView({ id }: { id: string }) {
         onCancel={() => setFeedback(null)}
       >
         <Table
-          rowKey={(r) => `${r.user}-${r.at}`}
+          rowKey={(row) => `${row.user}-${row.at}`}
           size="small"
           pagination={false}
           dataSource={feedback ?? []}

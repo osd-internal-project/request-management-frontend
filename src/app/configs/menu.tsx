@@ -85,7 +85,8 @@ export type MenuIconKey =
   | "esignLayout"
   | "esignAuthority"
   | "kb"
-  | "kbCategory";
+  | "kbCategory"
+  | "kbReview";
 
 export interface MenuEntry {
   label: string;
@@ -611,6 +612,13 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     label: messages.nav.kb,
     href: ROUTES.kb,
     icon: "kb",
+    group: messages.nav.kbGroup,
+  },
+  /** CD-260 — drafts waiting for review, and articles due for review. */
+  {
+    label: messages.nav.kbReview,
+    href: ROUTES.kbReview,
+    icon: "kbReview",
     group: messages.nav.kbGroup,
   },
   /** CD-259 — process categories, kept by the knowledge owners. */
