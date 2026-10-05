@@ -357,7 +357,7 @@ export function AssetRegister({
       <Drawer
         open={detail !== null}
         title={detail ? `${detail.name}` : m.detail}
-        width={560}
+        size={560}
         onClose={() => setDetail(null)}
         extra={
           detail &&

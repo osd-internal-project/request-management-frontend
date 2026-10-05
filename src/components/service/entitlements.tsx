@@ -429,7 +429,7 @@ export function Entitlements({
 
       <Drawer
         open={detail !== null}
-        width={560}
+        size={560}
         title={detail?.title}
         onClose={() => setDetail(null)}
         extra={

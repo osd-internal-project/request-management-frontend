@@ -407,7 +407,7 @@ export function Problems({
 
       <Drawer
         open={detail !== null}
-        width={640}
+        size={640}
         title={detail ? `${detail.problemNo} · ${detail.title}` : ""}
         onClose={() => setDetail(null)}
       >

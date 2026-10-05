@@ -111,7 +111,9 @@ export function PublicSurvey({ token }: { readonly token: string }) {
             </Text>
             <Rate
               value={scores[key] ?? 0}
-              onChange={(value) => setScores({ ...scores, [key]: value })}
+              onChange={(value) =>
+                setScores((prev) => ({ ...prev, [key]: value }))
+              }
             />
           </div>
         ))}
