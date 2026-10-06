@@ -914,6 +914,7 @@ export const messages = {
     kbGroup: "คลังความรู้",
     macomGroup: "การตลาด (MACOM)",
     contentCalendar: "ปฏิทินคอนเทนต์",
+    brandLibrary: "คลังแบรนด์และเทมเพลต",
     kb: "ค้นบทความความรู้",
     kbCategories: "หมวดคลังความรู้",
     kbReview: "รอตรวจและทบทวน",
@@ -2285,6 +2286,63 @@ export const messages = {
       saved: "บันทึกแล้ว",
       required: "จำเป็น",
     },
+  },
+
+  /** CD-273 — คลังแบรนด์และเทมเพลต */
+  brand: {
+    title: "คลังแบรนด์และเทมเพลต",
+    subtitle:
+      "โลโก้ เทมเพลตข้อเสนอ และเอกสารนำเสนอชุดมาตรฐาน — ทุกคนเห็นเฉพาะฉบับปัจจุบันที่อนุมัติแล้ว",
+    search: "ค้นชื่อ คำอธิบาย แท็ก",
+    allCategories: "ทุกหมวด",
+    categories: {
+      logo: "โลโก้",
+      proposal_template: "เทมเพลตข้อเสนอ",
+      presentation: "เอกสารนำเสนอ",
+      guideline: "คู่มือแบรนด์",
+      graphic: "ภาพ/กราฟิก",
+      other: "อื่น ๆ",
+    } as Record<string, string>,
+    add: "เพิ่มไฟล์",
+    empty: "ยังไม่มีไฟล์ในคลัง",
+    download: "ดาวน์โหลด",
+    manage: "จัดการ",
+    version: (n: number) => `ฉบับที่ ${n}`,
+    noCurrent: "ยังไม่มีฉบับที่อนุมัติ",
+    pending: (n: number) => `รออนุมัติ ${n}`,
+    retiredTag: "เลิกใช้",
+    showRetired: "แสดงที่เลิกใช้",
+    fields: {
+      category: "หมวด",
+      name: "ชื่อ",
+      description: "คำอธิบาย",
+      tags: "แท็ก",
+      note: "หมายเหตุของฉบับนี้",
+      file: "ไฟล์",
+    },
+    fileHint:
+      "PNG/JPG/SVG, PDF, PPTX/DOCX/XLSX, AI/EPS, ZIP ไม่เกิน 50 MB — ส่งอนุมัติทันที ขึ้นให้ทุกคนเห็นเมื่ออนุมัติแล้ว",
+    chooseFile: "เลือกไฟล์",
+    submit: "อัปโหลดและส่งอนุมัติ",
+    sent: "ส่งอนุมัติแล้ว",
+    saved: "บันทึกแล้ว",
+    required: "กรอกหมวด ชื่อ และเลือกไฟล์",
+    newVersion: "อัปโหลดฉบับใหม่",
+    versions: "ประวัติฉบับ",
+    statuses: {
+      current: "ฉบับปัจจุบัน",
+      approved: "เคยใช้",
+      pending: "รออนุมัติ",
+      rejected: "ไม่อนุมัติ",
+      cancelled: "ถอนแล้ว",
+    } as Record<string, string>,
+    withdraw: "ถอน",
+    withdrawConfirm: "ถอนฉบับนี้? คำขออนุมัติจะถูกยกเลิก",
+    viewRequest: "ดูคำขอ",
+    retire: "เลิกใช้",
+    retireReason: "เหตุผลที่เลิกใช้",
+    restore: "เปิดใช้อีกครั้ง",
+    retired: (reason: string) => `เลิกใช้แล้ว: ${reason}`,
   },
 
   /** CD-271 — ปฏิทินคอนเทนต์ */
@@ -6987,6 +7045,9 @@ export const messages = {
       projectResourceTypeCode: "ประเภทคำขอทีมเพิ่ม (PM → Engineer)",
       serviceWorkOrderTypeCode: "ประเภทคำขอใบสั่งงานบริการ",
       contentApprovalTypeCode: "ประเภทคำขออนุมัติคอนเทนต์ (MACOM)",
+      brandApprovalTypeCode: "ประเภทคำขออนุมัติไฟล์คลังแบรนด์ (MACOM)",
+      brandApprovalHint:
+        "ไฟล์คลังแบรนด์ทุกฉบับ (รวมฉบับแรก) ขึ้นเป็นฉบับปัจจุบันเมื่ออนุมัติคำขอประเภทนี้ (form: subject, asset_name, category, version_no, file_name, note, asset_id) · ว่าง = อัปโหลดไม่ได้",
       contentApprovalAll:
         "ทุกคอนเทนต์ต้องอนุมัติ (ไม่ใช่เฉพาะที่พาดพิงลูกค้า/ราคา/คู่ค้า)",
       contentApprovalHint:

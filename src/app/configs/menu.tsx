@@ -23,6 +23,7 @@ export type MenuIconKey =
   | "saleOrder"
   | "campaign"
   | "contentCalendar"
+  | "brandLibrary"
   | "salesTarget"
   | "salesReport"
   | "contract"
@@ -649,6 +650,13 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     href: ROUTES.contentCalendar,
     icon: "contentCalendar",
     permissions: ["crm.sales.read", "crm.campaign.manage"],
+    group: messages.nav.macomGroup,
+  },
+  /** CD-273 — โลโก้ เทมเพลต เอกสารนำเสนอฉบับปัจจุบัน — ทุกคนหยิบใช้ได้. */
+  {
+    label: messages.nav.brandLibrary,
+    href: ROUTES.brandLibrary,
+    icon: "brandLibrary",
     group: messages.nav.macomGroup,
   },
 

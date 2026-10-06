@@ -1833,6 +1833,8 @@ export interface CrmConfig {
   /** CD-272 */
   contentApprovalTypeCode?: string | null;
   contentApprovalAll?: boolean;
+  /** CD-273 */
+  brandApprovalTypeCode?: string | null;
   /** CD-225 — the company's readiness checklist. */
   projectReadinessChecklist?: string[];
   /** CD-226 — the as-built documents every project must leave. */
