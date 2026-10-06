@@ -20,6 +20,7 @@ import { appApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import {
+  AUDIENCE_COLOR,
   categoryOptions,
   fill,
   REVIEW_COLOR,
@@ -46,6 +47,7 @@ export function KbSearch() {
   const [categoryId, setCategoryId] = useState<string | undefined>();
   const [product, setProduct] = useState<string | undefined>();
   const [tag, setTag] = useState<string | undefined>();
+  const [audience, setAudience] = useState<string | undefined>();
   const [categories, setCategories] = useState<KbCategory[]>([]);
   const [tags, setTags] = useState<{ tag: string; n: number }[]>([]);
   const [loaded, setLoaded] = useState<{
@@ -70,6 +72,7 @@ export function KbSearch() {
   if (categoryId) params.set("category_id", categoryId);
   if (product) params.set("product_code", product);
   if (tag) params.set("tag", tag);
+  if (audience) params.set("audience", audience);
   const key = params.toString();
 
   useEffect(() => {
@@ -156,6 +159,19 @@ export function KbSearch() {
         />
         <Select
           allowClear
+          className="min-w-44"
+          placeholder={m.audience.filter}
+          value={audience}
+          onChange={setAudience}
+          options={(["internal", "customers", "selected"] as const).map(
+            (v) => ({
+              value: v,
+              label: m.audience.options[v],
+            }),
+          )}
+        />
+        <Select
+          allowClear
           showSearch
           className="min-w-44"
           placeholder={m.tag}
@@ -190,6 +206,11 @@ export function KbSearch() {
                   {a.status !== "published" ? (
                     <Tag color={STATUS_COLOR[a.status]}>
                       {m.statuses[a.status]}
+                    </Tag>
+                  ) : null}
+                  {a.audience !== "internal" ? (
+                    <Tag color={AUDIENCE_COLOR[a.audience]}>
+                      {m.audience.tags[a.audience]}
                     </Tag>
                   ) : null}
                   {REVIEW_COLOR[a.reviewState] ? (

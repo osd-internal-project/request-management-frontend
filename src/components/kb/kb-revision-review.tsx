@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { App, Button, Card, Input, Space, Tag } from "antd";
+import { Alert, App, Button, Card, Input, Space, Tag } from "antd";
 import Text from "antd/es/typography/Text";
 import { useRouter } from "next/navigation";
 import { appApi } from "@/lib/api/client";
@@ -83,6 +83,16 @@ export function KbRevisionReview({
           <Text strong>{r.changeNote}:</Text> {revision.changeNote || "—"} ·{" "}
           {r.writer}: {revision.createdBy}
         </Text>
+        {current.audience !== revision.audience ? (
+          <Alert
+            type="warning"
+            showIcon
+            title={fill(messages.kb.audience.changed, {
+              a: messages.kb.audience.options[current.audience],
+              b: messages.kb.audience.options[revision.audience],
+            })}
+          />
+        ) : null}
         {titleChanged ? (
           <Text>
             <Text delete type="danger">

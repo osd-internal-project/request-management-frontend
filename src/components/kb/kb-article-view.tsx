@@ -33,6 +33,7 @@ import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import { KbMarkdown } from "./kb-markdown";
 import {
+  AUDIENCE_COLOR,
   fill,
   lineDiff,
   REVIEW_COLOR,
@@ -44,6 +45,7 @@ import {
 
 const m = messages.kb;
 const r = m.review;
+const au = m.audience;
 
 interface VersionRow {
   version: number;
@@ -55,7 +57,10 @@ interface VersionRow {
 }
 
 type Dialog =
-  | { kind: "approve" | "sendBack" | "archive"; note: string }
+  | {
+      kind: "approve" | "sendBack" | "archive" | "withdrawCustomers";
+      note: string;
+    }
   | {
       kind: "owner";
       userId?: string;
@@ -199,6 +204,12 @@ export function KbArticleView({ id }: { id: string }) {
       ok = await post("send-back", { note: dialog.note }, r.sentBack);
     } else if (dialog.kind === "archive") {
       ok = await post("archive", { reason: dialog.note }, m.archived);
+    } else if (dialog.kind === "withdrawCustomers") {
+      ok = await post(
+        "withdraw-from-customers",
+        { reason: dialog.note },
+        au.withdrawn,
+      );
     } else if (dialog.kind === "owner" && dialog.userId) {
       ok = await post(
         "owner",
@@ -232,6 +243,7 @@ export function KbArticleView({ id }: { id: string }) {
           <Text type="secondary">{a.articleNo}</Text>
           <Tag color={STATUS_COLOR[a.status]}>{m.statuses[a.status]}</Tag>
           {a.version ? <Tag>{fill(r.version, { v: a.version })}</Tag> : null}
+          <Tag color={AUDIENCE_COLOR[a.audience]}>{au.tags[a.audience]}</Tag>
           {a.category?.name ? <Tag>{a.category.name}</Tag> : null}
           {a.source !== "manual" ? (
             <Tag>{m.sources[a.source] ?? a.source}</Tag>
@@ -269,6 +281,25 @@ export function KbArticleView({ id }: { id: string }) {
             <Tag key={t}>#{t}</Tag>
           ))}
         </Space>
+        {a.customers.length ? (
+          <div className="mt-1">
+            <Text type="secondary" className="text-xs">
+              {au.customers}:{" "}
+              {a.customers.map((c) => `${c.code} · ${c.name}`).join(", ")}
+            </Text>
+          </div>
+        ) : null}
+        {a.audience !== "internal" && a.status === "published" ? (
+          <div>
+            <Text type="secondary" className="text-xs">
+              {fill(au.portalStats, {
+                v: a.portalViews,
+                y: a.portalHelpfulYes,
+                n: a.portalHelpfulNo,
+              })}
+            </Text>
+          </div>
+        ) : null}
       </div>
 
       {a.status === "draft" && a.reviewNote ? (
@@ -404,6 +435,15 @@ export function KbArticleView({ id }: { id: string }) {
             {r.merge}
           </Button>
         ) : null}
+        {a.canArchive && a.audience !== "internal" ? (
+          <Button
+            danger
+            type="link"
+            onClick={() => setDialog({ kind: "withdrawCustomers", note: "" })}
+          >
+            {au.withdraw}
+          </Button>
+        ) : null}
         {a.canArchive ? (
           <Button
             danger
@@ -532,15 +572,22 @@ export function KbArticleView({ id }: { id: string }) {
               ? r.sendBackTitle
               : dialog?.kind === "archive"
                 ? m.archiveTitle
-                : dialog?.kind === "owner"
-                  ? r.changeOwner
-                  : r.mergeTitle
+                : dialog?.kind === "withdrawCustomers"
+                  ? au.withdrawTitle
+                  : dialog?.kind === "owner"
+                    ? r.changeOwner
+                    : r.mergeTitle
         }
         confirmLoading={busy}
         okButtonProps={{
-          danger: dialog?.kind === "sendBack" || dialog?.kind === "archive",
+          danger:
+            dialog?.kind === "sendBack" ||
+            dialog?.kind === "archive" ||
+            dialog?.kind === "withdrawCustomers",
           disabled:
-            ((dialog?.kind === "sendBack" || dialog?.kind === "archive") &&
+            ((dialog?.kind === "sendBack" ||
+              dialog?.kind === "archive" ||
+              dialog?.kind === "withdrawCustomers") &&
               !dialog.note.trim()) ||
             (dialog?.kind === "owner" && !dialog.userId) ||
             (dialog?.kind === "merge" && !dialog.intoId),
@@ -549,19 +596,33 @@ export function KbArticleView({ id }: { id: string }) {
         onOk={() => void confirmDialog()}
       >
         {dialog && "note" in dialog ? (
-          <Input.TextArea
-            rows={3}
-            maxLength={1000}
-            placeholder={
-              dialog.kind === "approve"
-                ? r.approveNote
-                : dialog.kind === "sendBack"
-                  ? r.sendBackNote
-                  : m.archiveReason
-            }
-            value={dialog.note}
-            onChange={(e) => setDialog({ ...dialog, note: e.target.value })}
-          />
+          <Space orientation="vertical" className="w-full">
+            {dialog.kind === "approve" && a.audience !== "internal" ? (
+              <Alert
+                type="warning"
+                showIcon
+                title={fill(au.approveWarning, { a: au.options[a.audience] })}
+              />
+            ) : null}
+            {dialog.kind === "withdrawCustomers" ? (
+              <Text type="secondary">{au.withdrawHint}</Text>
+            ) : null}
+            <Input.TextArea
+              rows={3}
+              maxLength={1000}
+              placeholder={
+                dialog.kind === "approve"
+                  ? r.approveNote
+                  : dialog.kind === "sendBack"
+                    ? r.sendBackNote
+                    : dialog.kind === "withdrawCustomers"
+                      ? au.withdrawReason
+                      : m.archiveReason
+              }
+              value={dialog.note}
+              onChange={(e) => setDialog({ ...dialog, note: e.target.value })}
+            />
+          </Space>
         ) : dialog?.kind === "owner" ? (
           <Select
             className="w-full"

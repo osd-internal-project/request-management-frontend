@@ -9,6 +9,7 @@ import {
   Form,
   Input,
   Popconfirm,
+  Radio,
   Select,
   Skeleton,
   Space,
@@ -35,6 +36,7 @@ import {
 const m = messages.kb;
 const f = m.form;
 const r = m.review;
+const au = m.audience;
 
 interface Draft {
   title: string;
@@ -46,6 +48,9 @@ interface Draft {
   productGroups: string[];
   /** CD-260 — a revision's "what changed". */
   changeNote: string;
+  /** CD-261 — who it is for. */
+  audience: "internal" | "customers" | "selected";
+  customerIds: string[];
 }
 
 const EMPTY: Draft = {
@@ -56,6 +61,8 @@ const EMPTY: Draft = {
   productCodes: [],
   productGroups: [],
   changeNote: "",
+  audience: "internal",
+  customerIds: [],
 };
 
 /**
@@ -77,6 +84,9 @@ export function KbArticleForm({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [revision, setRevision] = useState<KbRevision | null>(null);
+  const [customerOptions, setCustomerOptions] = useState<
+    { value: string; label: string }[]
+  >([]);
   const [categories, setCategories] = useState<KbCategory[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const body = useRef<HTMLTextAreaElement | null>(null);
@@ -91,9 +101,16 @@ export function KbArticleForm({
     );
     if (!id) return;
     if (revisionId) {
-      void appApi<KbArticle>(`kb/articles/${id}`).then(
-        (res) => res.ok && setArticleNo(res.data.articleNo),
-      );
+      void appApi<KbArticle>(`kb/articles/${id}`).then((res) => {
+        if (!res.ok) return;
+        setArticleNo(res.data.articleNo);
+        setCustomerOptions(
+          res.data.customers.map((c) => ({
+            value: c.id,
+            label: `${c.code} · ${c.name}`,
+          })),
+        );
+      });
       void appApi<KbRevision>(`kb/articles/${id}/revisions/${revisionId}`).then(
         (res) => {
           if (!res.ok) return setError(res.message);
@@ -107,6 +124,8 @@ export function KbArticleForm({
             productCodes: res.data.productCodes,
             productGroups: res.data.productGroups,
             changeNote: res.data.changeNote,
+            audience: res.data.audience,
+            customerIds: res.data.customerIds,
           });
         },
       );
@@ -125,7 +144,15 @@ export function KbArticleForm({
         productCodes: r.data.productCodes,
         productGroups: r.data.productGroups,
         changeNote: "",
+        audience: r.data.audience,
+        customerIds: r.data.customers.map((c) => c.id),
       });
+      setCustomerOptions(
+        r.data.customers.map((c) => ({
+          value: c.id,
+          label: `${c.code} · ${c.name}`,
+        })),
+      );
     });
   }, [id, revisionId]);
 
@@ -142,8 +169,29 @@ export function KbArticleForm({
     tags: d.tags,
     product_codes: d.productCodes,
     product_groups: d.productGroups,
+    audience: d.audience,
+    customer_ids: d.audience === "selected" ? d.customerIds : [],
     ...(revisionId ? { change_note: d.changeNote } : {}),
   });
+
+  async function searchCustomers(text: string) {
+    if (text.trim().length < 2) return;
+    const res = await appApi<{
+      data: { id: string; customerCode: string; nameTh: string }[];
+    }>(`customers?search=${encodeURIComponent(text.trim())}&page_size=20`);
+    if (!res.ok) return;
+    const picked = customerOptions.filter((o) =>
+      d.customerIds.includes(o.value),
+    );
+    const found = res.data.data.map((c) => ({
+      value: c.id,
+      label: `${c.customerCode} · ${c.nameTh}`,
+    }));
+    setCustomerOptions([
+      ...picked,
+      ...found.filter((o) => !picked.some((p) => p.value === o.value)),
+    ]);
+  }
 
   async function save(then?: "submit") {
     if (!d.title.trim()) {
@@ -333,6 +381,33 @@ export function KbArticleForm({
               />
             </Form.Item>
           </div>
+          <Form.Item
+            label={au.label}
+            extra={d.audience === "internal" ? undefined : au.customersHintNote}
+          >
+            <Radio.Group
+              value={d.audience}
+              onChange={(e) =>
+                set({ audience: e.target.value as Draft["audience"] })
+              }
+              options={(["internal", "customers", "selected"] as const).map(
+                (v) => ({ value: v, label: au.options[v] }),
+              )}
+            />
+          </Form.Item>
+          {d.audience === "selected" ? (
+            <Form.Item label={au.customers} extra={au.customersHint} required>
+              <Select
+                mode="multiple"
+                showSearch
+                filterOption={false}
+                onSearch={(t) => void searchCustomers(t)}
+                value={d.customerIds}
+                onChange={(v) => set({ customerIds: v })}
+                options={customerOptions}
+              />
+            </Form.Item>
+          ) : null}
           {revisionId ? (
             <Form.Item label={r.changeNote} required>
               <Input.TextArea

@@ -11,6 +11,8 @@ export interface KbCard {
   productCodes: string[];
   productGroups: string[];
   source: string;
+  /** CD-261 — internal · customers · selected */
+  audience: "internal" | "customers" | "selected";
   author: string;
   owner: string | null;
   nextReviewOn: string | null;
@@ -37,6 +39,10 @@ export interface KbArticle extends KbCard {
     url: string;
   }[];
   myRating: { helpful: boolean; comment: string | null } | null;
+  customers: { id: string; code: string; name: string }[];
+  portalViews: number;
+  portalHelpfulYes: number;
+  portalHelpfulNo: number;
   version: number;
   ownerId: string | null;
   submittedAt: string | null;
@@ -71,6 +77,8 @@ export interface KbRevision {
   tags: string[];
   productCodes: string[];
   productGroups: string[];
+  audience: "internal" | "customers" | "selected";
+  customerIds: string[];
   changeNote: string;
   createdBy: string;
   submittedAt: string | null;
@@ -170,3 +178,9 @@ export function lineDiff(before: string, after: string) {
   while (j < b.length) out.push({ kind: "add", text: b[j++] });
   return out;
 }
+
+export const AUDIENCE_COLOR: Record<string, string> = {
+  internal: "default",
+  customers: "green",
+  selected: "purple",
+};
