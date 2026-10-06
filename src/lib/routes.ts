@@ -191,6 +191,8 @@ export const ROUTES = {
   adminApiKeys: `${HOME_PATH}/admin/api-keys`,
   /** CD-275 */
   adminLlm: `${HOME_PATH}/admin/llm`,
+  /** CD-279 */
+  adminAiAudit: `${HOME_PATH}/admin/ai-audit`,
   adminErpSync: `${HOME_PATH}/admin/erp-sync`,
   /** REQ-02 — รูปแบบเลขรันของทุกชนิดเอกสาร. */
   adminRunNumbers: `${HOME_PATH}/admin/run-numbers`,

@@ -962,6 +962,7 @@ export const messages = {
     adminApiKeys: "กุญแจ API",
     adminErpSync: "คิวส่ง SAP",
     adminLlm: "LLM Gateway",
+    adminAiAudit: "บันทึกการใช้ AI",
     adminRunNumbers: "เลขรันเอกสาร",
     adminRequestTypes: "ประเภทคำขอ",
     adminSla: "เวลาทำการและวันหยุด",
@@ -2293,6 +2294,53 @@ export const messages = {
   },
 
   /** CD-275 — LLM Gateway */
+  aiAudit: {
+    title: "บันทึกการใช้ AI",
+    subtitle:
+      "ทุกครั้งที่ผู้ช่วยเรียกข้อมูลจากระบบ (MCP tool) และทุกครั้งที่เรียกโมเดล — ใคร เมื่อไร ถามอะไร ได้รายการใดกลับไป (เก็บเฉพาะรหัสรายการ ไม่เก็บค่าข้อมูล) · ข้อความแชตเต็มอยู่ใน LibreChat",
+    tabs: { mcp: "การเรียกข้อมูล (MCP)", llm: "การเรียกโมเดล" },
+    filters: {
+      person: "ผู้ถาม",
+      tool: "tool",
+      task: "งาน AI",
+      status: "ผลลัพธ์",
+      range: "ช่วงวันที่",
+    },
+    status: {
+      ok: "สำเร็จ",
+      error: "ผิดพลาด",
+      quota: "เกินโควตา",
+      disabled: "ปิดใช้งาน",
+    } as Record<string, string>,
+    columns: {
+      at: "เวลา",
+      person: "ผู้ถาม",
+      tool: "tool",
+      task: "งาน",
+      model: "โมเดล",
+      args: "ตัวกรองที่ส่งมา",
+      result: "รายการที่ตอบ",
+      tokens: "token",
+      cost: "ค่าใช้จ่ายประมาณ",
+      status: "ผล",
+      duration: "เวลา (ms)",
+    },
+    viaKey: "ผ่านกุญแจ API",
+    write: "แก้ไขข้อมูล",
+    fieldsOnly: (fields: string[]) => `ฟิลด์ที่ส่ง: ${fields.join(", ") || "—"}`,
+    resultCount: (count: number) => `${count.toLocaleString("th-TH")} รายการ`,
+    detail: "รายละเอียดการเรียก",
+    resultIds: "รหัสรายการที่ตอบกลับ",
+    noPerson: "ไม่ทราบตัวผู้ถาม",
+    empty: "ไม่มีบันทึกตามเงื่อนไข",
+    policy: {
+      title: "อายุการเก็บบันทึก",
+      hint: "บันทึกที่เก่ากว่านี้ระบบลบทิ้งวันละครั้ง (30–3650 วัน)",
+      days: "วัน",
+      save: "บันทึก",
+      saved: "บันทึกอายุการเก็บแล้ว",
+    },
+  },
   llm: {
     title: "LLM Gateway",
     subtitle:

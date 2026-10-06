@@ -98,6 +98,8 @@ export const CORE_SERVICE_PREFIXES = [
   "/macom",
   // CD-275 — LLM Gateway settings and usage
   "/llm",
+  // CD-279 — the AI audit log
+  "/ai-audit",
   // CD-236 — the installed base
   "/service-assets",
   // CD-237 — what covers them

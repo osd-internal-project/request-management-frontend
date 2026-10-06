@@ -26,6 +26,7 @@ export type MenuIconKey =
   | "brandLibrary"
   | "campaignResults"
   | "llm"
+  | "aiAudit"
   | "salesTarget"
   | "salesReport"
   | "contract"
@@ -833,6 +834,14 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     href: ROUTES.adminLlm,
     icon: "llm",
     permissions: ["admin.llm.manage"],
+    group: messages.nav.adminGroup,
+  },
+  /** CD-279 — บันทึก AI: การเรียก MCP tool และโมเดล ค้นย้อนหลัง + อายุการเก็บ. */
+  {
+    label: messages.nav.adminAiAudit,
+    href: ROUTES.adminAiAudit,
+    icon: "aiAudit",
+    permissions: ["admin.ai.audit"],
     group: messages.nav.adminGroup,
   },
   /** CM-06 / CD-88 — งานส่ง SAP ที่ไม่สำเร็จ ดูข้อผิดพลาดแล้วกดส่งใหม่. */
