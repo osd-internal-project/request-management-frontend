@@ -19,33 +19,10 @@ import {
 import Text from "antd/es/typography/Text";
 import dayjs from "dayjs";
 import { messages } from "@/lib/messages";
+import { API, call } from "./portal-api";
+import { PortalArticles } from "./portal-articles";
 
 const m = messages.service.assets.portal.public;
-const API = "/api/public/portal";
-
-async function call<T>(
-  path: string,
-  init?: RequestInit,
-): Promise<
-  { ok: true; data: T } | { ok: false; status: number; message: string }
-> {
-  const response = await fetch(`${API}/${path}`, {
-    ...init,
-    headers: { "content-type": "application/json" },
-  }).catch(() => null);
-  if (!response) return { ok: false, status: 503, message: m.unavailable };
-  const body = (await response.json().catch(() => ({}))) as T & {
-    message?: string;
-  };
-  return response.ok
-    ? { ok: true, data: body }
-    : {
-        ok: false,
-        status: response.status,
-        message: body.message ?? m.unavailable,
-      };
-}
-
 const fmt = (value: string | null) =>
   value ? dayjs(value).format("DD/MM/YYYY") : "—";
 
@@ -410,9 +387,19 @@ export function PortalHome() {
             key: "articles",
             label: m.tabs.articles,
             children: (
-              <Text type="secondary" className="block py-6 text-center">
-                {m.articlesSoon}
-              </Text>
+              <PortalArticles
+                onRaise={
+                  me.canRaise
+                    ? (subject) =>
+                        setRaising({
+                          assetId: null,
+                          subject,
+                          detail: "",
+                          severity: "medium",
+                        })
+                    : null
+                }
+              />
             ),
           },
         ]}

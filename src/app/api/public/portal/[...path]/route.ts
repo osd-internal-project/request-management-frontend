@@ -15,6 +15,10 @@ const ALLOWED = [
   /^logout$/,
   /^(me|assets|covers|jobs|reports)$/,
   /^reports\/[0-9a-f-]{36}\/pdf$/,
+  // CD-261 — knowledge articles published to this customer
+  /^articles$/,
+  /^articles\/[0-9a-f-]{36}(\/vote)?$/,
+  /^articles\/[0-9a-f-]{36}\/files\/[0-9a-f-]{36}$/,
 ];
 
 /**
@@ -42,15 +46,20 @@ async function forward(
     );
   }
   const session = request.cookies.get(COOKIE)?.value;
-  const response = await fetch(backendUrl(`/service-portal/public/${path}`), {
-    method: request.method,
-    headers: {
-      "content-type": "application/json",
-      ...(session ? { "x-portal-session": session } : {}),
+  // only the article search carries a query (`?q=`)
+  const search = path === "articles" ? request.nextUrl.search : "";
+  const response = await fetch(
+    backendUrl(`/service-portal/public/${path}${search}`),
+    {
+      method: request.method,
+      headers: {
+        "content-type": "application/json",
+        ...(session ? { "x-portal-session": session } : {}),
+      },
+      body: request.method === "POST" ? await request.text() : undefined,
+      cache: "no-store",
     },
-    body: request.method === "POST" ? await request.text() : undefined,
-    cache: "no-store",
-  }).catch(() => null);
+  ).catch(() => null);
   if (!response) {
     return NextResponse.json(
       { code: "UNAVAILABLE", message: m.unavailable },
@@ -81,7 +90,8 @@ async function forward(
     status: response.status,
     headers: {
       "content-type": type,
-      ...(type.includes("pdf")
+      // report PDFs and article images/files
+      ...(!type.includes("json")
         ? {
             "content-disposition":
               response.headers.get("content-disposition") ?? "inline",
