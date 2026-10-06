@@ -24,6 +24,7 @@ export type MenuIconKey =
   | "campaign"
   | "contentCalendar"
   | "brandLibrary"
+  | "campaignResults"
   | "salesTarget"
   | "salesReport"
   | "contract"
@@ -666,6 +667,14 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     label: messages.nav.brandLibrary,
     href: ROUTES.brandLibrary,
     icon: "brandLibrary",
+    group: messages.nav.macomGroup,
+  },
+  /** CD-274 — ผลแคมเปญถึงรายได้จริง (Data Mart). */
+  {
+    label: messages.nav.campaignResults,
+    href: ROUTES.campaignResults,
+    icon: "campaignResults",
+    permissions: ["crm.campaign.manage", "report.dashboard.read"],
     group: messages.nav.macomGroup,
   },
 

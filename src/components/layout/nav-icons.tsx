@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  FundOutlined,
   FolderOpenOutlined,
   AccountBookOutlined,
   ReadOutlined,
@@ -96,6 +97,7 @@ const MENU_ICONS: Record<MenuIconKey, ComponentType> = {
   campaign: NotificationOutlined,
   contentCalendar: CalendarOutlined,
   brandLibrary: FolderOpenOutlined,
+  campaignResults: FundOutlined,
   salesTarget: FlagOutlined,
   salesReport: BarChartOutlined,
   contract: FileProtectOutlined,

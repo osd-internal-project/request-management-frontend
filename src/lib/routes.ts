@@ -91,6 +91,8 @@ export const ROUTES = {
   contentCalendar: `${HOME_PATH}/macom/content`,
   /** CD-273 */
   brandLibrary: `${HOME_PATH}/macom/brand`,
+  /** CD-274 */
+  campaignResults: `${HOME_PATH}/macom/results`,
   targetAccounts: `${HOME_PATH}/target-accounts`,
   keeper: `${HOME_PATH}/keeper`,
   /** CD-75 — บันทึกการเข้าพบจากมือถือ */

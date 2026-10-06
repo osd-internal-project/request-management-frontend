@@ -915,6 +915,7 @@ export const messages = {
     macomGroup: "การตลาด (MACOM)",
     contentCalendar: "ปฏิทินคอนเทนต์",
     brandLibrary: "คลังแบรนด์และเทมเพลต",
+    campaignResults: "ผลแคมเปญถึงรายได้",
     kb: "ค้นบทความความรู้",
     kbCategories: "หมวดคลังความรู้",
     kbReview: "รอตรวจและทบทวน",
@@ -2287,6 +2288,41 @@ export const messages = {
       saved: "บันทึกแล้ว",
       required: "จำเป็น",
     },
+  },
+
+  /** CD-274 — วัดผลแคมเปญถึงรายได้จริง */
+  campaignResults: {
+    title: "ผลแคมเปญถึงรายได้จริง",
+    subtitle:
+      "ดีลนับให้แคมเปญของ Lead ที่มันมา · ยอดจอง = ใบสั่งขาย · ออกบิล/รับเงิน = งวดสัญญาของดีลนั้น (จาก SAP หรือบันทึกเอง) · เทียบค่าใช้จ่ายจริงของแคมเปญ",
+    refreshedAt: (at: string) => `ข้อมูลจาก Data Mart ณ ${at} (ปรับทุกชั่วโมง)`,
+    notBuilt:
+      "Data Mart ยังไม่เคยสร้างตารางผลแคมเปญ — รอรอบถัดไป หรือกดปรับปรุงที่หน้าตั้งค่า BI",
+    allKinds: "แคมเปญและอีเวนต์",
+    allAxes: "ทุกแกนขาย",
+    monthsFrom: "เดือนเริ่ม",
+    monthsTo: "ถึงเดือน",
+    kpis: {
+      spent: "ค่าใช้จ่ายจริง",
+      leads: "Lead",
+      won_deals: "ดีลที่ปิดได้",
+      booked: "ยอดจอง",
+      invoiced: "ออกบิลแล้ว",
+      paid: "รับเงินแล้ว",
+      cost_per_lead: "ต้นทุน/Lead",
+      cost_per_won_deal: "ต้นทุน/ดีล",
+      roi_paid: "รับเงิน ÷ ค่าใช้จ่าย",
+      roi_booked: "ยอดจอง ÷ ค่าใช้จ่าย",
+    } as Record<string, string>,
+    columns: {
+      campaign: "แคมเปญ",
+      conversion: "ปิดได้/Lead",
+    },
+    monthly: "รายเดือน (ทุกแคมเปญที่แสดง)",
+    month: "เดือน",
+    campaignMonthly: (name: string) => `${name} — รายเดือน`,
+    empty: "ยังไม่มีผลแคมเปญ",
+    times: (n: number) => `${n.toLocaleString("th-TH")}×`,
   },
 
   /** CD-273 — คลังแบรนด์และเทมเพลต */
