@@ -15,6 +15,7 @@ import {
   InputNumber,
   Modal,
   Progress,
+  Radio,
   Select,
   Switch,
   Table,
@@ -54,6 +55,11 @@ interface FormValues {
   formEnabled: boolean;
   formIntro?: string;
   adFormIds: string[];
+  kind: "campaign" | "event";
+  eventTime?: [Dayjs | null, Dayjs | null] | null;
+  eventVenue?: string;
+  eventOnlineUrl?: string;
+  eventCapacity?: number | null;
 }
 
 /**
@@ -96,6 +102,7 @@ export function CampaignList({
             period: null,
             formEnabled: false,
             adFormIds: [],
+            kind: "campaign",
           }
         : {
             code: editing.code,
@@ -116,6 +123,18 @@ export function CampaignList({
             formEnabled: editing.form.enabled,
             formIntro: editing.form.intro ?? undefined,
             adFormIds: editing.form.ad_form_ids,
+            kind: editing.kind,
+            eventTime: editing.event
+              ? [
+                  editing.event.starts_at
+                    ? dayjs(editing.event.starts_at)
+                    : null,
+                  editing.event.ends_at ? dayjs(editing.event.ends_at) : null,
+                ]
+              : null,
+            eventVenue: editing.event?.venue ?? undefined,
+            eventOnlineUrl: editing.event?.online_url ?? undefined,
+            eventCapacity: editing.event?.capacity ?? null,
           };
   const budgetFromLines =
     editing !== null && editing !== "new" ? editing.has_budget_lines : false;
@@ -145,6 +164,20 @@ export function CampaignList({
       form_enabled: values.formEnabled,
       form_intro: values.formIntro?.trim() ?? "",
       ad_form_ids: values.adFormIds ?? [],
+      kind: values.kind,
+      ...(values.kind === "event"
+        ? {
+            ...(values.eventTime?.[0]
+              ? { event_starts_at: values.eventTime[0].toISOString() }
+              : {}),
+            ...(values.eventTime?.[1]
+              ? { event_ends_at: values.eventTime[1].toISOString() }
+              : {}),
+            event_venue: values.eventVenue?.trim() ?? "",
+            event_online_url: values.eventOnlineUrl?.trim() ?? "",
+            event_capacity: values.eventCapacity ?? null,
+          }
+        : {}),
     };
 
     setBusy(true);
@@ -190,6 +223,9 @@ export function CampaignList({
                   <div>
                     <div>
                       <Text strong>{name}</Text>{" "}
+                      {row.kind === "event" && (
+                        <Tag color="purple">{m.kinds.event}</Tag>
+                      )}
                       <Tag color={row.active ? "green" : "default"}>
                         {row.active ? m.activeTag : m.closedTag}
                       </Tag>
@@ -309,6 +345,11 @@ export function CampaignList({
                       {m.leads}
                     </Link>
                     <a onClick={() => setPlanOf(row)}>{m.plan}</a>
+                    {row.kind === "event" && canManage && (
+                      <Link href={`${ROUTES.campaigns}/${row.id}/event`}>
+                        {m.registrants}
+                      </Link>
+                    )}
                     {canManage && <a onClick={() => open(row)}>{m.edit}</a>}
                   </span>
                 ),
@@ -369,6 +410,56 @@ export function CampaignList({
             ]}
           >
             <Input maxLength={255} />
+          </Form.Item>
+          <Form.Item name="kind" label={m.form.kind}>
+            <Radio.Group
+              options={[
+                { value: "campaign", label: m.kinds.campaign },
+                { value: "event", label: m.kinds.event },
+              ]}
+            />
+          </Form.Item>
+          <Form.Item noStyle dependencies={["kind"]}>
+            {({ getFieldValue }) =>
+              getFieldValue("kind") === "event" && (
+                <div className="mb-2 rounded border border-black/10 p-3">
+                  <Text type="secondary" className="mb-2 block text-xs">
+                    {m.form.eventHint}
+                  </Text>
+                  <Form.Item
+                    name="eventTime"
+                    label={m.form.eventTime}
+                    rules={[{ required: true, message: m.form.required }]}
+                  >
+                    <DatePicker.RangePicker
+                      showTime={{ format: "HH:mm" }}
+                      format="DD/MM/YYYY HH:mm"
+                    />
+                  </Form.Item>
+                  <Form.Item name="eventVenue" label={m.form.eventVenue}>
+                    <Input maxLength={500} />
+                  </Form.Item>
+                  <Form.Item
+                    name="eventOnlineUrl"
+                    label={m.form.eventOnlineUrl}
+                    extra={m.form.eventOnlineUrlHint}
+                  >
+                    <Input maxLength={500} placeholder="https://" />
+                  </Form.Item>
+                  <Form.Item
+                    name="eventCapacity"
+                    label={m.form.eventCapacity}
+                    extra={m.form.eventCapacityHint}
+                  >
+                    <InputNumber<number>
+                      min={1}
+                      precision={0}
+                      style={{ width: "100%" }}
+                    />
+                  </Form.Item>
+                </div>
+              )
+            }
           </Form.Item>
           <Form.Item name="channel" label={m.form.channel}>
             <Input maxLength={100} placeholder={m.form.channelPlaceholder} />

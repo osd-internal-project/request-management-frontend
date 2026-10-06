@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Result } from "antd";
-import { CampaignLeadForm } from "@/components/public/campaign-lead-form";
+import {
+  CampaignLeadForm,
+  type LeadFormView,
+} from "@/components/public/campaign-lead-form";
 import { leadIntakeFetch } from "@/lib/public/intake-client";
 import { messages } from "@/lib/messages";
 
@@ -21,10 +24,9 @@ export const metadata: Metadata = {
  */
 export default async function CampaignLeadFormPage({ params }: Params) {
   const { token } = await params;
-  const result = await leadIntakeFetch<{
-    campaign: string;
-    intro: string | null;
-  }>(`forms/${encodeURIComponent(token)}`);
+  const result = await leadIntakeFetch<LeadFormView>(
+    `forms/${encodeURIComponent(token)}`,
+  );
   if (!result.ok) {
     return result.status === 404 ? (
       <Result status="404" title={m.notFound} subTitle={m.notFoundHint} />

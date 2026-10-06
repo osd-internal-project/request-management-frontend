@@ -50,27 +50,33 @@ export async function POST(
       ? value.trim().slice(0, max)
       : undefined;
   const need = text(body.need, 1500);
-  const result = await leadIntakeFetch<{ received: boolean }>(
-    `forms/${encodeURIComponent(token)}`,
-    {
-      method: "POST",
-      body: {
-        name: text(body.company, 255) ?? text(body.contact_name, 255) ?? "",
-        contact_name: text(body.contact_name, 255),
-        contact_position: text(body.position, 255),
-        phone: text(body.phone, 50),
-        email: text(body.email, 255),
-        note: [need, m.consentNote(new Date().toISOString())]
-          .filter(Boolean)
-          .join("\n\n"),
-      },
+  const result = await leadIntakeFetch<{
+    received: boolean;
+    status?: string;
+    online_url?: string | null;
+  }>(`forms/${encodeURIComponent(token)}`, {
+    method: "POST",
+    body: {
+      name: text(body.company, 255) ?? text(body.contact_name, 255) ?? "",
+      contact_name: text(body.contact_name, 255),
+      contact_position: text(body.position, 255),
+      phone: text(body.phone, 50),
+      email: text(body.email, 255),
+      note: [need, m.consentNote(new Date().toISOString())]
+        .filter(Boolean)
+        .join("\n\n"),
     },
-  );
+  });
   if (!result.ok) {
     return NextResponse.json(
       { code: result.code, message: result.message },
       { status: result.status },
     );
   }
-  return NextResponse.json({ received: true });
+  // CD-270 — an event says whether they got a seat (and the online link if so)
+  return NextResponse.json({
+    received: true,
+    status: result.data.status ?? null,
+    online_url: result.data.online_url ?? null,
+  });
 }

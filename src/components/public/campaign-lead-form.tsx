@@ -5,9 +5,25 @@ import { Alert, Button, Card, Checkbox, Input, Result } from "antd";
 import Title from "antd/es/typography/Title";
 import Paragraph from "antd/es/typography/Paragraph";
 import Text from "antd/es/typography/Text";
+import dayjs from "dayjs";
 import { messages } from "@/lib/messages";
 
 const m = messages.leadForm;
+
+/** What the form page reads before it draws — CD-270 adds the event. */
+export interface LeadFormView {
+  campaign: string;
+  intro: string | null;
+  kind: "campaign" | "event";
+  event?: {
+    starts_at: string | null;
+    ends_at: string | null;
+    venue: string | null;
+    online: boolean;
+    full: boolean;
+    open: boolean;
+  };
+}
 
 interface Values {
   company: string;
@@ -37,14 +53,19 @@ export function CampaignLeadForm({
   form,
 }: {
   token: string;
-  form: { campaign: string; intro: string | null };
+  form: LeadFormView;
 }) {
   const [values, setValues] = useState<Values>(EMPTY);
   const [consent, setConsent] = useState(false);
   const [website, setWebsite] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState(false);
+  const [done, setDone] = useState<{
+    status: string | null;
+    online_url: string | null;
+  } | null>(null);
+
+  const event = form.kind === "event" ? form.event : undefined;
 
   const set = (key: keyof Values) => (event: { target: { value: string } }) =>
     setValues((current) => ({ ...current, [key]: event.target.value }));
@@ -84,19 +105,72 @@ export function CampaignLeadForm({
       setError(body.message ?? m.failed);
       return;
     }
-    setDone(true);
+    const answer = (await response.json().catch(() => ({}))) as {
+      status?: string | null;
+      online_url?: string | null;
+    };
+    setDone({
+      status: answer.status ?? null,
+      online_url: answer.online_url ?? null,
+    });
   }
 
   return (
     <Card className="mx-auto max-w-xl">
       {done ? (
-        <Result status="success" title={m.thanks} subTitle={m.thanksHint} />
+        <Result
+          status={done.status === "waitlisted" ? "info" : "success"}
+          title={
+            done.status === "registered"
+              ? m.registered
+              : done.status === "waitlisted"
+                ? m.waitlisted
+                : m.thanks
+          }
+          subTitle={done.status ? undefined : m.thanksHint}
+          extra={
+            done.online_url ? (
+              <a href={done.online_url} target="_blank" rel="noreferrer">
+                {m.onlineLink}
+              </a>
+            ) : undefined
+          }
+        />
+      ) : event && !event.open ? (
+        <Result status="info" title={m.eventClosed} />
       ) : (
         <div className="space-y-4">
           <div>
             <Title level={3} className="mb-1!">
               {form.campaign}
             </Title>
+            {event && (
+              <div className="mb-2 text-sm">
+                {event.starts_at && (
+                  <div>
+                    <Text type="secondary">{m.eventWhen}: </Text>
+                    {dayjs(event.starts_at).format("DD/MM/YYYY HH:mm")}
+                    {event.ends_at &&
+                      `–${dayjs(event.ends_at).format("HH:mm")}`}
+                  </div>
+                )}
+                {event.venue && (
+                  <div>
+                    <Text type="secondary">{m.eventWhere}: </Text>
+                    {event.venue}
+                  </div>
+                )}
+                {event.online && <Text type="secondary">{m.eventOnline}</Text>}
+              </div>
+            )}
+            {event?.full && (
+              <Alert
+                type="warning"
+                showIcon
+                title={m.eventFull}
+                className="mb-2"
+              />
+            )}
             {form.intro && (
               <Paragraph type="secondary" className="whitespace-pre-line">
                 {form.intro}
