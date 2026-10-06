@@ -244,6 +244,8 @@ export const ROUTES = {
   serviceWorkOrders: `${HOME_PATH}/service/work-orders`,
   /** CD-241 — who answers out of hours. */
   serviceOnCall: `${HOME_PATH}/service/on-call`,
+  /** CD-280 — AI CARE conversations. */
+  careConversations: `${HOME_PATH}/service/care`,
   /** CD-242 — billed service jobs sent to SAP. */
   serviceBilling: `${HOME_PATH}/service/billing`,
   /** CD-243 — selling rates of service labour. */

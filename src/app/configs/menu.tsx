@@ -80,6 +80,7 @@ export type MenuIconKey =
   | "serviceEntitlement"
   | "serviceWorkOrder"
   | "serviceOnCall"
+  | "careConversations"
   | "serviceBilling"
   | "serviceLabourRate"
   | "servicePm"
@@ -515,6 +516,15 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     href: ROUTES.serviceWorkOrders,
     icon: "serviceWorkOrder",
     permissions: ["service.asset.read"],
+    group: messages.nav.serviceGroup,
+  },
+
+  /** CD-280 — บทสนทนา AI CARE กับลูกค้าทุกช่องทาง. */
+  {
+    label: messages.nav.careConversations,
+    href: ROUTES.careConversations,
+    icon: "careConversations",
+    permissions: ["service.care.manage"],
     group: messages.nav.serviceGroup,
   },
 
