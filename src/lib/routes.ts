@@ -204,6 +204,8 @@ export const ROUTES = {
   kbRevision: (id: string, revisionId: string) =>
     `${HOME_PATH}/kb/${id}/revisions/${revisionId}`,
   kbReview: `${HOME_PATH}/kb/review`,
+  /** CD-262 — closed service jobs waiting to become knowledge. */
+  kbField: `${HOME_PATH}/kb/field`,
   projectOpen: (contractId?: string) =>
     `${HOME_PATH}/projects/open${contractId ? `?contract=${contractId}` : ""}`,
   projectDetail: (id: string) => `${HOME_PATH}/projects/${id}`,

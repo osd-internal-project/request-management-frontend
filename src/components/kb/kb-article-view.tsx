@@ -89,6 +89,16 @@ export function KbArticleView({ id }: { id: string }) {
     version: number;
     body: string;
   } | null>(null);
+  const [origin, setOrigin] = useState<{
+    usedOnJobs: number;
+    fromJobs: { requestId: string; requestNo: string | null }[];
+    fromProblem: {
+      id: string;
+      problemNo: string;
+      title: string;
+      status: string;
+    } | null;
+  } | null>(null);
   const [feedback, setFeedback] = useState<
     | { user: string; helpful: boolean; comment: string | null; at: string }[]
     | null
@@ -101,6 +111,13 @@ export function KbArticleView({ id }: { id: string }) {
   }, [id]);
 
   useEffect(() => load(), [load]);
+
+  // CD-262 — where it came from, and how often it fixed a job
+  useEffect(() => {
+    void appApi<NonNullable<typeof origin>>(
+      `kb/articles/${id}/provenance`,
+    ).then((res) => res.ok && setOrigin(res.data));
+  }, [id]);
 
   // A merged duplicate sends its readers on to the main article.
   useEffect(() => {
@@ -281,6 +298,39 @@ export function KbArticleView({ id }: { id: string }) {
             <Tag key={t}>#{t}</Tag>
           ))}
         </Space>
+        {origin &&
+        (origin.usedOnJobs || origin.fromJobs.length || origin.fromProblem) ? (
+          <div className="mt-1">
+            <Text type="secondary" className="text-xs">
+              {origin.usedOnJobs
+                ? fill(messages.kb.field.usedOn, { n: origin.usedOnJobs })
+                : ""}
+              {origin.fromJobs.length ? (
+                <>
+                  {origin.usedOnJobs ? " · " : ""}
+                  {messages.kb.field.fromJobs}{" "}
+                  {origin.fromJobs.map((j, i) => (
+                    <span key={j.requestId}>
+                      {i ? ", " : ""}
+                      <Link href={ROUTES.requestDetail(j.requestId)}>
+                        {j.requestNo ?? messages.kb.field.job}
+                      </Link>
+                    </span>
+                  ))}
+                </>
+              ) : null}
+              {origin.fromProblem ? (
+                <>
+                  {origin.usedOnJobs || origin.fromJobs.length ? " · " : ""}
+                  {messages.kb.field.fromProblem}{" "}
+                  <Link href={ROUTES.serviceProblems}>
+                    {origin.fromProblem.problemNo}
+                  </Link>
+                </>
+              ) : null}
+            </Text>
+          </div>
+        ) : null}
         {a.customers.length ? (
           <div className="mt-1">
             <Text type="secondary" className="text-xs">

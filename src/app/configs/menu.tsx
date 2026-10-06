@@ -86,7 +86,8 @@ export type MenuIconKey =
   | "esignAuthority"
   | "kb"
   | "kbCategory"
-  | "kbReview";
+  | "kbReview"
+  | "kbField";
 
 export interface MenuEntry {
   label: string;
@@ -611,6 +612,14 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     label: messages.nav.kbReview,
     href: ROUTES.kbReview,
     icon: "kbReview",
+    group: messages.nav.kbGroup,
+  },
+  /** CD-262 — closed service jobs waiting to become knowledge. */
+  {
+    label: messages.nav.kbField,
+    href: ROUTES.kbField,
+    icon: "kbField",
+    permissions: ["kb.article.manage", "service.asset.manage"],
     group: messages.nav.kbGroup,
   },
   /** CD-259 — process categories, kept by the knowledge owners. */

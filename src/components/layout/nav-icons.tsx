@@ -136,6 +136,7 @@ const MENU_ICONS: Record<MenuIconKey, ComponentType> = {
   kb: ReadOutlined,
   kbCategory: TagsOutlined,
   kbReview: AuditOutlined,
+  kbField: ToolOutlined,
   hrMandays: BarChartOutlined,
   hrLaborCost: DollarOutlined,
   pricingVendorCost: ShoppingCartOutlined,
