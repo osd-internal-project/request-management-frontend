@@ -23,8 +23,10 @@ import {
 import { PlusOutlined, UploadOutlined } from "@ant-design/icons";
 import Text from "antd/es/typography/Text";
 import dayjs from "dayjs";
+import Link from "next/link";
 import { appApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
+import { ROUTES } from "@/lib/routes";
 
 const m = messages.aiSmart;
 
@@ -32,6 +34,8 @@ const KINDS = ["dbd", "web", "social", "push", "file"] as const;
 const CONNECTOR_KINDS = ["dbd", "web", "social"];
 const AXES = ["getter", "government", "partner", "keeper"] as const;
 const STATUSES = ["new", "screened", "sent", "discarded"] as const;
+/** Mirrors the backend's weak line (`smart-scoring.ts`). */
+const WEAK_SCORE = 40;
 
 interface Criteria {
   keywords?: string[];
@@ -71,6 +75,12 @@ interface Prospect {
   status: string;
   discard_reason: string | null;
   created_at: string;
+  score: number | null;
+  score_reasons: { label: string; points: number }[];
+  ai_summary: string | null;
+  match_kind: string | null;
+  lead_id: string | null;
+  sent_outcome: string | null;
 }
 
 interface Run {
@@ -510,7 +520,11 @@ function Prospects({
   const [search, setSearch] = useState("");
   const [sourceId, setSourceId] = useState<string | undefined>();
   const [axis, setAxis] = useState<string | undefined>();
-  const [status, setStatus] = useState<string | undefined>("new");
+  const [status, setStatus] = useState<string | undefined>("screened");
+  const [minScore, setMinScore] = useState<number | null>(null);
+  const [match, setMatch] = useState<string | undefined>();
+  const [selected, setSelected] = useState<string[]>([]);
+  const [busy, setBusy] = useState(false);
   const [page, setPage] = useState(1);
   const [data, setData] = useState<{ data: Prospect[]; total: number } | null>(
     null,
@@ -526,6 +540,8 @@ function Prospects({
     if (sourceId) params.set("source_id", sourceId);
     if (axis) params.set("sales_axis", axis);
     if (status) params.set("status", status);
+    if (minScore !== null) params.set("min_score", String(minScore));
+    if (match) params.set("match_kind", match);
     void appApi<{ data: Prospect[]; total: number }>(
       `smart/prospects?${params.toString()}`,
     ).then((result) => {
@@ -538,7 +554,7 @@ function Prospects({
     return () => {
       live = false;
     };
-  }, [search, sourceId, axis, status, page, version, tick]);
+  }, [search, sourceId, axis, status, minScore, match, page, version, tick]);
 
   const sourceName = (id: string) =>
     sources.find((source) => source.id === id)?.name ?? "—";
@@ -555,6 +571,51 @@ function Prospects({
     setOpen(null);
     setTick((n) => n + 1);
     onChanged();
+  }
+
+  /** CD-290 — into CRM through the campaign screening; one row or many. */
+  async function send(ids: string[]) {
+    setBusy(true);
+    const result = await appApi<
+      { id: string; name: string; outcome: string; reason?: string }[]
+    >("smart/prospects/send", { method: "POST", body: JSON.stringify({ ids }) });
+    setBusy(false);
+    if (!result.ok) {
+      message.error(result.message);
+      return;
+    }
+    modal.info({
+      title: m.sent(result.data.filter((r) => r.outcome !== "skipped").length),
+      content: (
+        <ul className="m-0 pl-4 text-xs">
+          {result.data.map((r) => (
+            <li key={r.id}>
+              {r.name} — {m.outcome[r.outcome] ?? r.outcome}
+              {r.reason ? ` (${r.reason})` : ""}
+            </li>
+          ))}
+        </ul>
+      ),
+    });
+    setSelected([]);
+    setOpen(null);
+    setTick((n) => n + 1);
+    onChanged();
+  }
+
+  async function rescreen() {
+    setBusy(true);
+    const result = await appApi<{ screened: number }>("smart/prospects/screen", {
+      method: "POST",
+      body: JSON.stringify({}),
+    });
+    setBusy(false);
+    if (!result.ok) message.error(result.message);
+    else {
+      message.success(m.rescreened(result.data.screened));
+      setTick((n) => n + 1);
+      onChanged();
+    }
   }
 
   function discard(row: Prospect) {
@@ -621,7 +682,47 @@ function Prospects({
           }}
           options={STATUSES.map((value) => ({ value, label: m.status[value] }))}
         />
+        <InputNumber
+          min={0}
+          max={100}
+          placeholder={m.filters.minScore}
+          value={minScore}
+          onChange={(value) => {
+            setMinScore(value);
+            setPage(1);
+          }}
+        />
+        <Select
+          allowClear
+          className="w-44"
+          placeholder={m.filters.match}
+          value={match}
+          onChange={(value) => {
+            setMatch(value);
+            setPage(1);
+          }}
+          options={(["none", "customer", "lead"] as const).map((value) => ({
+            value,
+            label: m.match[value],
+          }))}
+        />
       </div>
+
+      {canManage && (
+        <Space wrap>
+          <Button
+            type="primary"
+            disabled={!selected.length}
+            loading={busy}
+            onClick={() => void send(selected)}
+          >
+            {m.sendSelected(selected.length)}
+          </Button>
+          <Button loading={busy} onClick={() => void rescreen()}>
+            {m.rescreen}
+          </Button>
+        </Space>
+      )}
 
       {error && <Alert type="error" showIcon title={error} />}
 
@@ -634,6 +735,17 @@ function Prospects({
         locale={{ emptyText: m.empty }}
         onRow={(row) => ({ onClick: () => setOpen(row) })}
         rowClassName="cursor-pointer"
+        rowSelection={
+          canManage
+            ? {
+                selectedRowKeys: selected,
+                onChange: (keys) => setSelected(keys as string[]),
+                getCheckboxProps: (row) => ({
+                  disabled: row.status === "sent" || row.status === "discarded",
+                }),
+              }
+            : undefined
+        }
         pagination={{
           current: page,
           pageSize: 50,
@@ -658,6 +770,31 @@ function Prospects({
                 </div>
               </div>
             ),
+          },
+          {
+            title: m.columns.score,
+            dataIndex: "score",
+            align: "right",
+            render: (value: number | null) =>
+              value === null ? (
+                "—"
+              ) : (
+                <Tag color={value >= 70 ? "green" : value >= WEAK_SCORE ? "blue" : "default"}>
+                  {value}
+                </Tag>
+              ),
+          },
+          {
+            title: m.columns.match,
+            dataIndex: "match_kind",
+            render: (value: string | null) =>
+              value && value !== "none" ? (
+                <Tag color={value === "customer" ? "purple" : "orange"}>
+                  {m.match[value]}
+                </Tag>
+              ) : (
+                "—"
+              ),
           },
           { title: m.columns.taxId, dataIndex: "tax_id", render: (v: string | null) => v ?? "—" },
           {
@@ -709,6 +846,15 @@ function Prospects({
           open &&
           canManage && (
             <Space>
+              {(open.status === "new" || open.status === "screened") && (
+                <Button
+                  type="primary"
+                  loading={busy}
+                  onClick={() => void send([open.id])}
+                >
+                  {m.send}
+                </Button>
+              )}
               {open.status === "discarded" ? (
                 <Button onClick={() => void act(open, "reopen")}>{m.reopen}</Button>
               ) : open.status !== "sent" ? (
@@ -722,6 +868,36 @@ function Prospects({
       >
         {open && (
           <Descriptions column={1} size="small" bordered>
+            <Descriptions.Item label={m.columns.score}>
+              {open.score === null ? (
+                "—"
+              ) : (
+                <div>
+                  <Text strong>{open.score}/100</Text>
+                  <ul className="m-0 pl-4 text-xs">
+                    {open.score_reasons.map((reason) => (
+                      <li key={reason.label}>
+                        {reason.points >= 0 ? "+" : ""}
+                        {reason.points} {reason.label}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </Descriptions.Item>
+            {open.ai_summary && (
+              <Descriptions.Item label={m.aiSummary}>{open.ai_summary}</Descriptions.Item>
+            )}
+            <Descriptions.Item label={m.columns.match}>
+              {open.match_kind ? m.match[open.match_kind] : "—"}
+            </Descriptions.Item>
+            {open.lead_id && (
+              <Descriptions.Item label={m.lead}>
+                <Link href={ROUTES.leadDetail(open.lead_id)}>
+                  {m.outcome[open.sent_outcome ?? ""] ?? m.openLead}
+                </Link>
+              </Descriptions.Item>
+            )}
             <Descriptions.Item label={m.columns.taxId}>{open.tax_id ?? "—"}</Descriptions.Item>
             <Descriptions.Item label={m.columns.contact}>
               {[open.phone, open.email, open.website].filter(Boolean).join(" · ") || "—"}
