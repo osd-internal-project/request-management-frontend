@@ -92,6 +92,7 @@ const MENU_ICONS: Record<MenuIconKey, ComponentType> = {
   quotation: FileTextOutlined,
   saleOrder: ShoppingCartOutlined,
   campaign: NotificationOutlined,
+  contentCalendar: CalendarOutlined,
   salesTarget: FlagOutlined,
   salesReport: BarChartOutlined,
   contract: FileProtectOutlined,

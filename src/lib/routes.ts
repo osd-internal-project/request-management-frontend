@@ -87,6 +87,8 @@ export const ROUTES = {
   crmDashboard: `${HOME_PATH}/crm`,
   /** CD-71 — แคมเปญ */
   campaigns: `${HOME_PATH}/campaigns`,
+  /** CD-271 */
+  contentCalendar: `${HOME_PATH}/macom/content`,
   targetAccounts: `${HOME_PATH}/target-accounts`,
   keeper: `${HOME_PATH}/keeper`,
   /** CD-75 — บันทึกการเข้าพบจากมือถือ */

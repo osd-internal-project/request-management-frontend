@@ -22,6 +22,7 @@ export type MenuIconKey =
   | "quotation"
   | "saleOrder"
   | "campaign"
+  | "contentCalendar"
   | "salesTarget"
   | "salesReport"
   | "contract"
@@ -636,6 +637,14 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     href: ROUTES.campaigns,
     icon: "campaign",
     permissions: ["crm.sales.read"],
+    group: messages.nav.macomGroup,
+  },
+  /** CD-271 — ปฏิทินคอนเทนต์ทุกช่องทาง. */
+  {
+    label: messages.nav.contentCalendar,
+    href: ROUTES.contentCalendar,
+    icon: "contentCalendar",
+    permissions: ["crm.sales.read", "crm.campaign.manage"],
     group: messages.nav.macomGroup,
   },
 
