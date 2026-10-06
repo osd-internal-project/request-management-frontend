@@ -5,6 +5,7 @@ import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import { can, getSession } from "@/lib/session";
 import { KbAiLog } from "@/components/kb/kb-ai-log";
+import { KbSemanticStatus } from "@/components/kb/kb-semantic-status";
 
 /** CD-265 — what AI channels searched and answered with (knowledge owners). */
 export default async function KbAiPage({
@@ -20,6 +21,9 @@ export default async function KbAiPage({
       <Title level={3} className="!mb-1">
         {messages.kb.ai.title}
       </Title>
+      <Card size="small">
+        <KbSemanticStatus />
+      </Card>
       <Card>
         <KbAiLog articleId={article_id} />
       </Card>

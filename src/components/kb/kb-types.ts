@@ -24,6 +24,9 @@ export interface KbCard {
   helpfulNo: number;
   helpfulPct: number | null;
   score?: number | null;
+  /** CD-267 — how a search found it, and the passage that matched by meaning. */
+  match?: "keyword" | "meaning" | "both";
+  passage?: { heading: string | null; text: string; similarity: number } | null;
 }
 
 export interface KbArticle extends KbCard {
