@@ -1317,7 +1317,8 @@ export const messages = {
       "integration.crm.sales.manage": "เขียนงานขายผ่าน API ภายนอก",
       "integration.crm.admin.manage": "แก้ตั้งค่า CRM ผ่าน API ภายนอก",
       "integration.flow.read": "ติดตามดีลทั้งสายผ่าน API ภายนอก",
-      "integration.presales.read": "อ่าน Solution ของ Pre-Sales ผ่าน API ภายนอก",
+      "integration.presales.read":
+        "อ่าน Solution ของ Pre-Sales ผ่าน API ภายนอก",
       "integration.legal.read": "อ่านคลังสัญญาผ่าน API ภายนอก",
       "integration.pm.read": "อ่านโครงการผ่าน API ภายนอก",
       "integration.pm.manage": "เปิดโครงการจากสัญญาผ่าน API ภายนอก",
@@ -2132,6 +2133,16 @@ export const messages = {
       period: "ช่วงเวลา",
       budget: "งบประมาณ (บาท)",
       budgetFromLines: "งบมาจากบรรทัดงบรายช่องทาง — แก้ที่ แผนงบ",
+      leadForm: "ฟอร์มลงทะเบียนและโฆษณา",
+      formEnabled: "เปิดฟอร์มลงทะเบียนสาธารณะ",
+      formEnabledHint:
+        "เปิดครั้งแรกระบบออกลิงก์ให้ — ปิดแล้วเปิดใหม่ได้ลิงก์เดิม · Lead ที่ลงทะเบียนเข้าทีมที่รับ คนเดิมซ้ำใน 30 วันไปต่อท้ายใบเดิม",
+      formLink: "ลิงก์ฟอร์ม (คัดลอกไปใส่โพสต์หรือ QR)",
+      formIntro: "ข้อความบนหัวฟอร์ม",
+      formIntroPlaceholder: "เช่น ลงทะเบียนรับเอกสารและสิทธิ์เข้าชมบูธ",
+      adForms: "รหัสฟอร์ม Lead Ads (Facebook / TikTok)",
+      adFormsHint:
+        "Lead จากฟอร์มโฆษณาที่มีรหัสนี้เข้าแคมเปญนี้ · พิมพ์แล้วกด Enter",
       axis: "แกนขายที่ป้อน",
       axisPlaceholder: "ไม่ระบุ",
       team: "ทีมที่รับ Lead",
@@ -9503,6 +9514,32 @@ export const messages = {
       hash: (value: string) => `SHA-256 ของไฟล์ที่ลงนาม: ${value}`,
     },
   },
+  /** CD-269 — a campaign's public registration form (/f/lead/<token>). */
+  leadForm: {
+    pageTitle: "ลงทะเบียน",
+    notFound: "ไม่พบแบบฟอร์มนี้",
+    notFoundHint: "ลิงก์อาจไม่ถูกต้อง หรือแคมเปญปิดรับลงทะเบียนแล้ว",
+    company: "ชื่อบริษัท / หน่วยงาน",
+    contactName: "ชื่อผู้ติดต่อ",
+    position: "ตำแหน่ง",
+    phone: "โทรศัพท์",
+    email: "อีเมล",
+    need: "สนใจเรื่องอะไร / ความต้องการ",
+    consent:
+      "ยินยอมให้บริษัทเก็บข้อมูลข้างต้นและติดต่อกลับเรื่องที่ลงทะเบียนไว้",
+    consentRequired: "กรุณาติ๊กยินยอมให้ติดต่อกลับ",
+    consentNote: (at: string) =>
+      `ผู้ลงทะเบียนยินยอมให้ติดต่อกลับ (ฟอร์มแคมเปญ ${at})`,
+    nameRequired: "กรอกชื่อบริษัทหรือชื่อผู้ติดต่อ",
+    contactRequired: "กรอกโทรศัพท์หรืออีเมลอย่างน้อยหนึ่งช่อง",
+    required: "ข้อมูลไม่ครบ",
+    submit: "ลงทะเบียน",
+    thanks: "ได้รับข้อมูลแล้ว ขอบคุณครับ",
+    thanksHint: "ทีมงานจะติดต่อกลับโดยเร็ว",
+    tooMany: "ส่งหลายครั้งเกินไป กรุณาลองใหม่ภายหลัง",
+    failed: "ส่งไม่สำเร็จ กรุณาลองใหม่อีกครั้ง",
+  },
+
   publicForm: {
     pageTitle: "ส่งคำขอ",
     defaultTitle: "ส่งคำขอถึงเรา",

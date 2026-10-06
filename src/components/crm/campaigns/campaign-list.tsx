@@ -31,6 +31,10 @@ import { ROUTES } from "@/lib/routes";
 
 const m = messages.campaigns;
 
+/** CD-269 — the public form's full link, for copying into posts and QR codes. */
+const formUrl = (token: string) =>
+  `${typeof window === "undefined" ? "" : window.location.origin}/f/lead/${token}`;
+
 const baht = (value: number) =>
   value.toLocaleString("th-TH", { maximumFractionDigits: 2 });
 
@@ -47,6 +51,9 @@ interface FormValues {
   targetLeads?: number | null;
   targetDeals?: number | null;
   targetSales?: number | null;
+  formEnabled: boolean;
+  formIntro?: string;
+  adFormIds: string[];
 }
 
 /**
@@ -82,7 +89,14 @@ export function CampaignList({
     editing === null
       ? undefined
       : editing === "new"
-        ? { code: "", name: "", active: true, period: null }
+        ? {
+            code: "",
+            name: "",
+            active: true,
+            period: null,
+            formEnabled: false,
+            adFormIds: [],
+          }
         : {
             code: editing.code,
             name: editing.name,
@@ -99,6 +113,9 @@ export function CampaignList({
             targetLeads: editing.targets.leads,
             targetDeals: editing.targets.deals,
             targetSales: editing.targets.sales,
+            formEnabled: editing.form.enabled,
+            formIntro: editing.form.intro ?? undefined,
+            adFormIds: editing.form.ad_form_ids,
           };
   const budgetFromLines =
     editing !== null && editing !== "new" ? editing.has_budget_lines : false;
@@ -125,6 +142,9 @@ export function CampaignList({
       target_leads: values.targetLeads ?? null,
       target_deals: values.targetDeals ?? null,
       target_sales: values.targetSales ?? null,
+      form_enabled: values.formEnabled,
+      form_intro: values.formIntro?.trim() ?? "",
+      ad_form_ids: values.adFormIds ?? [],
     };
 
     setBusy(true);
@@ -429,6 +449,41 @@ export function CampaignList({
           </div>
           <Form.Item name="note" label={m.form.note}>
             <Input.TextArea rows={2} maxLength={2000} />
+          </Form.Item>
+          <Text strong className="mb-2 block">
+            {m.form.leadForm}
+          </Text>
+          <Form.Item
+            name="formEnabled"
+            label={m.form.formEnabled}
+            extra={m.form.formEnabledHint}
+            valuePropName="checked"
+          >
+            <Switch />
+          </Form.Item>
+          {editing !== null && editing !== "new" && editing.form.token && (
+            <div className="mb-4">
+              <Text type="secondary" className="block text-xs">
+                {m.form.formLink}
+              </Text>
+              <Text copyable={{ text: formUrl(editing.form.token) }} code>
+                {formUrl(editing.form.token)}
+              </Text>
+            </div>
+          )}
+          <Form.Item name="formIntro" label={m.form.formIntro}>
+            <Input.TextArea
+              rows={2}
+              maxLength={2000}
+              placeholder={m.form.formIntroPlaceholder}
+            />
+          </Form.Item>
+          <Form.Item
+            name="adFormIds"
+            label={m.form.adForms}
+            extra={m.form.adFormsHint}
+          >
+            <Select mode="tags" tokenSeparators={[",", " "]} open={false} />
           </Form.Item>
           {editing !== "new" && (
             <Form.Item

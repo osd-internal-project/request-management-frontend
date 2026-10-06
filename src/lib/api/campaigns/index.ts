@@ -21,6 +21,13 @@ export interface CampaignRow {
   receiving_org_unit: { id: string; name: string } | null;
   /** งบมาจากบรรทัดงบรายช่องทาง — แก้งบรวมในฟอร์มไม่ได้. */
   has_budget_lines: boolean;
+  /** CD-269 — public form (/f/lead/<token>) and the Lead Ads forms tied to it. */
+  form: {
+    enabled: boolean;
+    token: string | null;
+    intro: string | null;
+    ad_form_ids: string[];
+  };
   spent: number;
   over_budget: boolean;
   targets: { leads: number | null; deals: number | null; sales: number | null };

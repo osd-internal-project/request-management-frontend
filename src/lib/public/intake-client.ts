@@ -9,6 +9,11 @@ import { messages } from "@/lib/messages";
 const EXTERNAL_SERVICE_URL =
   process.env.EXTERNAL_SERVICE_URL ?? "http://localhost:3003";
 const INTAKE_KEY = process.env.CUSTOMER_INTAKE_API_KEY ?? "";
+/**
+ * CD-269 — the campaign lead forms' key (`integration.crm.lead.create`).
+ * One key may carry both scopes, so the customer intake key is the fallback.
+ */
+const LEAD_KEY = process.env.LEAD_INTAKE_API_KEY ?? INTAKE_KEY;
 
 export type IntakeResult<T> =
   | { ok: true; data: T }
@@ -18,11 +23,27 @@ export function intakeConfigured(): boolean {
   return Boolean(INTAKE_KEY);
 }
 
-export async function intakeFetch<T>(
+export function intakeFetch<T>(
   path: string,
   init: { method?: "GET" | "POST"; body?: unknown } = {},
 ): Promise<IntakeResult<T>> {
-  if (!INTAKE_KEY) {
+  return send<T>(INTAKE_KEY, `request/intake/${path}`, init);
+}
+
+/** CD-269 — a campaign's public lead form (`crm/leads/forms/*`). */
+export function leadIntakeFetch<T>(
+  path: string,
+  init: { method?: "GET" | "POST"; body?: unknown } = {},
+): Promise<IntakeResult<T>> {
+  return send<T>(LEAD_KEY, `crm/leads/${path}`, init);
+}
+
+async function send<T>(
+  key: string,
+  path: string,
+  init: { method?: "GET" | "POST"; body?: unknown },
+): Promise<IntakeResult<T>> {
+  if (!key) {
     return {
       ok: false,
       status: 503,
@@ -32,11 +53,11 @@ export async function intakeFetch<T>(
   }
   try {
     const response = await fetch(
-      `${EXTERNAL_SERVICE_URL.replace(/\/$/, "")}/api/v1/request/intake/${path}`,
+      `${EXTERNAL_SERVICE_URL.replace(/\/$/, "")}/api/v1/${path}`,
       {
         method: init.method ?? "GET",
         headers: {
-          authorization: `Bearer ${INTAKE_KEY}`,
+          authorization: `Bearer ${key}`,
           "content-type": "application/json",
         },
         body: init.body === undefined ? undefined : JSON.stringify(init.body),
