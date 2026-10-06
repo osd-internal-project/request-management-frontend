@@ -99,6 +99,7 @@ const MENU_ICONS: Record<MenuIconKey, ComponentType> = {
   contentCalendar: CalendarOutlined,
   brandLibrary: FolderOpenOutlined,
   campaignResults: FundOutlined,
+  llm: RobotOutlined,
   salesTarget: FlagOutlined,
   salesReport: BarChartOutlined,
   contract: FileProtectOutlined,

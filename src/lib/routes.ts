@@ -189,6 +189,8 @@ export const ROUTES = {
   adminNotificationRules: `${HOME_PATH}/admin/notification-rules`,
   /** กุญแจ API ของช่องทางภายนอก — สิทธิ์ `integration.*` ออกที่นี่. */
   adminApiKeys: `${HOME_PATH}/admin/api-keys`,
+  /** CD-275 */
+  adminLlm: `${HOME_PATH}/admin/llm`,
   adminErpSync: `${HOME_PATH}/admin/erp-sync`,
   /** REQ-02 — รูปแบบเลขรันของทุกชนิดเอกสาร. */
   adminRunNumbers: `${HOME_PATH}/admin/run-numbers`,

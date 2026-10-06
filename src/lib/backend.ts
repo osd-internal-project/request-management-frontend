@@ -96,6 +96,8 @@ export const CORE_SERVICE_PREFIXES = [
   "/kb",
   // CD-15 MACOM (CD-268 — campaign plan)
   "/macom",
+  // CD-275 — LLM Gateway settings and usage
+  "/llm",
   // CD-236 — the installed base
   "/service-assets",
   // CD-237 — what covers them

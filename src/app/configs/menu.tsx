@@ -25,6 +25,7 @@ export type MenuIconKey =
   | "contentCalendar"
   | "brandLibrary"
   | "campaignResults"
+  | "llm"
   | "salesTarget"
   | "salesReport"
   | "contract"
@@ -824,6 +825,14 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     href: ROUTES.adminApiKeys,
     icon: "apiKey",
     permissions: ["admin.integration.manage"],
+    group: messages.nav.adminGroup,
+  },
+  /** CD-275 — LLM Gateway: โมเดลต่องาน AI โควตา ราคา และการใช้งาน. */
+  {
+    label: messages.nav.adminLlm,
+    href: ROUTES.adminLlm,
+    icon: "llm",
+    permissions: ["admin.llm.manage"],
     group: messages.nav.adminGroup,
   },
   /** CM-06 / CD-88 — งานส่ง SAP ที่ไม่สำเร็จ ดูข้อผิดพลาดแล้วกดส่งใหม่. */
