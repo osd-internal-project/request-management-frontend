@@ -14,7 +14,8 @@ export const CONTENT_CHANNELS = [
 ] as const;
 export type ContentChannel = (typeof CONTENT_CHANNELS)[number];
 
-export type ContentStatus = "draft" | "ready" | "published" | "cancelled";
+export type ContentStatus =
+  "draft" | "pending_approval" | "ready" | "published" | "cancelled";
 
 export interface ContentItem {
   id: string;
@@ -30,6 +31,16 @@ export interface ContentItem {
   cancel_reason: string | null;
   version: number;
   copied_from_id: string | null;
+  /** CD-272 */
+  mentions: { customer: boolean; price: boolean; partner: boolean };
+  needs_approval: boolean;
+  approval: {
+    status: "none" | "pending" | "approved" | "rejected" | "cancelled";
+    request_id: string | null;
+    approved_version: number | null;
+    current: boolean;
+    note: string | null;
+  };
 }
 
 export interface ContentDetail extends ContentItem {

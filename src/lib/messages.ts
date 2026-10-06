@@ -2316,6 +2316,7 @@ export const messages = {
     } as Record<string, string>,
     statuses: {
       draft: "ร่าง",
+      pending_approval: "รออนุมัติ",
       ready: "พร้อมเผยแพร่",
       published: "เผยแพร่แล้ว",
       cancelled: "ยกเลิก",
@@ -2334,7 +2335,24 @@ export const messages = {
       owner: "ผู้รับผิดชอบ",
       campaign: "แคมเปญ",
       caption: "ข้อความโพสต์",
+      mentions: "เนื้อหาพาดพิง",
     },
+    mentions: { customer: "ลูกค้า", price: "ราคา", partner: "คู่ค้า" },
+    mentionsHint:
+      "ติ๊กเมื่อโพสต์พาดพิงลูกค้า ราคา หรือคู่ค้า — ต้องผ่านการอนุมัติก่อนพร้อมเผยแพร่",
+    sendForApproval: "ส่งอนุมัติ",
+    withdraw: "ถอนกลับมาแก้",
+    withdrawConfirm: "ถอนออกจากการรออนุมัติ? คำขออนุมัติจะถูกยกเลิก",
+    approvalLabel: "การอนุมัติ",
+    approvalStatuses: {
+      none: "ยังไม่ส่งอนุมัติ",
+      pending: "รออนุมัติ",
+      approved: "อนุมัติแล้ว",
+      outdated: "อนุมัติเวอร์ชันก่อน — แก้แล้วต้องส่งใหม่",
+      rejected: "ไม่อนุมัติ",
+      cancelled: "ถอนแล้ว",
+    } as Record<string, string>,
+    viewRequest: "ดูคำขอ",
     noCampaign: "ไม่ผูกแคมเปญ",
     save: "บันทึก",
     saved: "บันทึกแล้ว",
@@ -6968,6 +6986,11 @@ export const messages = {
       projectTechChangeTypeCode: "ประเภทคำขออนุมัติปรับแก้ทางเทคนิค",
       projectResourceTypeCode: "ประเภทคำขอทีมเพิ่ม (PM → Engineer)",
       serviceWorkOrderTypeCode: "ประเภทคำขอใบสั่งงานบริการ",
+      contentApprovalTypeCode: "ประเภทคำขออนุมัติคอนเทนต์ (MACOM)",
+      contentApprovalAll:
+        "ทุกคอนเทนต์ต้องอนุมัติ (ไม่ใช่เฉพาะที่พาดพิงลูกค้า/ราคา/คู่ค้า)",
+      contentApprovalHint:
+        "ปฏิทินคอนเทนต์ส่งอนุมัติเป็นคำขอประเภทนี้ (form: subject, content_title, channel, planned_at, caption, mentions, media, content_version, content_id) — ผู้อนุมัติตามตารางอำนาจของประเภท · ว่าง = ส่งอนุมัติไม่ได้",
       serviceOnCallEscalateMinutes:
         "นาทีที่เวรหลักมีให้กดรับเคสนอกเวลา ก่อนส่งต่อเวรสำรอง (0 = ไม่ส่งต่อ)",
       serviceWorkOrderHint:

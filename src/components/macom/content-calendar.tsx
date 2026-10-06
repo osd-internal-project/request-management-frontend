@@ -7,6 +7,7 @@ import {
   Button,
   Calendar,
   Card,
+  Checkbox,
   DatePicker,
   Drawer,
   Input,
@@ -26,7 +27,9 @@ import {
 } from "@ant-design/icons";
 import Text from "antd/es/typography/Text";
 import dayjs, { type Dayjs } from "dayjs";
+import Link from "next/link";
 import { appApi } from "@/lib/api/client";
+import { ROUTES } from "@/lib/routes";
 import {
   CONTENT_CHANNELS,
   type ContentDetail,
@@ -47,6 +50,7 @@ const CHANNEL_COLOR: Record<string, string> = {
 };
 const STATUS_COLOR: Record<ContentStatus, string> = {
   draft: "default",
+  pending_approval: "warning",
   ready: "processing",
   published: "success",
   cancelled: "error",
@@ -59,6 +63,7 @@ interface Draft {
   caption: string;
   ownerId: string;
   campaignId: string | null;
+  mentions: { customer: boolean; price: boolean; partner: boolean };
 }
 
 type Option = { id: string; name: string };
@@ -129,6 +134,7 @@ export function ContentCalendar({
       caption: "",
       ownerId: me,
       campaignId: campaignId ?? null,
+      mentions: { customer: false, price: false, partner: false },
     });
   }
 
@@ -152,6 +158,7 @@ export function ContentCalendar({
       caption: item.caption,
       ownerId: item.owner.id,
       campaignId: item.campaign?.id ?? null,
+      mentions: item.mentions,
     });
   }
 
@@ -182,6 +189,9 @@ export function ContentCalendar({
       caption: draft.caption,
       ...(draft.ownerId ? { owner_user_id: draft.ownerId } : {}),
       campaign_id: draft.campaignId ?? "",
+      mentions_customer: draft.mentions.customer,
+      mentions_price: draft.mentions.price,
+      mentions_partner: draft.mentions.partner,
     });
     if (open === "new") {
       await call("macom/content", { method: "POST", body });
@@ -487,6 +497,30 @@ export function ContentCalendar({
                 />
               </label>
             </div>
+            <div>
+              <Text className="block text-xs">{m.fields.mentions}</Text>
+              {(["customer", "price", "partner"] as const).map((key) => (
+                <Checkbox
+                  key={key}
+                  checked={draft.mentions[key]}
+                  disabled={!editable}
+                  onChange={(event) =>
+                    setDraft({
+                      ...draft,
+                      mentions: {
+                        ...draft.mentions,
+                        [key]: event.target.checked,
+                      },
+                    })
+                  }
+                >
+                  {m.mentions[key]}
+                </Checkbox>
+              ))}
+              <Text type="secondary" className="block text-xs">
+                {m.mentionsHint}
+              </Text>
+            </div>
             <label className="block">
               <Text className="text-xs">{m.fields.caption}</Text>
               <Input.TextArea
@@ -572,6 +606,34 @@ export function ContentCalendar({
                     </a>
                   </div>
                 )}
+                {item.needs_approval && (
+                  <div className="text-sm">
+                    <Text type="secondary">{m.approvalLabel}: </Text>
+                    {
+                      m.approvalStatuses[
+                        item.approval.status === "approved" &&
+                        !item.approval.current
+                          ? "outdated"
+                          : item.approval.status
+                      ]
+                    }
+                    {item.approval.request_id && (
+                      <>
+                        {" · "}
+                        <Link
+                          href={ROUTES.requestDetail(item.approval.request_id)}
+                        >
+                          {m.viewRequest}
+                        </Link>
+                      </>
+                    )}
+                    {item.approval.note && (
+                      <div className="text-xs text-black/60">
+                        {item.approval.note}
+                      </div>
+                    )}
+                  </div>
+                )}
                 {item.cancel_reason && (
                   <Alert
                     type="warning"
@@ -582,10 +644,37 @@ export function ContentCalendar({
 
                 {canManage && (
                   <div className="flex flex-wrap items-center gap-2 border-t border-black/10 pt-3">
-                    {item.status === "draft" && (
-                      <Button onClick={() => move("ready")}>
-                        {m.markReady}
-                      </Button>
+                    {item.status === "draft" &&
+                      (item.needs_approval && !item.approval.current ? (
+                        <Button
+                          type="primary"
+                          loading={busy}
+                          onClick={() =>
+                            void call(`macom/content/${item.id}/approval`, {
+                              method: "POST",
+                              body: JSON.stringify({}),
+                            })
+                          }
+                        >
+                          {m.sendForApproval}
+                        </Button>
+                      ) : (
+                        <Button onClick={() => move("ready")}>
+                          {m.markReady}
+                        </Button>
+                      ))}
+                    {item.status === "pending_approval" && (
+                      <Popconfirm
+                        title={m.withdrawConfirm}
+                        onConfirm={() =>
+                          void call(
+                            `macom/content/${item.id}/approval/withdraw`,
+                            { method: "POST", body: JSON.stringify({}) },
+                          )
+                        }
+                      >
+                        <Button>{m.withdraw}</Button>
+                      </Popconfirm>
                     )}
                     {item.status === "ready" && (
                       <>
