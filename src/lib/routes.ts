@@ -214,6 +214,8 @@ export const ROUTES = {
   kbField: `${HOME_PATH}/kb/field`,
   /** CD-265 — what AI channels searched and answered with. */
   kbAi: `${HOME_PATH}/kb/ai`,
+  /** CD-266 — what the knowledge base can't answer yet. */
+  kbGaps: `${HOME_PATH}/kb/gaps`,
   projectOpen: (contractId?: string) =>
     `${HOME_PATH}/projects/open${contractId ? `?contract=${contractId}` : ""}`,
   projectDetail: (id: string) => `${HOME_PATH}/projects/${id}`,

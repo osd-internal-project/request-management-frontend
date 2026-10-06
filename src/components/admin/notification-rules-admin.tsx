@@ -145,7 +145,7 @@ function RuleCard({
               <Text strong className="mb-1 block text-sm">
                 {param.label}
               </Text>
-              {param.kind === "days" ? (
+              {SINGLE.has(param.kind) ? (
                 <span className="inline-flex items-center gap-2">
                   <InputNumber
                     min={param.min}
@@ -159,16 +159,12 @@ function RuleCard({
                     className="w-24"
                   />
                   <Text type="secondary" className="text-xs">
-                    {m.daysSuffix}
+                    {suffixOf(param.kind)}
                   </Text>
                 </span>
               ) : (
                 <DaysList
-                  suffix={
-                    param.kind === "percent_list"
-                      ? m.percentSuffix
-                      : m.daysSuffix
-                  }
+                  suffix={suffixOf(param.kind)}
                   value={(values[param.key] as number[]) ?? []}
                   min={param.min}
                   max={param.max}
@@ -181,9 +177,7 @@ function RuleCard({
                 {m.standardIs(
                   describe(
                     row.standard.params[param.key],
-                    param.kind === "percent_list"
-                      ? m.percentSuffix
-                      : m.daysSuffix,
+                    suffixOf(param.kind),
                   ),
                 )}
               </Text>
@@ -237,6 +231,24 @@ function RuleCard({
       </div>
     </Card>
   );
+}
+
+type ParamKind = NotificationRuleRow["params"][number]["kind"];
+
+/** Kinds edited as one whole number rather than a list of steps. */
+const SINGLE = new Set<ParamKind>(["days", "count", "percent"]);
+
+function suffixOf(kind: ParamKind) {
+  switch (kind) {
+    case "percent_list":
+      return m.percentSuffix;
+    case "percent":
+      return m.percentPlainSuffix;
+    case "count":
+      return m.countSuffix;
+    default:
+      return m.daysSuffix;
+  }
 }
 
 /** Steps such as "60, 30 days" — each its own box, largest first once saved. */

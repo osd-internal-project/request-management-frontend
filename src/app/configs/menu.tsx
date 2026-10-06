@@ -91,7 +91,8 @@ export type MenuIconKey =
   | "kbCategory"
   | "kbReview"
   | "kbField"
-  | "kbAi";
+  | "kbAi"
+  | "kbGaps";
 
 export interface MenuEntry {
   label: string;
@@ -636,6 +637,13 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     href: ROUTES.kbAi,
     icon: "kbAi",
     permissions: ["kb.article.manage"],
+    group: messages.nav.kbGroup,
+  },
+  /** CD-266 — knowledge gaps; whoever is handed one fills it from here. */
+  {
+    label: messages.nav.kbGaps,
+    href: ROUTES.kbGaps,
+    icon: "kbGaps",
     group: messages.nav.kbGroup,
   },
   /** CD-259 — process categories, kept by the knowledge owners. */
