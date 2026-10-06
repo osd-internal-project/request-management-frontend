@@ -722,6 +722,8 @@ export interface LessonView {
   kind: "went_well" | "improve" | "recommend";
   text: string;
   kbmsStatus: string;
+  /** CD-263 — the knowledge article it went into (KB-…). */
+  kbmsRef: string | null;
   createdBy: string;
   createdAt: string;
   createdByName: string | null;

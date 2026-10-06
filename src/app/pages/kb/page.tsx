@@ -7,7 +7,12 @@ import { KbSearch } from "@/components/kb/kb-search";
 const m = messages.kb;
 
 /** CD-259 — the knowledge base: search, read, write drafts (all staff). */
-export default function KbPage() {
+export default async function KbPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const { q } = await searchParams;
   return (
     <div className="space-y-3">
       <div>
@@ -17,7 +22,7 @@ export default function KbPage() {
         <Text type="secondary">{m.hint}</Text>
       </div>
       <Card>
-        <KbSearch />
+        <KbSearch initialQuery={q ?? ""} />
       </Card>
     </div>
   );

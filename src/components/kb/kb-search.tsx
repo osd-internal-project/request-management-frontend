@@ -40,9 +40,9 @@ interface SearchResult {
 }
 
 /** CD-259 — search the knowledge base by words, category, product and tag. */
-export function KbSearch() {
-  const [q, setQ] = useState("");
-  const [query, setQuery] = useState("");
+export function KbSearch({ initialQuery = "" }: { initialQuery?: string }) {
+  const [q, setQ] = useState(initialQuery);
+  const [query, setQuery] = useState(initialQuery);
   const [status, setStatus] = useState("published");
   const [categoryId, setCategoryId] = useState<string | undefined>();
   const [product, setProduct] = useState<string | undefined>();

@@ -75,6 +75,22 @@ export function ProjectCloseoutCard({
     return true;
   }
 
+  async function sendLessons() {
+    setBusy(true);
+    setError(null);
+    const result = await appApi<{ articleNo: string }>(
+      `kb/projects/${projectId}/lessons/send`,
+      { method: "POST", body: "{}" },
+    );
+    setBusy(false);
+    if (!result.ok) {
+      setError(result.message);
+      return;
+    }
+    message.success(m.kbmsSentDone.replace("{n}", result.data.articleNo));
+    router.refresh();
+  }
+
   async function attach() {
     if (attaching === null) return;
     if (!attaching.trim() || !file) {
@@ -285,6 +301,18 @@ export function ProjectCloseoutCard({
         <Text type="secondary" className="mb-1 block text-xs">
           {m.kbmsHint}
         </Text>
+        {/* CD-263 — send the pending lessons to the knowledge base now */}
+        {view.canEdit &&
+          view.lessons.some((row) => row.kbmsStatus !== "sent") && (
+            <Button
+              size="small"
+              className="mb-1"
+              loading={busy}
+              onClick={() => void sendLessons()}
+            >
+              {m.kbmsSend}
+            </Button>
+          )}
         {view.lessons.length === 0 && (
           <Text type="secondary" className="block text-xs">
             {m.noLessons}
@@ -299,6 +327,16 @@ export function ProjectCloseoutCard({
               <Text type="secondary" className="ml-1 text-xs">
                 {row.createdByName ?? ""} ·{" "}
                 {row.kbmsStatus === "sent" ? m.kbmsSent : m.kbmsPending}
+                {row.kbmsRef ? (
+                  <>
+                    {" "}
+                    <a
+                      href={`${ROUTES.kb}?q=${encodeURIComponent(row.kbmsRef)}`}
+                    >
+                      {row.kbmsRef}
+                    </a>
+                  </>
+                ) : null}
               </Text>
               {view.canWrite && mine && (
                 <Space size={0}>
