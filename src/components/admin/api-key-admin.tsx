@@ -41,6 +41,13 @@ const SCOPE_AREAS = [
   { key: "request", label: m.scopeAreas.request },
   { key: "approval", label: m.scopeAreas.approval },
   { key: "crm", label: m.scopeAreas.crm },
+  // สายงานหลังดีล (6 ต.ค. 2569) — เรียงตามลำดับที่งานเดิน
+  { key: "flow", label: m.scopeAreas.flow },
+  { key: "presales", label: m.scopeAreas.presales },
+  { key: "legal", label: m.scopeAreas.legal },
+  { key: "pm", label: m.scopeAreas.pm },
+  { key: "delivery", label: m.scopeAreas.delivery },
+  { key: "support", label: m.scopeAreas.support },
 ] as const;
 
 interface ScopeArea {
