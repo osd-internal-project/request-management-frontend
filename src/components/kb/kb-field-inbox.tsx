@@ -27,7 +27,10 @@ const f = messages.kb.field;
 
 interface Item {
   id: string;
-  requestId: string;
+  /** work_order (CD-262) · presales (CD-264) */
+  source: string;
+  solutionId: string | null;
+  requestId: string | null;
   requestNo: string | null;
   title: string;
   cause: string;
@@ -145,9 +148,18 @@ export function KbFieldInbox() {
                 <div className="min-w-0 flex-1">
                   <Space wrap size={6}>
                     <Text strong>{row.title}</Text>
-                    <Link href={ROUTES.requestDetail(row.requestId)}>
-                      <Tag>{row.requestNo ?? f.job}</Tag>
-                    </Link>
+                    <Tag color={row.source === "presales" ? "purple" : "blue"}>
+                      {f.sources[row.source] ?? row.source}
+                    </Tag>
+                    {row.source === "presales" && row.solutionId ? (
+                      <Link href={ROUTES.solutionDetail(row.solutionId)}>
+                        <Tag>{row.requestNo ?? "Solution"}</Tag>
+                      </Link>
+                    ) : row.requestId ? (
+                      <Link href={ROUTES.requestDetail(row.requestId)}>
+                        <Tag>{row.requestNo ?? f.job}</Tag>
+                      </Link>
+                    ) : null}
                     {row.customer ? (
                       <Text type="secondary">{row.customer}</Text>
                     ) : null}
@@ -155,11 +167,16 @@ export function KbFieldInbox() {
                       {f.closedAt} {shortDate(row.closedAt)}
                     </Text>
                   </Space>
+                  {row.cause ? (
+                    <div className="text-sm">
+                      <Text type="secondary">{f.cause}:</Text> {row.cause}
+                    </div>
+                  ) : null}
                   <div className="text-sm">
-                    <Text type="secondary">{f.cause}:</Text> {row.cause}
-                  </div>
-                  <div className="text-sm">
-                    <Text type="secondary">{f.fix}:</Text> {row.resolution}
+                    <Text type="secondary">
+                      {row.source === "presales" ? f.answer : f.fix}:
+                    </Text>{" "}
+                    {row.resolution}
                   </div>
                   {row.article ? (
                     <Link href={ROUTES.kbArticle(row.article.id)}>

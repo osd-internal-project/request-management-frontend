@@ -92,6 +92,7 @@ export function KbArticleView({ id }: { id: string }) {
   const [origin, setOrigin] = useState<{
     usedOnJobs: number;
     fromJobs: { requestId: string; requestNo: string | null }[];
+    fromSolutions?: { solutionId: string; title: string | null }[];
     fromProblem: {
       id: string;
       problemNo: string;
@@ -299,7 +300,10 @@ export function KbArticleView({ id }: { id: string }) {
           ))}
         </Space>
         {origin &&
-        (origin.usedOnJobs || origin.fromJobs.length || origin.fromProblem) ? (
+        (origin.usedOnJobs ||
+          origin.fromJobs.length ||
+          origin.fromSolutions?.length ||
+          origin.fromProblem) ? (
           <div className="mt-1">
             <Text type="secondary" className="text-xs">
               {origin.usedOnJobs
@@ -319,9 +323,27 @@ export function KbArticleView({ id }: { id: string }) {
                   ))}
                 </>
               ) : null}
-              {origin.fromProblem ? (
+              {origin.fromSolutions?.length ? (
                 <>
                   {origin.usedOnJobs || origin.fromJobs.length ? " · " : ""}
+                  {messages.kb.field.fromSolutions}{" "}
+                  {origin.fromSolutions.map((sol, i) => (
+                    <span key={sol.solutionId}>
+                      {i ? ", " : ""}
+                      <Link href={ROUTES.solutionDetail(sol.solutionId)}>
+                        {sol.title ?? "Solution"}
+                      </Link>
+                    </span>
+                  ))}
+                </>
+              ) : null}
+              {origin.fromProblem ? (
+                <>
+                  {origin.usedOnJobs ||
+                  origin.fromJobs.length ||
+                  origin.fromSolutions?.length
+                    ? " · "
+                    : ""}
                   {messages.kb.field.fromProblem}{" "}
                   <Link href={ROUTES.serviceProblems}>
                     {origin.fromProblem.problemNo}

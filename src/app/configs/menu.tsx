@@ -620,7 +620,11 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     label: messages.nav.kbField,
     href: ROUTES.kbField,
     icon: "kbField",
-    permissions: ["kb.article.manage", "service.asset.manage"],
+    permissions: [
+      "kb.article.manage",
+      "service.asset.manage",
+      "presales.solution.manage",
+    ],
     group: messages.nav.kbGroup,
   },
   /** CD-259 — process categories, kept by the knowledge owners. */
