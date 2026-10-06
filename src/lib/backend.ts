@@ -94,6 +94,8 @@ export const CORE_SERVICE_PREFIXES = [
   "/delivery",
   // CD-259 — คลังความรู้ (KBMS)
   "/kb",
+  // CD-15 MACOM (CD-268 — campaign plan)
+  "/macom",
   // CD-236 — the installed base
   "/service-assets",
   // CD-237 — what covers them

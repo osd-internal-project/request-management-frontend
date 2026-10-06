@@ -4,18 +4,26 @@ import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
 import { CampaignList } from "@/components/crm/campaigns/campaign-list";
 import { getCampaigns } from "@/lib/api/campaigns";
+import { getOrgUnitShapes } from "@/lib/api/org-units";
 import { messages } from "@/lib/messages";
 import { HOME_PATH } from "@/lib/routes";
 import { can, getSession } from "@/lib/session";
 
 const m = messages.campaigns;
 
-/** CD-71 — แคมเปญพร้อมผลถึงยอดขาย; ผู้มี `crm.campaign.manage` สร้าง/แก้/ปิดได้. */
+/**
+ * CD-71 — แคมเปญพร้อมผลถึงยอดขาย; ผู้มี `crm.campaign.manage` สร้าง/แก้/ปิดได้.
+ * CD-268 — แกนขาย ทีมที่รับ Lead เป้าหมาย และแผนงบรายช่องทาง.
+ */
 export default async function CampaignsPage() {
   const session = await getSession();
+  const canManage = can(session, "crm.campaign.manage");
   if (!can(session, "crm.sales.read")) redirect(HOME_PATH);
 
-  const result = await getCampaigns();
+  const [result, units] = await Promise.all([
+    getCampaigns(),
+    canManage ? getOrgUnitShapes() : null,
+  ]);
 
   return (
     <div className="space-y-4">
@@ -34,7 +42,14 @@ export default async function CampaignsPage() {
       {result.ok ? (
         <CampaignList
           rows={result.data}
-          canManage={can(session, "crm.campaign.manage")}
+          canManage={canManage}
+          units={
+            units?.ok
+              ? units.data
+                  .filter((unit) => unit.active)
+                  .map((unit) => ({ id: unit.id, name: unit.name }))
+              : []
+          }
         />
       ) : (
         <Alert

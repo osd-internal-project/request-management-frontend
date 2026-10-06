@@ -254,14 +254,6 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     permissions: ["crm.sales.read"],
     group: messages.nav.crmGroup,
   },
-  /** CD-71 — แคมเปญการตลาดและผลถึงยอดขาย. */
-  {
-    label: messages.nav.campaigns,
-    href: ROUTES.campaigns,
-    icon: "campaign",
-    permissions: ["crm.sales.read"],
-    group: messages.nav.crmGroup,
-  },
   /** CD-82 — เป้ารายเดือนเทียบยอดจริงและพยากรณ์. */
   {
     label: messages.nav.salesTargets,
@@ -628,6 +620,14 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     icon: "kbCategory",
     permissions: ["kb.article.manage"],
     group: messages.nav.kbGroup,
+  },
+  /** CD-71/CD-268 — แคมเปญ งบ และผลถึงยอดขาย (ทีม MACOM). */
+  {
+    label: messages.nav.campaigns,
+    href: ROUTES.campaigns,
+    icon: "campaign",
+    permissions: ["crm.sales.read"],
+    group: messages.nav.macomGroup,
   },
 
   /** CD-180 — ภาระงานทีมรายสัปดาห์ข้ามโครงการ (ผู้จัดคน / หัวหน้าทีม). */
