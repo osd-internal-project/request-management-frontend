@@ -919,6 +919,7 @@ export const messages = {
     kbCategories: "หมวดคลังความรู้",
     kbReview: "รอตรวจและทบทวน",
     kbField: "ความรู้จากหน้างาน",
+    kbAi: "บันทึกคำตอบของ AI",
     serviceGroup: "บริการหลังการขาย",
     serviceAssets: "ทะเบียนอุปกรณ์ที่ติดตั้ง",
     serviceEntitlements: "สิทธิ์บริการ",
@@ -4570,6 +4571,34 @@ export const messages = {
       required: "ต้องระบุชื่อบทความ",
       cannotEdit:
         "แก้บทความนี้ได้เฉพาะผู้เขียน (ขณะยังเป็นฉบับร่าง) หรือผู้ดูแลคลังความรู้",
+    },
+    /** CD-265 ช่องทางให้ AI ดึงความรู้ไปตอบ */
+    ai: {
+      title: "บันทึกคำตอบของ AI",
+      hint: "ทุกครั้งที่ AI CARE / AI SMART ค้นคลังความรู้ (เฉพาะบทความที่เผยแพร่ให้ลูกค้า) — บทความที่ได้ คำตอบ และบทความที่คำตอบอ้างอิง · ข้อความคำถาม/คำตอบเก็บ {d} วัน แล้วลบ เหลือการอ้างอิงไว้นับสถิติ",
+      outcome: "ผล",
+      outcomes: {
+        pending: "ยังไม่บันทึกคำตอบ",
+        answered: "ตอบได้",
+        unanswered: "ตอบไม่ได้",
+      } as Record<string, string>,
+      channel: "ช่องทาง",
+      channels: { ai_care: "AI CARE", ai_smart: "AI SMART" } as Record<
+        string,
+        string
+      >,
+      all: "ทั้งหมด",
+      question: "คำถาม",
+      answer: "คำตอบ",
+      returned: "บทความที่ได้",
+      cited: "อ้างอิง",
+      purged: "(ลบข้อความแล้วตามระยะเก็บ)",
+      at: "เวลา",
+      ref: "บทสนทนา",
+      none: "ยังไม่มีบันทึก",
+      citedCount: "AI ใช้อ้างอิง {n} ครั้ง",
+      filteredBy: "เฉพาะคำตอบที่อ้างบทความนี้",
+      clearFilter: "ดูทั้งหมด",
     },
     /** CD-262 ความรู้จากงานบริการที่ปิดและปัญหาราก */
     field: {

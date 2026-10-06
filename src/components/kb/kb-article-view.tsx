@@ -91,6 +91,7 @@ export function KbArticleView({ id }: { id: string }) {
   } | null>(null);
   const [origin, setOrigin] = useState<{
     usedOnJobs: number;
+    aiCitations?: number;
     fromJobs: { requestId: string; requestNo: string | null }[];
     fromSolutions?: { solutionId: string; title: string | null }[];
     fromProblem: {
@@ -351,6 +352,16 @@ export function KbArticleView({ id }: { id: string }) {
                 </>
               ) : null}
             </Text>
+          </div>
+        ) : null}
+        {origin?.aiCitations ? (
+          <div>
+            <Link
+              href={`${ROUTES.kbAi}?article_id=${a.id}`}
+              className="text-xs"
+            >
+              {fill(messages.kb.ai.citedCount, { n: origin.aiCitations })}
+            </Link>
           </div>
         ) : null}
         {a.customers.length ? (

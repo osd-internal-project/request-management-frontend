@@ -210,6 +210,8 @@ export const ROUTES = {
   kbReview: `${HOME_PATH}/kb/review`,
   /** CD-262 — closed service jobs waiting to become knowledge. */
   kbField: `${HOME_PATH}/kb/field`,
+  /** CD-265 — what AI channels searched and answered with. */
+  kbAi: `${HOME_PATH}/kb/ai`,
   projectOpen: (contractId?: string) =>
     `${HOME_PATH}/projects/open${contractId ? `?contract=${contractId}` : ""}`,
   projectDetail: (id: string) => `${HOME_PATH}/projects/${id}`,

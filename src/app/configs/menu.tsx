@@ -89,7 +89,8 @@ export type MenuIconKey =
   | "kb"
   | "kbCategory"
   | "kbReview"
-  | "kbField";
+  | "kbField"
+  | "kbAi";
 
 export interface MenuEntry {
   label: string;
@@ -626,6 +627,14 @@ const MENU_ITEMS: readonly MenuEntry[] = [
       "service.asset.manage",
       "presales.solution.manage",
     ],
+    group: messages.nav.kbGroup,
+  },
+  /** CD-265 — what AI channels searched and answered with. */
+  {
+    label: messages.nav.kbAi,
+    href: ROUTES.kbAi,
+    icon: "kbAi",
+    permissions: ["kb.article.manage"],
     group: messages.nav.kbGroup,
   },
   /** CD-259 — process categories, kept by the knowledge owners. */
