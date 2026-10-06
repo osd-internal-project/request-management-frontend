@@ -25,6 +25,7 @@ export type MenuIconKey =
   | "contentCalendar"
   | "brandLibrary"
   | "campaignResults"
+  | "aiSmart"
   | "llm"
   | "aiAudit"
   | "salesTarget"
@@ -685,6 +686,14 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     href: ROUTES.campaignResults,
     icon: "campaignResults",
     permissions: ["crm.campaign.manage", "report.dashboard.read"],
+    group: messages.nav.macomGroup,
+  },
+  /** CD-289 — AI SMART: แหล่งกวาด Lead และรายชื่อที่กวาดได้ก่อนเข้า CRM. */
+  {
+    label: messages.nav.aiSmart,
+    href: ROUTES.aiSmart,
+    icon: "aiSmart",
+    permissions: ["smart.prospect.read"],
     group: messages.nav.macomGroup,
   },
 

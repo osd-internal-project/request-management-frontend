@@ -96,6 +96,8 @@ export const CORE_SERVICE_PREFIXES = [
   "/kb",
   // CD-15 MACOM (CD-268 — campaign plan)
   "/macom",
+  // CD-16 AI SMART (CD-289 — sweep sources and the staging list)
+  "/smart",
   // CD-275 — LLM Gateway settings and usage
   "/llm",
   // CD-279 — the AI audit log

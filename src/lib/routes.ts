@@ -93,6 +93,8 @@ export const ROUTES = {
   brandLibrary: `${HOME_PATH}/macom/brand`,
   /** CD-274 */
   campaignResults: `${HOME_PATH}/macom/results`,
+  /** CD-289 — AI SMART */
+  aiSmart: `${HOME_PATH}/smart`,
   targetAccounts: `${HOME_PATH}/target-accounts`,
   keeper: `${HOME_PATH}/keeper`,
   /** CD-75 — บันทึกการเข้าพบจากมือถือ */
