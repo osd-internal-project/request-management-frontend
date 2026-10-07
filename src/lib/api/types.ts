@@ -1839,6 +1839,11 @@ export interface CrmConfig {
   contentApprovalAll?: boolean;
   /** CD-273 */
   brandApprovalTypeCode?: string | null;
+  /** CD-293 — AI SMART handoff request type and each axis's team. */
+  smartHandoffTypeCode?: string | null;
+  smartGetterOrgUnitId?: string | null;
+  smartGovernmentOrgUnitId?: string | null;
+  smartPartnerOrgUnitId?: string | null;
   /** CD-225 — the company's readiness checklist. */
   projectReadinessChecklist?: string[];
   /** CD-226 — the as-built documents every project must leave. */

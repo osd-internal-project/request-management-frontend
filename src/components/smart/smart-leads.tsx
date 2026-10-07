@@ -83,6 +83,10 @@ interface Prospect {
   lead_id: string | null;
   sent_outcome: string | null;
   interested_at: string | null;
+  handoff_axis: string | null;
+  handed_off_at: string | null;
+  handoff_error: string | null;
+  handoff_request: { id: string; request_no: string | null; status: string } | null;
 }
 
 interface Run {
@@ -607,6 +611,64 @@ function Prospects({
     onChanged();
   }
 
+  /** CD-293 — to the sales axis: a Lead for its team + the handoff request. */
+  function handOff(ids: string[]) {
+    let axis: string | undefined;
+    modal.confirm({
+      title: m.handoff.title(ids.length),
+      content: (
+        <div className="space-y-2">
+          <Text type="secondary" className="block text-xs">
+            {m.handoff.hint}
+          </Text>
+          <Select
+            allowClear
+            className="w-full"
+            placeholder={m.handoff.ownAxis}
+            onChange={(value: string | undefined) => {
+              axis = value;
+            }}
+            options={(["getter", "government", "partner"] as const).map((value) => ({
+              value,
+              label: m.axes[value],
+            }))}
+          />
+        </div>
+      ),
+      onOk: async () => {
+        const result = await appApi<
+          { id: string; name: string; outcome: string; reason?: string }[]
+        >("smart/prospects/handoff", {
+          method: "POST",
+          body: JSON.stringify({ ids, ...(axis ? { axis } : {}) }),
+        });
+        if (!result.ok) {
+          message.error(result.message);
+          return;
+        }
+        modal.info({
+          title: m.handoff.done(
+            result.data.filter((r) => r.outcome === "handed_off").length,
+          ),
+          content: (
+            <ul className="m-0 pl-4 text-xs">
+              {result.data.map((r) => (
+                <li key={r.id}>
+                  {r.name} — {m.handoff.outcomes[r.outcome] ?? r.outcome}
+                  {r.reason ? ` (${r.reason})` : ""}
+                </li>
+              ))}
+            </ul>
+          ),
+        });
+        setSelected([]);
+        setOpen(null);
+        setTick((n) => n + 1);
+        onChanged();
+      },
+    });
+  }
+
   async function rescreen() {
     setBusy(true);
     const result = await appApi<{ screened: number }>("smart/prospects/screen", {
@@ -722,6 +784,9 @@ function Prospects({
           >
             {m.sendSelected(selected.length)}
           </Button>
+          <Button disabled={!selected.length} onClick={() => handOff(selected)}>
+            {m.handoff.button(selected.length)}
+          </Button>
           <Button loading={busy} onClick={() => void rescreen()}>
             {m.rescreen}
           </Button>
@@ -781,6 +846,19 @@ function Prospects({
                 {row.interested_at && (
                   <Tag color="green" className="ml-1">
                     {m.interestedTag}
+                  </Tag>
+                )}
+                {row.handoff_axis && (
+                  <Tag color="purple" className="ml-1">
+                    {m.handoff.tag(m.axes[row.handoff_axis] ?? row.handoff_axis)}
+                    {row.handoff_request
+                      ? ` · ${row.handoff_request.request_no ?? ""} ${m.handoff.requestStatus[row.handoff_request.status] ?? row.handoff_request.status}`
+                      : ""}
+                  </Tag>
+                )}
+                {row.handoff_error && (
+                  <Tag color="red" className="ml-1" title={row.handoff_error}>
+                    {m.handoff.failed}
                   </Tag>
                 )}
                 <div className="text-xs">
@@ -864,6 +942,9 @@ function Prospects({
           open &&
           canManage && (
             <Space>
+              {!open.handoff_axis && open.status !== "discarded" && open.status !== "new" && (
+                <Button onClick={() => handOff([open.id])}>{m.handoff.single}</Button>
+              )}
               {(open.status === "new" || open.status === "screened") && (
                 <Button
                   type="primary"
@@ -909,6 +990,32 @@ function Prospects({
             <Descriptions.Item label={m.columns.match}>
               {open.match_kind ? m.match[open.match_kind] : "—"}
             </Descriptions.Item>
+            {(open.handoff_axis || open.handoff_error) && (
+              <Descriptions.Item label={m.handoff.label}>
+                {open.handoff_axis && (
+                  <div>
+                    {m.axes[open.handoff_axis] ?? open.handoff_axis}
+                    {open.handoff_request && (
+                      <>
+                        {" · "}
+                        <Link href={ROUTES.requestDetail(open.handoff_request.id)}>
+                          {open.handoff_request.request_no ?? m.handoff.request}
+                        </Link>{" "}
+                        <Tag>
+                          {m.handoff.requestStatus[open.handoff_request.status] ??
+                            open.handoff_request.status}
+                        </Tag>
+                      </>
+                    )}
+                  </div>
+                )}
+                {open.handoff_error && (
+                  <Text type="danger" className="text-xs">
+                    {open.handoff_error}
+                  </Text>
+                )}
+              </Descriptions.Item>
+            )}
             {open.lead_id && (
               <Descriptions.Item label={m.lead}>
                 <Link href={ROUTES.leadDetail(open.lead_id)}>
