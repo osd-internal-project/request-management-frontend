@@ -82,6 +82,7 @@ interface Prospect {
   match_kind: string | null;
   lead_id: string | null;
   sent_outcome: string | null;
+  interested_at: string | null;
 }
 
 interface Run {
@@ -775,6 +776,11 @@ function Prospects({
                 {row.evidence.mock === true && (
                   <Tag color="gold" className="ml-1">
                     {m.mockTag}
+                  </Tag>
+                )}
+                {row.interested_at && (
+                  <Tag color="green" className="ml-1">
+                    {m.interestedTag}
                   </Tag>
                 )}
                 <div className="text-xs">

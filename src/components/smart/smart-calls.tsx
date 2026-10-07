@@ -71,6 +71,116 @@ interface Target {
   hold_label: string | null;
 }
 
+interface Call {
+  id: string;
+  phone: string;
+  status: string;
+  outcome: string | null;
+  duration_sec: number | null;
+  transcript: string | null;
+  recording_ref: string | null;
+  summary: string | null;
+  error: string | null;
+  started_at: string;
+}
+
+const outcomeColor: Record<string, string> = {
+  interested: "green",
+  not_interested: "default",
+  no_answer: "orange",
+  busy: "orange",
+  refused: "red",
+  failed: "red",
+};
+
+/** CD-292 — the calls made on a list, and what was said. */
+function CallHistory({ listId, version }: { listId: string; version: number }) {
+  const [calls, setCalls] = useState<Call[] | null>(null);
+  const [open, setOpen] = useState<Call | null>(null);
+
+  useEffect(() => {
+    let live = true;
+    void appApi<Call[]>(`smart/call-lists/${listId}/calls`).then((result) => {
+      if (live && result.ok) setCalls(result.data);
+    });
+    return () => {
+      live = false;
+    };
+  }, [listId, version]);
+
+  return (
+    <>
+      <Table<Call>
+        rowKey="id"
+        size="small"
+        loading={calls === null}
+        dataSource={calls ?? []}
+        pagination={{ pageSize: 50, hideOnSinglePage: true }}
+        scroll={{ x: true }}
+        locale={{ emptyText: m.noCalls }}
+        onRow={(row) => ({ onClick: () => setOpen(row) })}
+        rowClassName="cursor-pointer"
+        columns={[
+          { title: m.callAt, dataIndex: "started_at", render: when },
+          { title: m.phone, dataIndex: "phone" },
+          {
+            title: m.outcome,
+            dataIndex: "outcome",
+            render: (value: string | null, row) =>
+              value ? (
+                <Tag color={outcomeColor[value]}>{m.outcomes[value] ?? value}</Tag>
+              ) : (
+                <Tag>{m.callStatuses[row.status] ?? row.status}</Tag>
+              ),
+          },
+          {
+            title: m.duration,
+            dataIndex: "duration_sec",
+            align: "right",
+            render: (value: number | null) => (value ? `${value}s` : "—"),
+          },
+          {
+            title: m.summary,
+            dataIndex: "summary",
+            render: (value: string | null) => (
+              <span className="text-xs">{value ?? "—"}</span>
+            ),
+          },
+        ]}
+      />
+      <Drawer
+        open={open !== null}
+        size={600}
+        title={open ? `${open.phone} · ${when(open.started_at)}` : undefined}
+        onClose={() => setOpen(null)}
+        destroyOnHidden
+      >
+        {open && (
+          <Descriptions column={1} size="small" bordered>
+            <Descriptions.Item label={m.outcome}>
+              {open.outcome ? m.outcomes[open.outcome] ?? open.outcome : "—"}
+            </Descriptions.Item>
+            {open.summary && (
+              <Descriptions.Item label={m.summary}>{open.summary}</Descriptions.Item>
+            )}
+            <Descriptions.Item label={m.transcript}>
+              <pre className="m-0 text-xs whitespace-pre-wrap">
+                {open.transcript ?? "—"}
+              </pre>
+            </Descriptions.Item>
+            <Descriptions.Item label={m.recording}>
+              {open.recording_ref ?? "—"}
+            </Descriptions.Item>
+            {open.error && (
+              <Descriptions.Item label={m.error}>{open.error}</Descriptions.Item>
+            )}
+          </Descriptions>
+        )}
+      </Drawer>
+    </>
+  );
+}
+
 interface Article {
   id: string;
   articleNo: string;
@@ -422,6 +532,7 @@ function ListDetail({
           </Descriptions.Item>
         </Descriptions>
       )}
+      <Text strong>{m.targetsTitle}</Text>
       <Table<Target>
         rowKey="id"
         size="small"
@@ -464,6 +575,8 @@ function ListDetail({
             : []),
         ]}
       />
+      <Text strong>{m.callsTitle}</Text>
+      <CallHistory listId={list.id} version={tick} />
     </div>
   );
 }
