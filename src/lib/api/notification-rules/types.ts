@@ -9,7 +9,8 @@ export interface NotificationRuleRow {
   params: {
     key: string;
     label: string;
-    kind: "days" | "days_list" | "percent_list";
+    /** CD-266 — count and percent are a single whole number. */
+    kind: "days" | "days_list" | "percent_list" | "count" | "percent";
     min: number;
     max: number;
     max_items: number | null;

@@ -1834,6 +1834,11 @@ export interface CrmConfig {
   serviceRepeatCustomerModel?: number;
   /** CD-249 — the user a Customer Portal case is raised under. */
   servicePortalUserId?: string | null;
+  /** CD-272 */
+  contentApprovalTypeCode?: string | null;
+  contentApprovalAll?: boolean;
+  /** CD-273 */
+  brandApprovalTypeCode?: string | null;
   /** CD-225 — the company's readiness checklist. */
   projectReadinessChecklist?: string[];
   /** CD-226 — the as-built documents every project must leave. */

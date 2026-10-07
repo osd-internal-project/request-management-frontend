@@ -44,6 +44,9 @@ export function notificationHref(notification: AppNotification): string | null {
     // CD-260 — a knowledge article to review, or what came of it
     case "kb_article":
       return ROUTES.kbArticle(notification.resourceId);
+    // CD-266 — a knowledge gap handed to me, or overdue
+    case "kb_gap":
+      return `${ROUTES.kbGaps}?id=${notification.resourceId}`;
     case "sales_handover":
       return `${ROUTES.handovers}?id=${notification.resourceId}`;
     default:

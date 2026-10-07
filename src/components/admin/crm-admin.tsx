@@ -397,6 +397,15 @@ function ConfigSection({
   const [portalUser, setPortalUser] = useState<string | null>(
     config.servicePortalUserId ?? null,
   );
+  const [contentApprovalType, setContentApprovalType] = useState(
+    config.contentApprovalTypeCode ?? "",
+  );
+  const [contentApprovalAll, setContentApprovalAll] = useState(
+    config.contentApprovalAll ?? false,
+  );
+  const [brandApprovalType, setBrandApprovalType] = useState(
+    config.brandApprovalTypeCode ?? "",
+  );
   const [repeat, setRepeat] = useState({
     days: config.serviceRepeatDays ?? 90,
     asset: config.serviceRepeatAsset ?? 3,
@@ -453,6 +462,9 @@ function ConfigSection({
       project_cost_alert_pct: costAlert,
       service_on_call_escalate_minutes: onCallMinutes,
       service_portal_user_id: portalUser ?? "",
+      content_approval_type_code: contentApprovalType,
+      content_approval_all: contentApprovalAll,
+      brand_approval_type_code: brandApprovalType,
       service_repeat_days: repeat.days,
       service_repeat_asset: repeat.asset,
       service_repeat_model: repeat.model,
@@ -836,6 +848,40 @@ function ConfigSection({
           onChange={(value?: string) => setPortalUser(value ?? null)}
         />
       </div>
+      {/* CD-272 — อนุมัติคอนเทนต์ (MACOM) */}
+      <div className="mt-3 max-w-xs">
+        <Text className="mb-1 block text-xs">{m.contentApprovalTypeCode}</Text>
+        <Input
+          value={contentApprovalType}
+          maxLength={20}
+          allowClear
+          onChange={(e) => setContentApprovalType(e.target.value.toUpperCase())}
+        />
+      </div>
+      <div className="mt-2 flex items-center gap-2">
+        <Switch
+          checked={contentApprovalAll}
+          onChange={setContentApprovalAll}
+          size="small"
+        />
+        <Text className="text-xs">{m.contentApprovalAll}</Text>
+      </div>
+      <Text type="secondary" className="mt-2 block text-xs">
+        {m.contentApprovalHint}
+      </Text>
+      {/* CD-273 — อนุมัติไฟล์คลังแบรนด์ (MACOM) */}
+      <div className="mt-3 max-w-xs">
+        <Text className="mb-1 block text-xs">{m.brandApprovalTypeCode}</Text>
+        <Input
+          value={brandApprovalType}
+          maxLength={20}
+          allowClear
+          onChange={(e) => setBrandApprovalType(e.target.value.toUpperCase())}
+        />
+      </div>
+      <Text type="secondary" className="mt-2 block text-xs">
+        {m.brandApprovalHint}
+      </Text>
       {/* CD-246 — เกณฑ์เสนอปัญหาที่เกิดซ้ำ */}
       <div className="mt-3 grid max-w-xl grid-cols-2 gap-2">
         {(

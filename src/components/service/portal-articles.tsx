@@ -55,8 +55,11 @@ interface Article {
  */
 export function PortalArticles({
   onRaise,
+  initialId,
 }: {
   onRaise: ((subject: string) => void) | null;
+  /** CD-281 — an article to open first (a link AI CARE sent). */
+  initialId?: string;
 }) {
   const [query, setQuery] = useState("");
   const [items, setItems] = useState<ArticleItem[] | null>(null);
@@ -80,6 +83,21 @@ export function PortalArticles({
       live = false;
     };
   }, [query]);
+
+  useEffect(() => {
+    if (!initialId) return;
+    let live = true;
+    void call<Article>(`articles/${encodeURIComponent(initialId)}`).then(
+      (result) => {
+        if (!live) return;
+        if (result.ok) setOpen(result.data);
+        else setError(result.message);
+      },
+    );
+    return () => {
+      live = false;
+    };
+  }, [initialId]);
 
   async function read(id: string) {
     setBusy(true);

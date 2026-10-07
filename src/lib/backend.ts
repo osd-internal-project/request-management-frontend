@@ -97,6 +97,12 @@ export const CORE_SERVICE_PREFIXES = [
   "/kb",
   // CD-15 MACOM (CD-268 — campaign plan)
   "/macom",
+  // CD-16 AI SMART (CD-289 — sweep sources and the staging list)
+  "/smart",
+  // CD-275 — LLM Gateway settings and usage
+  "/llm",
+  // CD-279 — the AI audit log
+  "/ai-audit",
   // CD-236 — the installed base
   "/service-assets",
   // CD-237 — what covers them
@@ -105,6 +111,8 @@ export const CORE_SERVICE_PREFIXES = [
   "/service-work-orders",
   // CD-241 — the out-of-hours rota
   "/service-on-call",
+  // CD-280 — AI CARE conversations
+  "/care",
   // CD-242 — billed service jobs to SAP
   "/service-billings",
   // CD-243 — time, materials and selling rates

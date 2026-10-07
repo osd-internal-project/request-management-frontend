@@ -22,6 +22,12 @@ export type MenuIconKey =
   | "quotation"
   | "saleOrder"
   | "campaign"
+  | "contentCalendar"
+  | "brandLibrary"
+  | "campaignResults"
+  | "aiSmart"
+  | "llm"
+  | "aiAudit"
   | "salesTarget"
   | "salesReport"
   | "contract"
@@ -74,6 +80,7 @@ export type MenuIconKey =
   | "serviceEntitlement"
   | "serviceWorkOrder"
   | "serviceOnCall"
+  | "careConversations"
   | "serviceBilling"
   | "serviceLabourRate"
   | "servicePm"
@@ -89,7 +96,9 @@ export type MenuIconKey =
   | "kb"
   | "kbCategory"
   | "kbReview"
-  | "kbField";
+  | "kbField"
+  | "kbAi"
+  | "kbGaps";
 
 export interface MenuEntry {
   label: string;
@@ -512,6 +521,15 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     group: messages.nav.serviceGroup,
   },
 
+  /** CD-280 — บทสนทนา AI CARE กับลูกค้าทุกช่องทาง. */
+  {
+    label: messages.nav.careConversations,
+    href: ROUTES.careConversations,
+    icon: "careConversations",
+    permissions: ["service.care.manage"],
+    group: messages.nav.serviceGroup,
+  },
+
   /** CD-241 — ตารางเวรนอกเวลา. */
   {
     label: messages.nav.serviceOnCall,
@@ -637,7 +655,26 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     label: messages.nav.kbField,
     href: ROUTES.kbField,
     icon: "kbField",
-    permissions: ["kb.article.manage", "service.asset.manage"],
+    permissions: [
+      "kb.article.manage",
+      "service.asset.manage",
+      "presales.solution.manage",
+    ],
+    group: messages.nav.kbGroup,
+  },
+  /** CD-265 — what AI channels searched and answered with. */
+  {
+    label: messages.nav.kbAi,
+    href: ROUTES.kbAi,
+    icon: "kbAi",
+    permissions: ["kb.article.manage"],
+    group: messages.nav.kbGroup,
+  },
+  /** CD-266 — knowledge gaps; whoever is handed one fills it from here. */
+  {
+    label: messages.nav.kbGaps,
+    href: ROUTES.kbGaps,
+    icon: "kbGaps",
     group: messages.nav.kbGroup,
   },
   /** CD-259 — process categories, kept by the knowledge owners. */
@@ -654,6 +691,37 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     href: ROUTES.campaigns,
     icon: "campaign",
     permissions: ["crm.sales.read"],
+    group: messages.nav.macomGroup,
+  },
+  /** CD-271 — ปฏิทินคอนเทนต์ทุกช่องทาง. */
+  {
+    label: messages.nav.contentCalendar,
+    href: ROUTES.contentCalendar,
+    icon: "contentCalendar",
+    permissions: ["crm.sales.read", "crm.campaign.manage"],
+    group: messages.nav.macomGroup,
+  },
+  /** CD-273 — โลโก้ เทมเพลต เอกสารนำเสนอฉบับปัจจุบัน — ทุกคนหยิบใช้ได้. */
+  {
+    label: messages.nav.brandLibrary,
+    href: ROUTES.brandLibrary,
+    icon: "brandLibrary",
+    group: messages.nav.macomGroup,
+  },
+  /** CD-274 — ผลแคมเปญถึงรายได้จริง (Data Mart). */
+  {
+    label: messages.nav.campaignResults,
+    href: ROUTES.campaignResults,
+    icon: "campaignResults",
+    permissions: ["crm.campaign.manage", "report.dashboard.read"],
+    group: messages.nav.macomGroup,
+  },
+  /** CD-289 — AI SMART: แหล่งกวาด Lead และรายชื่อที่กวาดได้ก่อนเข้า CRM. */
+  {
+    label: messages.nav.aiSmart,
+    href: ROUTES.aiSmart,
+    icon: "aiSmart",
+    permissions: ["smart.prospect.read"],
     group: messages.nav.macomGroup,
   },
 
@@ -795,6 +863,22 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     href: ROUTES.adminApiKeys,
     icon: "apiKey",
     permissions: ["admin.integration.manage"],
+    group: messages.nav.adminGroup,
+  },
+  /** CD-275 — LLM Gateway: โมเดลต่องาน AI โควตา ราคา และการใช้งาน. */
+  {
+    label: messages.nav.adminLlm,
+    href: ROUTES.adminLlm,
+    icon: "llm",
+    permissions: ["admin.llm.manage"],
+    group: messages.nav.adminGroup,
+  },
+  /** CD-279 — บันทึก AI: การเรียก MCP tool และโมเดล ค้นย้อนหลัง + อายุการเก็บ. */
+  {
+    label: messages.nav.adminAiAudit,
+    href: ROUTES.adminAiAudit,
+    icon: "aiAudit",
+    permissions: ["admin.ai.audit"],
     group: messages.nav.adminGroup,
   },
   /** CM-06 / CD-88 — งานส่ง SAP ที่ไม่สำเร็จ ดูข้อผิดพลาดแล้วกดส่งใหม่. */

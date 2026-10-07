@@ -12,7 +12,13 @@ const f = messages.kb.field;
 /** CD-262 — closed service jobs waiting to become knowledge. */
 export default async function KbFieldPage() {
   const session = await getSession();
-  if (!canAny(session, ["kb.article.manage", "service.asset.manage"]))
+  if (
+    !canAny(session, [
+      "kb.article.manage",
+      "service.asset.manage",
+      "presales.solution.manage",
+    ])
+  )
     redirect(ROUTES.kb);
   return (
     <div className="space-y-3">

@@ -12,6 +12,7 @@ import {
   Skeleton,
   Space,
   Tag,
+  Tooltip,
 } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import Text from "antd/es/typography/Text";
@@ -213,6 +214,11 @@ export function KbSearch({ initialQuery = "" }: { initialQuery?: string }) {
                       {m.audience.tags[a.audience]}
                     </Tag>
                   ) : null}
+                  {a.match === "meaning" ? (
+                    <Tooltip title={m.byMeaningHint}>
+                      <Tag color="geekblue">{m.byMeaning}</Tag>
+                    </Tooltip>
+                  ) : null}
                   {REVIEW_COLOR[a.reviewState] ? (
                     <Tag color={REVIEW_COLOR[a.reviewState]}>
                       {m.review.reviewStates[a.reviewState]}
@@ -221,6 +227,12 @@ export function KbSearch({ initialQuery = "" }: { initialQuery?: string }) {
                 </Space>
                 {a.summary ? (
                   <Text type="secondary">{highlight(a.summary)}</Text>
+                ) : null}
+                {a.passage?.text ? (
+                  <Text type="secondary" className="text-xs">
+                    {a.passage.heading ? <b>{a.passage.heading} · </b> : null}
+                    {highlight(a.passage.text)}
+                  </Text>
                 ) : null}
                 <Space wrap size={4}>
                   <Text type="secondary" className="text-xs">

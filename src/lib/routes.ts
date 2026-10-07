@@ -87,6 +87,14 @@ export const ROUTES = {
   crmDashboard: `${HOME_PATH}/crm`,
   /** CD-71 — แคมเปญ */
   campaigns: `${HOME_PATH}/campaigns`,
+  /** CD-271 */
+  contentCalendar: `${HOME_PATH}/macom/content`,
+  /** CD-273 */
+  brandLibrary: `${HOME_PATH}/macom/brand`,
+  /** CD-274 */
+  campaignResults: `${HOME_PATH}/macom/results`,
+  /** CD-289 — AI SMART */
+  aiSmart: `${HOME_PATH}/smart`,
   targetAccounts: `${HOME_PATH}/target-accounts`,
   keeper: `${HOME_PATH}/keeper`,
   /** CD-75 — บันทึกการเข้าพบจากมือถือ */
@@ -183,6 +191,10 @@ export const ROUTES = {
   adminNotificationRules: `${HOME_PATH}/admin/notification-rules`,
   /** กุญแจ API ของช่องทางภายนอก — สิทธิ์ `integration.*` ออกที่นี่. */
   adminApiKeys: `${HOME_PATH}/admin/api-keys`,
+  /** CD-275 */
+  adminLlm: `${HOME_PATH}/admin/llm`,
+  /** CD-279 */
+  adminAiAudit: `${HOME_PATH}/admin/ai-audit`,
   adminErpSync: `${HOME_PATH}/admin/erp-sync`,
   /** REQ-02 — รูปแบบเลขรันของทุกชนิดเอกสาร. */
   adminRunNumbers: `${HOME_PATH}/admin/run-numbers`,
@@ -206,6 +218,10 @@ export const ROUTES = {
   kbReview: `${HOME_PATH}/kb/review`,
   /** CD-262 — closed service jobs waiting to become knowledge. */
   kbField: `${HOME_PATH}/kb/field`,
+  /** CD-265 — what AI channels searched and answered with. */
+  kbAi: `${HOME_PATH}/kb/ai`,
+  /** CD-266 — what the knowledge base can't answer yet. */
+  kbGaps: `${HOME_PATH}/kb/gaps`,
   projectOpen: (contractId?: string) =>
     `${HOME_PATH}/projects/open${contractId ? `?contract=${contractId}` : ""}`,
   projectDetail: (id: string) => `${HOME_PATH}/projects/${id}`,
@@ -228,6 +244,8 @@ export const ROUTES = {
   serviceWorkOrders: `${HOME_PATH}/service/work-orders`,
   /** CD-241 — who answers out of hours. */
   serviceOnCall: `${HOME_PATH}/service/on-call`,
+  /** CD-280 — AI CARE conversations. */
+  careConversations: `${HOME_PATH}/service/care`,
   /** CD-242 — billed service jobs sent to SAP. */
   serviceBilling: `${HOME_PATH}/service/billing`,
   /** CD-243 — selling rates of service labour. */

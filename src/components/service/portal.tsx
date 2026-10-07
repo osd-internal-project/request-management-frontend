@@ -99,7 +99,7 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 /** CD-249 — the customer's portal: their jobs, equipment, covers, reports. */
-export function PortalHome() {
+export function PortalHome({ articleId }: { articleId?: string } = {}) {
   const [me, setMe] = useState<Me | null>(null);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [assets, setAssets] = useState<Asset[]>([]);
@@ -199,6 +199,7 @@ export function PortalHome() {
       )}
       {error && <Alert className="mb-2" type="error" showIcon title={error} />}
       <Tabs
+        defaultActiveKey={articleId ? "articles" : undefined}
         items={[
           {
             key: "jobs",
@@ -388,6 +389,7 @@ export function PortalHome() {
             label: m.tabs.articles,
             children: (
               <PortalArticles
+                initialId={articleId}
                 onRaise={
                   me.canRaise
                     ? (subject) =>
