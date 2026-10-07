@@ -5121,6 +5121,7 @@ export const messages = {
     } as Record<string, string>,
     outcomes: {
       idle: "เงียบหาย",
+      case_opened: "เปิดเคสแล้ว",
       resolved: "แก้ได้แล้ว",
       no_reply: "ลูกค้าไม่ตอบ",
       spam: "สแปม",
@@ -5162,6 +5163,23 @@ export const messages = {
     closeTitle: "ปิดบทสนทนาพร้อมผล",
     closed: "ปิดบทสนทนาแล้ว",
     open360: "ดูหน้า 360°",
+    /** CD-282 */
+    case: "เคสบริการ",
+    viewCase: "ดูเคส",
+    caseOffered: "เสนอเปิดเรื่องแล้ว รอลูกค้าตอบรับ",
+    openCase: "เปิดเคส",
+    openCaseTitle: "เปิดเคสบริการจากบทสนทนา",
+    openCaseHint:
+      "เวลาตามระดับบริการนับจากที่ AI CARE รับเรื่อง · ผู้ส่งที่ยืนยันแล้วเป็นใบสั่งงานบริการทันที ลูกค้าได้เลขเคสและลิงก์ติดตามในบทสนทนา",
+    caseSubject: "หัวเรื่อง (ไม่ใส่ = ข้อความแรกของลูกค้า)",
+    severities: {
+      auto: "ความเร่งด่วนตามคำในบทสนทนา",
+      critical: "วิกฤต",
+      high: "สูง",
+      medium: "ปานกลาง",
+      low: "ต่ำ",
+    } as Record<string, string>,
+    caseOpened: "เปิดเคส {n} แล้ว",
   },
   kb: {
     title: "คลังความรู้",
