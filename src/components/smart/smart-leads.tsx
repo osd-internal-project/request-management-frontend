@@ -27,6 +27,7 @@ import Link from "next/link";
 import { appApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
+import { AddToCallList, CallLists, CallPolicy, OptOuts } from "./smart-calls";
 
 const m = messages.aiSmart;
 
@@ -507,11 +508,13 @@ function Sources({
 function Prospects({
   sources,
   canManage,
+  canCall,
   version,
   onChanged,
 }: {
   sources: Source[];
   canManage: boolean;
+  canCall: boolean;
   version: number;
   onChanged: () => void;
 }) {
@@ -721,6 +724,15 @@ function Prospects({
           <Button loading={busy} onClick={() => void rescreen()}>
             {m.rescreen}
           </Button>
+          {canCall && (
+            <AddToCallList
+              prospectIds={selected}
+              onDone={() => {
+                setSelected([]);
+                onChanged();
+              }}
+            />
+          )}
         </Space>
       )}
 
@@ -986,7 +998,17 @@ function Runs({ sources, version }: { sources: Source[]; version: number }) {
  * CD-289 (CD-16 AI SMART) — sources to sweep, what they found (held outside
  * CRM until screening), and the history of sweeps.
  */
-export function SmartLeads({ canManage }: { canManage: boolean }) {
+export function SmartLeads({
+  canManage,
+  canCall,
+  canCertify,
+  canOptOut,
+}: {
+  canManage: boolean;
+  canCall: boolean;
+  canCertify: boolean;
+  canOptOut: boolean;
+}) {
   const [sources, setSources] = useState<Source[]>([]);
   const [version, setVersion] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -1020,6 +1042,7 @@ export function SmartLeads({ canManage }: { canManage: boolean }) {
               <Prospects
                 sources={sources}
                 canManage={canManage}
+                canCall={canCall}
                 version={version}
                 onChanged={reload}
               />
@@ -1037,6 +1060,20 @@ export function SmartLeads({ canManage }: { canManage: boolean }) {
             label: m.tabs.runs,
             children: <Runs sources={sources} version={version} />,
           },
+          // CD-291 — call lists, the calling policy, the do-not-contact register
+          {
+            key: "calls",
+            label: m.tabs.calls,
+            children: <CallLists canManage={canCall} version={version} />,
+          },
+          {
+            key: "policy",
+            label: m.tabs.policy,
+            children: <CallPolicy canManage={canCall} canCertify={canCertify} />,
+          },
+          ...(canOptOut
+            ? [{ key: "optouts", label: m.tabs.optOuts, children: <OptOuts /> }]
+            : []),
         ]}
       />
     </Card>

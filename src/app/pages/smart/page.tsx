@@ -20,7 +20,12 @@ export default async function AiSmartPage() {
         </Title>
         <Text type="secondary">{m.subtitle}</Text>
       </div>
-      <SmartLeads canManage={can(session, "smart.prospect.manage")} />
+      <SmartLeads
+        canManage={can(session, "smart.prospect.manage")}
+        canCall={can(session, "smart.call.manage")}
+        canCertify={can(session, "legal.contract.manage")}
+        canOptOut={can(session, "crm.contact.optout.manage")}
+      />
     </div>
   );
 }
