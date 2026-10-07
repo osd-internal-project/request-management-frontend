@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  FileZipOutlined,
   FundOutlined,
   FolderOpenOutlined,
   AccountBookOutlined,
@@ -106,6 +107,7 @@ const MENU_ICONS: Record<MenuIconKey, ComponentType> = {
   aiSmart: RadarChartOutlined,
   llm: RobotOutlined,
   aiAudit: FileSearchOutlined,
+  companyDocuments: FileZipOutlined,
   salesTarget: FlagOutlined,
   salesReport: BarChartOutlined,
   contract: FileProtectOutlined,

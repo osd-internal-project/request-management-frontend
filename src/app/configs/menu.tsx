@@ -28,6 +28,7 @@ export type MenuIconKey =
   | "aiSmart"
   | "llm"
   | "aiAudit"
+  | "companyDocuments"
   | "salesTarget"
   | "salesReport"
   | "contract"
@@ -879,6 +880,14 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     href: ROUTES.adminAiAudit,
     icon: "aiAudit",
     permissions: ["admin.ai.audit"],
+    group: messages.nav.adminGroup,
+  },
+  /** เอกสารบริษัท — มีวันที่ออกเอกสาร / ทั่วไป ให้ระบบภายนอกดึงผ่าน External API. */
+  {
+    label: messages.nav.adminDocuments,
+    href: ROUTES.adminDocuments,
+    icon: "companyDocuments",
+    permissions: ["admin.document.manage"],
     group: messages.nav.adminGroup,
   },
   /** CM-06 / CD-88 — งานส่ง SAP ที่ไม่สำเร็จ ดูข้อผิดพลาดแล้วกดส่งใหม่. */

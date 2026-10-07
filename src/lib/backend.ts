@@ -144,6 +144,7 @@ export const CORE_SERVICE_PREFIXES = [
   "/admin/approval-matrix",
   "/admin/bi",
   "/admin/crm",
+  "/admin/documents",
   "/admin/request-types",
   "/admin/intake-channels",
   "/admin/sla-configs",

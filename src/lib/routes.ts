@@ -195,6 +195,8 @@ export const ROUTES = {
   adminLlm: `${HOME_PATH}/admin/llm`,
   /** CD-279 */
   adminAiAudit: `${HOME_PATH}/admin/ai-audit`,
+  /** เอกสารบริษัท — ระบบภายนอกดึงไปผ่าน External API. */
+  adminDocuments: `${HOME_PATH}/admin/documents`,
   adminErpSync: `${HOME_PATH}/admin/erp-sync`,
   /** REQ-02 — รูปแบบเลขรันของทุกชนิดเอกสาร. */
   adminRunNumbers: `${HOME_PATH}/admin/run-numbers`,
