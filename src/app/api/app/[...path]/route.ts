@@ -57,6 +57,8 @@ async function forward(
         // `CompanyGuard` still rejects one the user is not a member of.
         ...companyHeader(request.cookies.get(COMPANY_COOKIE)?.value),
         ...(body ? { "Content-Type": contentType } : {}),
+        // A money action is retried safely only if the backend sees the same key twice.
+        ...idempotencyHeader(request.headers.get("idempotency-key")),
       },
       body,
       cache: "no-store",
@@ -135,4 +137,8 @@ export async function DELETE(
   { params }: { params: Promise<{ path: string[] }> },
 ) {
   return forward(request, (await params).path, "DELETE");
+}
+
+function idempotencyHeader(key: string | null): Record<string, string> {
+  return key && /^[\w-]{8,100}$/.test(key) ? { "Idempotency-Key": key } : {};
 }

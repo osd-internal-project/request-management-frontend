@@ -244,6 +244,12 @@ export const ROUTES = {
   serviceSurveys: `${HOME_PATH}/service/surveys`,
   /** CD-249 — Customer Portal contacts. */
   servicePortal: `${HOME_PATH}/service/portal`,
+  /** การเบิก — the work screen of FI05/FI06 tickets. */
+  disbursements: `${HOME_PATH}/disbursements`,
+  disbursementDetail: (docNo: string) =>
+    `${HOME_PATH}/disbursements/${encodeURIComponent(docNo)}`,
+  /** Cost Center master — the list forms pick from. */
+  costCenters: `${HOME_PATH}/admin/cost-centers`,
   /** CD-192 — every running project, the most at risk first. */
   projectPortfolio: `${HOME_PATH}/projects/portfolio`,
   /** CD-161 — คลังสัญญา (ฝ่ายกฎหมาย). */

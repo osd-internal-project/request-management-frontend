@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { CostCenterSelect } from "./cost-center-select";
 import {
   Alert,
   App,
@@ -1070,6 +1071,10 @@ function kindInput(
 ): ReactNode | null {
   const kind = fieldKindOf(property);
   const text = typeof value === "string" && value ? value : undefined;
+
+  if (property["x-options-source"] === "cost_centers") {
+    return <CostCenterSelect value={text} onChange={onChange} />;
+  }
 
   switch (kind) {
     case "select":

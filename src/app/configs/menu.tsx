@@ -82,6 +82,8 @@ export type MenuIconKey =
   | "serviceReport"
   | "serviceSurvey"
   | "servicePortal"
+  | "disbursementList"
+  | "costCenters"
   | "esignLayout"
   | "esignAuthority"
   | "kb"
@@ -589,6 +591,22 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     icon: "servicePortal",
     permissions: ["service.asset.read"],
     group: messages.nav.serviceGroup,
+  },
+
+  /** การเบิก — asked and approved as a request (FI05/FI06); the money work has its own list. */
+  {
+    label: messages.nav.disbursementList,
+    href: ROUTES.disbursements,
+    icon: "disbursementList",
+    permissions: ["request.read"],
+    group: messages.nav.financeGroup,
+  },
+  {
+    label: messages.nav.costCenters,
+    href: ROUTES.costCenters,
+    icon: "costCenters",
+    permissions: ["admin.cost-center.manage"],
+    group: messages.nav.financeGroup,
   },
 
   /** CD-237 — ประกันและสัญญาบริการที่คุ้มครองอุปกรณ์. */

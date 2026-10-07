@@ -38,6 +38,7 @@ import {
 } from "@/lib/api/contracts";
 import { ContractDraftCard } from "@/components/legal/contract-draft-card";
 import { WorkOrderPanel } from "@/components/service/work-order-panel";
+import { DisbursementPanel } from "@/components/disbursement/disbursement-panel";
 import { ChatRecordContext } from "@/components/layout/chat/chat-record-context";
 import { ContractRequestPackageCard } from "@/components/legal/contract-request-package-card";
 import { messages } from "@/lib/messages";
@@ -332,6 +333,15 @@ export default async function RequestDetailPage({
           requestId={id}
           status={request.status}
           canManage={can(session, "service.asset.manage")}
+        />
+      )}
+
+      {/* การเบิก — created once an FI05 / FI06 request is approved */}
+      {request.requestNo && ["FI05", "FI06"].includes(request.typeCode) && (
+        <DisbursementPanel
+          requestNo={request.requestNo}
+          approved={["approved", "closed"].includes(request.status)}
+          canCreate={can(session, "disbursement.pay")}
         />
       )}
 

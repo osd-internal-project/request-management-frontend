@@ -2,6 +2,7 @@
 
 import {
   AccountBookOutlined,
+  CreditCardOutlined,
   ReadOutlined,
   TagsOutlined,
   SmileOutlined,
@@ -156,6 +157,8 @@ const MENU_ICONS: Record<MenuIconKey, ComponentType> = {
   serviceReport: FileDoneOutlined,
   serviceSurvey: SmileOutlined,
   servicePortal: GlobalOutlined,
+  disbursementList: UnorderedListOutlined,
+  costCenters: CreditCardOutlined,
   esignLayout: LayoutOutlined,
   esignAuthority: SafetyOutlined,
 };

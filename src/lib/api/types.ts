@@ -220,6 +220,10 @@ export interface FormSchemaProperty {
   "x-sensitive"?: boolean;
   /** A long answer; rendered as a textarea rather than a single line. */
   "x-multiline"?: boolean;
+  /** Picks from a master list instead of free text — `cost_centers` today. */
+  "x-options-source"?: string;
+  /** Another module reads this field (`disbursement.purpose`); the form editor shows it. */
+  "x-bind"?: string;
   /**
    * CD-80 — worked out by the system, never typed: shown read-only and
    * recomputed by the server on save. See `src/lib/computed-fields.ts`.

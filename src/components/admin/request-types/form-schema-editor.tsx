@@ -49,6 +49,11 @@ export function FormSchemaEditor({
                   {messages.requestTypes.fieldRestricted}
                 </Tag>
               )}
+              {boundModule(row) && (
+                <Tag color="purple" className="m-0!">
+                  {messages.requestTypes.fieldBound(boundModule(row) ?? "")}
+                </Tag>
+              )}
             </button>
           </li>
         ))}
@@ -73,4 +78,11 @@ export function FormSchemaEditor({
       />
     </div>
   );
+}
+
+/** The module that reads this field (or one of its columns) through `x-bind`, by its display name. */
+function boundModule(row: FieldRow): string | null {
+  const binds = [row.extra["x-bind"], ...(row.columns ?? []).map((column) => column.extra["x-bind"])];
+  const target = binds.find(Boolean)?.split(".")[0];
+  return target ? (messages.requestTypes.bindModules[target] ?? target) : null;
 }

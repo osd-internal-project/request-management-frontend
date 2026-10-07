@@ -32,6 +32,9 @@ export function notificationHref(notification: AppNotification): string | null {
       return ROUTES.contracts;
     case "customer_contract":
       return ROUTES.contractDetail(notification.resourceId);
+    // การเบิก — the resource id is the document number
+    case "disbursement":
+      return ROUTES.disbursementDetail(notification.resourceId);
     // CD-175 — put on a project
     case "project":
       return ROUTES.projectDetail(notification.resourceId);

@@ -24,6 +24,10 @@ guide before touching a screen. `src/components/reports/bottleneck-table.tsx` is
 the worked example of the fix — a `"use client"` component the server page
 renders.
 
+**A client component takes only `import type` from `src/lib/api/<domain>`.** Those modules
+call `apiGet`, which reads `next/headers`; one value import (`disbursementFileUrl`) failed
+`yarn build`. Put client-side helpers beside the component (`components/disbursement/format.ts`).
+
 ## Where a component goes
 
 `src/components/` is grouped by who uses it, not by what the file is called:
