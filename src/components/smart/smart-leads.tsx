@@ -27,6 +27,7 @@ import Link from "next/link";
 import { appApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
+import { AddToCallList, CallLists, CallPolicy, OptOuts } from "./smart-calls";
 
 const m = messages.aiSmart;
 
@@ -81,6 +82,12 @@ interface Prospect {
   match_kind: string | null;
   lead_id: string | null;
   sent_outcome: string | null;
+  interested_at: string | null;
+  handoff_axis: string | null;
+  handed_off_at: string | null;
+  handoff_error: string | null;
+  keeper_opportunity_id: string | null;
+  handoff_request: { id: string; request_no: string | null; status: string } | null;
 }
 
 interface Run {
@@ -507,11 +514,13 @@ function Sources({
 function Prospects({
   sources,
   canManage,
+  canCall,
   version,
   onChanged,
 }: {
   sources: Source[];
   canManage: boolean;
+  canCall: boolean;
   version: number;
   onChanged: () => void;
 }) {
@@ -601,6 +610,103 @@ function Prospects({
     setOpen(null);
     setTick((n) => n + 1);
     onChanged();
+  }
+
+  /** CD-293 — to the sales axis: a Lead for its team + the handoff request. */
+  function handOff(ids: string[]) {
+    let axis: string | undefined;
+    modal.confirm({
+      title: m.handoff.title(ids.length),
+      content: (
+        <div className="space-y-2">
+          <Text type="secondary" className="block text-xs">
+            {m.handoff.hint}
+          </Text>
+          <Select
+            allowClear
+            className="w-full"
+            placeholder={m.handoff.ownAxis}
+            onChange={(value: string | undefined) => {
+              axis = value;
+            }}
+            options={(["getter", "government", "partner"] as const).map((value) => ({
+              value,
+              label: m.axes[value],
+            }))}
+          />
+        </div>
+      ),
+      onOk: async () => {
+        const result = await appApi<
+          { id: string; name: string; outcome: string; reason?: string }[]
+        >("smart/prospects/handoff", {
+          method: "POST",
+          body: JSON.stringify({ ids, ...(axis ? { axis } : {}) }),
+        });
+        if (!result.ok) {
+          message.error(result.message);
+          return;
+        }
+        modal.info({
+          title: m.handoff.done(
+            result.data.filter((r) => r.outcome === "handed_off").length,
+          ),
+          content: (
+            <ul className="m-0 pl-4 text-xs">
+              {result.data.map((r) => (
+                <li key={r.id}>
+                  {r.name} — {m.handoff.outcomes[r.outcome] ?? r.outcome}
+                  {r.reason ? ` (${r.reason})` : ""}
+                </li>
+              ))}
+            </ul>
+          ),
+        });
+        setSelected([]);
+        setOpen(null);
+        setTick((n) => n + 1);
+        onChanged();
+      },
+    });
+  }
+
+  /** CD-294 — existing customers to their account owners. */
+  function toKeeper(ids: string[]) {
+    modal.confirm({
+      title: m.handoff.keeperTitle(ids.length),
+      content: m.handoff.keeperHint,
+      onOk: async () => {
+        const result = await appApi<
+          { id: string; name: string; outcome: string; reason?: string }[]
+        >("smart/prospects/keeper", {
+          method: "POST",
+          body: JSON.stringify({ ids }),
+        });
+        if (!result.ok) {
+          message.error(result.message);
+          return;
+        }
+        modal.info({
+          title: m.handoff.keeperDone(
+            result.data.filter((r) => r.outcome === "sent").length,
+          ),
+          content: (
+            <ul className="m-0 pl-4 text-xs">
+              {result.data.map((r) => (
+                <li key={r.id}>
+                  {r.name} — {m.handoff.keeperOutcomes[r.outcome] ?? r.outcome}
+                  {r.reason ? ` (${r.reason})` : ""}
+                </li>
+              ))}
+            </ul>
+          ),
+        });
+        setSelected([]);
+        setOpen(null);
+        setTick((n) => n + 1);
+        onChanged();
+      },
+    });
   }
 
   async function rescreen() {
@@ -718,9 +824,24 @@ function Prospects({
           >
             {m.sendSelected(selected.length)}
           </Button>
+          <Button disabled={!selected.length} onClick={() => handOff(selected)}>
+            {m.handoff.button(selected.length)}
+          </Button>
+          <Button disabled={!selected.length} onClick={() => toKeeper(selected)}>
+            {m.handoff.keeperButton(selected.length)}
+          </Button>
           <Button loading={busy} onClick={() => void rescreen()}>
             {m.rescreen}
           </Button>
+          {canCall && (
+            <AddToCallList
+              prospectIds={selected}
+              onDone={() => {
+                setSelected([]);
+                onChanged();
+              }}
+            />
+          )}
         </Space>
       )}
 
@@ -763,6 +884,24 @@ function Prospects({
                 {row.evidence.mock === true && (
                   <Tag color="gold" className="ml-1">
                     {m.mockTag}
+                  </Tag>
+                )}
+                {row.interested_at && (
+                  <Tag color="green" className="ml-1">
+                    {m.interestedTag}
+                  </Tag>
+                )}
+                {row.handoff_axis && (
+                  <Tag color="purple" className="ml-1">
+                    {m.handoff.tag(m.axes[row.handoff_axis] ?? row.handoff_axis)}
+                    {row.handoff_request
+                      ? ` · ${row.handoff_request.request_no ?? ""} ${m.handoff.requestStatus[row.handoff_request.status] ?? row.handoff_request.status}`
+                      : ""}
+                  </Tag>
+                )}
+                {row.handoff_error && (
+                  <Tag color="red" className="ml-1" title={row.handoff_error}>
+                    {m.handoff.failed}
                   </Tag>
                 )}
                 <div className="text-xs">
@@ -846,6 +985,12 @@ function Prospects({
           open &&
           canManage && (
             <Space>
+              {open.match_kind === "customer" && !open.keeper_opportunity_id && open.status !== "discarded" && (
+                <Button onClick={() => toKeeper([open.id])}>{m.handoff.keeperSingle}</Button>
+              )}
+              {!open.handoff_axis && open.match_kind !== "customer" && open.status !== "discarded" && open.status !== "new" && (
+                <Button onClick={() => handOff([open.id])}>{m.handoff.single}</Button>
+              )}
               {(open.status === "new" || open.status === "screened") && (
                 <Button
                   type="primary"
@@ -891,6 +1036,39 @@ function Prospects({
             <Descriptions.Item label={m.columns.match}>
               {open.match_kind ? m.match[open.match_kind] : "—"}
             </Descriptions.Item>
+            {open.keeper_opportunity_id && (
+              <Descriptions.Item label={m.handoff.keeperDeal}>
+                <Link href={ROUTES.opportunityDetail(open.keeper_opportunity_id)}>
+                  {m.handoff.keeperDeal}
+                </Link>
+              </Descriptions.Item>
+            )}
+            {(open.handoff_axis || open.handoff_error) && (
+              <Descriptions.Item label={m.handoff.label}>
+                {open.handoff_axis && (
+                  <div>
+                    {m.axes[open.handoff_axis] ?? open.handoff_axis}
+                    {open.handoff_request && (
+                      <>
+                        {" · "}
+                        <Link href={ROUTES.requestDetail(open.handoff_request.id)}>
+                          {open.handoff_request.request_no ?? m.handoff.request}
+                        </Link>{" "}
+                        <Tag>
+                          {m.handoff.requestStatus[open.handoff_request.status] ??
+                            open.handoff_request.status}
+                        </Tag>
+                      </>
+                    )}
+                  </div>
+                )}
+                {open.handoff_error && (
+                  <Text type="danger" className="text-xs">
+                    {open.handoff_error}
+                  </Text>
+                )}
+              </Descriptions.Item>
+            )}
             {open.lead_id && (
               <Descriptions.Item label={m.lead}>
                 <Link href={ROUTES.leadDetail(open.lead_id)}>
@@ -986,7 +1164,17 @@ function Runs({ sources, version }: { sources: Source[]; version: number }) {
  * CD-289 (CD-16 AI SMART) — sources to sweep, what they found (held outside
  * CRM until screening), and the history of sweeps.
  */
-export function SmartLeads({ canManage }: { canManage: boolean }) {
+export function SmartLeads({
+  canManage,
+  canCall,
+  canCertify,
+  canOptOut,
+}: {
+  canManage: boolean;
+  canCall: boolean;
+  canCertify: boolean;
+  canOptOut: boolean;
+}) {
   const [sources, setSources] = useState<Source[]>([]);
   const [version, setVersion] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -1020,6 +1208,7 @@ export function SmartLeads({ canManage }: { canManage: boolean }) {
               <Prospects
                 sources={sources}
                 canManage={canManage}
+                canCall={canCall}
                 version={version}
                 onChanged={reload}
               />
@@ -1037,6 +1226,20 @@ export function SmartLeads({ canManage }: { canManage: boolean }) {
             label: m.tabs.runs,
             children: <Runs sources={sources} version={version} />,
           },
+          // CD-291 — call lists, the calling policy, the do-not-contact register
+          {
+            key: "calls",
+            label: m.tabs.calls,
+            children: <CallLists canManage={canCall} version={version} />,
+          },
+          {
+            key: "policy",
+            label: m.tabs.policy,
+            children: <CallPolicy canManage={canCall} canCertify={canCertify} />,
+          },
+          ...(canOptOut
+            ? [{ key: "optouts", label: m.tabs.optOuts, children: <OptOuts /> }]
+            : []),
         ]}
       />
     </Card>

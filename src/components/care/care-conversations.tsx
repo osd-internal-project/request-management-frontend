@@ -8,6 +8,7 @@ import {
   Descriptions,
   Drawer,
   Empty,
+  Input,
   Modal,
   Segmented,
   Select,
@@ -38,6 +39,13 @@ interface Conversation {
   lastMessageAt: string;
   closedAt: string | null;
   textPurged: boolean;
+  /** CD-282 */
+  caseOffered: boolean;
+  caseRequestId: string | null;
+  caseOpenedAt: string | null;
+  /** CD-283 */
+  handoverReason: string | null;
+  handoverAt: string | null;
 }
 
 interface Row extends Conversation {
@@ -234,11 +242,18 @@ export function CareConversations({ focusId }: { focusId?: string }) {
               key: "status",
               width: 130,
               render: (_, r) => (
-                <Tag color={STATUS_COLOR[r.status]}>
-                  {r.status === "closed" && r.outcome
-                    ? (m.outcomes[r.outcome] ?? r.outcome)
-                    : m.statuses[r.status]}
-                </Tag>
+                <Space orientation="vertical" size={2}>
+                  <Tag color={STATUS_COLOR[r.status]}>
+                    {r.status === "closed" && r.outcome
+                      ? (m.outcomes[r.outcome] ?? r.outcome)
+                      : m.statuses[r.status]}
+                  </Tag>
+                  {r.status === "waiting_human" && r.handoverReason ? (
+                    <Text type="secondary" className="text-xs">
+                      {m.handoverReasons[r.handoverReason] ?? r.handoverReason}
+                    </Text>
+                  ) : null}
+                </Space>
               ),
             },
           ]}
@@ -275,6 +290,10 @@ function ConversationDrawer({
     contactId?: string;
   } | null>(null);
   const [closing, setClosing] = useState<string | null>(null);
+  const [opening, setOpening] = useState<{
+    severity: string;
+    subject: string;
+  } | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -349,6 +368,36 @@ function ConversationDrawer({
     onChanged();
   }
 
+  async function openCase() {
+    if (!id || !opening) return;
+    setBusy(true);
+    const res = await appApi<{ requestNo: string | null }>(
+      `care/conversations/${id}/case`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          ...(opening.severity !== "auto"
+            ? { severity: opening.severity }
+            : {}),
+          ...(opening.subject.trim()
+            ? { subject: opening.subject.trim() }
+            : {}),
+        }),
+      },
+    );
+    if (!res.ok) {
+      setBusy(false);
+      void message.error(res.message);
+      return;
+    }
+    const fresh = await appApi<Detail>(`care/conversations/${id}`);
+    setBusy(false);
+    if (fresh.ok) setDetail(fresh.data);
+    setOpening(null);
+    notify(m.caseOpened.replace("{n}", res.data.requestNo ?? ""));
+    onChanged();
+  }
+
   const c = detail?.conversation;
   return (
     <Drawer
@@ -365,6 +414,13 @@ function ConversationDrawer({
           <Space>
             {c.identification !== "verified" ? (
               <Button onClick={startVerify}>{m.verify}</Button>
+            ) : null}
+            {!c.caseRequestId ? (
+              <Button
+                onClick={() => setOpening({ severity: "auto", subject: "" })}
+              >
+                {m.openCase}
+              </Button>
             ) : null}
             <Button danger onClick={() => setClosing("resolved")}>
               {m.close}
@@ -407,6 +463,37 @@ function ConversationDrawer({
                 "—"
               )}
             </Descriptions.Item>
+            {detail.conversation.handoverReason ? (
+              <Descriptions.Item label={m.handover}>
+                <Space wrap>
+                  <Tag color="orange">
+                    {m.handoverReasons[detail.conversation.handoverReason] ??
+                      detail.conversation.handoverReason}
+                  </Tag>
+                  {detail.conversation.handoverAt ? (
+                    <Text type="secondary" className="text-xs">
+                      {m.waitingSince.replace(
+                        "{t}",
+                        when(detail.conversation.handoverAt),
+                      )}
+                    </Text>
+                  ) : null}
+                </Space>
+              </Descriptions.Item>
+            ) : null}
+            {detail.conversation.caseRequestId ? (
+              <Descriptions.Item label={m.case}>
+                <Link
+                  href={ROUTES.requestDetail(detail.conversation.caseRequestId)}
+                >
+                  {m.viewCase}
+                </Link>
+              </Descriptions.Item>
+            ) : detail.conversation.caseOffered ? (
+              <Descriptions.Item label={m.case}>
+                <Tag color="gold">{m.caseOffered}</Tag>
+              </Descriptions.Item>
+            ) : null}
             {detail.contact ? (
               <Descriptions.Item label={m.contact}>
                 {detail.contact.name}
@@ -525,6 +612,40 @@ function ConversationDrawer({
                 <Text type="warning">{m.noContacts}</Text>
               )
             ) : null}
+          </Space>
+        ) : null}
+      </Modal>
+
+      <Modal
+        open={!!opening}
+        title={m.openCaseTitle}
+        onCancel={() => setOpening(null)}
+        confirmLoading={busy}
+        onOk={() => void openCase()}
+        destroyOnHidden
+      >
+        {opening ? (
+          <Space orientation="vertical" className="w-full">
+            <Text type="secondary">{m.openCaseHint}</Text>
+            <Select
+              className="w-full"
+              value={opening.severity}
+              onChange={(severity: string) =>
+                setOpening({ ...opening, severity })
+              }
+              options={Object.entries(m.severities).map(([value, label]) => ({
+                value,
+                label,
+              }))}
+            />
+            <Input
+              placeholder={m.caseSubject}
+              maxLength={200}
+              value={opening.subject}
+              onChange={(e) =>
+                setOpening({ ...opening, subject: e.target.value })
+              }
+            />
           </Space>
         ) : null}
       </Modal>

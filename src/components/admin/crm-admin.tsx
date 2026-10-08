@@ -106,6 +106,7 @@ export function CrmAdmin({
         teams={teams}
         onCall={call}
       />
+      <SmartHandoffSection config={config} teams={teams} onCall={call} />
       <KycSection config={config} entries={kycWatchlist} onCall={call} />
       <LetterheadSettings config={config} onCall={call} />
     </div>
@@ -1389,6 +1390,82 @@ function CustomerApprovalSection({
  * team it goes to unless they pick another. A line removed here is
  * deactivated on the server: handovers already sent keep their own copy.
  */
+/**
+ * CD-293 — where AI SMART sends an interested prospect: the request type that
+ * gives the handoff its owner and SLA, and the team for each sales axis.
+ */
+function SmartHandoffSection({
+  config,
+  teams,
+  onCall,
+}: {
+  config: CrmConfig;
+  teams: OrgUnitShape[];
+  onCall: (path: string, method: string, body?: unknown) => Promise<boolean>;
+}) {
+  const [typeCode, setTypeCode] = useState(config.smartHandoffTypeCode ?? "");
+  const [axisTeams, setAxisTeams] = useState({
+    getter: config.smartGetterOrgUnitId ?? undefined,
+    government: config.smartGovernmentOrgUnitId ?? undefined,
+    partner: config.smartPartnerOrgUnitId ?? undefined,
+    keeper: config.smartKeeperOrgUnitId ?? undefined,
+  });
+  const [busy, setBusy] = useState(false);
+  const options = (current?: string) =>
+    teams
+      .filter((unit) => unit.active || unit.id === current)
+      .map((unit) => ({ value: unit.id, label: unit.name }));
+
+  async function save() {
+    setBusy(true);
+    await onCall("config", "PATCH", {
+      smart_handoff_type_code: typeCode,
+      smart_getter_org_unit_id: axisTeams.getter ?? "",
+      smart_government_org_unit_id: axisTeams.government ?? "",
+      smart_partner_org_unit_id: axisTeams.partner ?? "",
+      smart_keeper_org_unit_id: axisTeams.keeper ?? "",
+    });
+    setBusy(false);
+  }
+
+  return (
+    <Card size="small" title={m.sectionSmartHandoff}>
+      <Text type="secondary" className="mb-3 block text-xs">
+        {m.smartHandoffHint}
+      </Text>
+      <div className="max-w-xs">
+        <Text className="mb-1 block text-xs">{m.smartHandoffTypeCode}</Text>
+        <Input
+          value={typeCode}
+          maxLength={20}
+          allowClear
+          onChange={(e) => setTypeCode(e.target.value.toUpperCase())}
+        />
+      </div>
+      <div className="mt-3 space-y-2">
+        {(["getter", "government", "partner", "keeper"] as const).map((axis) => (
+          <div key={axis} className="flex flex-wrap items-center gap-2">
+            <Text className="w-48">{m.smartAxisTeam[axis]}</Text>
+            <SearchSelect
+              style={{ minWidth: 260 }}
+              allowClear
+              placeholder={m.handoverTeamNone}
+              value={axisTeams[axis]}
+              onChange={(value) =>
+                setAxisTeams((prev) => ({ ...prev, [axis]: value }))
+              }
+              options={options(axisTeams[axis])}
+            />
+          </div>
+        ))}
+      </div>
+      <Button className="mt-3" type="primary" loading={busy} onClick={() => void save()}>
+        {m.save}
+      </Button>
+    </Card>
+  );
+}
+
 function HandoverSection({
   config,
   items,
