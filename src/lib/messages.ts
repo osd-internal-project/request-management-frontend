@@ -5302,6 +5302,18 @@ export const messages = {
       staff: "เจ้าหน้าที่รับเรื่องเอง",
     } as Record<string, string>,
     waitingSince: "รอมาตั้งแต่ {t}",
+    /** CD-285 */
+    fileKinds: {
+      image: "รูปภาพ",
+      video: "วิดีโอ",
+      audio: "ข้อความเสียง",
+      file: "ไฟล์",
+      sticker: "สติกเกอร์",
+      location: "ตำแหน่ง",
+    } as Record<string, string>,
+    filePending: "กำลังดึงไฟล์จาก LINE",
+    fileFailed: "ดึงไฟล์ไม่สำเร็จ",
+    fileGone: "ลบแล้วตามระยะเก็บ",
     /** CD-284 */
     agent: "เจ้าหน้าที่ที่ดูแล",
     take: "รับช่วง",
