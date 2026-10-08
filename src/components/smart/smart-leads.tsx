@@ -28,6 +28,7 @@ import { appApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import { AddToCallList, CallLists, CallPolicy, OptOuts } from "./smart-calls";
+import { SmartResults } from "./smart-results";
 
 const m = messages.aiSmart;
 
@@ -1240,6 +1241,12 @@ export function SmartLeads({
           ...(canOptOut
             ? [{ key: "optouts", label: m.tabs.optOuts, children: <OptOuts /> }]
             : []),
+          // CD-295 — from sweep to closed sale
+          {
+            key: "results",
+            label: m.tabs.results,
+            children: <SmartResults sources={sources} />,
+          },
         ]}
       />
     </Card>

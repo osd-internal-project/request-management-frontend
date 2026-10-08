@@ -721,7 +721,8 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     label: messages.nav.aiSmart,
     href: ROUTES.aiSmart,
     icon: "aiSmart",
-    permissions: ["smart.prospect.read"],
+    // CD-295 — executives see the results without the prospect list
+    permissions: ["smart.prospect.read", "report.dashboard.read"],
     group: messages.nav.macomGroup,
   },
 
