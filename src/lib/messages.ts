@@ -5231,6 +5231,17 @@ export const messages = {
       low: "ต่ำ",
     } as Record<string, string>,
     caseOpened: "เปิดเคส {n} แล้ว",
+    /** CD-283 */
+    handover: "ส่งต่อถึงคน",
+    handoverReasons: {
+      asked: "ลูกค้าขอคุยกับเจ้าหน้าที่",
+      severe: "เหตุรุนแรง",
+      displeased: "ลูกค้าไม่พอใจ",
+      unanswered: "AI ตอบไม่ได้ซ้ำ",
+      channel: "ลูกค้ากดขอคุยกับเจ้าหน้าที่",
+      staff: "เจ้าหน้าที่รับเรื่องเอง",
+    } as Record<string, string>,
+    waitingSince: "รอมาตั้งแต่ {t}",
   },
   kb: {
     title: "คลังความรู้",
@@ -6249,6 +6260,7 @@ export const messages = {
     resource: {
       request: "คำขอ",
       kb_gap: "ช่องว่างความรู้",
+      care_conversation: "บทสนทนา AI CARE",
       approval_case: "งานอนุมัติ",
       opportunity: "โอกาสการขาย",
       notification_digest: "สรุปรายวัน",

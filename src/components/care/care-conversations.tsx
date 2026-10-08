@@ -43,6 +43,9 @@ interface Conversation {
   caseOffered: boolean;
   caseRequestId: string | null;
   caseOpenedAt: string | null;
+  /** CD-283 */
+  handoverReason: string | null;
+  handoverAt: string | null;
 }
 
 interface Row extends Conversation {
@@ -239,11 +242,18 @@ export function CareConversations({ focusId }: { focusId?: string }) {
               key: "status",
               width: 130,
               render: (_, r) => (
-                <Tag color={STATUS_COLOR[r.status]}>
-                  {r.status === "closed" && r.outcome
-                    ? (m.outcomes[r.outcome] ?? r.outcome)
-                    : m.statuses[r.status]}
-                </Tag>
+                <Space orientation="vertical" size={2}>
+                  <Tag color={STATUS_COLOR[r.status]}>
+                    {r.status === "closed" && r.outcome
+                      ? (m.outcomes[r.outcome] ?? r.outcome)
+                      : m.statuses[r.status]}
+                  </Tag>
+                  {r.status === "waiting_human" && r.handoverReason ? (
+                    <Text type="secondary" className="text-xs">
+                      {m.handoverReasons[r.handoverReason] ?? r.handoverReason}
+                    </Text>
+                  ) : null}
+                </Space>
               ),
             },
           ]}
@@ -453,6 +463,24 @@ function ConversationDrawer({
                 "—"
               )}
             </Descriptions.Item>
+            {detail.conversation.handoverReason ? (
+              <Descriptions.Item label={m.handover}>
+                <Space wrap>
+                  <Tag color="orange">
+                    {m.handoverReasons[detail.conversation.handoverReason] ??
+                      detail.conversation.handoverReason}
+                  </Tag>
+                  {detail.conversation.handoverAt ? (
+                    <Text type="secondary" className="text-xs">
+                      {m.waitingSince.replace(
+                        "{t}",
+                        when(detail.conversation.handoverAt),
+                      )}
+                    </Text>
+                  ) : null}
+                </Space>
+              </Descriptions.Item>
+            ) : null}
             {detail.conversation.caseRequestId ? (
               <Descriptions.Item label={m.case}>
                 <Link
