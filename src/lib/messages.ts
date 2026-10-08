@@ -5302,6 +5302,24 @@ export const messages = {
       staff: "เจ้าหน้าที่รับเรื่องเอง",
     } as Record<string, string>,
     waitingSince: "รอมาตั้งแต่ {t}",
+    /** CD-288 */
+    results: {
+      title: "ผล AI CARE (12 เดือน)",
+      hint: "AI ตอบจบเอง = ปิดแล้ว AI ตอบอย่างน้อยหนึ่งครั้ง ไม่เปิดเคส ไม่มีเจ้าหน้าที่ร่วม · อัตรา = AI ตอบจบเอง ÷ (AI ตอบจบเอง + เปิดเคส + ส่งต่อเจ้าหน้าที่) — ไม่นับที่ยังคุยอยู่และที่ไม่ได้ถามเรื่องใด · คืนให้ AI แล้วก็ยังนับเป็นส่งต่อ",
+      month: "เดือน",
+      channel: "ช่องทาง",
+      total: "บทสนทนา",
+      rate: "AI ปิดเอง",
+      kinds: {
+        ai_resolved: "AI ตอบจบเอง",
+        case_opened: "เปิดเคส",
+        handed_over: "ส่งต่อเจ้าหน้าที่",
+        no_answer: "ไม่ได้ถามเรื่องใด",
+        live: "ยังคุยอยู่",
+      } as Record<string, string>,
+      byMonth: "รายเดือน",
+      byChannel: "ตามช่องทาง",
+    },
     /** CD-285 */
     fileKinds: {
       image: "รูปภาพ",
@@ -5475,6 +5493,7 @@ export const messages = {
       } as Record<string, string>,
       kinds: {
         ai_unanswered: "AI ตอบไม่ได้",
+        ai_handed_off: "AI ตอบแล้วยังส่งต่อคน",
         low_rated: "คะแนนต่ำ",
         search_miss: "ค้นไม่เจอ",
       } as Record<string, string>,
@@ -5518,6 +5537,7 @@ export const messages = {
       month: "เดือน",
       searches: "AI ค้น",
       selfAnswer: "AI ตอบได้เอง",
+      handedOff: "ตอบแล้วส่งต่อคน",
       opened: "ช่องว่างใหม่",
       closed: "เติมแล้ว",
       noData: "—",

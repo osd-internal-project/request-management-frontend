@@ -32,7 +32,7 @@ const m = messages.kb.gaps;
 
 interface Gap {
   id: string;
-  kind: "ai_unanswered" | "low_rated" | "search_miss";
+  kind: "ai_unanswered" | "ai_handed_off" | "low_rated" | "search_miss";
   title: string;
   detail: string | null;
   occurrences: number;
@@ -77,6 +77,8 @@ interface Month {
   searches: number;
   answered: number;
   unanswered: number;
+  /** CD-288 — answers a person took over after */
+  handedOff: number;
   selfAnswerPct: number | null;
   byChannel: { channel: string; selfAnswerPct: number | null }[];
   gapsOpened: number;
@@ -101,6 +103,7 @@ type Dialog =
 
 const KIND_COLOR: Record<string, string> = {
   ai_unanswered: "purple",
+  ai_handed_off: "magenta",
   low_rated: "orange",
   search_miss: "blue",
 };
@@ -593,6 +596,7 @@ function MonthlyTable({ rows }: { rows: Month[] }) {
             align: "right",
             render: pct,
           },
+          { title: m.handedOff, dataIndex: "handedOff", align: "right" },
           ...["ai_care", "ai_smart"].map((channel) => ({
             title: channels[channel],
             key: channel,

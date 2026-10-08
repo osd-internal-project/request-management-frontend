@@ -1701,7 +1701,14 @@ function TimelineTab({ timeline }: { timeline: CustomerTimelineEvent[] }) {
         key: event.id,
         children: (
           <div>
-            <div>{event.summary}</div>
+            {/* CD-288 — an AI CARE conversation opens where it is kept */}
+            {event.refType === "care_conversation" && event.refId ? (
+              <Link href={`${ROUTES.careConversations}?id=${event.refId}`}>
+                {event.summary}
+              </Link>
+            ) : (
+              <div>{event.summary}</div>
+            )}
             <Text type="secondary" className="text-xs">
               {event.actorName ? `${event.actorName} · ` : ""}
               {formatWhen(event.occurredAt)}
