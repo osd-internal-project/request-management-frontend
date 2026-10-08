@@ -593,6 +593,12 @@ export interface ProjectIssueView {
   resolvedAt: string | null;
   resolvedByName: string | null;
   changeRequest: { id: string; label: string } | null;
+  /** CD-223 — general · technical (troubleshooting → KBMS). */
+  kind: "general" | "technical";
+  cause: string | null;
+  /** CD-223 — null · pending · sending · sent; the article number once sent. */
+  kbmsStatus: string | null;
+  kbmsRef: string | null;
   createdAt: string;
 }
 

@@ -5372,6 +5372,7 @@ export const messages = {
       problem: "จากปัญหาราก",
       lesson: "จากบทเรียนโครงการ",
       presales: "จาก Pre-Sales",
+      project_issue: "จากการแก้ปัญหาในโครงการ",
     } as Record<string, string>,
     back: "กลับไปคลังความรู้",
     edit: "แก้ไข",
@@ -9454,8 +9455,25 @@ export const messages = {
         "สร้างร่างคำขอเปลี่ยนแปลงจากปัญหานี้ (ยกวันและต้นทุนไปให้)?",
       toChangeDone: (label: string) => `สร้างร่าง ${label} แล้ว`,
       resolution: (text: string) => `วิธีแก้: ${text}`,
+      // CD-223 — technical troubleshooting → KBMS
+      technical: "ปัญหาทางเทคนิค",
+      cause: (text: string) => `สาเหตุ: ${text}`,
+      kbms: {
+        pending: "รอส่งเข้าคลังความรู้",
+        sending: "กำลังส่งเข้าคลังความรู้",
+        sent: (ref: string) => `ส่งเข้าคลังความรู้แล้ว ${ref}`,
+      },
       saved: "บันทึกแล้ว",
       form: {
+        kind: "ประเภท",
+        kinds: {
+          general: "ทั่วไป",
+          technical: "ทางเทคนิค (บันทึกอาการ สาเหตุ วิธีแก้ ส่งเข้าคลังความรู้)",
+        } as Record<string, string>,
+        symptom: "อาการที่พบ",
+        cause: "สาเหตุ",
+        technicalHint:
+          "ปิดปัญหาทางเทคนิคต้องมีอาการ สาเหตุ และวิธีแก้ — ระบบร่างบทความส่งให้ผู้ดูแลความรู้ตรวจทันที",
         addTitle: "บันทึกปัญหา",
         editTitle: "แก้ไขปัญหา",
         resolveTitle: "ปิดปัญหา",

@@ -32,6 +32,8 @@ interface Draft {
   title: string;
   description: string;
   severity: ProjectIssueView["severity"];
+  kind: ProjectIssueView["kind"];
+  cause: string;
   days: number;
   cost: number;
   ownerUserId: string | null;
@@ -63,6 +65,7 @@ export function ProjectIssuesCard({
   const [draft, setDraft] = useState<Draft | null>(null);
   const [resolving, setResolving] = useState<ProjectIssueView | null>(null);
   const [resolution, setResolution] = useState("");
+  const [cause, setCause] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const base = `projects/${projectId}/issues`;
@@ -96,6 +99,8 @@ export function ProjectIssuesCard({
         title: draft.title,
         description: draft.description,
         severity: draft.severity,
+        kind: draft.kind,
+        cause: draft.cause,
         schedule_impact_days: draft.days,
         cost_impact: draft.cost,
         owner_user_id: draft.ownerUserId ?? undefined,
@@ -124,6 +129,8 @@ export function ProjectIssuesCard({
                 title: "",
                 description: "",
                 severity: "medium",
+                kind: "general",
+                cause: "",
                 days: 0,
                 cost: 0,
                 ownerUserId: null,
@@ -172,6 +179,9 @@ export function ProjectIssuesCard({
                   <Tag color={m.severityColor[issue.severity]}>
                     {m.severity[issue.severity]}
                   </Tag>
+                  {issue.kind === "technical" && (
+                    <Tag color="blue">{m.technical}</Tag>
+                  )}
                   {issue.status === "resolved" && (
                     <Tag color="success">{m.resolved}</Tag>
                   )}
@@ -195,6 +205,8 @@ export function ProjectIssuesCard({
                             title: issue.title,
                             description: issue.description ?? "",
                             severity: issue.severity,
+                            kind: issue.kind,
+                            cause: issue.cause ?? "",
                             days: issue.scheduleImpactDays,
                             cost: issue.costImpact,
                             ownerUserId: issue.ownerUserId,
@@ -232,6 +244,7 @@ export function ProjectIssuesCard({
                         onClick={() => {
                           setError(null);
                           setResolution("");
+                          setCause(issue.cause ?? "");
                           setResolving(issue);
                         }}
                       >
@@ -257,9 +270,23 @@ export function ProjectIssuesCard({
                   {issue.description}
                 </div>
               )}
+              {issue.cause && (
+                <div className="text-xs whitespace-pre-line">
+                  {m.cause(issue.cause)}
+                </div>
+              )}
               {issue.resolution && (
                 <Text type="success" className="block text-xs">
                   {m.resolution(issue.resolution)}
+                </Text>
+              )}
+              {issue.kbmsStatus && (
+                <Text type="secondary" className="block text-xs">
+                  {issue.kbmsStatus === "sent" && issue.kbmsRef
+                    ? m.kbms.sent(issue.kbmsRef)
+                    : issue.kbmsStatus === "sending"
+                      ? m.kbms.sending
+                      : m.kbms.pending}
                 </Text>
               )}
             </div>
@@ -293,7 +320,19 @@ export function ProjectIssuesCard({
               />
             </label>
             <label className="block text-xs">
-              {m.form.description}
+              {m.form.kind}
+              <Select
+                className="w-full"
+                value={draft.kind}
+                onChange={(kind: Draft["kind"]) => setDraft({ ...draft, kind })}
+                options={Object.entries(m.form.kinds).map(([value, label]) => ({
+                  value,
+                  label,
+                }))}
+              />
+            </label>
+            <label className="block text-xs">
+              {draft.kind === "technical" ? m.form.symptom : m.form.description}
               <Input.TextArea
                 rows={2}
                 value={draft.description}
@@ -302,6 +341,18 @@ export function ProjectIssuesCard({
                 }
               />
             </label>
+            {draft.kind === "technical" && (
+              <label className="block text-xs">
+                {m.form.cause}
+                <Input.TextArea
+                  rows={2}
+                  value={draft.cause}
+                  onChange={(event) =>
+                    setDraft({ ...draft, cause: event.target.value })
+                  }
+                />
+              </label>
+            )}
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               <label className="block text-xs">
                 {m.form.severity}
@@ -395,7 +446,11 @@ export function ProjectIssuesCard({
           if (!resolving) return;
           const done = await call(`${base}/${resolving.id}/resolve`, {
             method: "POST",
-            body: JSON.stringify({ resolution }),
+            body: JSON.stringify(
+              resolving.kind === "technical"
+                ? { resolution, cause }
+                : { resolution },
+            ),
           });
           if (done) {
             message.success(m.saved);
@@ -406,6 +461,26 @@ export function ProjectIssuesCard({
       >
         {error && (
           <Alert className="mb-2" type="error" showIcon title={error} />
+        )}
+        {resolving?.kind === "technical" && (
+          <>
+            <Text type="secondary" className="mb-2 block text-xs">
+              {m.form.technicalHint}
+            </Text>
+            {resolving.description && (
+              <div className="mb-2 text-xs whitespace-pre-line">
+                {m.form.symptom}: {resolving.description}
+              </div>
+            )}
+            <label className="mb-2 block text-xs">
+              {m.form.cause}
+              <Input.TextArea
+                rows={2}
+                value={cause}
+                onChange={(event) => setCause(event.target.value)}
+              />
+            </label>
+          </>
         )}
         <label className="block text-xs">
           {m.form.resolution}
