@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Alert,
   App,
@@ -25,6 +25,7 @@ import {
   type HandoverPackage,
   type HandoverState,
 } from "./handover-package";
+import { TechPackageSection, type TechPackage } from "./tech-package";
 
 const m = messages.delivery.handover;
 
@@ -59,6 +60,9 @@ export function ServiceHandoverCard({ projectId }: { projectId: string }) {
     null,
   );
   const base = `delivery/projects/${projectId}/handovers`;
+  // CD-227 — nothing is sent while the technical package is incomplete
+  const [tech, setTech] = useState<TechPackage | null>(null);
+  const onTech = useCallback((pack: TechPackage | null) => setTech(pack), []);
 
   useEffect(() => {
     let live = true;
@@ -102,6 +106,7 @@ export function ServiceHandoverCard({ projectId }: { projectId: string }) {
       <Text type="secondary" className="mb-2 block text-xs">
         {m.cardHint}
       </Text>
+      <TechPackageSection projectId={projectId} onLoaded={onTech} />
       {loaded?.error ? (
         <Alert type="error" showIcon title={loaded.error} />
       ) : !view ? (
@@ -154,6 +159,7 @@ export function ServiceHandoverCard({ projectId }: { projectId: string }) {
                       <Button
                         size="small"
                         type="primary"
+                        disabled={!tech?.complete}
                         onClick={() => setSending({ round: row, note: "" })}
                       >
                         {status === "questioned" ? m.resend : m.send}

@@ -5143,6 +5143,30 @@ export const messages = {
     },
     /** CD-255 ส่งมอบให้ทีมบริการ */
     handover: {
+      // CD-227 — the engineers' technical package
+      tech: {
+        title: "ข้อมูลเทคนิคถึงทีมบริการ",
+        complete: "ครบ ส่งต่อได้",
+        incomplete: (n: number) => `ยังขาด ${n} รายการ`,
+        gapsTitle: "ต้องครบก่อนส่งต่อทีมบริการ",
+        asBuilt: "เอกสารสภาพจริง (As-built)",
+        asBuiltOk: "ครบ และไม่มีจุดต่างที่ค้าง",
+        configs: (n: number, systems: string) =>
+          n ? `ค่าตั้งค่า ${n} รายการ · ${systems}` : "ยังไม่มีค่าตั้งค่า",
+        integrations: (n: number) => `จุดเชื่อมต่อ ${n} จุด`,
+        noIntegrations: "ไม่มีจุดเชื่อมต่อ",
+        noContact: "ไม่มีผู้ติดต่อ",
+        cautions: "ข้อควรระวัง",
+        cautionsHint:
+          "สิ่งที่ทีมบริการต้องรู้: จุดที่ห้ามแตะ อาการที่ต้องเฝ้าระวัง ค่าที่ไม่ควรเปลี่ยน",
+        cautionsEmpty: "ยังไม่ได้เขียนข้อควรระวัง",
+        cautionsBy: (name: string, at: string) => `แก้ล่าสุดโดย ${name} · ${at}`,
+        edit: "เขียนข้อควรระวัง",
+        save: "บันทึก",
+        cancel: "ยกเลิก",
+        saved: "บันทึกข้อควรระวังแล้ว",
+        sentTitle: "ข้อมูลเทคนิคที่ส่งไป",
+      },
       cardTitle: "ส่งต่อทีมบริการ",
       cardHint:
         "หลังตรวจรับแล้ว ส่งรายการอุปกรณ์ ประกัน ระดับบริการ เอกสาร และผู้ติดต่อให้ทีมบริการดูแลต่อ",
