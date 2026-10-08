@@ -51,6 +51,7 @@ interface Conversation {
 interface Row extends Conversation {
   customer: { code: string; name: string } | null;
   lastText: string | null;
+  agentName: string | null;
 }
 
 interface Message {
@@ -60,7 +61,20 @@ interface Message {
   text: string | null;
   attachments: { name: string; url?: string }[];
   at: string;
+  /** CD-284 */
+  authorName: string | null;
+  delivery: "pending" | "sent" | "failed" | null;
+  deliveryError: string | null;
 }
+
+const DELIVERY_COLOR: Record<string, string> = {
+  pending: "default",
+  sent: "green",
+  failed: "red",
+};
+
+/** CD-284 — new messages appear without reloading the page. */
+const REFRESH_MS = 10_000;
 
 interface Detail {
   conversation: Conversation;
@@ -76,6 +90,7 @@ interface Detail {
   }[];
   messages: Message[];
   contacts: Contact[];
+  agent: { id: string; name: string | null; mine: boolean } | null;
 }
 
 interface Contact {
@@ -113,7 +128,7 @@ const methodOf = (method: string | null) =>
 /** CD-280 — AI CARE conversations: who wrote, on which channel, and who they are. */
 export function CareConversations({ focusId }: { focusId?: string }) {
   const { message } = App.useApp();
-  const [tab, setTab] = useState("live");
+  const [tab, setTab] = useState("waiting");
   const [channel, setChannel] = useState<string | undefined>();
   const [ident, setIdent] = useState<string | undefined>();
   const [version, setVersion] = useState(0);
@@ -121,7 +136,9 @@ export function CareConversations({ focusId }: { focusId?: string }) {
   const [error, setError] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | undefined>(focusId);
 
-  const params = new URLSearchParams({ status: tab });
+  const params = new URLSearchParams(
+    tab === "waiting" || tab === "mine" ? { queue: tab } : { status: tab },
+  );
   if (channel) params.set("channel", channel);
   if (ident) params.set("identification", ident);
   const key = `${params.toString()}#${version}`;
@@ -141,6 +158,12 @@ export function CareConversations({ focusId }: { focusId?: string }) {
       live = false;
     };
   }, [key]);
+
+  // CD-284 — the queue moves on its own
+  useEffect(() => {
+    const timer = setInterval(() => setVersion((v) => v + 1), REFRESH_MS);
+    return () => clearInterval(timer);
+  }, []);
 
   return (
     <Space orientation="vertical" className="w-full" size="middle">
@@ -253,6 +276,9 @@ export function CareConversations({ focusId }: { focusId?: string }) {
                       {m.handoverReasons[r.handoverReason] ?? r.handoverReason}
                     </Text>
                   ) : null}
+                  {r.agentName ? (
+                    <Text className="text-xs">{r.agentName}</Text>
+                  ) : null}
                 </Space>
               ),
             },
@@ -295,6 +321,12 @@ function ConversationDrawer({
     subject: string;
   } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [transferring, setTransferring] = useState<{
+    team: { id: string; name: string; me: boolean }[] | null;
+    to?: string;
+  } | null>(null);
+  const [tick, setTick] = useState(0);
 
   useEffect(() => {
     if (!id) return;
@@ -309,7 +341,45 @@ function ConversationDrawer({
     return () => {
       live = false;
     };
+  }, [id, tick]);
+
+  // CD-284 — the customer's new messages come in while it is open
+  useEffect(() => {
+    if (!id) return;
+    const timer = setInterval(() => setTick((t) => t + 1), REFRESH_MS);
+    return () => clearInterval(timer);
   }, [id]);
+
+  async function act(path: string, body: unknown, done: string) {
+    if (!id) return false;
+    setBusy(true);
+    const res = await appApi<Detail>(`care/conversations/${id}/${path}`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+    setBusy(false);
+    if (!res.ok) {
+      void message.error(res.message);
+      return false;
+    }
+    setDetail(res.data);
+    notify(done);
+    onChanged();
+    return true;
+  }
+
+  async function sendReply() {
+    if (!draft.trim()) return;
+    if (await act("reply", { text: draft.trim() }, m.deliveries.pending))
+      setDraft("");
+  }
+
+  async function startTransfer() {
+    setTransferring({ team: null });
+    const res =
+      await appApi<{ id: string; name: string; me: boolean }[]>("care/team");
+    setTransferring({ team: res.ok ? res.data : [] });
+  }
 
   async function searchCustomers(text: string) {
     if (!verifying || text.trim().length < 2) return;
@@ -411,7 +481,29 @@ function ConversationDrawer({
       }
       extra={
         c && c.status !== "closed" ? (
-          <Space>
+          <Space wrap>
+            {!detail?.agent?.mine && !detail?.agent ? (
+              <Button
+                type="primary"
+                loading={busy}
+                onClick={() => void act("take", {}, m.taken)}
+              >
+                {m.take}
+              </Button>
+            ) : null}
+            <Button onClick={() => void startTransfer()}>{m.transfer}</Button>
+            {c.status !== "open" ? (
+              <Button
+                onClick={() =>
+                  Modal.confirm({
+                    title: m.releaseConfirm,
+                    onOk: () => act("release", {}, m.released),
+                  })
+                }
+              >
+                {m.release}
+              </Button>
+            ) : null}
             {c.identification !== "verified" ? (
               <Button onClick={startVerify}>{m.verify}</Button>
             ) : null}
@@ -463,6 +555,12 @@ function ConversationDrawer({
                 "—"
               )}
             </Descriptions.Item>
+            {detail.agent ? (
+              <Descriptions.Item label={m.agent}>
+                {detail.agent.name}
+                {detail.agent.mine ? ` ${m.me}` : ""}
+              </Descriptions.Item>
+            ) : null}
             {detail.conversation.handoverReason ? (
               <Descriptions.Item label={m.handover}>
                 <Space wrap>
@@ -544,7 +642,17 @@ function ConversationDrawer({
                   }`}
                 >
                   <Text type="secondary" className="block text-xs">
-                    {m.authors[msg.author] ?? msg.author} · {when(msg.at)}
+                    {msg.authorName ?? m.authors[msg.author] ?? msg.author} ·{" "}
+                    {when(msg.at)}
+                    {msg.delivery ? (
+                      <Tag
+                        color={DELIVERY_COLOR[msg.delivery]}
+                        className="ml-2"
+                        title={msg.deliveryError ?? undefined}
+                      >
+                        {m.deliveries[msg.delivery]}
+                      </Tag>
+                    ) : null}
                   </Text>
                   <Text className="whitespace-pre-wrap">
                     {msg.text ?? m.purged}
@@ -562,8 +670,83 @@ function ConversationDrawer({
               </div>
             ))}
           </Space>
+          {detail.conversation.status !== "closed" ? (
+            detail.agent && !detail.agent.mine ? (
+              <Alert
+                type="info"
+                showIcon
+                title={m.heldByOther.replace("{n}", detail.agent.name ?? "")}
+              />
+            ) : (
+              <Space orientation="vertical" className="w-full" size={4}>
+                {!detail.agent ? (
+                  <Text type="secondary" className="text-xs">
+                    {m.replyHintTake}
+                  </Text>
+                ) : null}
+                <Input.TextArea
+                  rows={3}
+                  maxLength={4000}
+                  placeholder={m.replyPlaceholder}
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  onPressEnter={(e) => {
+                    if (!e.shiftKey) {
+                      e.preventDefault();
+                      void sendReply();
+                    }
+                  }}
+                />
+                <div className="flex justify-end">
+                  <Button
+                    type="primary"
+                    loading={busy}
+                    disabled={!draft.trim()}
+                    onClick={() => void sendReply()}
+                  >
+                    {m.send}
+                  </Button>
+                </div>
+              </Space>
+            )
+          ) : null}
         </Space>
       )}
+
+      <Modal
+        open={!!transferring}
+        title={m.transferTitle}
+        onCancel={() => setTransferring(null)}
+        okButtonProps={{ disabled: !transferring?.to }}
+        confirmLoading={busy}
+        onOk={async () => {
+          if (
+            transferring?.to &&
+            (await act("transfer", { user_id: transferring.to }, m.transferred))
+          )
+            setTransferring(null);
+        }}
+        destroyOnHidden
+      >
+        {transferring?.team === null ? (
+          <Skeleton active paragraph={{ rows: 1 }} />
+        ) : transferring ? (
+          <Select
+            className="w-full"
+            showSearch
+            optionFilterProp="label"
+            placeholder={m.pickColleague}
+            value={transferring.to}
+            onChange={(to: string) => setTransferring({ ...transferring, to })}
+            options={(transferring.team ?? [])
+              .filter((t) => t.id !== detail?.agent?.id)
+              .map((t) => ({
+                value: t.id,
+                label: `${t.name}${t.me ? ` ${m.me}` : ""}`,
+              }))}
+          />
+        ) : null}
+      </Modal>
 
       <Modal
         open={!!verifying}
