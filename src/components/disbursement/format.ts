@@ -1,4 +1,5 @@
 import type {
+  DisbursementDetail,
   DisbursementKind,
   DisbursementStatus,
 } from "@/lib/api/disbursement";
@@ -97,4 +98,24 @@ export function v3StepIndex(kind: DisbursementKind, status: DisbursementStatus):
     CLOSED: 3,
   };
   return (kind === "PETTY_CASH" ? petty : advance)[status] ?? 0;
+}
+
+/**
+ * The slip accounting must attach before completing a settled advance — same rule as the
+ * server's `settlementEvidence`: only a file attached since the latest clearing counts.
+ */
+export function settlementSlip(
+  view: Pick<DisbursementDetail, "pending" | "files" | "clearingAt">,
+): { kind: "REFUND_PROOF" | "PAYMENT_SLIP" | null; attached: boolean } {
+  const kind = Number(view.pending?.refund ?? 0)
+    ? "REFUND_PROOF"
+    : Number(view.pending?.extraPay ?? 0)
+      ? "PAYMENT_SLIP"
+      : null;
+  if (!kind) return { kind, attached: true };
+  const since = view.clearingAt ? new Date(view.clearingAt).getTime() : 0;
+  const attached = view.files.some(
+    (file) => file.kind === kind && new Date(file.uploadedAt).getTime() >= since,
+  );
+  return { kind, attached };
 }

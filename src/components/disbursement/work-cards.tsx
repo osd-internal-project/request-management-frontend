@@ -5,7 +5,7 @@ import { Alert, Button, Card, Checkbox, Input, InputNumber, Select, Space, Table
 import type { DisbursementDetail, DisbursementMovement } from "@/lib/api/disbursement";
 import { messages } from "@/lib/messages";
 import { EvidenceFiles } from "./evidence-files";
-import { baht, thaiDate } from "./format";
+import { baht, settlementSlip, thaiDate } from "./format";
 import { LinesTable, type EditableLine } from "./lines-table";
 import { useDisbursementAction } from "./use-disbursement-action";
 
@@ -242,7 +242,7 @@ export function PettyCloseCard({ view }: { readonly view: DisbursementDetail }) 
         <Alert type="info" showIcon title={m.close.pettyHint} />
         {error && <Alert type="error" showIcon title={error} />}
         <Button type="primary" loading={busy} onClick={() => void run("close", {})}>
-          {m.close.submit}
+          {m.close.pettySubmit}
         </Button>
       </Space>
     </Card>
@@ -311,7 +311,7 @@ export function ClearingCard({ view, onFiles }: CardProps) {
   );
 }
 
-/** Screen 7 — accounting closes: the refund or overspend, then the ticket moves on. */
+/** Screen 7 — accounting clears the documents: complete (settling the difference, slip attached) or send back. */
 export function CloseCard({ view, onFiles }: CardProps) {
   const { run, busy, error } = useDisbursementAction(view.docNo);
   const [method, setMethod] = useState("transfer");
@@ -320,6 +320,7 @@ export function CloseCard({ view, onFiles }: CardProps) {
   const [returnReason, setReturnReason] = useState("");
   const refund = Number(view.pending?.refund ?? 0);
   const extra = Number(view.pending?.extraPay ?? 0);
+  const slip = settlementSlip(view);
 
   return (
     <Card title={m.close.title}>
@@ -364,13 +365,18 @@ export function CloseCard({ view, onFiles }: CardProps) {
                 <Input type="date" value={occurredAt} onChange={(e) => setOccurredAt(e.target.value)} />
               </div>
             </div>
-            <EvidenceFiles
-              docNo={view.docNo}
-              files={view.files}
-              kind="REFUND_PROOF"
-              editable
-              onChanged={onFiles}
-            />
+            {slip.kind && (
+              <EvidenceFiles
+                docNo={view.docNo}
+                files={view.files}
+                kind={slip.kind}
+                editable
+                onChanged={onFiles}
+              />
+            )}
+            {slip.kind && !slip.attached && (
+              <Alert type="warning" showIcon title={m.close.slipNeeded[slip.kind]} />
+            )}
           </>
         ) : (
           <Alert type="success" showIcon title={m.close.exact} />
@@ -380,6 +386,7 @@ export function CloseCard({ view, onFiles }: CardProps) {
           <Button
             type="primary"
             loading={busy}
+            disabled={!slip.attached}
             onClick={() =>
               void run("close", {
                 ...(refund || extra ? { method } : {}),
