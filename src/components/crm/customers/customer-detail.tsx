@@ -31,6 +31,7 @@ import Text from "antd/es/typography/Text";
 import Title from "antd/es/typography/Title";
 import dayjs from "dayjs";
 import { CUSTOMER_STATUS_COLOR } from "@/components/crm/customers/customer-list";
+import { CustomerProjectsTab } from "./customer-projects-tab";
 import { CustomerInvoicesTab } from "@/components/crm/customers/customer-invoices-tab";
 import { PricingExceptionsTable } from "@/components/pricing/pricing-exceptions-table";
 import { CustomerVersionsTab } from "@/components/crm/customers/customer-versions-tab";
@@ -593,6 +594,12 @@ export function CustomerDetailView({
               </CustomerContractsTab>
             ),
           },
+          // CD-68 — the projects (PM) the viewer may see, loaded on opening
+          {
+            key: "projects",
+            label: m.detail.projects.tab,
+            children: <CustomerProjectsTab customerId={customer.id} />,
+          },
           // CD-68 — cases: requests submitted with a severity (CD-67).
           ...(relatedRequests !== null
             ? [
@@ -637,6 +644,7 @@ export function CustomerDetailView({
                 !(key === "opportunities" && customerOpportunities !== null) &&
                 !(key === "quotations" && customerQuotations !== null) &&
                 key !== "contracts" &&
+                key !== "projects" &&
                 !(key === "cases" && relatedRequests !== null) &&
                 key !== "financials",
             )

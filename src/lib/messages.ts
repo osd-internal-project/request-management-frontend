@@ -7737,6 +7737,29 @@ export const messages = {
       /** CD-89 — แท็บการเงิน: ใบแจ้งหนี้และการรับชำระจาก SAP */
       tabFinancials: "การเงิน",
       tabAccount: "แผนบัญชี",
+      /** CD-68 — แท็บโครงการ (PM): เฉพาะที่ผู้ดูเห็น */
+      projects: {
+        tab: "โครงการ",
+        empty: "ไม่มีโครงการของลูกค้ารายนี้ที่คุณเห็นได้",
+        project: "โครงการ",
+        status: "สถานะ",
+        contract: "สัญญา",
+        period: "ระยะเวลา",
+        value: "มูลค่า",
+        manager: "ผู้จัดการโครงการ",
+        health: "สุขภาพ",
+        intake: "รับมอบงาน",
+        intakeStatus: {
+          pending: "รอตรวจรับมอบ",
+          returned: "ตีกลับ",
+          accepted: "รับมอบแล้ว",
+        } as Record<string, string>,
+        intakeColor: {
+          pending: "processing",
+          returned: "error",
+          accepted: "success",
+        } as Record<string, string>,
+      },
       invoices: {
         source: {
           mock: "รอเชื่อม SAP จริง — ระบบยังใช้ตัวเชื่อมจำลอง จึงไม่แสดงตัวเลข",
