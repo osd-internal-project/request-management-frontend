@@ -15,6 +15,7 @@ import {
   getStatusReports,
   getProjectTests,
   getProjectReadiness,
+  getProjectIntake,
   getProjectAsBuilt,
   getProjectAcceptances,
   getProjectUat,
@@ -82,6 +83,7 @@ export default async function ProjectPage({ params }: Params) {
     techChanges,
     costs,
     resources,
+    intake,
   ] = await Promise.all([
     getProjectMilestones(id),
     getProjectPlan(id),
@@ -139,6 +141,8 @@ export default async function ProjectPage({ params }: Params) {
     getProjectCosts(id),
     // CD-180
     getProjectResources(id),
+    // CD-176
+    getProjectIntake(id),
   ]);
   // the pickers only for who may change the manager or the team
   const users =
@@ -162,6 +166,7 @@ export default async function ProjectPage({ params }: Params) {
       statusReports={statusReports.ok ? statusReports.data : null}
       tests={tests.ok ? tests.data : null}
       readiness={readiness.ok ? readiness.data : null}
+      intake={intake.ok ? intake.data : null}
       asBuilt={asBuilt.ok ? asBuilt.data : null}
       acceptances={acceptances.ok ? acceptances.data : null}
       uat={uat.ok ? uat.data : null}

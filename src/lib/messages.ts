@@ -7994,6 +7994,7 @@ export const messages = {
       projectDesignTypeCode: "ประเภทคำขออนุมัติแบบรายละเอียด",
       projectTechChangeTypeCode: "ประเภทคำขออนุมัติปรับแก้ทางเทคนิค",
       projectResourceTypeCode: "ประเภทคำขอทีมเพิ่ม (PM → Engineer)",
+      projectIntakeChecklist: "ข้อที่บริษัทเพิ่มเองในรายการรับมอบงาน (PM)",
       serviceWorkOrderTypeCode: "ประเภทคำขอใบสั่งงานบริการ",
       contentApprovalTypeCode: "ประเภทคำขออนุมัติคอนเทนต์ (MACOM)",
       brandApprovalTypeCode: "ประเภทคำขออนุมัติไฟล์คลังแบรนด์ (MACOM)",
@@ -9034,6 +9035,65 @@ export const messages = {
         close: "ยกเลิก",
       },
     },
+    // CD-176 — receiving the work from Sales and the technical team
+    intake: {
+      title: "รับมอบงาน",
+      hint: "ตรวจทีละข้อว่าข้อมูลจากทีมขาย ทีมเทคนิค และสัญญาถูกต้องครบถ้วน · ข้อที่ไม่ครบให้ระบุเหตุผลแล้วตีกลับ แต่ละฝ่ายจะได้รับเฉพาะข้อของตัวเอง · ต้องรับมอบก่อนยืนยันงบอ้างอิง",
+      status: {
+        pending: "รอตรวจรับมอบ",
+        returned: "ตีกลับแล้ว",
+        accepted: "รับมอบแล้ว",
+      } as Record<string, string>,
+      statusColor: {
+        pending: "processing",
+        returned: "error",
+        accepted: "success",
+      } as Record<string, string>,
+      groups: {
+        sales: "จากทีมขาย",
+        technical: "จากทีมเทคนิค (Solution · ขอบเขต · BOQ)",
+        contract: "สัญญา",
+        company: "รายการของบริษัท",
+      } as Record<string, string>,
+      result: {
+        ok: "ถูกต้อง",
+        incomplete: "ไม่ครบ",
+        none: "ยังไม่ตรวจ",
+      } as Record<string, string>,
+      resultColor: {
+        ok: "success",
+        incomplete: "error",
+        none: "default",
+      } as Record<string, string>,
+      warn: "ต้นทางแจ้งว่ายังขาด",
+      changed: "ข้อมูลเปลี่ยนหลังตรวจ — ตรวจใหม่",
+      ok: "ถูกต้อง",
+      incomplete: "ไม่ครบ",
+      incompleteTitle: (label: string) => `ไม่ครบ: ${label}`,
+      incompleteNote: "ไม่ครบอย่างไร (ฝ่ายที่รับผิดชอบจะเห็นข้อความนี้)",
+      checkedBy: (name: string, at: string) => `ตรวจโดย ${name} · ${at}`,
+      refresh: "ดึงข้อมูลใหม่",
+      refreshHint:
+        "ดึงสัญญา Solution และงวดวางบิลล่าสุดมาเป็นฐานตั้งต้นใหม่ (หลังทีมขาย/เทคนิคแก้) — ข้อที่ข้อมูลเปลี่ยนต้องตรวจใหม่",
+      accept: "รับมอบงาน",
+      acceptConfirm: "ยืนยันรับมอบงาน? หลังรับมอบจะแก้รายการนี้ไม่ได้",
+      returnWork: "ตีกลับงาน",
+      returnTitle: "ตีกลับงาน",
+      returnNote: "ข้อความถึงทุกฝ่าย (ไม่บังคับ)",
+      returnGaps: "ข้อที่จะส่งกลับไปให้แก้",
+      accepted: (name: string, at: string) => `รับมอบแล้วโดย ${name} · ${at}`,
+      history: "ประวัติ",
+      historyAction: {
+        returned: "ตีกลับ",
+        accepted: "รับมอบ",
+        refreshed: "ดึงข้อมูลใหม่",
+      } as Record<string, string>,
+      round: (n: number) => `ครั้งที่ ${n}`,
+      saved: "บันทึกแล้ว",
+      bannerReturned:
+        'ตีกลับงานแล้ว — รอทีมขาย/เทคนิคแก้ แล้วกด "ดึงข้อมูลใหม่"',
+      cancel: "ยกเลิก",
+    },
     readiness: {
       title: "ตรวจความพร้อมก่อนส่งมอบ",
       hint: "รายการตรวจมาตรฐานของบริษัท (ตั้งในหน้าตั้งค่า CRM) แก้เพิ่มลดได้ในแต่ละโครงการ ผู้ตรวจที่ได้รับมอบหมายบันทึกผลพร้อมวันที่ · ระบบตรวจเองว่าทดสอบผ่านครบและไม่มีปัญหาค้าง · ผ่านครบทุกข้อจึงขอตรวจรับได้",
@@ -9505,6 +9565,9 @@ export const messages = {
     },
     /** CD-179 — งบอ้างอิง. */
     budget: {
+      // CD-176
+      awaitingIntake:
+        "ต้องรับมอบงานก่อนจึงยืนยันงบได้ (ดูการ์ดรับมอบงานด้านบน)",
       title: "งบอ้างอิง",
       hint: "ร่างจาก BOQ และค่าแรงในฐานตั้งต้น เติมต้นทุนที่ขาดแล้วกดยืนยัน — หลังยืนยันเปลี่ยนได้ผ่านคำขอเปลี่ยนแปลงเท่านั้น",
       none: "ยังไม่ได้ตั้งงบอ้างอิง",
