@@ -1408,6 +1408,7 @@ function SmartHandoffSection({
     getter: config.smartGetterOrgUnitId ?? undefined,
     government: config.smartGovernmentOrgUnitId ?? undefined,
     partner: config.smartPartnerOrgUnitId ?? undefined,
+    keeper: config.smartKeeperOrgUnitId ?? undefined,
   });
   const [busy, setBusy] = useState(false);
   const options = (current?: string) =>
@@ -1422,6 +1423,7 @@ function SmartHandoffSection({
       smart_getter_org_unit_id: axisTeams.getter ?? "",
       smart_government_org_unit_id: axisTeams.government ?? "",
       smart_partner_org_unit_id: axisTeams.partner ?? "",
+      smart_keeper_org_unit_id: axisTeams.keeper ?? "",
     });
     setBusy(false);
   }
@@ -1441,7 +1443,7 @@ function SmartHandoffSection({
         />
       </div>
       <div className="mt-3 space-y-2">
-        {(["getter", "government", "partner"] as const).map((axis) => (
+        {(["getter", "government", "partner", "keeper"] as const).map((axis) => (
           <div key={axis} className="flex flex-wrap items-center gap-2">
             <Text className="w-48">{m.smartAxisTeam[axis]}</Text>
             <SearchSelect

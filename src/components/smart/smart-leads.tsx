@@ -86,6 +86,7 @@ interface Prospect {
   handoff_axis: string | null;
   handed_off_at: string | null;
   handoff_error: string | null;
+  keeper_opportunity_id: string | null;
   handoff_request: { id: string; request_no: string | null; status: string } | null;
 }
 
@@ -669,6 +670,45 @@ function Prospects({
     });
   }
 
+  /** CD-294 — existing customers to their account owners. */
+  function toKeeper(ids: string[]) {
+    modal.confirm({
+      title: m.handoff.keeperTitle(ids.length),
+      content: m.handoff.keeperHint,
+      onOk: async () => {
+        const result = await appApi<
+          { id: string; name: string; outcome: string; reason?: string }[]
+        >("smart/prospects/keeper", {
+          method: "POST",
+          body: JSON.stringify({ ids }),
+        });
+        if (!result.ok) {
+          message.error(result.message);
+          return;
+        }
+        modal.info({
+          title: m.handoff.keeperDone(
+            result.data.filter((r) => r.outcome === "sent").length,
+          ),
+          content: (
+            <ul className="m-0 pl-4 text-xs">
+              {result.data.map((r) => (
+                <li key={r.id}>
+                  {r.name} — {m.handoff.keeperOutcomes[r.outcome] ?? r.outcome}
+                  {r.reason ? ` (${r.reason})` : ""}
+                </li>
+              ))}
+            </ul>
+          ),
+        });
+        setSelected([]);
+        setOpen(null);
+        setTick((n) => n + 1);
+        onChanged();
+      },
+    });
+  }
+
   async function rescreen() {
     setBusy(true);
     const result = await appApi<{ screened: number }>("smart/prospects/screen", {
@@ -786,6 +826,9 @@ function Prospects({
           </Button>
           <Button disabled={!selected.length} onClick={() => handOff(selected)}>
             {m.handoff.button(selected.length)}
+          </Button>
+          <Button disabled={!selected.length} onClick={() => toKeeper(selected)}>
+            {m.handoff.keeperButton(selected.length)}
           </Button>
           <Button loading={busy} onClick={() => void rescreen()}>
             {m.rescreen}
@@ -942,7 +985,10 @@ function Prospects({
           open &&
           canManage && (
             <Space>
-              {!open.handoff_axis && open.status !== "discarded" && open.status !== "new" && (
+              {open.match_kind === "customer" && !open.keeper_opportunity_id && open.status !== "discarded" && (
+                <Button onClick={() => toKeeper([open.id])}>{m.handoff.keeperSingle}</Button>
+              )}
+              {!open.handoff_axis && open.match_kind !== "customer" && open.status !== "discarded" && open.status !== "new" && (
                 <Button onClick={() => handOff([open.id])}>{m.handoff.single}</Button>
               )}
               {(open.status === "new" || open.status === "screened") && (
@@ -990,6 +1036,13 @@ function Prospects({
             <Descriptions.Item label={m.columns.match}>
               {open.match_kind ? m.match[open.match_kind] : "—"}
             </Descriptions.Item>
+            {open.keeper_opportunity_id && (
+              <Descriptions.Item label={m.handoff.keeperDeal}>
+                <Link href={ROUTES.opportunityDetail(open.keeper_opportunity_id)}>
+                  {m.handoff.keeperDeal}
+                </Link>
+              </Descriptions.Item>
+            )}
             {(open.handoff_axis || open.handoff_error) && (
               <Descriptions.Item label={m.handoff.label}>
                 {open.handoff_axis && (

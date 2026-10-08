@@ -1844,6 +1844,8 @@ export interface CrmConfig {
   smartGetterOrgUnitId?: string | null;
   smartGovernmentOrgUnitId?: string | null;
   smartPartnerOrgUnitId?: string | null;
+  /** CD-294 — whose head receives an ownerless existing customer. */
+  smartKeeperOrgUnitId?: string | null;
   /** CD-225 — the company's readiness checklist. */
   projectReadinessChecklist?: string[];
   /** CD-226 — the as-built documents every project must leave. */
