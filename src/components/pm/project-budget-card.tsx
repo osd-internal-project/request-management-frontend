@@ -145,7 +145,11 @@ export function ProjectBudgetCard({
                 )
               }
             >
-              <Button size="small" type="primary" disabled={busy}>
+              <Button
+                size="small"
+                type="primary"
+                disabled={busy || view.awaitingIntake}
+              >
                 {m.lock}
               </Button>
             </Popconfirm>
@@ -172,6 +176,10 @@ export function ProjectBudgetCard({
         {m.hint}
       </Text>
       {error && <Alert className="mb-2" type="error" showIcon title={error} />}
+      {/* CD-176 — the first budget waits until the work is received */}
+      {view.awaitingIntake && (
+        <Alert className="mb-2" type="info" showIcon title={m.awaitingIntake} />
+      )}
       {editing && current && current.lockProblems.length > 0 && (
         <Alert
           className="mb-2"

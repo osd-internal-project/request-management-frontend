@@ -59,7 +59,16 @@ interface Message {
   direction: "in" | "out";
   author: string;
   text: string | null;
-  attachments: { name: string; url?: string }[];
+  /** CD-285 — files are served by core once copied in */
+  attachments: {
+    name: string;
+    type: string | null;
+    url: string | null;
+    size: number | null;
+    stored: boolean;
+    pending: boolean;
+    error: string | null;
+  }[];
   at: string;
   /** CD-284 */
   authorName: string | null;
@@ -657,15 +666,51 @@ function ConversationDrawer({
                   <Text className="whitespace-pre-wrap">
                     {msg.text ?? m.purged}
                   </Text>
-                  {msg.attachments.map((f) => (
-                    <Text
-                      key={f.name}
-                      type="secondary"
-                      className="block text-xs"
-                    >
-                      {m.attachment}: {f.name}
-                    </Text>
-                  ))}
+                  {msg.attachments.map((f, index) => {
+                    const href = f.stored
+                      ? `/api/app/care/conversations/${detail.conversation.id}/messages/${msg.id}/attachments/${index}`
+                      : f.url;
+                    const label = `${m.fileKinds[f.type ?? ""] ?? m.attachment}: ${f.name}`;
+                    return (
+                      <div key={`${msg.id}-${index}`} className="text-xs">
+                        {f.stored && f.type === "image" && href ? (
+                          <a href={href} target="_blank" rel="noreferrer">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={href}
+                              alt={f.name}
+                              className="mt-1 max-h-48 rounded"
+                            />
+                          </a>
+                        ) : href ? (
+                          <a href={href} target="_blank" rel="noreferrer">
+                            {label}
+                          </a>
+                        ) : (
+                          <Text type="secondary" className="text-xs">
+                            {label}
+                          </Text>
+                        )}
+                        {f.pending ? (
+                          <Tag className="ml-2">{m.filePending}</Tag>
+                        ) : null}
+                        {f.error ? (
+                          <Tag color="red" className="ml-2" title={f.error}>
+                            {m.fileFailed}
+                          </Tag>
+                        ) : null}
+                        {!f.stored &&
+                        !f.pending &&
+                        !f.error &&
+                        !f.url &&
+                        ["image", "video", "audio", "file"].includes(
+                          f.type ?? "",
+                        ) ? (
+                          <Tag className="ml-2">{m.fileGone}</Tag>
+                        ) : null}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             ))}

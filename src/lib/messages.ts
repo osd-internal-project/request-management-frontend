@@ -388,6 +388,42 @@ export const messages = {
           close: "ปิด",
         },
       },
+      // CD-228 — out-of-contract work found once the job started
+      extras: {
+        title: "งานนอกสัญญา",
+        hint: "งานที่พบระหว่างทำว่าอยู่นอกสัญญา (เช่น ความเสียหายจากการใช้งานผิด ลูกค้าขอเพิ่ม) ต้องแจ้งลูกค้าพร้อมประมาณการ · ยินยอมแล้วรวมในใบเรียกเก็บของงานนี้ · ปฏิเสธแล้วเก็บไว้ในประวัติ ไม่เรียกเก็บ · มีรายการรอลูกค้าตอบจะแจ้งงานเสร็จไม่ได้",
+        empty: "ยังไม่มีงานนอกสัญญา",
+        add: "เสนองานนอกสัญญา",
+        description: "งานที่ต้องทำเพิ่ม",
+        reason: "ทำไมอยู่นอกสัญญา",
+        estimate: "ประมาณการ (บาท)",
+        propose: "บันทึก",
+        status: {
+          proposed: "รอลูกค้าตอบ",
+          agreed: "ลูกค้ายินยอม",
+          declined: "ลูกค้าปฏิเสธ",
+          cancelled: "ถอนแล้ว",
+        } as Record<string, string>,
+        statusColor: {
+          proposed: "processing",
+          agreed: "success",
+          declined: "default",
+          cancelled: "default",
+        } as Record<string, string>,
+        agree: "ลูกค้ายินยอม",
+        decline: "ลูกค้าปฏิเสธ",
+        cancel: "ถอน",
+        cancelConfirm: "ถอนรายการนี้ (เสนอผิด)?",
+        ackName: "ผู้ยินยอมฝั่งลูกค้า",
+        ackOn: "วันที่ยินยอม",
+        declineNote: "หมายเหตุ (ไม่บังคับ)",
+        confirm: "บันทึก",
+        close: "ยกเลิก",
+        ackBy: (name: string, on: string) => `ยินยอมโดย ${name} · ${on}`,
+        agreedTotal: (total: string) => `ยินยอมแล้วรวม ${total} บาท — รวมในใบเรียกเก็บของงานนี้`,
+        saved: "บันทึกแล้ว",
+        amount: (value: string) => `${value} บาท`,
+      },
       workOrders: {
         title: "ใบสั่งงานบริการ",
         hint: "งานบริการเป็นเคสในระบบคำขอ (เจ้าของ ผู้รับเรื่อง สถานะ นาฬิกา SLA) · ต้องตัดสินตั้งแต่เปิดงานว่าอยู่ในสัญญาหรือเก็บเงินเพิ่ม ระบบเสนอจากสิทธิ์บริการ คนยืนยัน · งานเก็บเงินต้องให้ลูกค้ารับทราบค่าใช้จ่ายก่อนเริ่ม · ปิดงานต้องบันทึกสาเหตุและวิธีแก้",
@@ -5144,6 +5180,30 @@ export const messages = {
     },
     /** CD-255 ส่งมอบให้ทีมบริการ */
     handover: {
+      // CD-227 — the engineers' technical package
+      tech: {
+        title: "ข้อมูลเทคนิคถึงทีมบริการ",
+        complete: "ครบ ส่งต่อได้",
+        incomplete: (n: number) => `ยังขาด ${n} รายการ`,
+        gapsTitle: "ต้องครบก่อนส่งต่อทีมบริการ",
+        asBuilt: "เอกสารสภาพจริง (As-built)",
+        asBuiltOk: "ครบ และไม่มีจุดต่างที่ค้าง",
+        configs: (n: number, systems: string) =>
+          n ? `ค่าตั้งค่า ${n} รายการ · ${systems}` : "ยังไม่มีค่าตั้งค่า",
+        integrations: (n: number) => `จุดเชื่อมต่อ ${n} จุด`,
+        noIntegrations: "ไม่มีจุดเชื่อมต่อ",
+        noContact: "ไม่มีผู้ติดต่อ",
+        cautions: "ข้อควรระวัง",
+        cautionsHint:
+          "สิ่งที่ทีมบริการต้องรู้: จุดที่ห้ามแตะ อาการที่ต้องเฝ้าระวัง ค่าที่ไม่ควรเปลี่ยน",
+        cautionsEmpty: "ยังไม่ได้เขียนข้อควรระวัง",
+        cautionsBy: (name: string, at: string) => `แก้ล่าสุดโดย ${name} · ${at}`,
+        edit: "เขียนข้อควรระวัง",
+        save: "บันทึก",
+        cancel: "ยกเลิก",
+        saved: "บันทึกข้อควรระวังแล้ว",
+        sentTitle: "ข้อมูลเทคนิคที่ส่งไป",
+      },
       cardTitle: "ส่งต่อทีมบริการ",
       cardHint:
         "หลังตรวจรับแล้ว ส่งรายการอุปกรณ์ ประกัน ระดับบริการ เอกสาร และผู้ติดต่อให้ทีมบริการดูแลต่อ",
@@ -5303,6 +5363,36 @@ export const messages = {
       staff: "เจ้าหน้าที่รับเรื่องเอง",
     } as Record<string, string>,
     waitingSince: "รอมาตั้งแต่ {t}",
+    /** CD-288 */
+    results: {
+      title: "ผล AI CARE (12 เดือน)",
+      hint: "AI ตอบจบเอง = ปิดแล้ว AI ตอบอย่างน้อยหนึ่งครั้ง ไม่เปิดเคส ไม่มีเจ้าหน้าที่ร่วม · อัตรา = AI ตอบจบเอง ÷ (AI ตอบจบเอง + เปิดเคส + ส่งต่อเจ้าหน้าที่) — ไม่นับที่ยังคุยอยู่และที่ไม่ได้ถามเรื่องใด · คืนให้ AI แล้วก็ยังนับเป็นส่งต่อ",
+      month: "เดือน",
+      channel: "ช่องทาง",
+      total: "บทสนทนา",
+      rate: "AI ปิดเอง",
+      kinds: {
+        ai_resolved: "AI ตอบจบเอง",
+        case_opened: "เปิดเคส",
+        handed_over: "ส่งต่อเจ้าหน้าที่",
+        no_answer: "ไม่ได้ถามเรื่องใด",
+        live: "ยังคุยอยู่",
+      } as Record<string, string>,
+      byMonth: "รายเดือน",
+      byChannel: "ตามช่องทาง",
+    },
+    /** CD-285 */
+    fileKinds: {
+      image: "รูปภาพ",
+      video: "วิดีโอ",
+      audio: "ข้อความเสียง",
+      file: "ไฟล์",
+      sticker: "สติกเกอร์",
+      location: "ตำแหน่ง",
+    } as Record<string, string>,
+    filePending: "กำลังดึงไฟล์จาก LINE",
+    fileFailed: "ดึงไฟล์ไม่สำเร็จ",
+    fileGone: "ลบแล้วตามระยะเก็บ",
     /** CD-284 */
     agent: "เจ้าหน้าที่ที่ดูแล",
     take: "รับช่วง",
@@ -5361,6 +5451,7 @@ export const messages = {
       problem: "จากปัญหาราก",
       lesson: "จากบทเรียนโครงการ",
       presales: "จาก Pre-Sales",
+      project_issue: "จากการแก้ปัญหาในโครงการ",
     } as Record<string, string>,
     back: "กลับไปคลังความรู้",
     edit: "แก้ไข",
@@ -5463,6 +5554,7 @@ export const messages = {
       } as Record<string, string>,
       kinds: {
         ai_unanswered: "AI ตอบไม่ได้",
+        ai_handed_off: "AI ตอบแล้วยังส่งต่อคน",
         low_rated: "คะแนนต่ำ",
         search_miss: "ค้นไม่เจอ",
       } as Record<string, string>,
@@ -5506,6 +5598,7 @@ export const messages = {
       month: "เดือน",
       searches: "AI ค้น",
       selfAnswer: "AI ตอบได้เอง",
+      handedOff: "ตอบแล้วส่งต่อคน",
       opened: "ช่องว่างใหม่",
       closed: "เติมแล้ว",
       noData: "—",
@@ -7726,6 +7819,29 @@ export const messages = {
       /** CD-89 — แท็บการเงิน: ใบแจ้งหนี้และการรับชำระจาก SAP */
       tabFinancials: "การเงิน",
       tabAccount: "แผนบัญชี",
+      /** CD-68 — แท็บโครงการ (PM): เฉพาะที่ผู้ดูเห็น */
+      projects: {
+        tab: "โครงการ",
+        empty: "ไม่มีโครงการของลูกค้ารายนี้ที่คุณเห็นได้",
+        project: "โครงการ",
+        status: "สถานะ",
+        contract: "สัญญา",
+        period: "ระยะเวลา",
+        value: "มูลค่า",
+        manager: "ผู้จัดการโครงการ",
+        health: "สุขภาพ",
+        intake: "รับมอบงาน",
+        intakeStatus: {
+          pending: "รอตรวจรับมอบ",
+          returned: "ตีกลับ",
+          accepted: "รับมอบแล้ว",
+        } as Record<string, string>,
+        intakeColor: {
+          pending: "processing",
+          returned: "error",
+          accepted: "success",
+        } as Record<string, string>,
+      },
       invoices: {
         source: {
           mock: "รอเชื่อม SAP จริง — ระบบยังใช้ตัวเชื่อมจำลอง จึงไม่แสดงตัวเลข",
@@ -7995,6 +8111,7 @@ export const messages = {
       projectDesignTypeCode: "ประเภทคำขออนุมัติแบบรายละเอียด",
       projectTechChangeTypeCode: "ประเภทคำขออนุมัติปรับแก้ทางเทคนิค",
       projectResourceTypeCode: "ประเภทคำขอทีมเพิ่ม (PM → Engineer)",
+      projectIntakeChecklist: "ข้อที่บริษัทเพิ่มเองในรายการรับมอบงาน (PM)",
       serviceWorkOrderTypeCode: "ประเภทคำขอใบสั่งงานบริการ",
       contentApprovalTypeCode: "ประเภทคำขออนุมัติคอนเทนต์ (MACOM)",
       brandApprovalTypeCode: "ประเภทคำขออนุมัติไฟล์คลังแบรนด์ (MACOM)",
@@ -9035,6 +9152,65 @@ export const messages = {
         close: "ยกเลิก",
       },
     },
+    // CD-176 — receiving the work from Sales and the technical team
+    intake: {
+      title: "รับมอบงาน",
+      hint: "ตรวจทีละข้อว่าข้อมูลจากทีมขาย ทีมเทคนิค และสัญญาถูกต้องครบถ้วน · ข้อที่ไม่ครบให้ระบุเหตุผลแล้วตีกลับ แต่ละฝ่ายจะได้รับเฉพาะข้อของตัวเอง · ต้องรับมอบก่อนยืนยันงบอ้างอิง",
+      status: {
+        pending: "รอตรวจรับมอบ",
+        returned: "ตีกลับแล้ว",
+        accepted: "รับมอบแล้ว",
+      } as Record<string, string>,
+      statusColor: {
+        pending: "processing",
+        returned: "error",
+        accepted: "success",
+      } as Record<string, string>,
+      groups: {
+        sales: "จากทีมขาย",
+        technical: "จากทีมเทคนิค (Solution · ขอบเขต · BOQ)",
+        contract: "สัญญา",
+        company: "รายการของบริษัท",
+      } as Record<string, string>,
+      result: {
+        ok: "ถูกต้อง",
+        incomplete: "ไม่ครบ",
+        none: "ยังไม่ตรวจ",
+      } as Record<string, string>,
+      resultColor: {
+        ok: "success",
+        incomplete: "error",
+        none: "default",
+      } as Record<string, string>,
+      warn: "ต้นทางแจ้งว่ายังขาด",
+      changed: "ข้อมูลเปลี่ยนหลังตรวจ — ตรวจใหม่",
+      ok: "ถูกต้อง",
+      incomplete: "ไม่ครบ",
+      incompleteTitle: (label: string) => `ไม่ครบ: ${label}`,
+      incompleteNote: "ไม่ครบอย่างไร (ฝ่ายที่รับผิดชอบจะเห็นข้อความนี้)",
+      checkedBy: (name: string, at: string) => `ตรวจโดย ${name} · ${at}`,
+      refresh: "ดึงข้อมูลใหม่",
+      refreshHint:
+        "ดึงสัญญา Solution และงวดวางบิลล่าสุดมาเป็นฐานตั้งต้นใหม่ (หลังทีมขาย/เทคนิคแก้) — ข้อที่ข้อมูลเปลี่ยนต้องตรวจใหม่",
+      accept: "รับมอบงาน",
+      acceptConfirm: "ยืนยันรับมอบงาน? หลังรับมอบจะแก้รายการนี้ไม่ได้",
+      returnWork: "ตีกลับงาน",
+      returnTitle: "ตีกลับงาน",
+      returnNote: "ข้อความถึงทุกฝ่าย (ไม่บังคับ)",
+      returnGaps: "ข้อที่จะส่งกลับไปให้แก้",
+      accepted: (name: string, at: string) => `รับมอบแล้วโดย ${name} · ${at}`,
+      history: "ประวัติ",
+      historyAction: {
+        returned: "ตีกลับ",
+        accepted: "รับมอบ",
+        refreshed: "ดึงข้อมูลใหม่",
+      } as Record<string, string>,
+      round: (n: number) => `ครั้งที่ ${n}`,
+      saved: "บันทึกแล้ว",
+      bannerReturned:
+        'ตีกลับงานแล้ว — รอทีมขาย/เทคนิคแก้ แล้วกด "ดึงข้อมูลใหม่"',
+      cancel: "ยกเลิก",
+    },
     readiness: {
       title: "ตรวจความพร้อมก่อนส่งมอบ",
       hint: "รายการตรวจมาตรฐานของบริษัท (ตั้งในหน้าตั้งค่า CRM) แก้เพิ่มลดได้ในแต่ละโครงการ ผู้ตรวจที่ได้รับมอบหมายบันทึกผลพร้อมวันที่ · ระบบตรวจเองว่าทดสอบผ่านครบและไม่มีปัญหาค้าง · ผ่านครบทุกข้อจึงขอตรวจรับได้",
@@ -9360,8 +9536,25 @@ export const messages = {
         "สร้างร่างคำขอเปลี่ยนแปลงจากปัญหานี้ (ยกวันและต้นทุนไปให้)?",
       toChangeDone: (label: string) => `สร้างร่าง ${label} แล้ว`,
       resolution: (text: string) => `วิธีแก้: ${text}`,
+      // CD-223 — technical troubleshooting → KBMS
+      technical: "ปัญหาทางเทคนิค",
+      cause: (text: string) => `สาเหตุ: ${text}`,
+      kbms: {
+        pending: "รอส่งเข้าคลังความรู้",
+        sending: "กำลังส่งเข้าคลังความรู้",
+        sent: (ref: string) => `ส่งเข้าคลังความรู้แล้ว ${ref}`,
+      },
       saved: "บันทึกแล้ว",
       form: {
+        kind: "ประเภท",
+        kinds: {
+          general: "ทั่วไป",
+          technical: "ทางเทคนิค (บันทึกอาการ สาเหตุ วิธีแก้ ส่งเข้าคลังความรู้)",
+        } as Record<string, string>,
+        symptom: "อาการที่พบ",
+        cause: "สาเหตุ",
+        technicalHint:
+          "ปิดปัญหาทางเทคนิคต้องมีอาการ สาเหตุ และวิธีแก้ — ระบบร่างบทความส่งให้ผู้ดูแลความรู้ตรวจทันที",
         addTitle: "บันทึกปัญหา",
         editTitle: "แก้ไขปัญหา",
         resolveTitle: "ปิดปัญหา",
@@ -9506,6 +9699,9 @@ export const messages = {
     },
     /** CD-179 — งบอ้างอิง. */
     budget: {
+      // CD-176
+      awaitingIntake:
+        "ต้องรับมอบงานก่อนจึงยืนยันงบได้ (ดูการ์ดรับมอบงานด้านบน)",
       title: "งบอ้างอิง",
       hint: "ร่างจาก BOQ และค่าแรงในฐานตั้งต้น เติมต้นทุนที่ขาดแล้วกดยืนยัน — หลังยืนยันเปลี่ยนได้ผ่านคำขอเปลี่ยนแปลงเท่านั้น",
       none: "ยังไม่ได้ตั้งงบอ้างอิง",

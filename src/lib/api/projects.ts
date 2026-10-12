@@ -427,6 +427,8 @@ export interface BudgetLineView {
 
 export interface ProjectBudgetView {
   canEdit: boolean;
+  /** CD-176 — the work not yet received: the first budget cannot be confirmed. */
+  awaitingIntake?: boolean;
   current: {
     id: string;
     versionNo: number;
@@ -591,6 +593,12 @@ export interface ProjectIssueView {
   resolvedAt: string | null;
   resolvedByName: string | null;
   changeRequest: { id: string; label: string } | null;
+  /** CD-223 — general · technical (troubleshooting → KBMS). */
+  kind: "general" | "technical";
+  cause: string | null;
+  /** CD-223 — null · pending · sending · sent; the article number once sent. */
+  kbmsStatus: string | null;
+  kbmsRef: string | null;
   createdAt: string;
 }
 
@@ -931,6 +939,46 @@ export function getProjectReadiness(
   id: string,
 ): Promise<ApiResult<ProjectReadinessView>> {
   return apiGet(`/projects/${encodeURIComponent(id)}/readiness`);
+}
+
+/** CD-176 — receiving the work from Sales and the technical team. */
+export type IntakeGroup = "sales" | "technical" | "contract" | "company";
+
+export interface IntakeLineView {
+  code: string;
+  group: IntakeGroup;
+  label: string;
+  detail: string;
+  warn: boolean;
+  result: "ok" | "incomplete" | null;
+  note: string | null;
+  byName: string | null;
+  at: string | null;
+  changed: boolean;
+}
+
+export interface ProjectIntakeView {
+  canEdit: boolean;
+  /** null = a project from before receipt existed. */
+  status: "pending" | "returned" | "accepted" | null;
+  round?: number;
+  acceptedAt?: string | null;
+  acceptedByName?: string | null;
+  problems?: string[];
+  lines: IntakeLineView[];
+  history: {
+    action: "returned" | "accepted" | "refreshed";
+    at: string;
+    byName: string;
+    round: number;
+    lines: string[];
+  }[];
+}
+
+export function getProjectIntake(
+  id: string,
+): Promise<ApiResult<ProjectIntakeView>> {
+  return apiGet(`/projects/${encodeURIComponent(id)}/intake`);
 }
 
 /** CD-226 — the project as built: documents and deviations. */

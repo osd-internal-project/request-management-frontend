@@ -1848,6 +1848,8 @@ export interface CrmConfig {
   smartKeeperOrgUnitId?: string | null;
   /** CD-225 — the company's readiness checklist. */
   projectReadinessChecklist?: string[];
+  /** CD-176 — the company's own lines in the manager's receipt of the work. */
+  projectIntakeChecklist?: string[];
   /** CD-226 — the as-built documents every project must leave. */
   projectAsBuiltDocuments?: string[];
   projectSoftwareDocuments?: string[];

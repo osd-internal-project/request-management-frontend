@@ -31,6 +31,7 @@ import Text from "antd/es/typography/Text";
 import Title from "antd/es/typography/Title";
 import dayjs from "dayjs";
 import { CUSTOMER_STATUS_COLOR } from "@/components/crm/customers/customer-list";
+import { CustomerProjectsTab } from "./customer-projects-tab";
 import { CustomerInvoicesTab } from "@/components/crm/customers/customer-invoices-tab";
 import { PricingExceptionsTable } from "@/components/pricing/pricing-exceptions-table";
 import { CustomerVersionsTab } from "@/components/crm/customers/customer-versions-tab";
@@ -593,6 +594,12 @@ export function CustomerDetailView({
               </CustomerContractsTab>
             ),
           },
+          // CD-68 — the projects (PM) the viewer may see, loaded on opening
+          {
+            key: "projects",
+            label: m.detail.projects.tab,
+            children: <CustomerProjectsTab customerId={customer.id} />,
+          },
           // CD-68 — cases: requests submitted with a severity (CD-67).
           ...(relatedRequests !== null
             ? [
@@ -637,6 +644,7 @@ export function CustomerDetailView({
                 !(key === "opportunities" && customerOpportunities !== null) &&
                 !(key === "quotations" && customerQuotations !== null) &&
                 key !== "contracts" &&
+                key !== "projects" &&
                 !(key === "cases" && relatedRequests !== null) &&
                 key !== "financials",
             )
@@ -1693,7 +1701,14 @@ function TimelineTab({ timeline }: { timeline: CustomerTimelineEvent[] }) {
         key: event.id,
         children: (
           <div>
-            <div>{event.summary}</div>
+            {/* CD-288 — an AI CARE conversation opens where it is kept */}
+            {event.refType === "care_conversation" && event.refId ? (
+              <Link href={`${ROUTES.careConversations}?id=${event.refId}`}>
+                {event.summary}
+              </Link>
+            ) : (
+              <div>{event.summary}</div>
+            )}
             <Text type="secondary" className="text-xs">
               {event.actorName ? `${event.actorName} · ` : ""}
               {formatWhen(event.occurredAt)}

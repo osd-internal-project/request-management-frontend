@@ -35,6 +35,7 @@ import type {
   StatusReportsView,
   ProjectTestsView,
   ProjectReadinessView,
+  ProjectIntakeView,
   ProjectAsBuiltView,
   ProjectAcceptancesView,
   ProjectUatView,
@@ -68,6 +69,7 @@ import { ProjectCloseoutCard } from "./project-closeout-card";
 import { ProjectStatusCard } from "./project-status-card";
 import { ProjectTestsCard } from "./project-tests-card";
 import { ProjectReadinessCard } from "./project-readiness-card";
+import { ProjectIntakeCard } from "./project-intake-card";
 import { ProjectDeliveryCard } from "@/components/delivery/project-delivery-card";
 import { DeliveryDocsCard } from "@/components/delivery/delivery-docs-card";
 import { AcceptanceCertificatesCard } from "@/components/delivery/acceptance-certificates-card";
@@ -117,6 +119,7 @@ export function ProjectDetailView({
   statusReports,
   tests,
   readiness,
+  intake,
   asBuilt,
   acceptances,
   uat,
@@ -163,6 +166,8 @@ export function ProjectDetailView({
   readonly tests: ProjectTestsView | null;
   /** CD-225 — null = could not load. */
   readonly readiness: ProjectReadinessView | null;
+  /** CD-176 — null = could not load. */
+  readonly intake: ProjectIntakeView | null;
   /** CD-226 — null = could not load. */
   readonly asBuilt: ProjectAsBuiltView | null;
   /** CD-189 — null = could not load. */
@@ -382,6 +387,15 @@ export function ProjectDetailView({
               ))}
             </ul>
           }
+        />
+      )}
+
+      {/* CD-176 — receiving the work, before the budget is confirmed */}
+      {intake && (
+        <ProjectIntakeCard
+          key={`${intake.status}-${intake.round ?? 0}`}
+          projectId={project.id}
+          view={intake}
         />
       )}
 

@@ -413,6 +413,9 @@ function ConfigSection({
     model: config.serviceRepeatModel ?? 5,
     customerModel: config.serviceRepeatCustomerModel ?? 3,
   });
+  const [intakeList, setIntakeList] = useState<string[]>(
+    config.projectIntakeChecklist ?? [],
+  );
   const [readinessList, setReadinessList] = useState<string[]>(
     config.projectReadinessChecklist ?? [],
   );
@@ -471,6 +474,7 @@ function ConfigSection({
       service_repeat_model: repeat.model,
       service_repeat_customer_model: repeat.customerModel,
       project_readiness_checklist: readinessList,
+      project_intake_checklist: intakeList,
       project_as_built_documents: asBuiltList,
       project_software_documents: softwareDocList,
       delivery_documents: deliveryDocs,
@@ -974,6 +978,17 @@ function ConfigSection({
       <Text type="secondary" className="mt-2 block text-xs">
         {m.projectCostHint}
       </Text>
+      {/* CD-176 — ข้อของบริษัทในรายการรับมอบงาน */}
+      <div className="mt-3 max-w-xl">
+        <Text className="mb-1 block text-xs">{m.projectIntakeChecklist}</Text>
+        <Select
+          mode="tags"
+          className="w-full"
+          value={intakeList}
+          open={false}
+          onChange={(values: string[]) => setIntakeList(values)}
+        />
+      </div>
       {/* CD-225 — รายการตรวจความพร้อมก่อนส่งมอบ */}
       <div className="mt-3 max-w-xl">
         <Text className="mb-1 block text-xs">

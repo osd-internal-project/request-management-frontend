@@ -3,6 +3,7 @@
 import { Alert, Descriptions, List, Space, Tag } from "antd";
 import Text from "antd/es/typography/Text";
 import { messages } from "@/lib/messages";
+import { TechSnapshotView, type TechSnapshot } from "./tech-package";
 import { thaiDate } from "./delivery-types";
 
 const m = messages.delivery.handover;
@@ -51,6 +52,8 @@ export interface HandoverState {
   acknowledgedBy: string | null;
   acknowledgedAt: string | null;
   ackNote: string | null;
+  /** CD-227 — the technical package as sent (older handovers have none). */
+  technical?: TechSnapshot | null;
 }
 
 export const HANDOVER_COLOR: Record<string, string> = {
@@ -94,6 +97,7 @@ export function HandoverTrail({ state }: { state: HandoverState }) {
           {state.ackNote ? ` — ${state.ackNote}` : ""}
         </Text>
       ) : null}
+      {state.technical ? <TechSnapshotView snapshot={state.technical} /> : null}
     </Space>
   );
 }

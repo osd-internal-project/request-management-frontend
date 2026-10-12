@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { Card } from "antd";
 import Title from "antd/es/typography/Title";
 import { CareConversations } from "@/components/care/care-conversations";
+import { CareResults } from "@/components/care/care-results";
 import { messages } from "@/lib/messages";
 import { HOME_PATH } from "@/lib/routes";
 import { can, getSession } from "@/lib/session";
@@ -23,6 +24,7 @@ export default async function CareConversationsPage({
       <Card>
         <CareConversations focusId={id} />
       </Card>
+      <CareResults />
     </div>
   );
 }

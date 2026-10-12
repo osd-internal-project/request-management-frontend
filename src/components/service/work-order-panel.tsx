@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Alert,
@@ -27,6 +27,7 @@ import { Claims, ReplaceUnitButton } from "./claims";
 import { ProblemBanner } from "./problems";
 import { KbSuggestions } from "@/components/kb/kb-suggestions";
 import { SurveyCard } from "./surveys";
+import { ExtraWorks } from "./extra-works";
 
 const m = messages.service.assets.workOrders;
 
@@ -72,6 +73,9 @@ export function WorkOrderPanel({
   const [kind, setKind] = useState("corrective");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // CD-228 — out-of-contract items the customer agreed to (charged too)
+  const [agreedExtras, setAgreedExtras] = useState(0);
+  const onAgreed = useCallback((count: number) => setAgreedExtras(count), []);
 
   useEffect(() => {
     let live = true;
@@ -357,6 +361,11 @@ export function WorkOrderPanel({
           )
         ))}
 
+      {/* CD-228 — work found outside the contract once the job started */}
+      {order.billing && (
+        <ExtraWorks workOrderId={order.id} onAgreed={onAgreed} />
+      )}
+
       <Text strong className="block text-xs">
         {m.outcome}
       </Text>
@@ -411,7 +420,7 @@ export function WorkOrderPanel({
       )}
 
       {/* CD-242 — a billed job, once done: its charge to SAP */}
-      {order.billing === "billable" &&
+      {(order.billing === "billable" || agreedExtras > 0) &&
         ["completed", "approved", "closed"].includes(status) && (
           <ServiceBillingCard workOrderId={order.id} canManage={canManage} />
         )}
