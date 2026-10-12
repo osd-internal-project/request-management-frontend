@@ -1875,6 +1875,7 @@ export const messages = {
     submitPickReceiver: "เลือกผู้รับเรื่องก่อนยื่น",
     submitPickReceiverHint:
       "ประเภทคำขอนี้ยังไม่ได้กำหนดผู้รับเรื่องประจำ — เลือกคนในทีมผู้รับ",
+    attachOther: "แนบเอกสารอื่น",
     submitNoCandidates:
       "ทีมผู้รับยังไม่มีสมาชิก — ให้ผู้ดูแลระบบตั้งผู้รับเรื่องประจำของประเภทนี้",
     /* H2.2 ข้อ 3 — the second form, filled in by whoever did the work. */

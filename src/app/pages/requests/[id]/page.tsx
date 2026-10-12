@@ -45,6 +45,7 @@ import { messages } from "@/lib/messages";
 import { getAllDirectoryUsers } from "@/lib/api/users";
 import { getOrgUnitShapes } from "@/lib/api/org-units";
 import { subtreeIds } from "@/lib/org/org-tree";
+import { DraftAttachments } from "@/components/requests/draft-attachments";
 import { STATUS_COLOR } from "@/components/requests/status";
 
 /** Thai date + time as §16 prints it: `23 ส.ค. 16:40 น.` */
@@ -563,6 +564,23 @@ export default async function RequestDetailPage({
                   </li>
                 ))}
               </ul>
+              {/* A draft another screen raised has no form to attach its documents from. */}
+              {["draft", "returned"].includes(request.status) &&
+                request.requesterId === viewerId && (
+                  <DraftAttachments
+                    requestId={request.id}
+                    requiredDocs={
+                      (request.status === "returned"
+                        ? request.typeSnapshot?.requiredDocs
+                        : undefined) ??
+                      request.requestType?.requiredDocs ??
+                      []
+                    }
+                    attachedCodes={attachments
+                      .map((entry) => entry.docCode)
+                      .filter((code): code is string => Boolean(code))}
+                  />
+                )}
             </Card>
           </div>
           {/*
