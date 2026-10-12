@@ -13,6 +13,8 @@ export const ACTION_PERMISSION: Readonly<Record<string, string>> = {
   receive: "request.complete",
   assign: "request.complete",
   complete: "request.complete",
+  // Missing until 12 ต.ค. 2569: every v2 step's forward button was filtered out here.
+  advance: "request.complete",
   comment: "request.read",
   hold: "request.hold",
   resume: "request.hold",
