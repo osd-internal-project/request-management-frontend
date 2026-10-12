@@ -137,7 +137,12 @@ export function DisbursementV3View({
                 </Card>
               ))}
 
-            {!advance && view.status === "PAID" && accounting && <PettyCloseCard view={view} />}
+            {!advance && view.status === "PAID" &&
+              (accounting ? (
+                <PettyCloseCard view={view} />
+              ) : (
+                <Alert type="info" showIcon title={m.close.pettyWaiting} />
+              ))}
 
             {view.status === "CLOSED" && (
               <Card title={m.close.closed}>

@@ -212,6 +212,7 @@ export const messages = {
       pettyTitle: "ปิดรายการเงินสดย่อย",
       pettySubmit: "ปิดรายการ",
       pettyHint: "จ่ายครบแล้ว — ตรวจหลักฐานการจ่ายแล้วปิดรายการ",
+      pettyWaiting: "จ่ายครบแล้ว รอบัญชีปิดรายการ",
     },
     files: {
       upload: "คลิกหรือลากไฟล์มาที่นี่",
