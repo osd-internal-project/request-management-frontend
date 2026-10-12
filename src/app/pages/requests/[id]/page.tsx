@@ -48,16 +48,24 @@ import { subtreeIds } from "@/lib/org/org-tree";
 import { DraftAttachments } from "@/components/requests/draft-attachments";
 import { STATUS_COLOR } from "@/components/requests/status";
 
-/** Thai date + time as §16 prints it: `23 ส.ค. 16:40 น.` */
+/**
+ * Thai date + time as §16 prints it: `23 ส.ค. 16:40 น.`
+ *
+ * Pinned to Bangkok: this runs on the server, whose zone is UTC, so the
+ * approval chain read seven hours behind the timeline beside it (which the
+ * browser formats in local time).
+ */
 function when(iso: string): string {
   const at = new Date(iso);
 
   return `${at.toLocaleDateString("th-TH", {
     day: "numeric",
     month: "short",
+    timeZone: "Asia/Bangkok",
   })} ${at.toLocaleTimeString("th-TH", {
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: "Asia/Bangkok",
   })} น.`;
 }
 
@@ -674,16 +682,22 @@ export default async function RequestDetailPage({
                   />
 
                   {/* The two lines §16 requires under the stepper. */}
-                  <Paragraph type="secondary" className="mt-3! mb-1! text-xs">
-                    {approvalCase.amount
-                      ? messages.requestDetail.chainFrom(
-                          Number(approvalCase.amount).toLocaleString("th-TH"),
-                          approvalCase.matrixVersion,
-                        )
-                      : messages.requestDetail.chainVersion(
-                          approvalCase.matrixVersion,
-                        )}
-                  </Paragraph>
+                  {/*
+                    A case a v2 flow step opened has no matrix version; the
+                    line printed "ตารางอำนาจเวอร์ชัน null" until it was skipped.
+                  */}
+                  {approvalCase.matrixVersion !== null && (
+                    <Paragraph type="secondary" className="mt-3! mb-1! text-xs">
+                      {approvalCase.amount
+                        ? messages.requestDetail.chainFrom(
+                            Number(approvalCase.amount).toLocaleString("th-TH"),
+                            approvalCase.matrixVersion,
+                          )
+                        : messages.requestDetail.chainVersion(
+                            approvalCase.matrixVersion,
+                          )}
+                    </Paragraph>
+                  )}
                   <Paragraph type="secondary" className="mb-0! text-xs">
                     {messages.requestDetail.voidNote}
                   </Paragraph>

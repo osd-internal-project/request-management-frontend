@@ -114,7 +114,14 @@ export function RequestTimeline({
           event.actorLabel === "system"
             ? messages.requestDetail.system
             : (event.actor?.displayName ?? messages.requestDetail.system);
-        const title = messages.requestDetail.events[event.type] ?? event.type;
+        const label = messages.requestDetail.events[event.type] ?? event.type;
+        // A v2 step event carries the step's name; without it every move read the same.
+        const stepName =
+          typeof event.data?.name === "string" ? event.data.name : null;
+        const title =
+          stepName && event.type.startsWith("request.step")
+            ? messages.requestDetail.eventWithStep(label, stepName)
+            : label;
         const fromStatus =
           event.fromStatus &&
           (messages.myWork.status[event.fromStatus] ?? event.fromStatus);
