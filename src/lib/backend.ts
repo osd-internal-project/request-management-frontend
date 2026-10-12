@@ -69,6 +69,7 @@ export const CORE_SERVICE_PREFIXES = [
   "/contract-requests",
   "/esign",
   "/disbursements",
+  "/cost-centers",
   "/leads",
   "/opportunities",
   "/quotations",
@@ -99,6 +100,8 @@ export const CORE_SERVICE_PREFIXES = [
   "/macom",
   // CD-16 AI SMART (CD-289 — sweep sources and the staging list)
   "/smart",
+  // CD-291 — the do-not-contact register
+  "/contact-optouts",
   // CD-275 — LLM Gateway settings and usage
   "/llm",
   // CD-279 — the AI audit log
