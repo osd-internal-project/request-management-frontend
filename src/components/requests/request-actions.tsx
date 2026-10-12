@@ -13,8 +13,11 @@ import {
   decideCase,
   holdRequest,
   receiveRequest,
+  resubmitRequest,
   resumeRequest,
   returnRequest,
+  saveDraft,
+  submitRequest,
 } from "@/lib/api/client-requests";
 import type { CodedLabel, FlowMoves } from "@/lib/api/types";
 import { messages } from "@/lib/messages";
@@ -68,6 +71,12 @@ export function RequestActions({
     approvalStage?: string | null;
     /** The current approval level lets an approval go without a note. */
     approveNoteOptional?: boolean;
+    /**
+     * A draft with nobody to hand it to — set when another screen raised it
+     * (PRA from a quotation, SOLA from a Solution) for a type whose team has
+     * no ผู้รับเรื่องประจำ. The requester picks one here before it goes.
+     */
+    receiverChoices?: readonly { id: string; label: string }[] | null;
   };
   readonly session: Session | null;
 }) {
@@ -78,6 +87,9 @@ export function RequestActions({
   const [error, setError] = useState<string | null>(null);
   /** Which reason dialog is open, if any. */
   const [asking, setAsking] = useState<ReasonAction | null>(null);
+  /** The receiver picker a draft needs before it can be submitted. */
+  const [picking, setPicking] = useState(false);
+  const [receiver, setReceiver] = useState<string | undefined>();
 
   // Offered moves come from the backend's `availableActions` — the table `assertMayAct` enforces.
   const offered = offeredActions(request.available_actions, session);
@@ -102,6 +114,41 @@ export function RequestActions({
   }
 
   const actions: React.ReactNode[] = [];
+
+  /*
+    A draft raised by another screen lands here with no form to send it from,
+    and a returned request had no way back in at all — `submit` and `resubmit`
+    were offered by the backend and rendered by nobody.
+  */
+  if (offered.has("submit")) {
+    actions.push(
+      <Button
+        key="submit"
+        type="primary"
+        loading={busy === "submit"}
+        onClick={() =>
+          request.receiverChoices
+            ? setPicking(true)
+            : void run("submit", () => submitRequest(request.id))
+        }
+      >
+        {messages.requestDetail.submit}
+      </Button>,
+    );
+  }
+
+  if (offered.has("resubmit")) {
+    actions.push(
+      <Button
+        key="resubmit"
+        type="primary"
+        loading={busy === "resubmit"}
+        onClick={() => void run("resubmit", () => resubmitRequest(request.id))}
+      >
+        {messages.requestDetail.resubmit}
+      </Button>,
+    );
+  }
 
   if (offered.has("receive")) {
     actions.push(
@@ -298,6 +345,50 @@ export function RequestActions({
     <div className="space-y-2 max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:z-20 max-md:border-t max-md:border-black/10 max-md:bg-white max-md:p-3 max-md:pb-[max(0.75rem,env(safe-area-inset-bottom))] max-md:shadow-[0_-4px_12px_rgba(0,0,0,0.06)]">
       {error && <Alert type="error" showIcon title={error} />}
       {actions.length > 0 && <Space wrap>{actions}</Space>}
+
+      <Modal
+        open={picking}
+        title={messages.requestDetail.submitPickReceiver}
+        onCancel={() => setPicking(false)}
+        confirmLoading={busy === "submit"}
+        okText={messages.requestDetail.submit}
+        okButtonProps={{ disabled: !receiver }}
+        onOk={async () => {
+          if (!receiver) return;
+          const ok = await run("submit", async () => {
+            // The receiver is saved on the draft first: submit reads it from the row.
+            const saved = await saveDraft(request.id, {
+              receiver_user_id: receiver,
+            });
+            return saved.ok ? submitRequest(request.id) : saved;
+          });
+          if (ok) setPicking(false);
+        }}
+      >
+        {request.receiverChoices?.length ? (
+          <>
+            <p className="mb-2 text-gray-500">
+              {messages.requestDetail.submitPickReceiverHint}
+            </p>
+            <SearchSelect
+              className="w-full"
+              value={receiver}
+              onChange={setReceiver}
+              placeholder={messages.requestForm.receiverPlaceholder}
+              options={request.receiverChoices.map((person) => ({
+                value: person.id,
+                label: person.label,
+              }))}
+            />
+          </>
+        ) : (
+          <Alert
+            type="warning"
+            showIcon
+            title={messages.requestDetail.submitNoCandidates}
+          />
+        )}
+      </Modal>
 
       <ReasonDialog
         action={asking}

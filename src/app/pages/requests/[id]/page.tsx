@@ -27,7 +27,7 @@ import { RequestStepper } from "@/components/requests/request-stepper";
 import { CurrentStepCard } from "@/components/requests/current-step-card";
 import { DueBadge } from "@/components/requests/due-badge";
 import { ResponseClock, SeverityTag } from "@/components/requests/severity";
-import { can, getSession } from "@/lib/session";
+import { can, getSession, type Session } from "@/lib/session";
 import { getSolutionForRequest } from "@/lib/api/presales";
 import { getQuotationApproval } from "@/lib/api/pricing";
 import { DiscountImpactCard } from "@/components/pricing/discount-impact-card";
@@ -42,6 +42,9 @@ import { DisbursementPanel } from "@/components/disbursement/disbursement-panel"
 import { ChatRecordContext } from "@/components/layout/chat/chat-record-context";
 import { ContractRequestPackageCard } from "@/components/legal/contract-request-package-card";
 import { messages } from "@/lib/messages";
+import { getAllDirectoryUsers } from "@/lib/api/users";
+import { getOrgUnitShapes } from "@/lib/api/org-units";
+import { subtreeIds } from "@/lib/org/org-tree";
 import { STATUS_COLOR } from "@/components/requests/status";
 
 /** Thai date + time as §16 prints it: `23 ส.ค. 16:40 น.` */
@@ -58,6 +61,33 @@ function when(iso: string): string {
 }
 
 /** One non-table answer as text: labelled booleans, Thai dates. Server-rendered, so the zone is pinned. */
+/**
+ * The answers on this request the viewer is not allowed to see.
+ *
+ * The masker deletes a withheld field, so absence alone cannot tell "hidden
+ * from you" from "never filled in" — and every blank optional field used to
+ * print as ••••••. A field is withheld only when it is declared sensitive for
+ * this type and the viewer's role does not unmask it. Null when the session
+ * predates `sensitive_fields_all`: then every absent field reads as withheld,
+ * as before, rather than leaking nothing and printing "—" over a mask.
+ */
+function withheldFields(
+  session: Session | null,
+  typeCode: string | null | undefined,
+): ReadonlySet<string> | null {
+  const declared = session?.sensitive_fields_all;
+  if (!declared || !typeCode) return null;
+
+  const prefix = `request:${typeCode}.`;
+  const visible = new Set(session.sensitive_fields_visible);
+
+  return new Set(
+    declared
+      .filter((key) => key.startsWith(prefix) && !visible.has(key))
+      .map((key) => key.slice(prefix.length)),
+  );
+}
+
 function answerText(property: FormSchemaProperty, value: unknown): string {
   if (value === undefined || value === null || value === "") return "—";
 
@@ -187,6 +217,38 @@ export default async function RequestDetailPage({
   );
 
   const viewerId = session?.user.id ?? "";
+  const withheldSet = withheldFields(session, request.typeCode);
+
+  /*
+    A draft another screen raised for a type with no ผู้รับเรื่องประจำ has
+    nobody to go to, and submit answers 400 until somebody is named. Offer the
+    receiving team's members — the same branch the new-request form offers.
+  */
+  const needsReceiver =
+    request.status === "draft" &&
+    request.requesterId === viewerId &&
+    !request.receiverUserId;
+  const [people, units] = needsReceiver
+    ? await Promise.all([getAllDirectoryUsers(), getOrgUnitShapes()])
+    : [null, null];
+  const receiverChoices = needsReceiver
+    ? (() => {
+        const all = people?.ok ? people.data : [];
+        const branch =
+          request.receiverOrgUnitId && units?.ok
+            ? subtreeIds(units.data, request.receiverOrgUnitId)
+            : null;
+        return all
+          .filter(
+            (person) =>
+              !branch || (person.orgUnitId && branch.has(person.orgUnitId)),
+          )
+          .map((person) => ({
+            id: person.id,
+            label: `${person.displayName} · ${person.username}`,
+          }));
+      })()
+    : null;
 
   /*
     Anyone the request already involves may comment. The read itself is what
@@ -323,6 +385,7 @@ export default async function RequestDetailPage({
           missingSubRequests,
           flowMoves,
           stepNames,
+          receiverChoices,
         }}
         session={session}
       />
@@ -449,7 +512,10 @@ export default async function RequestDetailPage({
 
           <div>
             <Card title={messages.requestDetail.infoTitle} size="small">
-              <RequestFacts request={request} />
+              <RequestFacts
+                request={request}
+                withheldSet={withheldSet}
+              />
             </Card>
           </div>
           {/*
@@ -468,6 +534,7 @@ export default async function RequestDetailPage({
                   <SchemaAnswers
                     schema={receiverSchema}
                     answers={request.receiverFormData ?? {}}
+                    withheldSet={withheldSet}
                   />
                 </Card>
               )}
@@ -650,12 +717,16 @@ function AnswerField({
   name,
   property,
   answers,
+  withheldSet,
 }: {
   readonly name: string;
   readonly property: FormSchemaProperty;
   readonly answers: Record<string, unknown>;
+  /** From `withheldFields`; null falls back to "absent = withheld". */
+  readonly withheldSet: ReadonlySet<string> | null;
 }) {
-  const withheld = !(name in answers);
+  const withheld =
+    !(name in answers) && (withheldSet ? withheldSet.has(name) : true);
   const label = property.title ?? name;
   const value = answers[name];
 
@@ -710,9 +781,11 @@ function AnswerField({
 function SchemaAnswers({
   schema,
   answers,
+  withheldSet,
 }: {
   schema: FormSchema;
   answers: Record<string, unknown>;
+  withheldSet: ReadonlySet<string> | null;
 }) {
   return (
     <div className="grid sm:grid-cols-1 md:grid-cols-3 gap-4">
@@ -722,6 +795,7 @@ function SchemaAnswers({
           name={name}
           property={property}
           answers={answers}
+          withheldSet={withheldSet}
         />
       ))}
     </div>
@@ -793,7 +867,13 @@ function FormAnswer({
   );
 }
 
-function RequestFacts({ request }: { request: RequestDetail }) {
+function RequestFacts({
+  request,
+  withheldSet,
+}: {
+  request: RequestDetail;
+  withheldSet: ReadonlySet<string> | null;
+}) {
   const properties = request.requestType?.formSchema?.properties ?? {};
   const formData = request.formData ?? {};
 
@@ -842,6 +922,7 @@ function RequestFacts({ request }: { request: RequestDetail }) {
           name={name}
           property={property}
           answers={formData}
+          withheldSet={withheldSet}
         />
       ))}
     </div>

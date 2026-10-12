@@ -227,6 +227,16 @@ export function submitRequest(id: string): Promise<ClientResult<RequestRow>> {
   });
 }
 
+/** REQ-04 — a returned request goes back in, edits or not. */
+export function resubmitRequest(
+  id: string,
+): Promise<ClientResult<RequestRow>> {
+  return appApi<RequestRow>(`requests/${id}/resubmit`, {
+    method: "POST",
+    body: JSON.stringify({}),
+  });
+}
+
 /**
  * APV-02 — the route this request would take, before it is submitted.
  *

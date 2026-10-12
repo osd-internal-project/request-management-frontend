@@ -35,6 +35,8 @@ export interface Session {
    */
   leads_units: boolean;
   sensitive_fields_visible: string[];
+  /** Every field declared sensitive; absent from a backend older than 12 Oct 2026. */
+  sensitive_fields_all?: string[];
 }
 
 /**

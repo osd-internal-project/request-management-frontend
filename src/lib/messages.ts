@@ -1869,6 +1869,14 @@ export const messages = {
 
   requestDetail: {
     receive: "รับเรื่อง",
+    /* A draft another screen raised (PRA, SOLA…) and a returned request are sent from here. */
+    submit: "ยื่นคำขอ",
+    resubmit: "ยื่นใหม่",
+    submitPickReceiver: "เลือกผู้รับเรื่องก่อนยื่น",
+    submitPickReceiverHint:
+      "ประเภทคำขอนี้ยังไม่ได้กำหนดผู้รับเรื่องประจำ — เลือกคนในทีมผู้รับ",
+    submitNoCandidates:
+      "ทีมผู้รับยังไม่มีสมาชิก — ให้ผู้ดูแลระบบตั้งผู้รับเรื่องประจำของประเภทนี้",
     /* H2.2 ข้อ 3 — the second form, filled in by whoever did the work. */
     receiverFormTitle: "ฟอร์มผู้รับคำขอ",
     receiverFormHint:
