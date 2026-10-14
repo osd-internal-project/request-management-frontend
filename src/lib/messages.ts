@@ -2030,7 +2030,19 @@ export const messages = {
       "sla.escalated": "เกินกำหนด — เร่งงานอัตโนมัติ",
       "service.oncall.dispatched": "นอกเวลา — ส่งถึงเวร",
       "service.oncall.escalated": "เวรหลักไม่ได้รับ — ส่งต่อเวรสำรอง",
+      /* Written by every v2 flow move; the step name is appended from the event data. */
+      "request.step.entered": "เข้าขั้น",
+      "request.step.left": "จบขั้น",
+      "request.step_form.saved": "บันทึกฟอร์มของขั้น",
+      "request.review.vote": "ลงความเห็นอนุมัติ",
+      "request.attachment.added": "แนบเอกสาร",
+      "request.attachment.removed": "ลบเอกสารแนบ",
+      "approval.requested": "ขออนุมัติ",
+      "sla.breached": "เกินกำหนด SLA",
+      "sla.response_overdue": "ตอบรับช้ากว่ากำหนด",
     } as Record<string, string>,
+    /** `เข้าขั้น: ดำเนินการ` — a step event names the step it moved through. */
+    eventWithStep: (label: string, step: string) => `${label}: ${step}`,
   },
 
   /** APV-06 (CD-45) */

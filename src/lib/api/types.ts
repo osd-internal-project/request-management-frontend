@@ -680,7 +680,8 @@ export interface RequestDetail extends Omit<
     status?: string;
     subjectType?: string;
     currentStep: number;
-    matrixVersion: number;
+    /** Null on a case a v2 flow step opened — no published matrix behind it. */
+    matrixVersion: number | null;
     amount: string | null;
     steps: RequestDetailStep[];
   }[];
