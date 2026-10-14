@@ -8,12 +8,20 @@ import {
 } from "@/components/layout/chat/chat-context";
 import { messages } from "@/lib/messages";
 
-export interface ChatWidgetConfig {
+export interface ChatWidgetOption {
+  id: string;
+  name: string;
   /** LibreChat origin for http pages; an https one also serves them. */
   httpUrl: string | null;
   /** LibreChat origin for https pages — an http script there is mixed content. */
   httpsUrl: string | null;
   publicId: string;
+}
+
+/** The chats this user may open and the one the panel starts on. */
+export interface ChatWidgetConfig {
+  widgets: ChatWidgetOption[];
+  defaultId: string | null;
 }
 
 const SSO_LOGOUT_EVENT = "librechat-widget:sso-logout";
@@ -30,7 +38,7 @@ type WidgetOrigin = { origin: string } | { problem: string };
  * at the app's own domain and the script request hit our login redirect.
  */
 function resolveWidgetOrigin(
-  widget: ChatWidgetConfig,
+  widget: ChatWidgetOption,
   pageOrigin: string,
 ): WidgetOrigin {
   const securePage = pageOrigin.startsWith("https:");
@@ -93,7 +101,7 @@ export function signOutChatWidget() {
  * The aiyara LibreChat widget in inline mode, following the vendor's React
  * snippet. The script appends its iframe inside our container.
  */
-export function LibreChatWidget({ widget }: { widget: ChatWidgetConfig }) {
+export function LibreChatWidget({ widget }: { widget: ChatWidgetOption }) {
   // ChatPanel can be mounted twice (split pane + drawer), so the target id
   // must be unique; useId's punctuation is not a valid CSS selector.
   const targetId = `librechat-widget-${useId().replace(/[^A-Za-z0-9_-]/g, "")}`;
