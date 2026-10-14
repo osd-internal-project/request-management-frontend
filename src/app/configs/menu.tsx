@@ -28,6 +28,7 @@ export type MenuIconKey =
   | "aiSmart"
   | "llm"
   | "aiAudit"
+  | "chatWidget"
   | "salesTarget"
   | "salesReport"
   | "contract"
@@ -880,6 +881,14 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     href: ROUTES.adminAiAudit,
     icon: "aiAudit",
     permissions: ["admin.ai.audit"],
+    group: messages.nav.adminGroup,
+  },
+  /** แผงผู้ช่วย AI โหลด LibreChat จากที่อยู่ไหน (http / https) ต่อบริษัท. */
+  {
+    label: messages.nav.adminChatWidget,
+    href: ROUTES.adminChatWidget,
+    icon: "chatWidget",
+    permissions: ["admin.chat-widget.manage"],
     group: messages.nav.adminGroup,
   },
   /** CM-06 / CD-88 — งานส่ง SAP ที่ไม่สำเร็จ ดูข้อผิดพลาดแล้วกดส่งใหม่. */

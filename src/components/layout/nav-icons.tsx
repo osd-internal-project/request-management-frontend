@@ -106,6 +106,7 @@ const MENU_ICONS: Record<MenuIconKey, ComponentType> = {
   aiSmart: RadarChartOutlined,
   llm: RobotOutlined,
   aiAudit: FileSearchOutlined,
+  chatWidget: CommentOutlined,
   salesTarget: FlagOutlined,
   salesReport: BarChartOutlined,
   contract: FileProtectOutlined,

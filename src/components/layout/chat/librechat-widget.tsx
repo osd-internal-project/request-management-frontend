@@ -1,15 +1,18 @@
 "use client";
 
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useId, useRef, useSyncExternalStore } from "react";
 import {
   attachChatWidget,
   clearChatContext,
   detachChatWidget,
 } from "@/components/layout/chat/chat-context";
+import { messages } from "@/lib/messages";
 
 export interface ChatWidgetConfig {
-  /** Origin of the LibreChat host, no path. */
-  url: string;
+  /** LibreChat origin for http pages; an https one also serves them. */
+  httpUrl: string | null;
+  /** LibreChat origin for https pages — an http script there is mixed content. */
+  httpsUrl: string | null;
   publicId: string;
 }
 
@@ -19,6 +22,35 @@ const STORAGE_PREFIX = "librechat-widget:";
 
 /** Long enough for an open widget's iframe to receive the logout message. */
 const LOGOUT_GRACE_MS = 200;
+
+type WidgetOrigin = { origin: string } | { problem: string };
+
+/**
+ * The LibreChat origin this page loads, or why it cannot. The env once pointed
+ * at the app's own domain and the script request hit our login redirect.
+ */
+function resolveWidgetOrigin(
+  widget: ChatWidgetConfig,
+  pageOrigin: string,
+): WidgetOrigin {
+  const securePage = pageOrigin.startsWith("https:");
+  const url = securePage ? widget.httpsUrl : (widget.httpUrl ?? widget.httpsUrl);
+  if (!url) return { problem: messages.chat.insecureOnHttps };
+  let origin: string;
+  try {
+    origin = new URL(url).origin;
+  } catch {
+    return { problem: messages.chat.invalidUrl };
+  }
+  if (origin === "null") return { problem: messages.chat.invalidUrl };
+  if (origin === pageOrigin) return { problem: messages.chat.selfOrigin };
+  if (securePage && origin.startsWith("http:")) {
+    return { problem: messages.chat.insecureOnHttps };
+  }
+  return { origin };
+}
+
+const subscribeNever = () => () => {};
 
 /** v1.js keeps its token in the host's localStorage; clear it even with the panel closed. */
 function clearStoredWidgetTokens() {
@@ -66,15 +98,23 @@ export function LibreChatWidget({ widget }: { widget: ChatWidgetConfig }) {
   // must be unique; useId's punctuation is not a valid CSS selector.
   const targetId = `librechat-widget-${useId().replace(/[^A-Za-z0-9_-]/g, "")}`;
   const containerRef = useRef<HTMLDivElement>(null);
+  // Null during SSR and hydration, where there is no page origin to compare with.
+  const pageOrigin = useSyncExternalStore(
+    subscribeNever,
+    () => window.location.origin,
+    () => null,
+  );
+  const target = pageOrigin ? resolveWidgetOrigin(widget, pageOrigin) : null;
+  const origin = target && "origin" in target ? target.origin : null;
 
   useEffect(() => {
     const container = containerRef.current;
-    if (!container) return;
+    if (!container || !origin) return;
 
     const instanceSelector = `[data-librechat-widget-instance="${widget.publicId}"]`;
 
     const script = document.createElement("script");
-    script.src = `${widget.url}/widget/v1.js`;
+    script.src = `${origin}/widget/v1.js`;
     script.dataset.publicId = widget.publicId;
     script.dataset.mode = "inline";
     script.dataset.target = `#${targetId}`;
@@ -86,7 +126,7 @@ export function LibreChatWidget({ widget }: { widget: ChatWidgetConfig }) {
       container.querySelectorAll<HTMLIFrameElement>(instanceSelector).forEach((frame) => {
         frame.contentWindow?.postMessage(
           { type: "librechat-widget:logout", publicId: widget.publicId },
-          widget.url,
+          origin,
         );
       });
     };
@@ -122,7 +162,10 @@ export function LibreChatWidget({ widget }: { widget: ChatWidgetConfig }) {
       script.remove();
       container.querySelectorAll(instanceSelector).forEach((frame) => frame.remove());
     };
-  }, [widget.url, widget.publicId, targetId]);
+  }, [origin, widget.publicId, targetId]);
 
+  if (target && "problem" in target) {
+    return <p className="p-4 text-[var(--app-text-muted)]">{target.problem}</p>;
+  }
   return <div id={targetId} ref={containerRef} className="h-full w-full" />;
 }

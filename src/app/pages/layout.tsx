@@ -39,6 +39,8 @@ export default async function DashboardLayout({
   // caller (team visibility) by the backend. A failed fetch just renders the
   // menu without the BI group — the dashboards themselves still load their
   // own data when opened.
+  // Started before the BI menu so the two backend reads overlap.
+  const chatWidget = readChatWidgetConfig();
   let biDashboards: BiMenuDashboard[] = [];
   if (session.permissions.includes("report.dashboard.read")) {
     const menu = await apiGet<{ dashboards: BiMenuDashboard[] }>("/bi/menu");
@@ -60,7 +62,7 @@ export default async function DashboardLayout({
       }}
       menus={accessMenuItems(session, biDashboards)}
       canReadNotifications={session.permissions.includes("notification.read")}
-      chatWidget={readChatWidgetConfig()}
+      chatWidget={await chatWidget}
     >
       {/* AUTH-02. The two durations are server env, so they reach the browser
           as props rather than as NEXT_PUBLIC_ variables. */}

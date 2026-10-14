@@ -1249,6 +1249,7 @@ export const messages = {
     adminErpSync: "คิวส่ง SAP",
     adminLlm: "LLM Gateway",
     adminAiAudit: "บันทึกการใช้ AI",
+    adminChatWidget: "ผู้ช่วย AI (LibreChat)",
     adminRunNumbers: "เลขรันเอกสาร",
     adminRequestTypes: "ประเภทคำขอ",
     adminSla: "เวลาทำการและวันหยุด",
@@ -1272,6 +1273,9 @@ export const messages = {
     toggle: "เปิด/ปิดผู้ช่วย AI",
     close: "ปิด",
     notConfigured: "ยังไม่ได้ตั้งค่าผู้ช่วย AI",
+    invalidUrl: "ตั้งค่าผู้ช่วย AI ไม่ถูกต้อง: ที่อยู่ LibreChat ไม่ใช่ URL",
+    selfOrigin: "ตั้งค่าผู้ช่วย AI ไม่ถูกต้อง: ที่อยู่ LibreChat ชี้มาที่ระบบนี้เอง",
+    insecureOnHttps: "ผู้ช่วย AI ยังใช้บนหน้า https ไม่ได้: ยังไม่ได้ตั้งที่อยู่ LibreChat แบบ https",
     collapse: "ย่อ",
     collapseHint: "ซ่อนผู้ช่วย AI (บทสนทนายังอยู่)",
     expand: "ขยายเต็มจอ",
@@ -2649,6 +2653,23 @@ export const messages = {
       saved: "บันทึกอายุการเก็บแล้ว",
     },
   },
+  chatWidget: {
+    title: "ผู้ช่วย AI (LibreChat)",
+    subtitle:
+      "แผงผู้ช่วย AI โหลด widget จาก LibreChat ตามที่อยู่ด้านล่าง — หน้า https ใช้ได้เฉพาะที่อยู่ https · ช่องที่เว้นว่างใช้ค่าจาก env ของระบบ",
+    httpUrl: "ที่อยู่สำหรับหน้า http",
+    httpUrlHelp: "origin เท่านั้น เช่น http://192.168.31.52",
+    httpsUrl: "ที่อยู่สำหรับหน้า https",
+    httpsUrlHelp: "origin เท่านั้น เช่น https://aiyara.osd.co.th",
+    publicId: "Public ID ของ widget",
+    mustBeHttp: "ต้องขึ้นต้นด้วย http://",
+    mustBeHttps: "ต้องขึ้นต้นด้วย https://",
+    envFallback: (value: string) => `ค่าจาก env: ${value}`,
+    save: "บันทึก",
+    saved: "บันทึกแล้ว — มีผลเมื่อโหลดหน้าใหม่",
+    updatedAt: (at: string) => `แก้ล่าสุด ${at}`,
+  },
+
   llm: {
     title: "LLM Gateway",
     subtitle:

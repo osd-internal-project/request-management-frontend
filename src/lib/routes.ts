@@ -195,6 +195,8 @@ export const ROUTES = {
   adminLlm: `${HOME_PATH}/admin/llm`,
   /** CD-279 */
   adminAiAudit: `${HOME_PATH}/admin/ai-audit`,
+  /** The ผู้ช่วย AI panel's LibreChat host, per company. */
+  adminChatWidget: `${HOME_PATH}/admin/chat-widget`,
   adminErpSync: `${HOME_PATH}/admin/erp-sync`,
   /** REQ-02 — รูปแบบเลขรันของทุกชนิดเอกสาร. */
   adminRunNumbers: `${HOME_PATH}/admin/run-numbers`,
