@@ -106,6 +106,8 @@ export const CORE_SERVICE_PREFIXES = [
   "/llm",
   // CD-279 — the AI audit log
   "/ai-audit",
+  // the ผู้ช่วย AI panel's LibreChat chats (org + org-unit groups)
+  "/chat-widget",
   // CD-236 — the installed base
   "/service-assets",
   // CD-237 — what covers them

@@ -18,8 +18,8 @@ import { messages } from "@/lib/messages";
 /**
  * The frame around the AI chat widget: title bar plus widget. How wide it is,
  * and whether it is a split pane or a drawer, is the shell's decision.
- * `widget` is null when the company has no chat this user may open; with two
- * or more, the title becomes a picker.
+ * `widget` is null when the company has no chat this user may open; otherwise
+ * the title is a picker of the chats they may open.
  */
 export function ChatPanel({
   widget,
@@ -46,7 +46,8 @@ export function ChatPanel({
       <div className="flex h-10 shrink-0 items-center justify-between gap-2 border-b border-[var(--app-border-soft)] px-3">
         <span className="flex items-center gap-2 font-medium">
           <RobotOutlined className="text-[var(--app-primary)]" />
-          {chosen && options.length > 1 ? (
+          {/* A picker even with one chat, so users see it is a choice. */}
+          {chosen ? (
             <Select
               size="small"
               variant="borderless"
@@ -60,7 +61,7 @@ export function ChatPanel({
               }))}
             />
           ) : (
-            (chosen?.name ?? messages.chat.title)
+            messages.chat.title
           )}
         </span>
         <div className="flex items-center gap-1">
