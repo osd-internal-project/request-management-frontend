@@ -6,9 +6,9 @@ import {
   App,
   Button,
   Card,
+  Checkbox,
   Form,
   Input,
-  InputNumber,
   Modal,
   Popconfirm,
   Radio,
@@ -17,15 +17,20 @@ import {
   Switch,
   Table,
   Tag,
+  Tooltip,
 } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
+import {
+  ArrowDownOutlined,
+  ArrowUpOutlined,
+  PlusOutlined,
+} from "@ant-design/icons";
 import Text from "antd/es/typography/Text";
-import { SearchTreeSelect } from "@/components/ui/search-select";
 import { appApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
-import { buildUnitTree } from "@/lib/org/org-tree";
+import { buildUnitTree, type UnitTreeNode } from "@/lib/org/org-tree";
 
 const m = messages.chatWidget;
+const unitKinds: Record<string, string> = messages.org.unitKinds;
 
 interface AdminWidget {
   id: string;
@@ -45,13 +50,15 @@ interface Unit {
   name: string;
   kind: string;
   parentId: string | null;
-  chat_count: number;
 }
 
-interface GroupSetting {
+interface GroupRow {
+  org_unit_id: string;
   widget_ids: string[];
   default_id: string | null;
 }
+
+type GroupDraft = Omit<GroupRow, "org_unit_id">;
 
 interface WidgetValues {
   name: string;
@@ -60,7 +67,6 @@ interface WidgetValues {
   public_id: string;
   active: boolean;
   org_wide: boolean;
-  sort_order: number;
 }
 
 /** An empty field passes — the "at least one URL" rule is checked on the pair. */
@@ -94,17 +100,19 @@ function payload(row: AdminWidget, patch: Partial<AdminWidget> = {}) {
   };
 }
 
-/** The chat-widget screen: the company's chats, then each unit's chats. */
+/** The chat-widget screen: the company's chats, then the unit × chat matrix. */
 export function ChatWidgetSettings() {
   const { message } = App.useApp();
   const [widgets, setWidgets] = useState<AdminWidget[] | null>(null);
   const [units, setUnits] = useState<Unit[]>([]);
+  const [groups, setGroups] = useState<GroupRow[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const [list, unitList] = await Promise.all([
+    const [list, unitList, groupList] = await Promise.all([
       appApi<AdminWidget[]>("chat-widget/widgets"),
       appApi<Unit[]>("chat-widget/org-units"),
+      appApi<GroupRow[]>("chat-widget/groups"),
     ]);
     if (!list.ok) {
       setError(list.message);
@@ -113,6 +121,8 @@ export function ChatWidgetSettings() {
     setWidgets(list.data);
     if (unitList.ok) setUnits(unitList.data);
     else message.error(unitList.message);
+    if (groupList.ok) setGroups(groupList.data);
+    else message.error(groupList.message);
   }, [message]);
 
   useEffect(() => {
@@ -133,7 +143,15 @@ export function ChatWidgetSettings() {
   return (
     <div className="space-y-4">
       <OrgCard widgets={widgets} onChanged={load} />
-      <GroupCard widgets={widgets} units={units} onChanged={load} />
+      <GroupMatrix
+        widgets={widgets}
+        units={units}
+        groups={groups}
+        onSaved={(rows) => {
+          setGroups(rows);
+          void load();
+        }}
+      />
     </div>
   );
 }
@@ -169,6 +187,16 @@ function OrgCard({
       body: JSON.stringify(payload(row, change)),
     });
 
+  function move(index: number, step: -1 | 1) {
+    const ids = widgets.map((widget) => widget.id);
+    const target = index + step;
+    [ids[index], ids[target]] = [ids[target], ids[index]];
+    void send("chat-widget/order", {
+      method: "PUT",
+      body: JSON.stringify({ ids }),
+    });
+  }
+
   function open(row: AdminWidget | "new") {
     setEditing(row);
     form.setFieldsValue(
@@ -180,7 +208,6 @@ function OrgCard({
             public_id: "",
             active: true,
             org_wide: true,
-            sort_order: widgets.length,
           }
         : {
             name: row.name,
@@ -189,7 +216,6 @@ function OrgCard({
             public_id: row.public_id ?? "",
             active: row.active,
             org_wide: row.org_wide,
-            sort_order: row.sort_order,
           },
     );
   }
@@ -199,7 +225,10 @@ function OrgCard({
       ...values,
       http_url: values.http_url.trim() || null,
       https_url: values.https_url.trim() || null,
-      ...(editing && editing !== "new" ? { is_default: editing.is_default } : {}),
+      // A new chat goes last; an edit keeps its place and default flag.
+      ...(editing && editing !== "new"
+        ? { is_default: editing.is_default, sort_order: editing.sort_order }
+        : { sort_order: widgets.length }),
     };
     const ok =
       editing === "new"
@@ -230,46 +259,92 @@ function OrgCard({
         rowKey="id"
         size="small"
         pagination={false}
+        scroll={{ x: "max-content" }}
         dataSource={widgets}
         columns={[
-          { key: "name", title: m.name, dataIndex: "name" },
           {
-            key: "url",
-            title: `${m.httpUrl} / https`,
-            render: (_, row) => (
-              <div className="text-xs">
-                <div>{row.http_url ?? "—"}</div>
-                <div>{row.https_url ?? "—"}</div>
+            key: "order",
+            title: m.sortOrder,
+            width: 80,
+            render: (_, _row, index) => (
+              <div className="flex gap-1">
+                <Button
+                  size="small"
+                  type="text"
+                  icon={<ArrowUpOutlined />}
+                  aria-label={m.moveUp}
+                  disabled={busy || index === 0}
+                  onClick={() => move(index, -1)}
+                />
+                <Button
+                  size="small"
+                  type="text"
+                  icon={<ArrowDownOutlined />}
+                  aria-label={m.moveDown}
+                  disabled={busy || index === widgets.length - 1}
+                  onClick={() => move(index, 1)}
+                />
               </div>
             ),
           },
           {
+            key: "name",
+            title: m.name,
+            render: (_, row) => (
+              <div className="flex flex-wrap items-center gap-1">
+                <span className={row.active ? "font-medium" : "text-[var(--app-text-muted)]"}>
+                  {row.name}
+                </span>
+                {row.is_default && <Tag color="blue">{m.orgDefault}</Tag>}
+                {!row.active && <Tag>{m.inactiveTag}</Tag>}
+                {row.active && !row.org_wide && <Tag color="purple">{m.unitsOnlyTag}</Tag>}
+              </div>
+            ),
+          },
+          {
+            key: "http",
+            title: "http",
+            render: (_, row) => <Text className="text-xs">{row.http_url ?? "—"}</Text>,
+          },
+          {
+            key: "https",
+            title: "https",
+            render: (_, row) => <Text className="text-xs">{row.https_url ?? "—"}</Text>,
+          },
+          {
             key: "active",
             title: m.active,
+            align: "center",
             render: (_, row) => (
-              <Switch
-                size="small"
-                checked={row.active}
-                disabled={busy || row.is_default}
-                onChange={(active) => void patch(row, { active })}
-              />
+              <Tooltip title={row.is_default ? m.defaultLocked : undefined}>
+                <Switch
+                  size="small"
+                  checked={row.active}
+                  disabled={busy || row.is_default}
+                  onChange={(active) => void patch(row, { active })}
+                />
+              </Tooltip>
             ),
           },
           {
             key: "org_wide",
             title: m.orgWide,
+            align: "center",
             render: (_, row) => (
-              <Switch
-                size="small"
-                checked={row.org_wide}
-                disabled={busy || row.is_default}
-                onChange={(orgWide) => void patch(row, { org_wide: orgWide })}
-              />
+              <Tooltip title={row.is_default ? m.defaultLocked : undefined}>
+                <Switch
+                  size="small"
+                  checked={row.org_wide}
+                  disabled={busy || row.is_default}
+                  onChange={(orgWide) => void patch(row, { org_wide: orgWide })}
+                />
+              </Tooltip>
             ),
           },
           {
             key: "default",
             title: m.orgDefault,
+            align: "center",
             render: (_, row) => (
               <Radio
                 checked={row.is_default}
@@ -281,26 +356,23 @@ function OrgCard({
           {
             key: "groups",
             title: m.groups,
-            render: (_, row) =>
-              row.group_count ? <Tag>{m.chatCount(row.group_count)}</Tag> : "—",
+            align: "center",
+            render: (_, row) => (row.group_count ? m.chatUnits(row.group_count) : "—"),
           },
-          { key: "sort", title: m.sortOrder, dataIndex: "sort_order" },
           {
             key: "actions",
             render: (_, row) => (
-              <div className="flex gap-2">
+              <div className="flex gap-1">
                 <Button size="small" type="link" onClick={() => open(row)}>
                   {m.edit}
                 </Button>
                 <Popconfirm
                   title={m.deleteConfirm}
                   onConfirm={() =>
-                    void send(`chat-widget/widgets/${row.id}`, {
-                      method: "DELETE",
-                    })
+                    void send(`chat-widget/widgets/${row.id}`, { method: "DELETE" })
                   }
                 >
-                  <Button size="small" type="link" danger>
+                  <Button size="small" type="link" danger disabled={row.is_default}>
                     {m.delete}
                   </Button>
                 </Popconfirm>
@@ -321,7 +393,11 @@ function OrgCard({
         destroyOnHidden
       >
         <Form<WidgetValues> form={form} layout="vertical" onFinish={submit}>
-          <Form.Item name="name" label={m.name} rules={[{ required: true, whitespace: true, message: m.required }]}>
+          <Form.Item
+            name="name"
+            label={m.name}
+            rules={[{ required: true, whitespace: true, message: m.required }]}
+          >
             <Input maxLength={100} />
           </Form.Item>
           <Form.Item
@@ -349,8 +425,13 @@ function OrgCard({
           >
             <Input allowClear />
           </Form.Item>
-          <Form.Item name="public_id" label={m.publicId} rules={[{ required: true, whitespace: true, message: m.required }]}>
-            <Input maxLength={100} />
+          <Form.Item
+            name="public_id"
+            label={m.publicId}
+            rules={[{ required: true, whitespace: true, message: m.required }]}
+          >
+            {/* Masked on screen; new-password keeps the browser from offering to save it. */}
+            <Input.Password maxLength={100} autoComplete="new-password" />
           </Form.Item>
           <div className="flex flex-wrap gap-6">
             <Form.Item name="active" label={m.active} valuePropName="checked">
@@ -364,9 +445,6 @@ function OrgCard({
             >
               <Switch />
             </Form.Item>
-            <Form.Item name="sort_order" label={m.sortOrder}>
-              <InputNumber min={0} />
-            </Form.Item>
           </div>
         </Form>
       </Modal>
@@ -374,118 +452,233 @@ function OrgCard({
   );
 }
 
-function GroupCard({
+interface MatrixRow {
+  id: string;
+  name: string;
+  kind: string;
+  depth: number;
+}
+
+/** The unit tree flattened in chart order, each row knowing how deep it sits. */
+function flatten(nodes: UnitTreeNode[], kindOf: Map<string, Unit>, depth = 0): MatrixRow[] {
+  return nodes.flatMap((node) => [
+    {
+      id: node.value,
+      name: node.title,
+      kind: kindOf.get(node.value)?.kind ?? "",
+      depth,
+    },
+    ...flatten(node.children, kindOf, depth + 1),
+  ]);
+}
+
+const sameDraft = (a: GroupDraft, b: GroupDraft) =>
+  a.default_id === b.default_id &&
+  a.widget_ids.length === b.widget_ids.length &&
+  a.widget_ids.every((id) => b.widget_ids.includes(id));
+
+const EMPTY: GroupDraft = { widget_ids: [], default_id: null };
+
+/**
+ * Units down the side, active chats across the top: tick a chat to add it to
+ * a unit (and its subtree), pick the unit's default. Changes are drafts until
+ * "save" sends the changed rows together.
+ */
+function GroupMatrix({
   widgets,
   units,
-  onChanged,
+  groups,
+  onSaved,
 }: {
   widgets: AdminWidget[];
   units: Unit[];
-  onChanged: () => Promise<void>;
+  groups: GroupRow[];
+  onSaved: (rows: GroupRow[]) => void;
 }) {
   const { message } = App.useApp();
-  const [unitId, setUnitId] = useState<string | null>(null);
-  const [setting, setSetting] = useState<GroupSetting | null>(null);
+  const [drafts, setDrafts] = useState<Map<string, GroupDraft>>(new Map());
+  const [search, setSearch] = useState("");
+  const [kind, setKind] = useState<string | null>(null);
+  const [onlyConfigured, setOnlyConfigured] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  const tree = useMemo(
-    () =>
-      buildUnitTree(units, {
-        title: (unit) =>
-          unit.chat_count ? `${unit.name} · ${m.chatCount(unit.chat_count)}` : unit.name,
-      }),
+  const saved = useMemo(
+    () => new Map(groups.map((row) => [row.org_unit_id, row])),
+    [groups],
+  );
+  const rows = useMemo(
+    () => flatten(buildUnitTree(units), new Map(units.map((u) => [u.id, u]))),
     [units],
   );
-  // Only active chats can be added; inactive ones keep their rows server-side.
-  const choices = widgets.filter((widget) => widget.active);
+  const chats = widgets.filter((widget) => widget.active);
+  const current = (unitId: string): GroupDraft =>
+    drafts.get(unitId) ?? saved.get(unitId) ?? EMPTY;
 
-  async function pick(id: string | null) {
-    setUnitId(id);
-    setSetting(null);
-    if (!id) return;
-    const result = await appApi<GroupSetting>(`chat-widget/groups/${id}`);
-    if (result.ok) setSetting(result.data);
-    else message.error(result.message);
+  const visible = rows.filter((row) => {
+    if (search && !row.name.toLowerCase().includes(search.toLowerCase())) return false;
+    if (kind && row.kind !== kind) return false;
+    if (onlyConfigured && !current(row.id).widget_ids.length) return false;
+    return true;
+  });
+  const kinds = [...new Set(units.map((unit) => unit.kind))];
+
+  function setDraft(unitId: string, next: GroupDraft) {
+    setDrafts((prev) => {
+      const copy = new Map(prev);
+      if (sameDraft(next, saved.get(unitId) ?? EMPTY)) copy.delete(unitId);
+      else copy.set(unitId, next);
+      return copy;
+    });
+  }
+
+  function toggle(unitId: string, widgetId: string, checked: boolean) {
+    const draft = current(unitId);
+    const ids = checked
+      ? [...draft.widget_ids, widgetId]
+      : draft.widget_ids.filter((id) => id !== widgetId);
+    setDraft(unitId, {
+      widget_ids: ids,
+      default_id: draft.default_id && ids.includes(draft.default_id) ? draft.default_id : null,
+    });
   }
 
   async function save() {
-    if (!unitId || !setting) return;
     setBusy(true);
-    const result = await appApi<GroupSetting>(`chat-widget/groups/${unitId}`, {
+    const result = await appApi<GroupRow[]>("chat-widget/groups", {
       method: "PUT",
-      body: JSON.stringify(setting),
+      body: JSON.stringify({
+        groups: [...drafts].map(([orgUnitId, draft]) => ({
+          org_unit_id: orgUnitId,
+          ...draft,
+        })),
+      }),
     });
     setBusy(false);
     if (!result.ok) {
       message.error(result.message);
       return;
     }
-    setSetting(result.data);
+    setDrafts(new Map());
     message.success(m.saved);
-    await onChanged();
+    onSaved(result.data);
   }
 
-  const nameOf = (id: string) => widgets.find((w) => w.id === id)?.name ?? id;
-
   return (
-    <Card size="small" title={m.groupTitle}>
+    <Card
+      size="small"
+      title={m.groupTitle}
+      extra={
+        <div className="flex gap-2">
+          <Button size="small" disabled={!drafts.size || busy} onClick={() => setDrafts(new Map())}>
+            {m.cancel}
+          </Button>
+          <Button
+            size="small"
+            type="primary"
+            disabled={!drafts.size}
+            loading={busy}
+            onClick={() => void save()}
+          >
+            {m.saveChanges(drafts.size)}
+          </Button>
+        </div>
+      }
+    >
       <Text type="secondary" className="mb-3 block text-xs">
         {m.groupHint}
       </Text>
-      <SearchTreeSelect
-        className="w-full max-w-md"
-        allowClear
-        treeDefaultExpandAll
-        treeData={tree}
-        value={unitId ?? undefined}
-        placeholder={m.pickUnit}
-        onChange={(value: string | undefined) => void pick(value ?? null)}
-      />
-      {unitId && !setting && (
-        <div className="py-4">
-          <Spin size="small" />
-        </div>
-      )}
-      {setting && (
-        <div className="mt-4 max-w-2xl space-y-3">
-          <div>
-            <Text strong>{m.unitChats}</Text>
-            <Select
-              className="mt-1 w-full"
-              mode="multiple"
-              allowClear
-              value={setting.widget_ids}
-              placeholder={m.unitChatsPlaceholder}
-              options={choices.map((w) => ({ value: w.id, label: w.name }))}
-              onChange={(ids: string[]) =>
-                setSetting({
-                  widget_ids: ids,
-                  default_id:
-                    setting.default_id && ids.includes(setting.default_id)
-                      ? setting.default_id
-                      : null,
-                })
-              }
-            />
-          </div>
-          <div>
-            <Text strong>{m.groupDefault}</Text>
-            <Select
-              className="mt-1 w-full"
-              value={setting.default_id ?? ""}
-              options={[
-                { value: "", label: m.groupDefaultNone },
-                ...setting.widget_ids.map((id) => ({ value: id, label: nameOf(id) })),
-              ]}
-              onChange={(id: string) =>
-                setSetting({ ...setting, default_id: id || null })
-              }
-            />
-          </div>
-          <Button type="primary" loading={busy} onClick={() => void save()}>
-            {m.save}
-          </Button>
-        </div>
+      <div className="mb-3 flex flex-wrap items-center gap-3">
+        <Input.Search
+          allowClear
+          className="max-w-xs"
+          placeholder={m.searchUnit}
+          onChange={(event) => setSearch(event.target.value)}
+        />
+        <Select
+          allowClear
+          className="w-40"
+          placeholder={m.unitKind}
+          value={kind ?? undefined}
+          onChange={(value: string | undefined) => setKind(value ?? null)}
+          options={kinds.map((value) => ({ value, label: unitKinds[value] ?? value }))}
+        />
+        <label className="flex items-center gap-2 text-sm">
+          <Switch size="small" checked={onlyConfigured} onChange={setOnlyConfigured} />
+          {m.onlyConfigured}
+        </label>
+      </div>
+      {chats.length === 0 ? (
+        <Text type="secondary">{m.noActiveChats}</Text>
+      ) : (
+        <Table<MatrixRow>
+          rowKey="id"
+          size="small"
+          sticky
+          scroll={{ x: "max-content" }}
+          pagination={{ pageSize: 20, hideOnSinglePage: true }}
+          dataSource={visible}
+          rowClassName={(row) => (drafts.has(row.id) ? "bg-amber-50" : "")}
+          columns={[
+            {
+              key: "unit",
+              title: m.groups,
+              fixed: "left",
+              render: (_, row) => (
+                <div style={{ paddingLeft: search ? 0 : row.depth * 16 }} className="flex items-center gap-2">
+                  <span>{row.name}</span>
+                  <Text type="secondary" className="text-xs">
+                    {unitKinds[row.kind] ?? row.kind}
+                  </Text>
+                </div>
+              ),
+            },
+            ...chats.map((chat) => ({
+              key: chat.id,
+              align: "center" as const,
+              title: (
+                <div className="flex flex-col items-center leading-tight">
+                  <span>{chat.name}</span>
+                  {chat.org_wide && (
+                    <Text type="secondary" className="text-[11px]">
+                      {m.orgWide}
+                    </Text>
+                  )}
+                </div>
+              ),
+              render: (_: unknown, row: MatrixRow) => (
+                <Checkbox
+                  aria-label={`${row.name} · ${chat.name}`}
+                  checked={current(row.id).widget_ids.includes(chat.id)}
+                  onChange={(event) => toggle(row.id, chat.id, event.target.checked)}
+                />
+              ),
+            })),
+            {
+              key: "default",
+              title: m.groupDefault,
+              render: (_, row) => {
+                const draft = current(row.id);
+                return (
+                  <Select
+                    size="small"
+                    className="w-40"
+                    disabled={!draft.widget_ids.length}
+                    value={draft.default_id ?? ""}
+                    onChange={(id: string) =>
+                      setDraft(row.id, { ...draft, default_id: id || null })
+                    }
+                    options={[
+                      { value: "", label: m.groupDefaultNone },
+                      ...chats
+                        .filter((chat) => draft.widget_ids.includes(chat.id))
+                        .map((chat) => ({ value: chat.id, label: chat.name })),
+                    ]}
+                  />
+                );
+              },
+            },
+          ]}
+        />
       )}
     </Card>
   );
