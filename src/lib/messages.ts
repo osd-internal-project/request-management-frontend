@@ -1276,7 +1276,7 @@ export const messages = {
     pick: "เลือกผู้ช่วย AI",
     invalidUrl: "ตั้งค่าผู้ช่วย AI ไม่ถูกต้อง: ที่อยู่ LibreChat ไม่ใช่ URL",
     selfOrigin: "ตั้งค่าผู้ช่วย AI ไม่ถูกต้อง: ที่อยู่ LibreChat ชี้มาที่ระบบนี้เอง",
-    insecureOnHttps: "ผู้ช่วย AI ยังใช้บนหน้า https ไม่ได้: ยังไม่ได้ตั้งที่อยู่ LibreChat แบบ https",
+    loadFailed: "โหลดผู้ช่วย AI ไม่สำเร็จ: หน้า https ที่ใช้ที่อยู่ http ต้องอนุญาต insecure content ใน browser หรือตั้งที่อยู่ https · ตรวจ Allowed Origin ของ chat นี้ใน LibreChat",
     collapse: "ย่อ",
     collapseHint: "ซ่อนผู้ช่วย AI (บทสนทนายังอยู่)",
     expand: "ขยายเต็มจอ",
@@ -2657,7 +2657,7 @@ export const messages = {
   chatWidget: {
     title: "ผู้ช่วย AI (LibreChat)",
     subtitle:
-      "chat ที่แผงผู้ช่วย AI เปิดได้ — ตั้งระดับองค์กร (ใช้งาน · ทั้งองค์กร · default) แล้วติ๊ก chat ให้หน่วยงานพร้อม default ของหน่วยงาน · หน้า https ใช้ได้เฉพาะ chat ที่มีที่อยู่ https",
+      "chat ที่แผงผู้ช่วย AI เปิดได้ — ตั้งระดับองค์กร (ใช้งาน · ทั้งองค์กร · default) แล้วติ๊ก chat ให้หน่วยงานพร้อม default ของหน่วยงาน · หน้า https ใช้ที่อยู่ https ก่อน ถ้าไม่มีจะลองที่อยู่ http (browser อาจบล็อก)",
     orgTitle: "chat ขององค์กร",
     groupTitle: "chat ของหน่วยงาน",
     groupHint:

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useSyncExternalStore } from "react";
+import { useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
 import {
   attachChatWidget,
   clearChatContext,
@@ -26,6 +26,7 @@ export interface ChatWidgetConfig {
 
 const SSO_LOGOUT_EVENT = "librechat-widget:sso-logout";
 const AVAILABLE_EVENT = "librechat-widget:available";
+const ERROR_EVENT = "librechat-widget:error";
 const STORAGE_PREFIX = "librechat-widget:";
 
 /** Long enough for an open widget's iframe to receive the logout message. */
@@ -42,8 +43,12 @@ function resolveWidgetOrigin(
   pageOrigin: string,
 ): WidgetOrigin {
   const securePage = pageOrigin.startsWith("https:");
-  const url = securePage ? widget.httpsUrl : (widget.httpUrl ?? widget.httpsUrl);
-  if (!url) return { problem: messages.chat.insecureOnHttps };
+  // An https page with only an http URL still tries it, as before the DB settings:
+  // the browser decides on mixed content (labs allows it per site), and a block lands in `loadFailed`.
+  const url = securePage
+    ? (widget.httpsUrl ?? widget.httpUrl)
+    : (widget.httpUrl ?? widget.httpsUrl);
+  if (!url) return { problem: messages.chat.notConfigured };
   let origin: string;
   try {
     origin = new URL(url).origin;
@@ -52,9 +57,6 @@ function resolveWidgetOrigin(
   }
   if (origin === "null") return { problem: messages.chat.invalidUrl };
   if (origin === pageOrigin) return { problem: messages.chat.selfOrigin };
-  if (securePage && origin.startsWith("http:")) {
-    return { problem: messages.chat.insecureOnHttps };
-  }
   return { origin };
 }
 
@@ -106,6 +108,8 @@ export function LibreChatWidget({ widget }: { widget: ChatWidgetOption }) {
   // must be unique; useId's punctuation is not a valid CSS selector.
   const targetId = `librechat-widget-${useId().replace(/[^A-Za-z0-9_-]/g, "")}`;
   const containerRef = useRef<HTMLDivElement>(null);
+  // v1.js reports a refused origin only as an event; without this the panel stays blank.
+  const [loadFailed, setLoadFailed] = useState(false);
   // Null during SSR and hydration, where there is no page origin to compare with.
   const pageOrigin = useSyncExternalStore(
     subscribeNever,
@@ -158,7 +162,21 @@ export function LibreChatWidget({ widget }: { widget: ChatWidgetOption }) {
       attachChatWidget(announced);
     }
     document.addEventListener(AVAILABLE_EVENT, onAvailable);
-    script.addEventListener("error", stopListening);
+    // Not tied to this mount's script: a StrictMode twin with the same publicId fails the same way.
+    const onError = (event: Event) => {
+      if (!(event instanceof CustomEvent)) return;
+      const detail: unknown = event.detail;
+      if (typeof detail !== "object" || detail === null) return;
+      if (Reflect.get(detail, "publicId") !== widget.publicId) return;
+      console.warn("[chat] widget failed to load", detail);
+      setLoadFailed(true);
+    };
+    document.addEventListener(ERROR_EVENT, onError);
+    const onScriptError = () => {
+      stopListening();
+      setLoadFailed(true);
+    };
+    script.addEventListener("error", onScriptError);
 
     return () => {
       retired = true;
@@ -167,6 +185,8 @@ export function LibreChatWidget({ widget }: { widget: ChatWidgetOption }) {
         destroyWidget(instance);
       }
       window.removeEventListener(SSO_LOGOUT_EVENT, onLogout);
+      document.removeEventListener(ERROR_EVENT, onError);
+      script.removeEventListener("error", onScriptError);
       script.remove();
       container.querySelectorAll(instanceSelector).forEach((frame) => frame.remove());
     };
@@ -174,6 +194,9 @@ export function LibreChatWidget({ widget }: { widget: ChatWidgetOption }) {
 
   if (target && "problem" in target) {
     return <p className="p-4 text-[var(--app-text-muted)]">{target.problem}</p>;
+  }
+  if (loadFailed) {
+    return <p className="p-4 text-[var(--app-text-muted)]">{messages.chat.loadFailed}</p>;
   }
   return <div id={targetId} ref={containerRef} className="h-full w-full" />;
 }
