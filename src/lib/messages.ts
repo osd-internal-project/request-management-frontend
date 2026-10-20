@@ -1246,6 +1246,7 @@ export const messages = {
     esignAuthorities: "ทะเบียนผู้มีอำนาจลงนาม",
     adminCrm: "ตั้งค่า CRM",
     adminApiKeys: "กุญแจ API",
+    adminWebhooks: "Webhook",
     adminErpSync: "คิวส่ง SAP",
     adminLlm: "LLM Gateway",
     adminAiAudit: "บันทึกการใช้ AI",
@@ -4939,6 +4940,59 @@ export const messages = {
     issuedBody:
       "ค่าเต็มแสดงครั้งเดียว ระบบเก็บไว้แค่ค่าแฮช อ่านกลับไม่ได้อีก — ทำหายคือออกใบใหม่แล้วเพิกถอนใบเก่า",
     issuedDone: "คัดลอกแล้ว ปิดหน้าต่าง",
+  },
+
+  /** G-07 — webhook ขาออก: แจ้งเว็บภายนอกเมื่อเกิด event ของบริษัท. */
+  webhooks: {
+    title: "Webhook",
+    subtitle:
+      "แจ้งเว็บภายนอกทันทีเมื่อเกิดเหตุการณ์ — ส่งแค่ id กับชนิด event ปลายทางเรียก API อ่านรายละเอียดเอง",
+    add: "เพิ่มปลายทาง",
+    empty: "ยังไม่มี webhook ของบริษัทนี้",
+    loadFailed: "โหลดรายการ webhook ไม่สำเร็จ",
+    columnName: "ชื่อ",
+    columnUrl: "URL",
+    columnEvents: "Event",
+    columnStatus: "สถานะ",
+    columnActions: "",
+    active: "ส่งอยู่",
+    inactive: "ปิด",
+    edit: "แก้ไข",
+    enable: "เปิด",
+    disable: "ปิด",
+    test: "ทดสอบ",
+    testQueued: "ส่ง webhook.ping ในรอบถัดไป (ไม่เกิน ~15 วินาที) — ดูผลที่ประวัติการส่ง",
+    rotate: "ออก secret ใหม่",
+    rotateConfirm: "ออก secret ใหม่?",
+    rotateConfirmBody: "secret เดิมใช้ตรวจลายเซ็นไม่ได้ทันที ปลายทางต้องเปลี่ยนตาม",
+    history: "ประวัติการส่ง",
+    historyEmpty: "ยังไม่มีการส่ง",
+    formName: "ชื่อที่อ่านแล้วรู้ว่าส่งไปไหน",
+    formUrl: "URL ปลายทาง",
+    formUrlHint:
+      "ต้องเป็น https — http หรือเครือข่ายภายในได้เฉพาะ host ที่ผู้ดูแลระบบใส่ไว้ใน WEBHOOK_PRIVATE_HOSTS",
+    formEvents: "Event ที่จะส่ง",
+    save: "บันทึก",
+    saved: "บันทึกแล้ว",
+    secretTitle: "คัดลอก secret เดี๋ยวนี้",
+    secretBody:
+      "ใช้ตรวจ X-Webhook-Signature (HMAC-SHA256 ของ `timestamp.body`) — แสดงครั้งเดียว ทำหายคือออก secret ใหม่",
+    secretDone: "คัดลอกแล้ว ปิดหน้าต่าง",
+    deliveryStatus: {
+      pending: "รอส่ง",
+      sending: "กำลังส่ง",
+      sent: "ส่งแล้ว",
+      dead: "เลิกส่ง",
+    } as Record<string, string>,
+    deliveryColor: {
+      pending: "blue",
+      sending: "blue",
+      sent: "green",
+      dead: "red",
+    } as Record<string, string>,
+    columnAt: "เวลา",
+    columnAttempts: "ครั้งที่",
+    columnResult: "ผล",
   },
 
   /** ใบเสนอราคาฉบับพิมพ์ (A4) */
