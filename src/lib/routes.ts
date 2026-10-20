@@ -191,6 +191,8 @@ export const ROUTES = {
   adminNotificationRules: `${HOME_PATH}/admin/notification-rules`,
   /** กุญแจ API ของช่องทางภายนอก — สิทธิ์ `integration.*` ออกที่นี่. */
   adminApiKeys: `${HOME_PATH}/admin/api-keys`,
+  /** G-07 — webhook ขาออก. */
+  adminWebhooks: `${HOME_PATH}/admin/webhooks`,
   /** CD-275 */
   adminLlm: `${HOME_PATH}/admin/llm`,
   /** CD-279 */
