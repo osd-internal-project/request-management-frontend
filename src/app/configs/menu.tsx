@@ -822,6 +822,14 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     permissions: ["audit.read"],
     group: messages.nav.adminGroup,
   },
+  /** กระบวนการ 7 ขั้น — ทุก step ที่ OSD Workflow บันทึกเข้ามา. */
+  {
+    label: messages.nav.adminProcessLogs,
+    href: ROUTES.adminProcessLogs,
+    icon: "audit",
+    permissions: ["audit.read"],
+    group: messages.nav.adminGroup,
+  },
   /** CD-55 — ส่งถึงใคร เมื่อไร ช่องทางใด อ่านแล้วหรือยัง. */
   {
     label: messages.nav.adminNotificationLog,

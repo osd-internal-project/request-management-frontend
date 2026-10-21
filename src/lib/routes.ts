@@ -184,6 +184,8 @@ export const ROUTES = {
   adminUsers: `${HOME_PATH}/admin/users`,
   /** SUP-04 — Audit log */
   adminAudit: `${HOME_PATH}/admin/audit`,
+  /** บันทึกกระบวนการ End-to-End 7 ขั้น ที่ OSD Workflow เขียนเข้ามา. */
+  adminProcessLogs: `${HOME_PATH}/admin/process-logs`,
   /** CD-55 — บันทึกการแจ้งเตือน */
   adminNotificationLog: `${HOME_PATH}/admin/notification-log`,
   /** CD-54 — ถ้อยคำการแจ้งเตือน */

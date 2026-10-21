@@ -1257,6 +1257,7 @@ export const messages = {
     adminOrg: "ผังทีมและสิทธิ์",
     adminUsers: "ผู้ใช้",
     adminAudit: "Audit Log",
+    adminProcessLogs: "บันทึกกระบวนการ 7 ขั้น",
     adminNotificationLog: "บันทึกการแจ้งเตือน",
     adminNotificationTemplates: "ข้อความแจ้งเตือน",
     adminNotificationRules: "กติกาแจ้งเตือน",
@@ -1616,6 +1617,8 @@ export const messages = {
       "integration.crm.sales.manage": "เขียนงานขายผ่าน API ภายนอก",
       "integration.crm.admin.manage": "แก้ตั้งค่า CRM ผ่าน API ภายนอก",
       "integration.flow.read": "ติดตามดีลทั้งสายผ่าน API ภายนอก",
+      "integration.process.log":
+        "บันทึกกระบวนการ 7 ขั้นจาก OSD Workflow",
       "integration.presales.read":
         "อ่าน Solution ของ Pre-Sales ผ่าน API ภายนอก",
       "integration.legal.read": "อ่านคลังสัญญาผ่าน API ภายนอก",
@@ -4943,6 +4946,42 @@ export const messages = {
   },
 
   /** G-07 — webhook ขาออก: แจ้งเว็บภายนอกเมื่อเกิด event ของบริษัท. */
+  processLogs: {
+    title: "บันทึกกระบวนการ End-to-End 7 ขั้น",
+    subtitle:
+      "ทุกขั้นที่ OSD Workflow เดินผ่าน — ตลาด → โซลูชัน → สัญญา → โครงการ → วางบิล → ปิดต้นทุน → ปิดโครงการ",
+    appendOnly: "บันทึกอย่างเดียว แก้ไขหรือลบไม่ได้",
+    empty: "ยังไม่มีบันทึกในช่วงที่เลือก",
+    resultCount: (count: number) => `${count.toLocaleString("th-TH")} รายการ`,
+    columns: {
+      time: "เวลา",
+      stage: "ขั้น",
+      step: "ขั้นตอนย่อย",
+      status: "ผล",
+      decision: "ทางที่เลือก",
+      ref: "เอกสารอ้างอิง",
+      actor: "ผู้ทำ",
+      instance: "Workflow",
+    },
+    status: {
+      started: "เริ่ม",
+      completed: "เสร็จ",
+      approved: "อนุมัติ",
+      rejected: "ไม่อนุมัติ",
+      returned: "ส่งกลับ",
+      skipped: "ข้าม",
+      failed: "ล้มเหลว",
+      info: "ข้อมูล",
+    },
+    filters: {
+      anyStage: "ทุกขั้น",
+      anyStatus: "ทุกผล",
+      refNo: "เลขเอกสารอ้างอิง",
+      instance: "instance id",
+      apply: "ค้นหา",
+      clear: "ล้าง",
+    },
+  },
   webhooks: {
     title: "Webhook",
     subtitle:
