@@ -194,6 +194,8 @@ export const ROUTES = {
   /** ระบบภายนอก: วิธีเรียก + กุญแจ + webhook + MCP + ประวัติการเรียก (22 ต.ค. 2569). */
   adminIntegrations: `${HOME_PATH}/admin/integrations`,
   adminIntegrationDetail: (id: string) => `${HOME_PATH}/admin/integrations/${id}`,
+  /** เหตุการณ์ใน CTD → เริ่ม workflow บน OSD Workflow. */
+  adminWorkflowTriggers: `${HOME_PATH}/admin/workflow-triggers`,
   /** CD-275 */
   adminLlm: `${HOME_PATH}/admin/llm`,
   /** CD-279 */

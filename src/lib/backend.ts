@@ -147,6 +147,7 @@ export const CORE_SERVICE_PREFIXES = [
   "/admin/api-keys",
   "/admin/webhooks",
   "/admin/integrations",
+  "/admin/workflow-triggers",
   "/process-logs",
   "/admin/erp-sync",
   "/admin/approval-matrix",
