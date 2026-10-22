@@ -69,7 +69,9 @@ export function IntegrationDetail({
   }, [refresh]);
 
   if (error) {
-    return <Alert type="error" showIcon title={m.loadFailed} description={error} />;
+    return (
+      <Alert type="error" showIcon title={m.loadFailed} description={error} />
+    );
   }
   if (row === undefined) {
     return (
@@ -103,7 +105,12 @@ export function IntegrationDetail({
         </Text>
         <ModeTags integration={row} />
         {row.allow_acting_user && (
-          <Alert className="mt-2" type="warning" showIcon title={m.actingUserWarning} />
+          <Alert
+            className="mt-2"
+            type="warning"
+            showIcon
+            title={m.actingUserWarning}
+          />
         )}
       </div>
 
@@ -117,12 +124,26 @@ export function IntegrationDetail({
           {
             key: "keys",
             label: `${m.tabs.keys} (${row.api_key_count})`,
-            children: <ApiKeyAdmin integrationId={row.id} />,
+            children: (
+              <>
+                <Paragraph type="secondary" className="text-xs">
+                  {m.keysHint}
+                </Paragraph>
+                <ApiKeyAdmin integrationId={row.id} />
+              </>
+            ),
           },
           {
             key: "webhooks",
             label: `${m.tabs.webhooks} (${row.webhook_count})`,
-            children: <WebhookAdmin integrationId={row.id} />,
+            children: (
+              <>
+                <Paragraph type="secondary" className="text-xs">
+                  {m.webhooksHint}
+                </Paragraph>
+                <WebhookAdmin integrationId={row.id} />
+              </>
+            ),
           },
           {
             key: "mcp",
@@ -132,7 +153,7 @@ export function IntegrationDetail({
           {
             key: "calls",
             label: m.tabs.calls,
-            children: <CallsTab id={row.id} />,
+            children: <CallsTab id={row.id} canAudit={canAudit} />,
           },
         ]}
       />
@@ -241,7 +262,9 @@ function SettingsTab({
               <Button danger>{m.deactivate}</Button>
             </Popconfirm>
           ) : (
-            <Button onClick={() => void save({ active: true })}>{m.activate}</Button>
+            <Button onClick={() => void save({ active: true })}>
+              {m.activate}
+            </Button>
           )}
         </Space>
       </Space>
@@ -270,6 +293,7 @@ function McpTab({
           {m.mcpEndpointUnset}
         </Paragraph>
       )}
+      <Paragraph className="text-sm">{m.mcpCredential}</Paragraph>
       <Text strong className="text-xs">
         {m.mcpHowTo}
       </Text>
@@ -283,7 +307,13 @@ function McpTab({
   );
 }
 
-function CallsTab({ id }: { readonly id: string }) {
+function CallsTab({
+  id,
+  canAudit,
+}: {
+  readonly id: string;
+  readonly canAudit: boolean;
+}) {
   const [page, setPage] = useState(1);
   const [rows, setRows] = useState<IntegrationCall[] | null>(null);
   const [total, setTotal] = useState(0);
@@ -298,13 +328,22 @@ function CallsTab({ id }: { readonly id: string }) {
   }, [id, page]);
 
   if (error) {
-    return <Alert type="error" showIcon title={m.loadFailed} description={error} />;
+    return (
+      <Alert type="error" showIcon title={m.loadFailed} description={error} />
+    );
   }
 
   return (
     <Card>
       <Paragraph type="secondary" className="text-xs">
         {m.callsHint}
+        {canAudit && (
+          <>
+            {" "}
+            {m.callsVsAudit}{" "}
+            <Link href={ROUTES.adminAiAudit}>{m.mcpAudit}</Link>
+          </>
+        )}
       </Paragraph>
       <Table<IntegrationCall>
         rowKey="id"

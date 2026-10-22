@@ -35,6 +35,21 @@ import { messages } from "@/lib/messages";
 
 const m = messages.webhooks;
 
+/** `request.approved` → กลุ่ม `request`; กลุ่มที่ไม่มีหัวข้อไปรวมที่ "อื่น ๆ". */
+function eventGroups(codes: readonly string[]) {
+  const groups = new Map<string, string[]>();
+  for (const code of codes) {
+    const prefix = code.split(".")[0] ?? "";
+    const key = prefix in m.eventGroups ? prefix : "other";
+    groups.set(key, [...(groups.get(key) ?? []), code]);
+  }
+  return [...groups.entries()].map(([key, list]) => ({
+    key,
+    label: m.eventGroups[key],
+    codes: list,
+  }));
+}
+
 function errorText(result: Extract<ClientResult<unknown>, { ok: false }>) {
   return result.details?.length
     ? messages.common.withDetails(
@@ -100,7 +115,8 @@ export function WebhookAdmin({
     });
   }, [refresh]);
 
-  const ready = name.trim().length > 0 && url.trim().length > 0 && chosen.length > 0;
+  const ready =
+    name.trim().length > 0 && url.trim().length > 0 && chosen.length > 0;
 
   function open(row: WebhookRow | "new") {
     setName(row === "new" ? "" : row.name);
@@ -158,7 +174,9 @@ export function WebhookAdmin({
   }
 
   if (error) {
-    return <Alert type="error" showIcon title={m.loadFailed} description={error} />;
+    return (
+      <Alert type="error" showIcon title={m.loadFailed} description={error} />
+    );
   }
 
   if (!rows) {
@@ -190,7 +208,9 @@ export function WebhookAdmin({
             {
               title: m.columnUrl,
               dataIndex: "url",
-              render: (value: string) => <code className="text-xs break-all">{value}</code>,
+              render: (value: string) => (
+                <code className="text-xs break-all">{value}</code>
+              ),
             },
             {
               title: m.columnEvents,
@@ -225,7 +245,11 @@ export function WebhookAdmin({
                   <Button size="small" onClick={() => void toggle(row)}>
                     {row.active ? m.disable : m.enable}
                   </Button>
-                  <Button size="small" disabled={!row.active} onClick={() => void ping(row)}>
+                  <Button
+                    size="small"
+                    disabled={!row.active}
+                    onClick={() => void ping(row)}
+                  >
                     {m.test}
                   </Button>
                   <Button size="small" onClick={() => void openHistory(row)}>
@@ -280,14 +304,23 @@ export function WebhookAdmin({
               {m.formEvents}
             </Text>
             <Checkbox.Group
-              className="mt-2 grid gap-1"
+              className="mt-2 block"
               value={chosen}
               onChange={(values) => setChosen(values as string[])}
             >
-              {events.map((code) => (
-                <Checkbox key={code} value={code}>
-                  <code className="text-xs">{code}</code>
-                </Checkbox>
+              {eventGroups(events).map((group) => (
+                <div key={group.key} className="mb-3">
+                  <Text strong className="text-xs">
+                    {group.label}
+                  </Text>
+                  <div className="mt-1 grid gap-1">
+                    {group.codes.map((code) => (
+                      <Checkbox key={code} value={code}>
+                        <code className="text-xs">{code}</code>
+                      </Checkbox>
+                    ))}
+                  </div>
+                </div>
               ))}
             </Checkbox.Group>
           </div>
@@ -340,7 +373,9 @@ export function WebhookAdmin({
                 title: m.columnStatus,
                 dataIndex: "status",
                 render: (status: string) => (
-                  <Tag color={m.deliveryColor[status]}>{m.deliveryStatus[status]}</Tag>
+                  <Tag color={m.deliveryColor[status]}>
+                    {m.deliveryStatus[status]}
+                  </Tag>
                 ),
               },
               { title: m.columnAttempts, dataIndex: "attempts", width: 70 },
@@ -348,7 +383,8 @@ export function WebhookAdmin({
                 title: m.columnResult,
                 key: "result",
                 render: (_, row) =>
-                  row.last_error ?? (row.last_status_code ? `HTTP ${row.last_status_code}` : "—"),
+                  row.last_error ??
+                  (row.last_status_code ? `HTTP ${row.last_status_code}` : "—"),
               },
             ]}
           />

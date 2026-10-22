@@ -5053,7 +5053,9 @@ export const messages = {
 
     mcpEndpoint: "MCP Server URL",
     mcpEndpointUnset:
-      "ยังไม่ได้ตั้ง EXTERNAL_API_PUBLIC_URL — ใช้ http://<host>:3503/api/v1/mcp",
+      "ยังไม่แสดง เพราะผู้ดูแลระบบยังไม่ได้ตั้ง EXTERNAL_API_PUBLIC_URL ของเว็บ เป็นที่อยู่ external-service ที่คนนอกเห็น เช่น https://ctd-dev.osd.co.th/external-api — ตั้งแล้ว URL จะขึ้นที่นี่",
+    mcpCredential:
+      "MCP ไม่มีกุญแจแยก — ถ้าเลือก OAuth ใน LibreChat ผู้ใช้ login ด้วยบัญชีของตัวเอง ไม่ต้องตั้งอะไรเพิ่ม; ถ้าใช้กุญแจ ให้ใช้กุญแจ rfk_ จาก tab กุญแจ API ของระบบนี้",
     mcpHowTo: "เชื่อม LibreChat",
     mcpSteps: [
       "ใน LibreChat เปิด \"เพิ่มเซิร์ฟเวอร์ MCP\" แล้ววาง URL ด้านบน เลือก Transport แบบ Streamable HTTPS",
@@ -5062,6 +5064,12 @@ export const messages = {
     ],
     mcpAudit: "ดูว่าผู้ช่วยเรียกข้อมูลอะไรไปบ้าง",
 
+    keysHint:
+      "กุญแจ (rfk_…) คือสิ่งที่ระบบนั้นใช้เรียก API และ MCP ของเรา — scope บอกว่ามันทำอะไรได้ ตรงกับสิทธิ์ของผู้ใช้ทีละตัว",
+    webhooksHint:
+      "Webhook คือเราแจ้งระบบนั้นเมื่อเกิดเรื่อง — event บอกว่าเกิดอะไร ส่งไปแค่ id; secret (whsec_…) ใช้เซ็นข้อความให้ระบบนั้นตรวจว่ามาจากเรา ไม่ใช่กุญแจ และไม่ให้สิทธิ์อ่านข้อมูล อ่านรายละเอียดต้องใช้กุญแจที่มี scope อ่าน",
+    callsVsAudit:
+      "บันทึกการใช้ AI เป็นอีกมุม: ดูว่าผู้ช่วยเรียก tool อะไร ในนามใคร ได้รายการไหนกลับไป ของทั้งบริษัท",
     callsHint:
       "ทุกคำขอที่เข้ามาด้วยกุญแจของระบบนี้ — เก็บตามอายุการเก็บของบันทึกการใช้ AI ไม่เก็บเนื้อหาหรือ header",
     callsEmpty: "ยังไม่มีคำขอจากระบบนี้",
@@ -5107,6 +5115,16 @@ export const messages = {
     formUrlHint:
       "ต้องเป็น https — http หรือเครือข่ายภายในได้เฉพาะ host ที่ผู้ดูแลระบบใส่ไว้ใน WEBHOOK_PRIVATE_HOSTS",
     formEvents: "Event ที่จะส่ง",
+    /** หัวข้อกลุ่มตามคำนำหน้าของรหัส event — Record เพราะ index ด้วยคำนำหน้าที่ตัดจากรหัสจริง */
+    eventGroups: {
+      request: "คำขอ",
+      approval: "อนุมัติ",
+      sla: "SLA",
+      esign: "ลงนามอิเล็กทรอนิกส์",
+      lead: "Lead",
+      webhook: "ทดสอบ",
+      other: "อื่น ๆ",
+    } as Record<string, string>,
     save: "บันทึก",
     saved: "บันทึกแล้ว",
     secretTitle: "คัดลอก secret เดี๋ยวนี้",
