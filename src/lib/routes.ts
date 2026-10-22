@@ -191,10 +191,11 @@ export const ROUTES = {
   /** CD-54 — ถ้อยคำการแจ้งเตือน */
   adminNotificationTemplates: `${HOME_PATH}/admin/notification-templates`,
   adminNotificationRules: `${HOME_PATH}/admin/notification-rules`,
-  /** กุญแจ API ของช่องทางภายนอก — สิทธิ์ `integration.*` ออกที่นี่. */
-  adminApiKeys: `${HOME_PATH}/admin/api-keys`,
-  /** G-07 — webhook ขาออก. */
-  adminWebhooks: `${HOME_PATH}/admin/webhooks`,
+  /** ระบบภายนอก: วิธีเรียก + กุญแจ + webhook + MCP + ประวัติการเรียก (22 ต.ค. 2569). */
+  adminIntegrations: `${HOME_PATH}/admin/integrations`,
+  adminIntegrationDetail: (id: string) => `${HOME_PATH}/admin/integrations/${id}`,
+  /** เหตุการณ์ใน CTD → เริ่ม workflow บน OSD Workflow. */
+  adminWorkflowTriggers: `${HOME_PATH}/admin/workflow-triggers`,
   /** CD-275 */
   adminLlm: `${HOME_PATH}/admin/llm`,
   /** CD-279 */

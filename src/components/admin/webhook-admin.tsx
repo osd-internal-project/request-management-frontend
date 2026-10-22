@@ -60,8 +60,12 @@ function dateTime(iso: string | null): string {
  *
  * secret แสดงครั้งเดียวหลังเพิ่มหรือออกใหม่ — หน้านี้ไม่เก็บไว้ที่อื่นนอกจาก
  * state ของหน้าต่างนั้น
+ *
+ * `integrationId` = แสดงเฉพาะ webhook ของระบบนั้น และเพิ่มใหม่ให้ระบบนั้น.
  */
-export function WebhookAdmin() {
+export function WebhookAdmin({
+  integrationId,
+}: { readonly integrationId?: string } = {}) {
   const { message } = App.useApp();
   const [rows, setRows] = useState<WebhookRow[] | null>(null);
   const [events, setEvents] = useState<string[]>([]);
@@ -79,10 +83,14 @@ export function WebhookAdmin() {
   const refresh = useCallback(
     () =>
       listWebhooks().then((result) => {
-        if (result.ok) setRows(result.data);
-        else setError(result.message);
+        if (!result.ok) return setError(result.message);
+        setRows(
+          integrationId
+            ? result.data.filter((row) => row.integration_id === integrationId)
+            : result.data,
+        );
       }),
-    [],
+    [integrationId],
   );
 
   useEffect(() => {
@@ -106,7 +114,10 @@ export function WebhookAdmin() {
     setBusy(true);
     const payload = { name: name.trim(), url: url.trim(), events: chosen };
     if (form === "new") {
-      const result = await createWebhook(payload);
+      const result = await createWebhook({
+        ...payload,
+        ...(integrationId ? { integration_id: integrationId } : {}),
+      });
       setBusy(false);
       if (!result.ok) return void message.error(errorText(result));
       setSecret(result.data);
