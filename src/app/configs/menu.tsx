@@ -868,16 +868,10 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     permissions: ["admin.crm.manage"],
     group: messages.nav.adminGroup,
   },
+  /** กุญแจ API + webhook + MCP ของแต่ละระบบภายนอก (หน้าเดิมสองหน้า redirect มาที่นี่). */
   {
-    label: messages.nav.adminApiKeys,
-    href: ROUTES.adminApiKeys,
-    icon: "apiKey",
-    permissions: ["admin.integration.manage"],
-    group: messages.nav.adminGroup,
-  },
-  {
-    label: messages.nav.adminWebhooks,
-    href: ROUTES.adminWebhooks,
+    label: messages.nav.adminIntegrations,
+    href: ROUTES.adminIntegrations,
     icon: "apiKey",
     permissions: ["admin.integration.manage"],
     group: messages.nav.adminGroup,

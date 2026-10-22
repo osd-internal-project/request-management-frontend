@@ -11,6 +11,7 @@ import {
   InputNumber,
   Modal,
   Popconfirm,
+  Select,
   Space,
   Spin,
   Table,
@@ -27,6 +28,10 @@ import {
   type ApiKeyRow,
   type IssuedApiKey,
 } from "@/lib/api/api-keys";
+import {
+  listIntegrationPresets,
+  type IntegrationPreset,
+} from "@/lib/api/integrations";
 import { messages, thaiForPermission } from "@/lib/messages";
 
 const m = messages.apiKeys;
@@ -129,8 +134,12 @@ function ScopePicker({
  *
  * ค่าเต็มของกุญแจปรากฏครั้งเดียวในหน้าต่างหลังออกใบใหม่ — ฐานข้อมูลเก็บแค่ค่าแฮช
  * จึงไม่มีทางอ่านกลับ และหน้านี้ไม่เก็บมันไว้ที่ไหนนอกจาก state ของหน้าต่างนั้น
+ *
+ * `integrationId` = แสดงเฉพาะกุญแจของระบบนั้น และออกใบใหม่ให้ระบบนั้น.
  */
-export function ApiKeyAdmin() {
+export function ApiKeyAdmin({
+  integrationId,
+}: { readonly integrationId?: string } = {}) {
   // antd's `message` from context, so it inherits the app theme.
   const { message } = App.useApp();
   const [rows, setRows] = useState<ApiKeyRow[] | null>(null);
@@ -146,6 +155,7 @@ export function ApiKeyAdmin() {
   const [sourceCode, setSourceCode] = useState("");
   const [chosenScopes, setChosenScopes] = useState<string[]>([]);
   const [expiresInDays, setExpiresInDays] = useState<number | null>(null);
+  const [presets, setPresets] = useState<IntegrationPreset[]>([]);
 
   // .then style keeps every setState inside an async callback — the
   // react-hooks/set-state-in-effect rule rejects anything it cannot prove
@@ -153,10 +163,14 @@ export function ApiKeyAdmin() {
   const refresh = useCallback(
     () =>
       listApiKeys().then((result) => {
-        if (result.ok) setRows(result.data);
-        else setError(result.message);
+        if (!result.ok) return setError(result.message);
+        setRows(
+          integrationId
+            ? result.data.filter((row) => row.integration_id === integrationId)
+            : result.data,
+        );
       }),
-    [],
+    [integrationId],
   );
 
   useEffect(() => {
@@ -164,7 +178,12 @@ export function ApiKeyAdmin() {
     void listApiKeyScopes().then((result) => {
       if (result.ok) setScopes(result.data.map((scope) => scope.code));
     });
-  }, [refresh]);
+    if (integrationId) {
+      void listIntegrationPresets().then((result) => {
+        if (result.ok) setPresets(result.data);
+      });
+    }
+  }, [refresh, integrationId]);
 
   const sourceInvalid =
     sourceCode.trim().length > 0 && !SOURCE_CODE_PATTERN.test(sourceCode.trim());
@@ -189,6 +208,7 @@ export function ApiKeyAdmin() {
       source_code: sourceCode.trim(),
       scopes: chosenScopes,
       ...(expiresInDays ? { expires_in_days: expiresInDays } : {}),
+      ...(integrationId ? { integration_id: integrationId } : {}),
     });
 
     setBusy(false);
@@ -379,6 +399,24 @@ export function ApiKeyAdmin() {
             <Text strong className="text-xs">
               {m.formScopes}
             </Text>
+            {presets.length > 0 && (
+              <Select<string>
+                className="mt-2 w-full"
+                allowClear
+                placeholder={m.formPreset}
+                options={presets.map((preset) => ({
+                  value: preset.code,
+                  label: preset.name,
+                }))}
+                onChange={(code) =>
+                  setChosenScopes(
+                    presets
+                      .find((preset) => preset.code === code)
+                      ?.scopes.filter((scope) => scopes.includes(scope)) ?? [],
+                  )
+                }
+              />
+            )}
             <ScopePicker
               all={scopes}
               value={chosenScopes}

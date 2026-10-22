@@ -22,6 +22,8 @@ export interface ApiKeyRow {
   last_used_at: string | null;
   created_at: string;
   created_by: string | null;
+  /** ระบบภายนอกเจ้าของกุญแจ — null = กุญแจก่อน 22 ต.ค. 2569 ที่ยังไม่ backfill. */
+  integration_id: string | null;
 }
 
 /** คำตอบตอนออกกุญแจ — `key` คือค่าเต็มที่จะไม่ปรากฏอีก. */
@@ -38,6 +40,8 @@ export interface IssueApiKeyPayload {
   source_code: string;
   scopes: string[];
   expires_in_days?: number;
+  /** ไม่ส่ง = backend สร้างระบบภายนอกให้กุญแจใบนี้เอง */
+  integration_id?: string;
 }
 
 /** สิทธิ์ที่ออกให้กุญแจได้ — มาจาก catalog ฝั่ง backend ไม่ใช่รายการเขียนมือ. */

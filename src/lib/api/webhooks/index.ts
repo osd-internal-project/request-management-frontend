@@ -18,6 +18,7 @@ export interface WebhookRow {
   active: boolean;
   created_at: string;
   created_by: string;
+  integration_id: string | null;
 }
 
 export interface WebhookWithSecret extends WebhookRow {
@@ -41,6 +42,7 @@ export interface WebhookPayload {
   name: string;
   url: string;
   events: string[];
+  integration_id?: string;
 }
 
 export async function listWebhookEvents(): Promise<

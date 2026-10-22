@@ -1245,8 +1245,7 @@ export const messages = {
     esignMine: "เอกสารรอลงนาม",
     esignAuthorities: "ทะเบียนผู้มีอำนาจลงนาม",
     adminCrm: "ตั้งค่า CRM",
-    adminApiKeys: "กุญแจ API",
-    adminWebhooks: "Webhook",
+    adminIntegrations: "ระบบภายนอก",
     adminErpSync: "คิวส่ง SAP",
     adminLlm: "LLM Gateway",
     adminAiAudit: "บันทึกการใช้ AI",
@@ -4937,6 +4936,7 @@ export const messages = {
     formSourceInvalid: "ใช้ได้เฉพาะตัวพิมพ์เล็ก ตัวเลข และขีด",
     formScopes: "สิทธิ์ที่กุญแจใบนี้ถือ",
     formScopesHint: "ไม่มีค่าตั้งต้น — ติ๊กเท่าที่ช่องทางนั้นต้องใช้จริง",
+    formPreset: "ติ๊กตามชุดสำเร็จรูป (แก้ต่อได้)",
     /** หัวข้อย่อยของ `integration.<area>.*` — จัดกลุ่มตามโมดูลที่กุญแจไปแตะ. */
     scopeAreas: {
       request: "คำขอ",
@@ -4997,6 +4997,86 @@ export const messages = {
       clear: "ล้าง",
     },
   },
+  integrations: {
+    title: "ระบบภายนอก",
+    subtitle:
+      "ระบบที่เชื่อมเข้ามา (AI agent, workflow, chatbot) — แต่ละระบบถือกุญแจ API และ webhook ของตัวเอง และกำหนดได้ว่าเรียกในนามใคร",
+    add: "เพิ่มระบบภายนอก",
+    empty: "ยังไม่มีระบบภายนอกที่เชื่อมกับบริษัทนี้ — เพิ่มระบบแรก แล้วออกกุญแจให้มัน",
+    loadFailed: "โหลดรายการระบบภายนอกไม่สำเร็จ",
+    notFound: "ไม่พบระบบภายนอกนี้ในบริษัทที่กำลังทำงานอยู่",
+    back: "ระบบภายนอกทั้งหมด",
+
+    columnName: "ชื่อ",
+    columnModes: "เรียกได้แบบ",
+    columnKeys: "กุญแจ",
+    columnWebhooks: "Webhook",
+    columnStatus: "สถานะ",
+    active: "ใช้งาน",
+    inactive: "ปิดอยู่",
+
+    mode: {
+      app: "ในนามบริษัท",
+      delegated: "ในนามผู้ใช้ (ผู้ใช้ login เอง)",
+    },
+    actingUser: "ระบุผู้ใช้ด้วยอีเมล (แบบเดิม)",
+    actingUserWarning:
+      "เปิดให้ระบุผู้ใช้ด้วยอีเมลอยู่ — ระบบนี้ทำแทนใครก็ได้โดยผู้ใช้ไม่ได้ยินยอม ควรเปลี่ยนไปใช้ token ของผู้ใช้แล้วปิด",
+
+    formName: "ชื่อระบบ เช่น Aiyara AI agent",
+    formDescription: "ใช้ทำอะไร (ไม่บังคับ)",
+    formPreset: "ใช้ทำอะไร — เลือกแล้วระบบตั้งวิธีเรียกให้",
+    formModes: "เรียกได้แบบ",
+    formModesHint:
+      "ในนามบริษัท = ระบบทำงานเองโดยไม่มีผู้ใช้; ในนามผู้ใช้ = ผู้ใช้ login กับระบบนั้นแล้วส่ง token มาด้วย สิทธิ์คือส่วนที่ทั้งกุญแจและผู้ใช้มี",
+    formActingUser: "อนุญาตให้ระบุผู้ใช้ด้วยอีเมล (X-Acting-User)",
+    formClientIds: "Keycloak client ที่ออก token ของผู้ใช้ให้ระบบนี้",
+    formClientIdsHint:
+      "ต้องตรงกับ azp ของ token — token ที่ออกให้ระบบอื่น (เช่นเว็บของเราเอง) ใช้แทนไม่ได้",
+    save: "บันทึก",
+    saved: "บันทึกแล้ว — มีผลกับคำขอถัดไปทันที",
+    created: "เพิ่มระบบภายนอกแล้ว — ออกกุญแจให้มันที่ tab กุญแจ API",
+    deactivate: "ปิดการเชื่อมต่อ",
+    deactivateConfirm: "ปิดการเชื่อมต่อ?",
+    deactivateConfirmBody:
+      "กุญแจทุกใบของระบบนี้จะถูกปฏิเสธตั้งแต่คำขอถัดไป เปิดกลับได้ภายหลัง",
+    activate: "เปิดการเชื่อมต่อ",
+
+    tabs: {
+      settings: "ตั้งค่า",
+      keys: "กุญแจ API",
+      webhooks: "Webhook",
+      mcp: "MCP",
+      calls: "ประวัติการเรียก",
+    },
+
+    mcpEndpoint: "MCP Server URL",
+    mcpEndpointUnset:
+      "ยังไม่ได้ตั้ง EXTERNAL_API_PUBLIC_URL — ใช้ http://<host>:3503/api/v1/mcp",
+    mcpHowTo: "เชื่อม LibreChat",
+    mcpSteps: [
+      "ใน LibreChat เปิด \"เพิ่มเซิร์ฟเวอร์ MCP\" แล้ววาง URL ด้านบน เลือก Transport แบบ Streamable HTTPS",
+      "ถ้าแต่ละคนต้องเห็นข้อมูลของตัวเอง เลือกการยืนยันตัวตนแบบ OAuth — ผู้ใช้ login ด้วยบัญชีของตัวเอง",
+      "ถ้าใช้กุญแจ API ของระบบนี้ ต้องส่ง token ของผู้ใช้มาใน X-User-Token ด้วย และระบบต้องเปิด \"ในนามผู้ใช้\"",
+    ],
+    mcpAudit: "ดูว่าผู้ช่วยเรียกข้อมูลอะไรไปบ้าง",
+
+    callsHint:
+      "ทุกคำขอที่เข้ามาด้วยกุญแจของระบบนี้ — เก็บตามอายุการเก็บของบันทึกการใช้ AI ไม่เก็บเนื้อหาหรือ header",
+    callsEmpty: "ยังไม่มีคำขอจากระบบนี้",
+    callAt: "เวลา",
+    callRoute: "คำขอ",
+    callMode: "ในนาม",
+    callStatus: "ผล",
+    callDuration: "ใช้เวลา",
+    callModeLabel: {
+      app: "บริษัท",
+      user_token: "ผู้ใช้ (token)",
+      acting_user: "ผู้ใช้ (อีเมล)",
+      person: "ผู้ใช้เอง",
+    },
+  },
+
   webhooks: {
     title: "Webhook",
     subtitle:
