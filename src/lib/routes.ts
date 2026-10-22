@@ -195,6 +195,8 @@ export const ROUTES = {
   adminApiKeys: `${HOME_PATH}/admin/api-keys`,
   /** G-07 — webhook ขาออก. */
   adminWebhooks: `${HOME_PATH}/admin/webhooks`,
+  /** เหตุการณ์ใน CTD → เริ่ม workflow บน OSD Workflow. */
+  adminWorkflowTriggers: `${HOME_PATH}/admin/workflow-triggers`,
   /** CD-275 */
   adminLlm: `${HOME_PATH}/admin/llm`,
   /** CD-279 */

@@ -882,6 +882,13 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     permissions: ["admin.integration.manage"],
     group: messages.nav.adminGroup,
   },
+  {
+    label: messages.nav.adminWorkflowTriggers,
+    href: ROUTES.adminWorkflowTriggers,
+    icon: "apiKey",
+    permissions: ["admin.integration.manage"],
+    group: messages.nav.adminGroup,
+  },
   /** CD-275 — LLM Gateway: โมเดลต่องาน AI โควตา ราคา และการใช้งาน. */
   {
     label: messages.nav.adminLlm,

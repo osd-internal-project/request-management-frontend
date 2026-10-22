@@ -27,6 +27,7 @@ export { default as notifications } from "./notifications";
 export { default as bi } from "./bi";
 export { default as apiKeys } from "./api-keys";
 export { default as webhooks } from "./webhooks";
+export { default as workflowTriggers } from "./workflow-triggers";
 export { default as erpSync } from "./erp-sync";
 export { default as products } from "./products";
 export { default as customers } from "./customers";
