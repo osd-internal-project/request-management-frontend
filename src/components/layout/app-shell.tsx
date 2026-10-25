@@ -7,12 +7,11 @@ import {
   Dropdown,
   Grid,
   Layout,
-  Menu,
   Splitter,
 } from "antd";
 import { MenuOutlined } from "@ant-design/icons";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import type { MenuEntry } from "@/app/configs/menu";
 import { updateChatContext } from "@/components/layout/chat/chat-context";
 import { ChatPanel } from "@/components/layout/chat/chat-panel";
@@ -22,39 +21,17 @@ import {
   type ChatWidgetConfig,
 } from "@/components/layout/chat/librechat-widget";
 import { useChatDock } from "@/components/layout/chat/use-chat-dock";
-import { MenuIcon } from "@/components/layout/nav-icons";
+import { menuEntryFor, ModuleNav } from "@/components/layout/module-nav";
 import { NavRail } from "@/components/layout/nav-rail";
 import { CompanySwitcher } from "@/components/layout/company-switcher";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { messages } from "@/lib/messages";
-import { HOME_PATH } from "@/lib/routes";
 
 const { Header, Content, Footer, Sider } = Layout;
 
 const currentYear = new Date().getFullYear();
 
 const LOGOUT_ROUTE = "/api/auth/logout";
-
-function toMenuItem(entry: MenuEntry) {
-  return {
-    key: entry.href,
-    label: entry.label,
-    icon: <MenuIcon name={entry.icon} />,
-  };
-}
-
-/** The entry whose href is the longest prefix of `pathname`, so a detail page maps to its list. */
-function menuEntryFor(pathname: string, menus: readonly MenuEntry[]) {
-  let best: MenuEntry | null = null;
-  for (const entry of menus) {
-    // Home is the prefix of every route, so it only ever matches itself.
-    const matches =
-      pathname === entry.href ||
-      (entry.href !== HOME_PATH && pathname.startsWith(`${entry.href}/`));
-    if (matches && entry.href.length > (best?.href.length ?? -1)) best = entry;
-  }
-  return best;
-}
 
 export interface ShellCompany {
   id: string;
@@ -117,46 +94,6 @@ export function AppShell({
   // usable, so the panel covers the screen instead.
   const isDesktop = !!screens.lg;
 
-  // Groups keep the "ผู้ดูแลระบบ" heading from the mockups without the menu
-  // config needing to know about antd's item shape.
-  const items = useMemo(() => {
-    const ungrouped = menus.filter((entry) => !entry.group);
-    const groups = new Map<string, MenuEntry[]>();
-
-    for (const entry of menus.filter((candidate) => candidate.group)) {
-      const bucket = groups.get(entry.group!) ?? [];
-      bucket.push(entry);
-      groups.set(entry.group!, bucket);
-    }
-
-    return [
-      ...ungrouped.map(toMenuItem),
-      ...[...groups.entries()].map(([group, entries]) => ({
-        key: `group:${group}`,
-        type: "group" as const,
-        label: group,
-        children: entries.map(toMenuItem),
-      })),
-    ];
-  }, [menus]);
-
-  // One menu, shown in the Sider on desktop and in a drawer below `lg`.
-  const navMenu = (
-    <Menu
-      // min-h-0: a flex item defaults to min-height:auto, which would let a
-      // long menu stretch the Sider instead of scrolling.
-      className="min-h-0 flex-1 overflow-y-auto"
-      mode="inline"
-      selectedKeys={[pathname]}
-      items={items}
-      onClick={({ key }) => {
-        if (key.startsWith("group:")) return;
-        setNavOpen(false);
-        router.push(key);
-      }}
-    />
-  );
-
   async function onLogoutClick(event: React.MouseEvent<HTMLAnchorElement>) {
     // Revoke the chat widget's session first; the navigation would cut its iframe off.
     event.preventDefault();
@@ -217,6 +154,7 @@ export function AppShell({
         />
       ) : (
         <Sider
+          width={280}
           className="max-lg:hidden!"
           classNames={{ body: "flex h-full flex-col" }}
         >
@@ -224,7 +162,12 @@ export function AppShell({
             <h1 className="text-xl font-bold">{messages.app.name}</h1>
           </div>
 
-          {navMenu}
+          <ModuleNav
+            menus={menus}
+            pathname={pathname}
+            onNavigate={(href) => router.push(href)}
+            shortcut
+          />
         </Sider>
       )}
 
@@ -236,7 +179,14 @@ export function AppShell({
         styles={{ body: { padding: 0, display: "flex", flexDirection: "column" } }}
         onClose={() => setNavOpen(false)}
       >
-        {navMenu}
+        <ModuleNav
+          menus={menus}
+          pathname={pathname}
+          onNavigate={(href) => {
+            setNavOpen(false);
+            router.push(href);
+          }}
+        />
       </Drawer>
 
       {/* min-w-0 keeps a wide table from pushing the Sider off-screen. */}
