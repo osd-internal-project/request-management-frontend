@@ -108,8 +108,10 @@ export interface MenuEntry {
   icon?: MenuIconKey;
   /** Shown only if the session holds at least one of these. */
   permissions?: readonly string[];
-  /** Group heading rendered above this entry, e.g. "ผู้ดูแลระบบ". */
-  group?: string;
+  /** The module this entry belongs to, e.g. "ผู้ดูแลระบบ" — one icon in the rail. */
+  group: string;
+  /** Sub-heading inside the module's panel, for modules too long to scan flat. */
+  section?: string;
 }
 
 /**
@@ -785,6 +787,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     icon: "requestType",
     permissions: ["admin.request-type.manage"],
     group: messages.nav.adminGroup,
+    section: messages.nav.adminSectionModules,
   },
   /** CD-66 — ลูกค้ายื่นคำขอเองผ่านแบบฟอร์มสาธารณะ / LINE / AI CARE. */
   {
@@ -793,6 +796,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     icon: "intakeChannel",
     permissions: ["admin.request-type.manage"],
     group: messages.nav.adminGroup,
+    section: messages.nav.adminSectionModules,
   },
   {
     label: messages.nav.adminSla,
@@ -800,6 +804,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     icon: "slaSettings",
     permissions: ["admin.sla.manage"],
     group: messages.nav.adminGroup,
+    section: messages.nav.adminSectionModules,
   },
   {
     label: messages.nav.adminOrg,
@@ -807,6 +812,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     icon: "org",
     permissions: ["admin.org.manage"],
     group: messages.nav.adminGroup,
+    section: messages.nav.adminSectionAccess,
   },
   {
     label: messages.nav.adminUsers,
@@ -814,6 +820,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     icon: "user",
     permissions: ["user.read"],
     group: messages.nav.adminGroup,
+    section: messages.nav.adminSectionAccess,
   },
   {
     label: messages.nav.adminAudit,
@@ -821,6 +828,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     icon: "audit",
     permissions: ["audit.read"],
     group: messages.nav.adminGroup,
+    section: messages.nav.adminSectionAudit,
   },
   /** กระบวนการ 7 ขั้น — ทุก step ที่ OSD Workflow บันทึกเข้ามา. */
   {
@@ -829,6 +837,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     icon: "audit",
     permissions: ["audit.read"],
     group: messages.nav.adminGroup,
+    section: messages.nav.adminSectionAudit,
   },
   /** CD-55 — ส่งถึงใคร เมื่อไร ช่องทางใด อ่านแล้วหรือยัง. */
   {
@@ -837,6 +846,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     icon: "notificationLog",
     permissions: ["audit.read"],
     group: messages.nav.adminGroup,
+    section: messages.nav.adminSectionNotifications,
   },
   /** CD-53 — กติกาแจ้งเตือนจากเหตุการณ์ (สัญญา/ใบแจ้งหนี้/KYC/ดีลเงียบ) รวมที่เดียว. */
   {
@@ -845,6 +855,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     icon: "notificationRule",
     permissions: ["admin.notification.manage"],
     group: messages.nav.adminGroup,
+    section: messages.nav.adminSectionNotifications,
   },
   /** CD-54 — ถ้อยคำการแจ้งเตือนต่อเหตุการณ์ ของแต่ละบริษัท. */
   {
@@ -853,6 +864,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     icon: "notificationTemplate",
     permissions: ["admin.notification.manage"],
     group: messages.nav.adminGroup,
+    section: messages.nav.adminSectionNotifications,
   },
   {
     label: messages.nav.adminBi,
@@ -860,6 +872,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     icon: "biSettings",
     permissions: ["admin.bi.manage"],
     group: messages.nav.adminGroup,
+    section: messages.nav.adminSectionModules,
   },
   {
     label: messages.nav.adminCrm,
@@ -867,6 +880,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     icon: "crmSettings",
     permissions: ["admin.crm.manage"],
     group: messages.nav.adminGroup,
+    section: messages.nav.adminSectionModules,
   },
   /** กุญแจ API + webhook + MCP ของแต่ละระบบภายนอก (หน้าเดิมสองหน้า redirect มาที่นี่). */
   {
@@ -875,6 +889,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     icon: "apiKey",
     permissions: ["admin.integration.manage"],
     group: messages.nav.adminGroup,
+    section: messages.nav.adminSectionIntegrations,
   },
   {
     label: messages.nav.adminWorkflowTriggers,
@@ -882,6 +897,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     icon: "apiKey",
     permissions: ["admin.integration.manage"],
     group: messages.nav.adminGroup,
+    section: messages.nav.adminSectionIntegrations,
   },
   /** CD-275 — LLM Gateway: โมเดลต่องาน AI โควตา ราคา และการใช้งาน. */
   {
@@ -890,6 +906,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     icon: "llm",
     permissions: ["admin.llm.manage"],
     group: messages.nav.adminGroup,
+    section: messages.nav.adminSectionIntegrations,
   },
   /** CD-279 — บันทึก AI: การเรียก MCP tool และโมเดล ค้นย้อนหลัง + อายุการเก็บ. */
   {
@@ -898,6 +915,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     icon: "aiAudit",
     permissions: ["admin.ai.audit"],
     group: messages.nav.adminGroup,
+    section: messages.nav.adminSectionIntegrations,
   },
   /** แผงผู้ช่วย AI โหลด LibreChat จากที่อยู่ไหน (http / https) ต่อบริษัท. */
   {
@@ -906,6 +924,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     icon: "chatWidget",
     permissions: ["admin.chat-widget.manage"],
     group: messages.nav.adminGroup,
+    section: messages.nav.adminSectionIntegrations,
   },
   /** CM-06 / CD-88 — งานส่ง SAP ที่ไม่สำเร็จ ดูข้อผิดพลาดแล้วกดส่งใหม่. */
   {
@@ -914,6 +933,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     icon: "erpSync",
     permissions: ["admin.integration.manage"],
     group: messages.nav.adminGroup,
+    section: messages.nav.adminSectionIntegrations,
   },
   {
     label: messages.nav.adminRunNumbers,
@@ -921,8 +941,27 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     icon: "runNumber",
     permissions: ["admin.run-number.manage"],
     group: messages.nav.adminGroup,
+    section: messages.nav.adminSectionModules,
   },
 ];
+
+/** The rail icon for each module, keyed by `MenuEntry.group`. */
+export const GROUP_ICONS: Readonly<Record<string, MenuIconKey>> = {
+  [messages.nav.requestGroup]: "inbox",
+  [messages.nav.biGroup]: "dashboard",
+  [messages.nav.crmGroup]: "customer",
+  [messages.nav.macomGroup]: "campaign",
+  [messages.nav.presalesGroup]: "opportunity",
+  [messages.nav.pricingGroup]: "pricingPrice",
+  [messages.nav.pmGroup]: "project",
+  [messages.nav.deliveryGroup]: "delivery",
+  [messages.nav.serviceGroup]: "serviceWorkOrder",
+  [messages.nav.hrGroup]: "hrEmployee",
+  [messages.nav.financeGroup]: "disbursementList",
+  [messages.nav.legalGroup]: "contract",
+  [messages.nav.kbGroup]: "kb",
+  [messages.nav.adminGroup]: "org",
+};
 
 /** One BI dashboard as the menu needs it — `key` and `title` from `GET /bi/menu`. */
 export interface BiMenuDashboard {
