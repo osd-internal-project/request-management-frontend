@@ -7,7 +7,7 @@ import {
   App,
   Button,
   Card,
-  Checkbox,
+  Form,
   Input,
   Popconfirm,
   Select,
@@ -198,44 +198,42 @@ function SettingsTab({
 
   return (
     <Card>
-      <Space direction="vertical" className="w-full max-w-2xl">
-        <Input
-          placeholder={m.formName}
-          value={name}
-          maxLength={120}
-          onChange={(e) => setName(e.target.value)}
-        />
-        <Input.TextArea
-          placeholder={m.formDescription}
-          value={description}
-          maxLength={500}
-          autoSize={{ minRows: 2 }}
-          onChange={(e) => setDescription(e.target.value)}
-        />
-        <ModesPicker value={modes} onChange={setModes} />
+      <Form layout="vertical" component="div" className="max-w-2xl">
+        <Form.Item label={m.formNameLabel} required>
+          <Input
+            placeholder={m.formName}
+            value={name}
+            maxLength={120}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </Form.Item>
+        <Form.Item label={m.formDescriptionLabel}>
+          <Input.TextArea
+            placeholder={m.formDescription}
+            value={description}
+            maxLength={500}
+            autoSize={{ minRows: 2 }}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+        </Form.Item>
+        <Form.Item>
+          <ModesPicker
+            value={modes}
+            onChange={setModes}
+            actingUser={{ value: actingUser, onChange: setActingUser }}
+          />
+        </Form.Item>
         {modes.includes("delegated") && (
-          <div>
-            <Text strong className="text-xs">
-              {m.formClientIds}
-            </Text>
+          <Form.Item label={m.formClientIds} extra={m.formClientIdsHint}>
             <Select
               mode="tags"
-              className="mt-1 w-full"
+              className="w-full"
               value={clientIds}
               onChange={setClientIds}
               tokenSeparators={[",", " "]}
             />
-            <Text type="secondary" className="text-xs">
-              {m.formClientIdsHint}
-            </Text>
-          </div>
+          </Form.Item>
         )}
-        <Checkbox
-          checked={actingUser}
-          onChange={(e) => setActingUser(e.target.checked)}
-        >
-          {m.formActingUser}
-        </Checkbox>
         <Space>
           <Button
             type="primary"
@@ -267,7 +265,7 @@ function SettingsTab({
             </Button>
           )}
         </Space>
-      </Space>
+      </Form>
     </Card>
   );
 }

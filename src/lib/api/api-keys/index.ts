@@ -5,8 +5,8 @@
  * Services: core-service — `/admin/api-keys/*`
  *
  * ผ่าน BFF (`adminApi`) ไม่ใช่ `core.ts` เพราะทุกตัวยิงจากการคลิกบนหน้าจอ
- * ค่าเต็มของกุญแจอยู่ในคำตอบของ `issueApiKey` **ครั้งเดียว** ไม่มี endpoint
- * ไหนอ่านกลับได้ — ห้ามเก็บไว้ที่ไหนนอกจากแสดงให้คนออกกุญแจคัดลอก
+ * ค่าเต็มของกุญแจอ่านได้ตอนออก / ออกใหม่ และจาก `revealApiKey` (ลง audit ทุกครั้ง)
+ * — ห้ามเก็บไว้ที่ไหนนอกจาก state ของช่องที่แสดงมัน
  */
 
 import { adminApi, type ClientResult } from "../client";
@@ -26,7 +26,7 @@ export interface ApiKeyRow {
   integration_id: string | null;
 }
 
-/** คำตอบตอนออกกุญแจ — `key` คือค่าเต็มที่จะไม่ปรากฏอีก. */
+/** คำตอบตอนออกกุญแจ / ออกใหม่ — `key` คือค่าเต็ม. */
 export interface IssuedApiKey extends ApiKeyRow {
   key: string;
 }
@@ -80,6 +80,20 @@ export async function revokeApiKey(
   return adminApi<ApiKeyRow>(`api-keys/${id}/revoke`, { method: "POST" });
 }
 
+/** ค่าเต็มของกุญแจ — กุญแจที่ออกก่อน 26 ต.ค. 2569 ได้ 422 (ต้องออกใหม่). */
+export async function revealApiKey(
+  id: string,
+): Promise<ClientResult<{ key: string }>> {
+  return adminApi<{ key: string }>(`api-keys/${id}/secret`);
+}
+
+/** ออกใบใหม่สิทธิ์เดิม แล้วเพิกถอนใบเดิมทันที. */
+export async function rotateApiKey(
+  id: string,
+): Promise<ClientResult<IssuedApiKey>> {
+  return adminApi<IssuedApiKey>(`api-keys/${id}/rotate`, { method: "POST" });
+}
+
 /** Grouped for `import apiKeys from …` at call sites. */
 const apiKeys = {
   listApiKeyScopes,
@@ -87,6 +101,8 @@ const apiKeys = {
   issueApiKey,
   updateApiKeyScopes,
   revokeApiKey,
+  revealApiKey,
+  rotateApiKey,
 };
 
 export default apiKeys;

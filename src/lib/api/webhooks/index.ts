@@ -4,8 +4,8 @@
  * Database: webhook_subscriptions, webhook_deliveries
  * Services: core-service — `/admin/webhooks/*`
  *
- * `secret` อยู่ในคำตอบของ `createWebhook` / `rotateWebhookSecret` **ครั้งเดียว**
- * — ห้ามเก็บไว้ที่ไหนนอกจากแสดงให้คนตั้งคัดลอก
+ * `secret` อยู่ในคำตอบของ `createWebhook` / `rotateWebhookSecret` และ
+ * `revealWebhookSecret` (ลง audit ทุกครั้ง) — ห้ามเก็บไว้นอก state ของช่องที่แสดงมัน
  */
 
 import { adminApi, type ClientResult } from "../client";
@@ -82,6 +82,24 @@ export async function rotateWebhookSecret(
   });
 }
 
+/** secret ปัจจุบัน — ลง audit ทุกครั้งที่ดู. */
+export async function revealWebhookSecret(
+  id: string,
+): Promise<ClientResult<{ secret: string }>> {
+  return adminApi<{ secret: string }>(`webhooks/${id}/secret`);
+}
+
+/** ส่งการแจ้งเดิมซ้ำด้วย `X-Webhook-Id` เดิม ในรอบถัดไปของ worker. */
+export async function redeliverWebhook(
+  id: string,
+  deliveryId: string,
+): Promise<ClientResult<{ queued: true }>> {
+  return adminApi<{ queued: true }>(
+    `webhooks/${id}/deliveries/${deliveryId}/redeliver`,
+    { method: "POST" },
+  );
+}
+
 export async function listWebhookDeliveries(
   id: string,
 ): Promise<ClientResult<WebhookDelivery[]>> {
@@ -100,6 +118,8 @@ const webhooks = {
   createWebhook,
   updateWebhook,
   rotateWebhookSecret,
+  revealWebhookSecret,
+  redeliverWebhook,
   listWebhookDeliveries,
   testWebhook,
 };
