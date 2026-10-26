@@ -6,23 +6,28 @@ import {
   App,
   Button,
   Card,
-  Checkbox,
   Drawer,
+  Dropdown,
+  Form,
   Input,
   Modal,
-  Popconfirm,
+  Popover,
   Space,
   Spin,
   Table,
   Tag,
 } from "antd";
+import { MoreOutlined } from "@ant-design/icons";
 import Paragraph from "antd/es/typography/Paragraph";
-import Text from "antd/es/typography/Text";
+import { GroupedPicker } from "@/components/admin/integrations/grouped-picker";
+import { SecretField, unwrap } from "@/components/admin/integrations/secret-field";
 import {
   createWebhook,
   listWebhookDeliveries,
   listWebhookEvents,
   listWebhooks,
+  redeliverWebhook,
+  revealWebhookSecret,
   rotateWebhookSecret,
   testWebhook,
   updateWebhook,
@@ -73,15 +78,15 @@ function dateTime(iso: string | null): string {
 /**
  * ตั้งปลายทาง webhook ขาออกของบริษัท (`admin.integration.manage`, G-07).
  *
- * secret แสดงครั้งเดียวหลังเพิ่มหรือออกใหม่ — หน้านี้ไม่เก็บไว้ที่อื่นนอกจาก
- * state ของหน้าต่างนั้น
+ * secret แสดงหลังเพิ่มหรือออกใหม่ และกดดูย้อนหลังได้ (ลง audit ทุกครั้ง) —
+ * หน้านี้ไม่เก็บไว้ที่อื่นนอกจาก state ของช่องที่แสดงมัน
  *
  * `integrationId` = แสดงเฉพาะ webhook ของระบบนั้น และเพิ่มใหม่ให้ระบบนั้น.
  */
 export function WebhookAdmin({
   integrationId,
 }: { readonly integrationId?: string } = {}) {
-  const { message } = App.useApp();
+  const { message, modal } = App.useApp();
   const [rows, setRows] = useState<WebhookRow[] | null>(null);
   const [events, setEvents] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -153,10 +158,25 @@ export function WebhookAdmin({
     await refresh();
   }
 
-  async function rotate(row: WebhookRow) {
-    const result = await rotateWebhookSecret(row.id);
+  function confirmRotate(row: WebhookRow) {
+    modal.confirm({
+      title: m.rotateConfirm,
+      content: m.rotateConfirmBody,
+      okText: m.rotate,
+      okButtonProps: { danger: true },
+      onOk: async () => {
+        const result = await rotateWebhookSecret(row.id);
+        if (!result.ok) return void message.error(errorText(result));
+        setSecret(result.data);
+      },
+    });
+  }
+
+  async function redeliver(row: WebhookRow, delivery: WebhookDelivery) {
+    const result = await redeliverWebhook(row.id, delivery.id);
     if (!result.ok) return void message.error(errorText(result));
-    setSecret(result.data);
+    message.success(m.redelivered);
+    await openHistory(row);
   }
 
   async function ping(row: WebhookRow) {
@@ -204,23 +224,50 @@ export function WebhookAdmin({
           locale={{ emptyText: m.empty }}
           scroll={{ x: true }}
           columns={[
-            { title: m.columnName, dataIndex: "name" },
             {
-              title: m.columnUrl,
-              dataIndex: "url",
-              render: (value: string) => (
-                <code className="text-xs break-all">{value}</code>
+              title: m.columnName,
+              dataIndex: "name",
+              render: (name: string, row) => (
+                <div className="min-w-40">
+                  <div>{name}</div>
+                  <code className="text-xs break-all text-[var(--app-text-secondary)]">
+                    {row.url}
+                  </code>
+                </div>
               ),
             },
             {
               title: m.columnEvents,
               dataIndex: "events",
+              width: 110,
               render: (codes: string[]) => (
-                <Space size={[0, 4]} wrap>
-                  {codes.map((code) => (
-                    <Tag key={code}>{code}</Tag>
-                  ))}
-                </Space>
+                <Popover
+                  title={m.columnEvents}
+                  content={
+                    <Space size={[0, 4]} wrap className="max-w-sm">
+                      {codes.map((code) => (
+                        <Tag key={code}>{m.eventLabel[code] ?? code}</Tag>
+                      ))}
+                    </Space>
+                  }
+                >
+                  <Tag className="cursor-pointer">{m.eventCount(codes.length)}</Tag>
+                </Popover>
+              ),
+            },
+            {
+              title: m.columnSecret,
+              key: "secret",
+              width: 260,
+              render: (_, row) => (
+                <SecretField
+                  hint="whsec_…"
+                  load={() =>
+                    revealWebhookSecret(row.id).then((result) =>
+                      unwrap(result, (data) => data.secret),
+                    )
+                  }
+                />
               ),
             },
             {
@@ -236,34 +283,33 @@ export function WebhookAdmin({
             {
               title: m.columnActions,
               key: "actions",
-              width: 360,
+              width: 200,
               render: (_, row) => (
-                <span className="flex flex-wrap gap-2">
+                <span className="flex gap-1">
                   <Button size="small" onClick={() => open(row)}>
                     {m.edit}
-                  </Button>
-                  <Button size="small" onClick={() => void toggle(row)}>
-                    {row.active ? m.disable : m.enable}
-                  </Button>
-                  <Button
-                    size="small"
-                    disabled={!row.active}
-                    onClick={() => void ping(row)}
-                  >
-                    {m.test}
                   </Button>
                   <Button size="small" onClick={() => void openHistory(row)}>
                     {m.history}
                   </Button>
-                  <Popconfirm
-                    title={m.rotateConfirm}
-                    description={m.rotateConfirmBody}
-                    onConfirm={() => rotate(row)}
+                  <Dropdown
+                    trigger={["click"]}
+                    menu={{
+                      items: [
+                        { key: "toggle", label: row.active ? m.disable : m.enable },
+                        { key: "test", label: m.test, disabled: !row.active },
+                        { type: "divider" },
+                        { key: "rotate", label: m.rotate, danger: true },
+                      ],
+                      onClick: ({ key }) => {
+                        if (key === "toggle") void toggle(row);
+                        else if (key === "test") void ping(row);
+                        else confirmRotate(row);
+                      },
+                    }}
                   >
-                    <Button size="small" danger>
-                      {m.rotate}
-                    </Button>
-                  </Popconfirm>
+                    <Button size="small" icon={<MoreOutlined />} aria-label={m.more} />
+                  </Dropdown>
                 </span>
               ),
             },
@@ -281,50 +327,33 @@ export function WebhookAdmin({
         onOk={() => void save()}
         destroyOnHidden
       >
-        <Space direction="vertical" className="w-full">
-          <Input
-            placeholder={m.formName}
-            value={name}
-            maxLength={120}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <div>
+        <Form layout="vertical" component="div">
+          <Form.Item label={m.columnName} required>
             <Input
-              placeholder={m.formUrl}
+              placeholder={m.formName}
+              value={name}
+              maxLength={120}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </Form.Item>
+          <Form.Item label={m.formUrl} required extra={m.formUrlHint}>
+            <Input
+              placeholder="https://"
               value={url}
               maxLength={2000}
               onChange={(e) => setUrl(e.target.value)}
             />
-            <Text type="secondary" className="text-xs">
-              {m.formUrlHint}
-            </Text>
-          </div>
-          <div>
-            <Text strong className="text-xs">
-              {m.formEvents}
-            </Text>
-            <Checkbox.Group
-              className="mt-2 block"
+          </Form.Item>
+          <Form.Item label={m.formEvents} required extra={m.formEventsHint}>
+            <GroupedPicker
+              groups={eventGroups(events)}
+              describe={(code) => m.eventLabel[code] ?? ""}
               value={chosen}
-              onChange={(values) => setChosen(values as string[])}
-            >
-              {eventGroups(events).map((group) => (
-                <div key={group.key} className="mb-3">
-                  <Text strong className="text-xs">
-                    {group.label}
-                  </Text>
-                  <div className="mt-1 grid gap-1">
-                    {group.codes.map((code) => (
-                      <Checkbox key={code} value={code}>
-                        <code className="text-xs">{code}</code>
-                      </Checkbox>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </Checkbox.Group>
-          </div>
-        </Space>
+              onChange={setChosen}
+              searchPlaceholder={m.eventSearch}
+            />
+          </Form.Item>
+        </Form>
       </Modal>
 
       <Modal
@@ -336,8 +365,8 @@ export function WebhookAdmin({
         cancelButtonProps={{ style: { display: "none" } }}
         destroyOnHidden
       >
-        <Paragraph type="warning">{m.secretBody}</Paragraph>
-        <Input.TextArea readOnly autoSize value={secret?.secret} />
+        <Paragraph>{m.secretBody}</Paragraph>
+        {secret && <SecretField hint="whsec_…" value={secret.secret} />}
       </Modal>
 
       <Drawer
@@ -385,6 +414,21 @@ export function WebhookAdmin({
                 render: (_, row) =>
                   row.last_error ??
                   (row.last_status_code ? `HTTP ${row.last_status_code}` : "—"),
+              },
+              {
+                key: "redeliver",
+                width: 80,
+                render: (_, delivery) =>
+                  history &&
+                  (delivery.status === "sent" || delivery.status === "dead") && (
+                    <Button
+                      size="small"
+                      disabled={!history.active}
+                      onClick={() => void redeliver(history, delivery)}
+                    >
+                      {m.redeliver}
+                    </Button>
+                  ),
               },
             ]}
           />

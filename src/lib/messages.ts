@@ -4904,8 +4904,11 @@ export const messages = {
 
     columnName: "ชื่อ",
     columnPrefix: "ตัวขึ้นต้น",
+    columnKey: "กุญแจ",
     columnSource: "รหัสช่องทาง",
     columnScopes: "สิทธิ์",
+    scopeCount: (count: number) => `${count} สิทธิ์`,
+    more: "ตัวเลือกอื่น",
     columnStatus: "สถานะ",
     columnExpires: "หมดอายุ",
     columnLastUsed: "ใช้ล่าสุด",
@@ -4936,6 +4939,13 @@ export const messages = {
       "มีผลกับคำขอถัดไปทันที และย้อนกลับไม่ได้ — ช่องทางที่ถือใบนี้จะเรียก API ไม่ได้อีก",
     revoked: "เพิกถอนแล้ว",
 
+    rotate: "ออกใหม่",
+    rotateConfirm: "ออกกุญแจใบใหม่แทนใบนี้?",
+    rotateConfirmBody:
+      "ใบใหม่ได้สิทธิ์เดิมทุกอย่าง ใบนี้ใช้ไม่ได้ตั้งแต่คำขอถัดไป — ระบบปลายทางต้องเปลี่ยนเป็นใบใหม่ทันที ไม่อย่างนั้นจะเรียก API ไม่ได้",
+
+    scopeSearch: "ค้นหาสิทธิ์ เช่น lead หรือ อ่าน",
+
     formName: "ชื่อที่อ่านแล้วรู้ว่าอยู่ที่ไหน",
     formNameHint: "เช่น เว็บไซต์ osd.co.th (production)",
     formSource: "รหัสช่องทาง",
@@ -4962,10 +4972,10 @@ export const messages = {
     formExpiresHint: "ไม่ระบุ = ไม่หมดอายุ เพิกถอนเอาเท่านั้น",
     save: "ออกกุญแจ",
 
-    issuedTitle: "คัดลอกกุญแจเดี๋ยวนี้",
+    issuedTitle: "ออกกุญแจแล้ว",
     issuedBody:
-      "ค่าเต็มแสดงครั้งเดียว ระบบเก็บไว้แค่ค่าแฮช อ่านกลับไม่ได้อีก — ทำหายคือออกใบใหม่แล้วเพิกถอนใบเก่า",
-    issuedDone: "คัดลอกแล้ว ปิดหน้าต่าง",
+      "ส่งกุญแจนี้ให้ผู้ดูแลระบบปลายทาง — ดูย้อนหลังได้ที่คอลัมน์กุญแจ ทุกครั้งที่ดูถูกบันทึกไว้",
+    issuedDone: "ปิด",
   },
 
   /** G-07 — webhook ขาออก: แจ้งเว็บภายนอกเมื่อเกิด event ของบริษัท. */
@@ -5033,11 +5043,20 @@ export const messages = {
 
     formName: "ชื่อระบบ เช่น Aiyara AI agent",
     formDescription: "ใช้ทำอะไร (ไม่บังคับ)",
+    formNameLabel: "ชื่อระบบ",
+    formDescriptionLabel: "ใช้ทำอะไร",
     formPreset: "ใช้ทำอะไร — เลือกแล้วระบบตั้งวิธีเรียกให้",
     formModes: "เรียกได้แบบ",
     formModesHint:
-      "ในนามบริษัท = ระบบทำงานเองโดยไม่มีผู้ใช้; ในนามผู้ใช้ = ผู้ใช้ login กับระบบนั้นแล้วส่ง token มาด้วย สิทธิ์คือส่วนที่ทั้งกุญแจและผู้ใช้มี",
+      "เลือกทั้งสองได้ — แต่ละ API กำหนดเองว่าต้องเรียกแบบไหน และตรวจตามแบบนั้น สิทธิ์สองแบบไม่รวมกัน",
+    modeHint: {
+      app: "ระบบทำงานเองโดยไม่มีผู้ใช้ เช่น รับฟอร์มลูกค้า หรือ AI ทำงานเบื้องหลัง — ทำได้เท่าที่สิทธิ์ของกุญแจ",
+      delegated:
+        "ผู้ใช้ login กับระบบนั้นแล้วส่ง token มาด้วย (X-User-Token) — ทำได้เฉพาะสิ่งที่ทั้งกุญแจและผู้ใช้คนนั้นมีสิทธิ์",
+    } as Record<string, string>,
     formActingUser: "อนุญาตให้ระบุผู้ใช้ด้วยอีเมล (X-Acting-User)",
+    formActingUserHint:
+      "แบบเดิม ไม่แนะนำ — ระบบนั้นระบุอีเมลแล้วทำแทนใครก็ได้โดยผู้ใช้ไม่ต้อง login",
     formClientIds: "Keycloak client ที่ออก token ของผู้ใช้ให้ระบบนี้",
     formClientIdsHint:
       "ต้องตรงกับ azp ของ token — token ที่ออกให้ระบบอื่น (เช่นเว็บของเราเอง) ใช้แทนไม่ได้",
@@ -5049,6 +5068,23 @@ export const messages = {
     deactivateConfirmBody:
       "กุญแจทุกใบของระบบนี้จะถูกปฏิเสธตั้งแต่คำขอถัดไป เปิดกลับได้ภายหลัง",
     activate: "เปิดการเชื่อมต่อ",
+
+    /** รายการติ๊กแบบค้นได้ — ใช้กับ scope ของกุญแจและ event ของ webhook. */
+    picker: {
+      selected: (count: number, total: number) =>
+        `เลือกแล้ว ${count} จาก ${total}`,
+      onlySelected: "เฉพาะที่เลือก",
+      clear: "ล้างที่เลือก",
+      noMatch: "ไม่พบรายการที่ตรงกับคำค้น",
+      groupAll: "ทั้งกลุ่ม",
+    },
+
+    secret: {
+      label: "ค่าลับ",
+      copy: "คัดลอก",
+      copied: "คัดลอกแล้ว",
+      copyFailed: "คัดลอกอัตโนมัติไม่ได้บนหน้านี้ — เปิดค่าให้แล้ว เลือกแล้วคัดลอกเอง",
+    },
 
     tabs: {
       settings: "ตั้งค่า",
@@ -5074,7 +5110,7 @@ export const messages = {
     keysHint:
       "กุญแจ (rfk_…) คือสิ่งที่ระบบนั้นใช้เรียก API และ MCP ของเรา — scope บอกว่ามันทำอะไรได้ ตรงกับสิทธิ์ของผู้ใช้ทีละตัว",
     webhooksHint:
-      "Webhook คือเราแจ้งระบบนั้นเมื่อเกิดเรื่อง — event บอกว่าเกิดอะไร ส่งไปแค่ id; secret (whsec_…) ใช้เซ็นข้อความให้ระบบนั้นตรวจว่ามาจากเรา ไม่ใช่กุญแจ และไม่ให้สิทธิ์อ่านข้อมูล อ่านรายละเอียดต้องใช้กุญแจที่มี scope อ่าน",
+      "Webhook คือเราแจ้งระบบนั้นเมื่อเกิดเรื่องที่เลือกไว้ ข้อความมีแค่ id ไม่มีสิทธิ์ให้ตั้ง; secret (whsec_…) ให้ระบบนั้นตรวจว่าข้อความมาจากเรา — ระบบนั้นจะอ่านรายละเอียดได้แค่ไหน ขึ้นกับสิทธิ์ของกุญแจในแท็บกุญแจ API",
     callsVsAudit:
       "บันทึกการใช้ AI เป็นอีกมุม: ดูว่าผู้ช่วยเรียก tool อะไร ในนามใคร ได้รายการไหนกลับไป ของทั้งบริษัท",
     callsHint:
@@ -5103,6 +5139,11 @@ export const messages = {
     columnName: "ชื่อ",
     columnUrl: "URL",
     columnEvents: "Event",
+    columnSecret: "Secret",
+    eventCount: (count: number) => `${count} event`,
+    more: "ตัวเลือกอื่น",
+    redeliver: "ส่งซ้ำ",
+    redelivered: "ส่งซ้ำในรอบถัดไป — ปลายทางได้ X-Webhook-Id เดิม ตัดซ้ำได้",
     columnStatus: "สถานะ",
     columnActions: "",
     active: "ส่งอยู่",
@@ -5121,7 +5162,35 @@ export const messages = {
     formUrl: "URL ปลายทาง",
     formUrlHint:
       "ต้องเป็น https — http หรือเครือข่ายภายในได้เฉพาะ host ที่ผู้ดูแลระบบใส่ไว้ใน WEBHOOK_PRIVATE_HOSTS",
-    formEvents: "Event ที่จะส่ง",
+    formEvents: "แจ้งเมื่อเกิดเรื่องอะไร",
+    formEventsHint:
+      "เลือกเรื่องที่ระบบปลายทางต้องรู้ — เป็นตัวกรองข่าว ไม่ใช่สิทธิ์ ข้อความมีแค่ id; อ่านรายละเอียดได้แค่ไหนขึ้นกับสิทธิ์ของกุญแจ API",
+    eventSearch: "ค้นหาเรื่อง เช่น lead หรือ อนุมัติ",
+    /** ชื่อภาษาคนของ event ใน `DOMAIN_EVENTS` (core-service) — ไม่มีชื่อ = แสดงรหัส */
+    eventLabel: {
+      "request.submitted": "ยื่นคำขอ",
+      "request.returned": "ตีกลับให้แก้ไข",
+      "request.resubmitted": "ยื่นคำขอใหม่หลังแก้ไข",
+      "request.cancelled": "ยกเลิกคำขอ",
+      "request.completed": "ทำงานเสร็จ รอตรวจรับ",
+      "request.approved": "คำขออนุมัติแล้ว",
+      "request.pre_approved": "อนุมัติก่อนเริ่มงาน",
+      "request.rejected": "ไม่อนุมัติคำขอ",
+      "request.step.entered": "คำขอเข้าขั้นตอนใหม่",
+      "approval.step.pending": "มีงานรออนุมัติ",
+      "approval.completed": "อนุมัติครบทุกขั้น",
+      "approval.rejected": "ผู้อนุมัติไม่อนุมัติ",
+      "approval.voided": "การอนุมัติถูกยกเลิกเพราะข้อมูลเปลี่ยน",
+      "sla.warning": "ใกล้เกินกำหนด SLA",
+      "sla.breached": "เกินกำหนด SLA",
+      "esign.completed": "ลงนามเอกสารครบ",
+      "lead.created": "มี Lead ใหม่",
+      "lead.updated": "แก้ข้อมูล Lead",
+      "lead.status_changed": "Lead เปลี่ยนสถานะ",
+      "lead.intake_updated": "แก้ข้อมูลรับเรื่องของ Lead",
+      "lead.converted": "Lead เปลี่ยนเป็นดีล",
+      "webhook.ping": "ทดสอบการเชื่อมต่อ",
+    } as Record<string, string>,
     /** หัวข้อกลุ่มตามคำนำหน้าของรหัส event — Record เพราะ index ด้วยคำนำหน้าที่ตัดจากรหัสจริง */
     eventGroups: {
       request: "คำขอ",
@@ -5134,10 +5203,10 @@ export const messages = {
     } as Record<string, string>,
     save: "บันทึก",
     saved: "บันทึกแล้ว",
-    secretTitle: "คัดลอก secret เดี๋ยวนี้",
+    secretTitle: "Secret ของ webhook",
     secretBody:
-      "ใช้ตรวจ X-Webhook-Signature (HMAC-SHA256 ของ `timestamp.body`) — แสดงครั้งเดียว ทำหายคือออก secret ใหม่",
-    secretDone: "คัดลอกแล้ว ปิดหน้าต่าง",
+      "ส่งให้ระบบปลายทางใช้ตรวจ X-Webhook-Signature (HMAC-SHA256 ของ `timestamp.body`) — ดูย้อนหลังได้ที่คอลัมน์ Secret",
+    secretDone: "ปิด",
     deliveryStatus: {
       pending: "รอส่ง",
       sending: "กำลังส่ง",

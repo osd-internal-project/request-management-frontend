@@ -6,28 +6,33 @@ import {
   App,
   Button,
   Card,
-  Checkbox,
+  Dropdown,
   Input,
   InputNumber,
   Modal,
-  Popconfirm,
+  Popover,
   Select,
   Space,
   Spin,
   Table,
   Tag,
 } from "antd";
+import { MoreOutlined } from "@ant-design/icons";
 import Paragraph from "antd/es/typography/Paragraph";
 import Text from "antd/es/typography/Text";
 import {
   issueApiKey,
   listApiKeys,
   listApiKeyScopes,
+  revealApiKey,
   revokeApiKey,
+  rotateApiKey,
   updateApiKeyScopes,
   type ApiKeyRow,
   type IssuedApiKey,
 } from "@/lib/api/api-keys";
+import { GroupedPicker } from "@/components/admin/integrations/grouped-picker";
+import { SecretField, unwrap } from "@/components/admin/integrations/secret-field";
 import {
   listIntegrationPresets,
   type IntegrationPreset,
@@ -103,37 +108,42 @@ function ScopePicker({
   readonly onChange: (next: string[]) => void;
 }) {
   return (
-    <Checkbox.Group
-      className="mt-2 block"
+    <GroupedPicker
+      groups={scopeAreas(all)}
+      describe={thaiForPermission}
       value={value}
-      onChange={(values) => onChange(values as string[])}
+      onChange={onChange}
+      searchPlaceholder={m.scopeSearch}
+    />
+  );
+}
+
+/** "12 สิทธิ์" — รายการเต็มอยู่ใน popover ไม่ให้แถวสูงตามจำนวนสิทธิ์. */
+function ScopeCount({ codes }: { readonly codes: readonly string[] }) {
+  return (
+    <Popover
+      title={m.columnScopes}
+      content={
+        <ul className="m-0 max-h-72 max-w-sm list-none overflow-y-auto p-0 text-xs">
+          {codes.map((code) => (
+            <li key={code} className="py-0.5">
+              {thaiForPermission(code) || code}{" "}
+              <code className="text-[var(--app-text-muted)]">{code}</code>
+            </li>
+          ))}
+        </ul>
+      }
     >
-      {scopeAreas(all).map((area) => (
-        <div key={area.key} className="mb-3">
-          <Text strong className="text-xs tracking-wide">
-            {area.label}
-          </Text>
-          <div className="mt-1 grid gap-1">
-            {area.codes.map((code) => (
-              <Checkbox key={code} value={code}>
-                <code className="text-xs">{code}</code>
-                <Text type="secondary" className="ml-2 text-xs">
-                  {thaiForPermission(code)}
-                </Text>
-              </Checkbox>
-            ))}
-          </div>
-        </div>
-      ))}
-    </Checkbox.Group>
+      <Tag className="cursor-pointer">{m.scopeCount(codes.length)}</Tag>
+    </Popover>
   );
 }
 
 /**
  * ออกและเพิกถอนกุญแจ API ของช่องทางภายนอก (`admin.integration.manage`).
  *
- * ค่าเต็มของกุญแจปรากฏครั้งเดียวในหน้าต่างหลังออกใบใหม่ — ฐานข้อมูลเก็บแค่ค่าแฮช
- * จึงไม่มีทางอ่านกลับ และหน้านี้ไม่เก็บมันไว้ที่ไหนนอกจาก state ของหน้าต่างนั้น
+ * ค่าเต็มของกุญแจแสดงหลังออกใบใหม่ และกดดูย้อนหลังได้ทีละใบ (ลง audit ทุกครั้ง)
+ * — หน้านี้ไม่เก็บมันไว้ที่ไหนนอกจาก state ของช่องที่แสดงมัน
  *
  * `integrationId` = แสดงเฉพาะกุญแจของระบบนั้น และออกใบใหม่ให้ระบบนั้น.
  */
@@ -141,7 +151,7 @@ export function ApiKeyAdmin({
   integrationId,
 }: { readonly integrationId?: string } = {}) {
   // antd's `message` from context, so it inherits the app theme.
-  const { message } = App.useApp();
+  const { message, modal } = App.useApp();
   const [rows, setRows] = useState<ApiKeyRow[] | null>(null);
   const [scopes, setScopes] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -264,6 +274,31 @@ export function ApiKeyAdmin({
     await refresh();
   }
 
+  function confirmRevoke(row: ApiKeyRow) {
+    modal.confirm({
+      title: m.revokeConfirm,
+      content: m.revokeConfirmBody,
+      okText: m.revoke,
+      okButtonProps: { danger: true },
+      onOk: () => revoke(row),
+    });
+  }
+
+  function confirmRotate(row: ApiKeyRow) {
+    modal.confirm({
+      title: m.rotateConfirm,
+      content: m.rotateConfirmBody,
+      okText: m.rotate,
+      okButtonProps: { danger: true },
+      onOk: async () => {
+        const result = await rotateApiKey(row.id);
+        if (!result.ok) return void message.error(result.message);
+        setIssued(result.data);
+        await refresh();
+      },
+    });
+  }
+
   if (error) {
     return <Alert type="error" showIcon title={m.loadFailed} description={error} />;
   }
@@ -291,28 +326,45 @@ export function ApiKeyAdmin({
           dataSource={rows}
           pagination={false}
           locale={{ emptyText: m.empty }}
+          scroll={{ x: true }}
           columns={[
-            { title: m.columnName, dataIndex: "name" },
             {
-              title: m.columnPrefix,
-              dataIndex: "prefix",
-              render: (prefix: string) => <code className="text-xs">{prefix}</code>,
+              title: m.columnName,
+              dataIndex: "name",
+              render: (name: string, row) => (
+                <div className="min-w-32">
+                  <div>{name}</div>
+                  {row.source_code && (
+                    <Text type="secondary" className="text-xs">
+                      {m.columnSource}: {row.source_code}
+                    </Text>
+                  )}
+                </div>
+              ),
             },
             {
-              title: m.columnSource,
-              dataIndex: "source_code",
-              render: (code: string | null) => code ?? m.never,
+              title: m.columnKey,
+              key: "key",
+              width: 280,
+              render: (_, row) =>
+                row.status === "active" ? (
+                  <SecretField
+                    hint={`${row.prefix}…`}
+                    load={() =>
+                      revealApiKey(row.id).then((result) =>
+                        unwrap(result, (data) => data.key),
+                      )
+                    }
+                  />
+                ) : (
+                  <code className="text-xs">{row.prefix}…</code>
+                ),
             },
             {
               title: m.columnScopes,
               dataIndex: "scopes",
-              render: (codes: string[]) => (
-                <Space size={[0, 4]} wrap>
-                  {codes.map((code) => (
-                    <Tag key={code}>{code}</Tag>
-                  ))}
-                </Space>
-              ),
+              width: 110,
+              render: (codes: string[]) => <ScopeCount codes={codes} />,
             },
             {
               title: m.columnStatus,
@@ -337,22 +389,26 @@ export function ApiKeyAdmin({
             {
               title: m.columnActions,
               key: "actions",
-              width: 190,
+              width: 140,
               render: (_, row) =>
                 row.status === "active" && (
-                  <span className="flex gap-2">
+                  <span className="flex gap-1">
                     <Button size="small" onClick={() => startEdit(row)}>
                       {m.editScopes}
                     </Button>
-                    <Popconfirm
-                      title={m.revokeConfirm}
-                      description={m.revokeConfirmBody}
-                      onConfirm={() => revoke(row)}
+                    <Dropdown
+                      trigger={["click"]}
+                      menu={{
+                        items: [
+                          { key: "rotate", label: m.rotate },
+                          { key: "revoke", label: m.revoke, danger: true },
+                        ],
+                        onClick: ({ key }) =>
+                          key === "rotate" ? confirmRotate(row) : confirmRevoke(row),
+                      }}
                     >
-                      <Button size="small" danger>
-                        {m.revoke}
-                      </Button>
-                    </Popconfirm>
+                      <Button size="small" icon={<MoreOutlined />} aria-label={m.more} />
+                    </Dropdown>
                   </span>
                 ),
             },
@@ -471,8 +527,11 @@ export function ApiKeyAdmin({
         cancelButtonProps={{ style: { display: "none" } }}
         destroyOnHidden
       >
-        <Paragraph type="warning">{m.issuedBody}</Paragraph>
-        <Input.TextArea readOnly autoSize value={issued?.key} />
+        <Paragraph type="secondary">
+          <code>{issued?.prefix}…</code> · {issued?.name}
+        </Paragraph>
+        <Paragraph>{m.issuedBody}</Paragraph>
+        {issued && <SecretField hint={`${issued.prefix}…`} value={issued.key} />}
       </Modal>
     </div>
   );
