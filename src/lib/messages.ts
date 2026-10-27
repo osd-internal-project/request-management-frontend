@@ -5237,7 +5237,6 @@ export const messages = {
     columnLastStart: "เริ่มล่าสุด",
     columnStatus: "สถานะ",
     columnActions: "",
-    onlyTypes: (codes: string) => `เฉพาะประเภท ${codes}`,
     active: "ใช้อยู่",
     inactive: "ปิด",
     edit: "แก้ไข",
@@ -5256,8 +5255,19 @@ export const messages = {
     formName: "ชื่อที่อ่านแล้วรู้ว่าเริ่มอะไร เช่น Lead ใหม่ → ขั้นที่ 1",
     formEvent: "เหตุการณ์ใน CTD",
     formVariables: (names: string) => `ตัวแปรที่ส่งไป: ${names}`,
-    formTypeCodes: "ประเภทคำขอ (เว้นว่าง = ทุกประเภท)",
-    formTypeCodesHint: "พิมพ์รหัสประเภทแล้วกด Enter เช่น SOL",
+    /** the filter box, by what the event's codes are */
+    filter: {
+      request_type: {
+        placeholder: "ประเภทคำขอ (เว้นว่าง = ทุกประเภท)",
+        hint: "พิมพ์รหัสประเภทแล้วกด Enter เช่น SOL",
+        only: (codes: string) => `เฉพาะประเภท ${codes}`,
+      },
+      lead_status: {
+        placeholder: "สถานะ Lead (เว้นว่าง = ทุกการเปลี่ยนสถานะ)",
+        hint: "พิมพ์รหัสสถานะจากตั้งค่า CRM → สถานะ Lead แล้วกด Enter เช่น qualified (ผ่านคัดกรอง)",
+        only: (codes: string) => `เฉพาะสถานะ ${codes}`,
+      },
+    },
     formChannelId: "Channel ID",
     formChannelIdHint:
       "จากหน้า Channels ของ OSD Workflow — channel ผูกกับ workflow ที่จะเริ่ม",

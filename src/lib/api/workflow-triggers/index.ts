@@ -14,7 +14,11 @@ export interface WorkflowTriggerEvent {
   label: string;
   variables: string[];
   filters_by_type: boolean;
+  /** what the codes in `type_codes` are — null when the event cannot filter */
+  filter_kind: WorkflowTriggerFilterKind | null;
 }
+
+export type WorkflowTriggerFilterKind = "request_type" | "lead_status";
 
 export type WorkflowStartStatus = "pending" | "sending" | "started" | "dead";
 

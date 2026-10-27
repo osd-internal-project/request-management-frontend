@@ -105,6 +105,7 @@ export function WorkflowTriggerAdmin() {
     [events],
   );
   const chosenEvent = eventKey ? eventOf.get(eventKey) : undefined;
+  const filterKind = chosenEvent?.filter_kind ?? "request_type";
 
   const ready =
     name.trim().length > 0 &&
@@ -221,7 +222,10 @@ export function WorkflowTriggerAdmin() {
                   </span>
                   {row.type_codes.length > 0 && (
                     <Text type="secondary" className="text-xs">
-                      {m.onlyTypes(row.type_codes.join(", "))}
+                      {m.filter[
+                        eventOf.get(row.event_key)?.filter_kind ??
+                          "request_type"
+                      ].only(row.type_codes.join(", "))}
                     </Text>
                   )}
                 </Space>
@@ -333,18 +337,23 @@ export function WorkflowTriggerAdmin() {
               <Select
                 mode="tags"
                 className="w-full"
-                placeholder={m.formTypeCodes}
+                placeholder={m.filter[filterKind].placeholder}
                 value={typeCodes}
                 onChange={(values: string[]) =>
                   setTypeCodes(
                     values
-                      .map((value) => value.trim().toUpperCase())
+                      .map((value) =>
+                        // request types are uppercase, lead statuses lowercase
+                        filterKind === "lead_status"
+                          ? value.trim().toLowerCase()
+                          : value.trim().toUpperCase(),
+                      )
                       .filter(Boolean),
                   )
                 }
               />
               <Text type="secondary" className="text-xs">
-                {m.formTypeCodesHint}
+                {m.filter[filterKind].hint}
               </Text>
             </div>
           )}
