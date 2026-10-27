@@ -22,6 +22,7 @@ import Text from "antd/es/typography/Text";
 import Title from "antd/es/typography/Title";
 import { ApiKeyAdmin } from "@/components/admin/api-key-admin";
 import { WebhookAdmin } from "@/components/admin/webhook-admin";
+import { IntegrationEndpointAdmin } from "@/components/admin/integration-endpoint-admin";
 import {
   listIntegrationCalls,
   listIntegrations,
@@ -142,6 +143,21 @@ export function IntegrationDetail({
                   {m.webhooksHint}
                 </Paragraph>
                 <WebhookAdmin integrationId={row.id} />
+              </>
+            ),
+          },
+          {
+            key: "endpoints",
+            label: `${m.tabs.endpoints} (${row.endpoint_count})`,
+            children: (
+              <>
+                <Paragraph type="secondary" className="text-xs">
+                  {m.endpointsHint}
+                </Paragraph>
+                <IntegrationEndpointAdmin
+                  integrationId={row.id}
+                  onChanged={refresh}
+                />
               </>
             ),
           },

@@ -396,6 +396,65 @@ export function DisqualifyLeadModal({
   );
 }
 
+/** สั่ง agent หา Lead ตามหัวข้อ — สร้างงาน `lead.find` แล้วส่ง id กลับให้เปิดหน้างาน. */
+export function FindLeadModal({
+  open,
+  onClose,
+  onStarted,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onStarted: (recordId: string) => void;
+}) {
+  const [topic, setTopic] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function start() {
+    if (!topic.trim()) return;
+    setBusy(true);
+    setError(null);
+    const result = await appApi<{ id: string }>("leads/find", {
+      method: "POST",
+      body: JSON.stringify({ topic: topic.trim() }),
+    });
+    setBusy(false);
+    if (!result.ok) {
+      setError(result.message);
+      return;
+    }
+    setTopic("");
+    onStarted(result.data.id);
+  }
+
+  return (
+    <Modal
+      open={open}
+      title={m.findLead.title}
+      okText={m.findLead.search}
+      okButtonProps={{ disabled: !topic.trim() }}
+      confirmLoading={busy}
+      onCancel={onClose}
+      onOk={() => void start()}
+      destroyOnHidden
+    >
+      <Space direction="vertical" className="w-full">
+        {error && <Alert type="error" showIcon title={error} />}
+        <Text>{m.findLead.topicLabel}</Text>
+        <Input
+          name="topic"
+          autoFocus
+          maxLength={500}
+          placeholder={m.findLead.topicPlaceholder}
+          value={topic}
+          onChange={(e) => setTopic(e.target.value)}
+          onPressEnter={() => void start()}
+        />
+      </Space>
+    </Modal>
+  );
+}
+
 /** แปลงเป็นโอกาสการขาย — ข้อมูลไหลต่อ; ต้องชี้ลูกค้าในทะเบียน. */
 export function ConvertLeadModal({
   lead,
