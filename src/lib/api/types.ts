@@ -1333,7 +1333,7 @@ export interface LeadDetail extends LeadRow {
     title: string;
     stage: OpportunityStage;
   } | null;
-  owner: { id: string; displayName: string };
+  owner: { id: string; displayName: string } | null;
   activities: LeadActivity[];
   /** CD-85 — the target account this lead came from. */
   targetAccount: {
