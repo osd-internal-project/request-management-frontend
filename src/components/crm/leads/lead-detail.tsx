@@ -395,7 +395,7 @@ export function LeadDetailView({
                               {dash(lead.sourceCode)}
                             </Descriptions.Item>
                             <Descriptions.Item label={md.fields.owner}>
-                              {lead.owner.displayName}
+                              {dash(lead.owner?.displayName)}
                             </Descriptions.Item>
                             <Descriptions.Item label={md.fields.customer}>
                               {lead.customer ? (
@@ -501,12 +501,16 @@ export function LeadDetailView({
                           : `${formatAmount(lead.projectRevenue)} THB`}
                       </Descriptions.Item>
                       <Descriptions.Item label={md.fields.owner}>
-                        <Space size={6}>
-                          <Avatar size="small">
-                            {initials(lead.owner.displayName)}
-                          </Avatar>
-                          {lead.owner.displayName}
-                        </Space>
+                        {lead.owner ? (
+                          <Space size={6}>
+                            <Avatar size="small">
+                              {initials(lead.owner.displayName)}
+                            </Avatar>
+                            {lead.owner.displayName}
+                          </Space>
+                        ) : (
+                          "—"
+                        )}
                       </Descriptions.Item>
                     </Descriptions>
                   </Card>
