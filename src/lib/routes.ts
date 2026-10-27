@@ -116,6 +116,9 @@ export const ROUTES = {
   leadImport: `${HOME_PATH}/leads/import`,
   /** หน้ารายละเอียด Lead — pipeline, ข้อมูลบริษัท/ที่อยู่, กิจกรรม. */
   leadDetail: (id: string) => `${HOME_PATH}/leads/${id}`,
+  /** งานที่ส่งให้ AI agent (Find Lead) — สถานะอัปเดตเองผ่าน SSE. */
+  agentRecords: `${HOME_PATH}/agent-records`,
+  agentRecordDetail: (id: string) => `${HOME_PATH}/agent-records/${id}`,
   opportunities: `${HOME_PATH}/opportunities`,
   opportunityDetail: (id: string) => `${HOME_PATH}/opportunities/${id}`,
   /** SUP-03 กล่องแจ้งเตือน */

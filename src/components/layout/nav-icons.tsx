@@ -94,6 +94,7 @@ const MENU_ICONS: Record<MenuIconKey, ComponentType> = {
   keeper: HeartOutlined,
   targetAccount: AimOutlined,
   lead: UserAddOutlined,
+  agentRecord: RobotOutlined,
   visitLog: EnvironmentOutlined,
   handover: SwapOutlined,
   opportunity: RiseOutlined,

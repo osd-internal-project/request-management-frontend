@@ -17,6 +17,7 @@ import Text from "antd/es/typography/Text";
 import {
   ConvertLeadModal,
   DisqualifyLeadModal,
+  FindLeadModal,
   LeadFormModal,
   isLeadOpen,
 } from "@/components/crm/leads/lead-actions";
@@ -66,6 +67,7 @@ export function LeadList({
   const [editing, setEditing] = useState<LeadRow | null>(null);
   const [disqualifying, setDisqualifying] = useState<LeadRow | null>(null);
   const [converting, setConverting] = useState<LeadRow | null>(null);
+  const [finding, setFinding] = useState(false);
 
   /** ทุกอย่างที่หน้านี้อ่านจาก URL — ตัวกรอง มุมมอง และหน้าที่เปิดอยู่. */
   function navigate(
@@ -137,6 +139,9 @@ export function LeadList({
             <Link href={ROUTES.leadImport}>
               <Button>{m.importer.openButton}</Button>
             </Link>
+            <Button onClick={() => setFinding(true)}>
+              {m.findLead.openButton}
+            </Button>
             <Button
               type="primary"
               onClick={() => {
@@ -328,6 +333,11 @@ export function LeadList({
           if (editing) router.refresh();
           else router.push(ROUTES.leadDetail(id));
         }}
+      />
+      <FindLeadModal
+        open={finding}
+        onClose={() => setFinding(false)}
+        onStarted={(recordId) => router.push(ROUTES.agentRecordDetail(recordId))}
       />
       <DisqualifyLeadModal
         lead={disqualifying}

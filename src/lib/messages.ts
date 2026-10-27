@@ -1164,6 +1164,7 @@ export const messages = {
     crmDashboard: "ภาพรวม CRM",
     customers: "ทะเบียนลูกค้า",
     leads: "Lead",
+    agentRecords: "งานของ AI agent",
     opportunities: "โอกาสการขาย",
     quotations: "ใบเสนอราคา",
     saleOrders: "ใบสั่งขาย",
@@ -5015,6 +5016,37 @@ export const messages = {
       clear: "ล้าง",
     },
   },
+  /** แท็บ "Endpoint ที่เราเรียก" ของหน้า Integrations — ปลายทางของงาน agent. */
+  integrationEndpoints: {
+    add: "เพิ่ม endpoint",
+    addTitle: "เพิ่ม endpoint",
+    editTitle: "แก้ endpoint",
+    save: "บันทึก",
+    saved: "บันทึก endpoint แล้ว",
+    edit: "แก้ไข",
+    empty: "ยังไม่มี endpoint — เพิ่มเพื่อให้ปุ่มของงานนั้นส่งงานมาที่ระบบนี้ได้",
+    loadFailed: "โหลด endpoint ไม่สำเร็จ",
+    columns: {
+      action: "งาน",
+      url: "ปลายทาง",
+      active: "เปิดใช้",
+      key: "x-api-key",
+    },
+    fields: {
+      action: "งาน",
+      baseUrl: "Base URL",
+      baseUrlHint: "เช่น https://d80g4r2y4zcsb.cloudfront.net — ต้องเป็น https",
+      endpointId: "Endpoint id",
+      endpointIdHint: "เช่น ep_192af84b… จากหน้า API ของ agent",
+      apiKey: "x-api-key",
+      apiKeyKeep: "เว้นว่าง = ใช้ key เดิม",
+      preview: "CTD จะเรียก",
+    },
+    keyHint: "กดดูหรือคัดลอก — ทุกครั้งลงบันทึกตรวจสอบ",
+    actions: {
+      "lead.find": "Find Lead",
+    } as Record<string, string>,
+  },
   integrations: {
     title: "ระบบภายนอก",
     subtitle:
@@ -5090,6 +5122,7 @@ export const messages = {
       settings: "ตั้งค่า",
       keys: "กุญแจ API",
       webhooks: "Webhook",
+      endpoints: "Endpoint ที่เราเรียก",
       mcp: "MCP",
       calls: "ประวัติการเรียก",
     },
@@ -5111,6 +5144,8 @@ export const messages = {
       "กุญแจ (rfk_…) คือสิ่งที่ระบบนั้นใช้เรียก API และ MCP ของเรา — scope บอกว่ามันทำอะไรได้ ตรงกับสิทธิ์ของผู้ใช้ทีละตัว",
     webhooksHint:
       "Webhook คือเราแจ้งระบบนั้นเมื่อเกิดเรื่องที่เลือกไว้ ข้อความมีแค่ id ไม่มีสิทธิ์ให้ตั้ง; secret (whsec_…) ให้ระบบนั้นตรวจว่าข้อความมาจากเรา — ระบบนั้นจะอ่านรายละเอียดได้แค่ไหน ขึ้นกับสิทธิ์ของกุญแจในแท็บกุญแจ API",
+    endpointsHint:
+      "ที่อยู่ที่ CTD ส่งงานไปให้ระบบนี้ทำ เช่นปุ่ม Find Lead ส่งหัวข้อไปให้ Vuvagent หา Lead — งานหนึ่งมีได้ endpoint เดียวต่อบริษัท ระบบนั้นส่งผลกลับด้วยกุญแจในแท็บกุญแจ API",
     callsVsAudit:
       "บันทึกการใช้ AI เป็นอีกมุม: ดูว่าผู้ช่วยเรียก tool อะไร ในนามใคร ได้รายการไหนกลับไป ของทั้งบริษัท",
     callsHint:
@@ -6968,6 +7003,54 @@ export const messages = {
       `${message} · ${details}`,
   },
 
+  /** งานที่ส่งให้ AI agent ภายนอก (Vuvagent) — สถานะอัปเดตเองโดยไม่ต้องรีเฟรช. */
+  agentRecords: {
+    title: "งานของ AI agent",
+    subtitle: "งานที่สั่งให้ agent ทำในเบื้องหลัง สถานะเปลี่ยนเองเมื่อ agent ทำเสร็จ",
+    back: "กลับไปหน้ารายการ",
+    action: {
+      "lead.find": "Find Lead",
+    } as Record<string, string>,
+    status: {
+      processing: "กำลังทำ",
+      done: "เสร็จแล้ว",
+      failed: "ไม่สำเร็จ",
+    },
+    statusColor: {
+      processing: "processing",
+      done: "success",
+      failed: "error",
+    },
+    filterStatus: "สถานะ: ทั้งหมด",
+    columns: {
+      action: "งาน",
+      topic: "หัวข้อ",
+      status: "สถานะ",
+      createdBy: "ผู้สั่ง",
+      createdAt: "เริ่ม",
+      updatedAt: "อัปเดตล่าสุด",
+    },
+    empty: "ยังไม่มีงานของ agent — สั่งได้จากปุ่ม Find Lead ในหน้า Lead",
+    resultCount: (n: number) => `${n} งาน`,
+    startedBy: (who: string, when: string) => `สั่งโดย ${who} เมื่อ ${when}`,
+    elapsed: (text: string) => `ผ่านไป ${text}`,
+    duration: (minutes: number, seconds: number) =>
+      minutes > 0 ? `${minutes} นาที ${seconds} วินาที` : `${seconds} วินาที`,
+    working: "Agent กำลังค้นหา หน้านี้จะอัปเดตเองเมื่อมีผล",
+    slow: "งานนี้ใช้เวลานานกว่า 10 นาทีแล้ว ถ้ายังไม่เสร็จ ให้ตรวจสถานะที่ Vuvagent",
+    failed: "Agent ทำงานนี้ไม่สำเร็จ",
+    failedNoReason: "agent ไม่ได้ส่งเหตุผลกลับมา",
+    leadsTitle: (n: number) => `Lead ที่ agent สร้าง (${n})`,
+    leadsEmpty: "ยังไม่มี Lead จากงานนี้",
+    leadColumns: {
+      name: "ชื่อ",
+      contact: "ผู้ติดต่อ",
+      status: "สถานะ",
+      createdAt: "สร้างเมื่อ",
+    },
+    loadFailed: "โหลดรายการงานของ agent ไม่สำเร็จ",
+  },
+
   /** CRM ระยะ 1 — Customer Master (CM-01…08, spec artifact 856c08fd). */
   sales: {
     leads: {
@@ -7008,6 +7091,14 @@ export const messages = {
         none: "ยังไม่เคยติดต่อ",
       },
       newLead: "เพิ่ม Lead",
+      /** ส่งหัวข้อให้ Vuvagent หา Lead ในเบื้องหลัง → เปิดหน้างานของ agent. */
+      findLead: {
+        openButton: "Find Lead",
+        title: "Find Lead",
+        topicLabel: "หาลูกค้าแบบไหน",
+        topicPlaceholder: "เช่น บริษัทโลจิสติกส์ในภาคตะวันออก",
+        search: "ค้นหา",
+      },
       searchPlaceholder: "ค้นหา ชื่อ / ผู้ติดต่อ / โทร / อีเมล",
       filterStatus: "สถานะ: ทั้งหมด",
       mineOnly: "เฉพาะของฉัน",
