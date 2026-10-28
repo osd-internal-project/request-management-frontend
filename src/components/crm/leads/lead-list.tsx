@@ -20,6 +20,7 @@ import {
   FindLeadModal,
   LeadFormModal,
   isLeadOpen,
+  type LostStatus,
 } from "@/components/crm/leads/lead-actions";
 import { LeadBoard } from "@/components/crm/leads/lead-board";
 import { SearchSelect } from "@/components/ui/search-select";
@@ -66,6 +67,7 @@ export function LeadList({
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<LeadRow | null>(null);
   const [disqualifying, setDisqualifying] = useState<LeadRow | null>(null);
+  const [closeAs, setCloseAs] = useState<LostStatus>("disqualified");
   const [converting, setConverting] = useState<LeadRow | null>(null);
   const [finding, setFinding] = useState(false);
 
@@ -166,7 +168,10 @@ export function LeadList({
               setFormOpen(true);
             }}
             onConvert={(lead) => setConverting(lead)}
-            onDisqualify={(lead) => setDisqualifying(lead)}
+            onDisqualify={(lead, closeAs) => {
+              setCloseAs(closeAs ?? "disqualified");
+              setDisqualifying(lead);
+            }}
             onMoved={() => router.refresh()}
           />
           {total > pageSize && (
@@ -340,7 +345,9 @@ export function LeadList({
         onStarted={(recordId) => router.push(ROUTES.agentRecordDetail(recordId))}
       />
       <DisqualifyLeadModal
+        key={`${disqualifying?.id ?? "closed"}-${closeAs}`}
         lead={disqualifying}
+        initialStatus={closeAs}
         onClose={() => setDisqualifying(null)}
         onDone={() => {
           setDisqualifying(null);

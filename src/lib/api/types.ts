@@ -1212,7 +1212,10 @@ export type LeadStatus =
   | "cannot_contact"
   | "contacted"
   | "qualified"
+  | "proposal"
+  | "negotiation"
   | "disqualified"
+  | "lost"
   | "converted";
 export type LeadActivityType =
   | "call"
