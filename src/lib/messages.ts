@@ -1252,6 +1252,7 @@ export const messages = {
     adminLlm: "LLM Gateway",
     adminAiAudit: "บันทึกการใช้ AI",
     adminChatWidget: "ผู้ช่วย AI (LibreChat)",
+    adminDocuments: "เอกสารบริษัท",
     adminRunNumbers: "เลขรันเอกสาร",
     adminRequestTypes: "ประเภทคำขอ",
     adminSla: "เวลาทำการและวันหยุด",
@@ -1611,6 +1612,7 @@ export const messages = {
       "pm.project.read": "ดูโครงการทั้งบริษัท",
       "pm.project.manage": "เปิดโครงการจากสัญญา กำหนดผู้จัดการและทีม",
       "admin.integration.manage": "ออก/เพิกถอนกุญแจ API",
+      "admin.document.manage": "อัปโหลดและจัดการเอกสารบริษัท",
 
       "integration.request.create": "ยื่นคำขอแทนผู้ใช้",
       "integration.request.read": "อ่านคำขอแทนผู้ใช้",
@@ -1650,6 +1652,7 @@ export const messages = {
       "integration.service.care.manage": "คุยกับลูกค้าผ่านช่องทาง (AI CARE)",
       "integration.smart.prospect.create": "ส่งรายชื่อเป้าหมายเข้า AI SMART",
       "integration.smart.call.update": "รายงานผลการโทร (D-Callcenter)",
+      "integration.document.read": "อ่านและดาวน์โหลดเอกสารบริษัท",
     } as Record<string, string>,
 
     /** §5.4 guardrail 1 — the reason the admin boxes are not tickable here. */
@@ -2630,6 +2633,55 @@ export const messages = {
       saved: "บันทึกแล้ว",
       required: "จำเป็น",
     },
+  },
+
+  /** เอกสารบริษัท (ตั้งค่า) — ระบบภายนอกดึงไปผ่าน External API */
+  companyDocuments: {
+    title: "เอกสารบริษัท",
+    subtitle:
+      "อัปโหลดเอกสารของบริษัทให้ระบบอื่นดึงไปใช้ผ่าน External API (สิทธิ์กุญแจ integration.document.read) — เอกสารที่มีวันที่ออกต้องกรอกวันที่ออกเอกสารทุกครั้ง",
+    kinds: {
+      dated: "มีวันที่ออกเอกสาร",
+      general: "เอกสารทั่วไป",
+    } as Record<string, string>,
+    kindHints: {
+      dated: "เช่น หนังสือรับรองบริษัท ใบอนุญาต ภ.พ.20 — ต้องกรอกวันที่ออกเอกสาร",
+      general: "เช่น โบรชัวร์ แบบฟอร์ม คู่มือ — ไม่มีวันที่ออกเอกสาร",
+    } as Record<string, string>,
+    upload: "อัปโหลดเอกสาร",
+    search: "ค้นชื่อเอกสาร คำอธิบาย ชื่อไฟล์",
+    showArchived: "แสดงที่เลิกใช้",
+    archivedTag: "เลิกใช้",
+    columns: {
+      title: "เอกสาร",
+      issueDate: "วันที่ออกเอกสาร",
+      file: "ไฟล์",
+      uploaded: "อัปโหลดเมื่อ",
+    },
+    fields: {
+      kind: "ประเภทเอกสาร",
+      title: "ชื่อเอกสาร",
+      description: "คำอธิบาย",
+      issueDate: "วันที่ออกเอกสาร",
+      file: "ไฟล์",
+    },
+    chooseFile: "เลือกไฟล์",
+    fileHint: "PDF รูป (PNG/JPG) Word Excel PowerPoint หรือ ZIP ไม่เกิน 50 MB",
+    requiredTitle: "กรอกชื่อเอกสาร",
+    requiredIssueDate: "กรอกวันที่ออกเอกสาร",
+    requiredFile: "เลือกไฟล์",
+    uploaded: "อัปโหลดแล้ว",
+    saved: "บันทึกแล้ว",
+    edit: "แก้ไข",
+    editTitle: "แก้ไขเอกสาร",
+    archive: "เลิกใช้",
+    archiveConfirm: "เลิกใช้เอกสารนี้? ระบบภายนอกจะดึงไม่ได้อีก (เปิดใช้กลับได้)",
+    archived: "เลิกใช้แล้ว",
+    restore: "เปิดใช้",
+    restored: "เปิดใช้แล้ว",
+    open: "เปิดไฟล์",
+    empty: "ยังไม่มีเอกสาร",
+    by: (name: string) => `โดย ${name}`,
   },
 
   /** CD-275 — LLM Gateway */

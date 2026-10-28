@@ -30,6 +30,7 @@ export type MenuIconKey =
   | "llm"
   | "aiAudit"
   | "chatWidget"
+  | "companyDocuments"
   | "salesTarget"
   | "salesReport"
   | "contract"
@@ -932,6 +933,15 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     href: ROUTES.adminChatWidget,
     icon: "chatWidget",
     permissions: ["admin.chat-widget.manage"],
+    group: messages.nav.adminGroup,
+    section: messages.nav.adminSectionIntegrations,
+  },
+  /** เอกสารบริษัท — มีวันที่ออกเอกสาร / ทั่วไป ให้ระบบภายนอกดึงผ่าน External API. */
+  {
+    label: messages.nav.adminDocuments,
+    href: ROUTES.adminDocuments,
+    icon: "companyDocuments",
+    permissions: ["admin.document.manage"],
     group: messages.nav.adminGroup,
     section: messages.nav.adminSectionIntegrations,
   },
