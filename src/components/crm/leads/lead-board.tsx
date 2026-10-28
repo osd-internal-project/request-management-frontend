@@ -5,7 +5,11 @@ import Link from "next/link";
 import { App, Button, Card, Dropdown, Space, Tag } from "antd";
 import { MoreOutlined } from "@ant-design/icons";
 import Text from "antd/es/typography/Text";
-import { isLeadOpen } from "@/components/crm/leads/lead-actions";
+import {
+  isLeadLost,
+  isLeadOpen,
+  type LostStatus,
+} from "@/components/crm/leads/lead-actions";
 import { appApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
@@ -16,14 +20,17 @@ const mb = m.board;
 
 /**
  * ลำดับคอลัมน์ของกระดาน — เดินตาม pipeline ของหน้ารายละเอียด (`lead-detail.tsx`)
- * แล้วต่อท้ายด้วยทางออก "คัดออก" ซึ่งไม่ใช่ขั้นระหว่างทาง.
+ * แล้วต่อท้ายด้วยทางออก Lost / Disqualified ซึ่งไม่ใช่ขั้นระหว่างทาง.
  */
 const BOARD_COLUMNS: LeadStatus[] = [
   "new",
   "cannot_contact",
   "contacted",
   "qualified",
+  "proposal",
+  "negotiation",
   "converted",
+  "lost",
   "disqualified",
 ];
 
@@ -65,7 +72,7 @@ export function LeadBoard({
   canManage: boolean;
   onEdit: (lead: LeadRow) => void;
   onConvert: (lead: LeadRow) => void;
-  onDisqualify: (lead: LeadRow) => void;
+  onDisqualify: (lead: LeadRow, closeAs?: LostStatus) => void;
   onMoved: () => void;
 }) {
   const { message } = App.useApp();
@@ -107,9 +114,9 @@ export function LeadBoard({
     setHovered(null);
     if (!lead || !accepts(status)) return;
 
-    // สองปลายทางนี้ต้องกรอกข้อมูลเพิ่มก่อน จึงเปิด modal แทนการยิง PATCH
+    // ปลายทางต้องกรอกข้อมูลเพิ่มก่อน จึงเปิด modal แทนการยิง PATCH
     if (status === "converted") onConvert(lead);
-    else if (status === "disqualified") onDisqualify(lead);
+    else if (isLeadLost(status)) onDisqualify(lead, status);
     else void move(lead, status);
   }
 
@@ -268,7 +275,7 @@ function LeadCard({
           </Link>
         )}
 
-        {lead.status === "disqualified" && lead.disqualifyReason && (
+        {isLeadLost(lead.status) && lead.disqualifyReason && (
           <Text type="secondary" className="text-xs">
             {lead.disqualifyReason}
           </Text>

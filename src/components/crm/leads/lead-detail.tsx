@@ -40,6 +40,7 @@ import {
   ConvertLeadModal,
   DisqualifyLeadModal,
   LeadFormModal,
+  isLeadLost,
   isLeadOpen,
 } from "@/components/crm/leads/lead-actions";
 import { formatAmount } from "@/components/crm/opportunities/opportunity-list";
@@ -66,14 +67,16 @@ const md = m.detail;
 const ma = md.activities;
 
 /**
- * The pipeline as the page draws it. `converted` is the goal at the end;
- * `disqualified` is not a step — it is the exit, shown as a banner.
+ * The pipeline as the page draws it. `converted` (Won) is the goal at the end;
+ * `lost` / `disqualified` are not steps — they are the exits, shown as a banner.
  */
 const PIPELINE: LeadStatus[] = [
   "new",
   "cannot_contact",
   "contacted",
   "qualified",
+  "proposal",
+  "negotiation",
   "converted",
 ];
 
@@ -156,7 +159,7 @@ export function LeadDetailView({
   }
 
   const currentStep = PIPELINE.indexOf(lead.status);
-  const disqualified = lead.status === "disqualified";
+  const disqualified = isLeadLost(lead.status);
 
   return (
     <div className="space-y-4">
@@ -176,11 +179,13 @@ export function LeadDetailView({
           }
         />
       )}
-      {lead.status === "disqualified" && (
+      {disqualified && (
         <Alert
           type="warning"
           showIcon
-          title={md.disqualifiedBanner(lead.disqualifyReason ?? "")}
+          title={(lead.status === "lost"
+            ? md.lostBanner
+            : md.disqualifiedBanner)(lead.disqualifyReason ?? "")}
         />
       )}
 
@@ -254,7 +259,7 @@ export function LeadDetailView({
               ...(disqualified ? { status: "wait" as const } : {}),
             })),
             ...(disqualified
-              ? [{ title: m.status.disqualified, status: "error" as const }]
+              ? [{ title: m.status[lead.status], status: "error" as const }]
               : []),
           ]}
         />

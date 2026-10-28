@@ -10,6 +10,7 @@ import {
   Input,
   InputNumber,
   Modal,
+  Radio,
   Row,
   Space,
 } from "antd";
@@ -22,13 +23,21 @@ import type { CampaignRow } from "@/lib/api/campaigns";
 
 const m = messages.sales.leads;
 
+/** ปลายทางที่ปิดแบบไม่ได้ไปต่อ (backend: kind `lost`) — เลือกได้ตอนคัดออก. */
+export const LOST_STATUSES = ["lost", "disqualified"] as const;
+export type LostStatus = (typeof LOST_STATUSES)[number];
+
+export function isLeadLost(status: string): status is LostStatus {
+  return (LOST_STATUSES as readonly string[]).includes(status);
+}
+
 /**
- * Still workable — anything but the two closed states. The list, the detail
- * page and the pipeline all ask this one question; the backend's `requireOpen`
- * is the same rule.
+ * Still workable — anything but the closed states (Won / Lost / Disqualified).
+ * The list, the detail page and the pipeline all ask this one question; the
+ * backend's `requireOpen` is the same rule.
  */
 export function isLeadOpen(status: LeadStatus): boolean {
-  return status !== "converted" && status !== "disqualified";
+  return status !== "converted" && !isLeadLost(status);
 }
 
 /** snake_case exactly as `CreateLeadDto` — one shape for create and edit. */
@@ -339,17 +348,24 @@ export function LeadFormModal({
   );
 }
 
-/** คัดออก — เหตุผลบังคับ ไม่มีการลบ. */
+/**
+ * คัดออก — ปิดเป็น Lost หรือ Disqualified, เหตุผลบังคับ ไม่มีการลบ.
+ * `initialStatus` อ่านครั้งเดียวตอน mount — ผู้เรียกที่เปลี่ยนค่านี้ได้ (ลากการ์ด
+ * ไปคอลัมน์ Lost) ต้องใส่ `key` ให้ modal เกิดใหม่.
+ */
 export function DisqualifyLeadModal({
   lead,
+  initialStatus = "disqualified",
   onClose,
   onDone,
 }: {
   lead: LeadRow | null;
+  initialStatus?: LostStatus;
   onClose: () => void;
   onDone: () => void;
 }) {
   const { message } = App.useApp();
+  const [status, setStatus] = useState<LostStatus>(initialStatus);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -360,7 +376,7 @@ export function DisqualifyLeadModal({
     setError(null);
     const result = await appApi(`leads/${lead.id}/disqualify`, {
       method: "POST",
-      body: JSON.stringify({ reason: reason.trim() }),
+      body: JSON.stringify({ reason: reason.trim(), status }),
     });
     setBusy(false);
     if (!result.ok) {
@@ -385,6 +401,18 @@ export function DisqualifyLeadModal({
     >
       <Space direction="vertical" className="w-full">
         {error && <Alert type="error" showIcon title={error} />}
+        <Space>
+          <Text>{m.closeAs}</Text>
+          <Radio.Group
+            optionType="button"
+            value={status}
+            onChange={(e) => setStatus(e.target.value as LostStatus)}
+            options={LOST_STATUSES.map((value) => ({
+              value,
+              label: m.status[value],
+            }))}
+          />
+        </Space>
         <Input.TextArea
           rows={2}
           placeholder={m.disqualifyReason}

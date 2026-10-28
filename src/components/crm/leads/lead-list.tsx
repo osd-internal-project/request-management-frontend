@@ -20,17 +20,19 @@ import {
   FindLeadModal,
   LeadFormModal,
   isLeadOpen,
+  type LostStatus,
 } from "@/components/crm/leads/lead-actions";
 import { LeadBoard } from "@/components/crm/leads/lead-board";
+import {
+  rememberLeadLayout,
+  type LeadLayout,
+} from "@/lib/lead-layout";
 import { SearchSelect } from "@/components/ui/search-select";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import type { CustomerRow, LeadRow } from "@/lib/api/types";
 
 const m = messages.sales.leads;
-
-/** ตาราง = ทะเบียนเต็ม, การ์ด = กระดานแยกตามสถานะ. อยู่ใน URL จึง bookmark ได้. */
-export type LeadLayout = "table" | "board";
 
 /**
  * Lead register — รับเข้า แก้ไข คัดออก (เหตุผลบังคับ ไม่มีการลบ) และแปลงเป็น
@@ -66,6 +68,7 @@ export function LeadList({
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<LeadRow | null>(null);
   const [disqualifying, setDisqualifying] = useState<LeadRow | null>(null);
+  const [closeAs, setCloseAs] = useState<LostStatus>("disqualified");
   const [converting, setConverting] = useState<LeadRow | null>(null);
   const [finding, setFinding] = useState(false);
 
@@ -128,7 +131,10 @@ export function LeadList({
         <div className="grow" />
         <Segmented<LeadLayout>
           value={layout}
-          onChange={(value) => navigate({ layout: value, page: 1 })}
+          onChange={(value) => {
+            rememberLeadLayout(value);
+            navigate({ layout: value, page: 1 });
+          }}
           options={[
             { value: "table", label: m.view.table },
             { value: "board", label: m.view.board },
@@ -166,7 +172,10 @@ export function LeadList({
               setFormOpen(true);
             }}
             onConvert={(lead) => setConverting(lead)}
-            onDisqualify={(lead) => setDisqualifying(lead)}
+            onDisqualify={(lead, closeAs) => {
+              setCloseAs(closeAs ?? "disqualified");
+              setDisqualifying(lead);
+            }}
             onMoved={() => router.refresh()}
           />
           {total > pageSize && (
@@ -340,7 +349,9 @@ export function LeadList({
         onStarted={(recordId) => router.push(ROUTES.agentRecordDetail(recordId))}
       />
       <DisqualifyLeadModal
+        key={`${disqualifying?.id ?? "closed"}-${closeAs}`}
         lead={disqualifying}
+        initialStatus={closeAs}
         onClose={() => setDisqualifying(null)}
         onDone={() => {
           setDisqualifying(null);
