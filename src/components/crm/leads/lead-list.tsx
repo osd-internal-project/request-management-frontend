@@ -23,15 +23,16 @@ import {
   type LostStatus,
 } from "@/components/crm/leads/lead-actions";
 import { LeadBoard } from "@/components/crm/leads/lead-board";
+import {
+  rememberLeadLayout,
+  type LeadLayout,
+} from "@/lib/lead-layout";
 import { SearchSelect } from "@/components/ui/search-select";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import type { CustomerRow, LeadRow } from "@/lib/api/types";
 
 const m = messages.sales.leads;
-
-/** ตาราง = ทะเบียนเต็ม, การ์ด = กระดานแยกตามสถานะ. อยู่ใน URL จึง bookmark ได้. */
-export type LeadLayout = "table" | "board";
 
 /**
  * Lead register — รับเข้า แก้ไข คัดออก (เหตุผลบังคับ ไม่มีการลบ) และแปลงเป็น
@@ -130,7 +131,10 @@ export function LeadList({
         <div className="grow" />
         <Segmented<LeadLayout>
           value={layout}
-          onChange={(value) => navigate({ layout: value, page: 1 })}
+          onChange={(value) => {
+            rememberLeadLayout(value);
+            navigate({ layout: value, page: 1 });
+          }}
           options={[
             { value: "table", label: m.view.table },
             { value: "board", label: m.view.board },

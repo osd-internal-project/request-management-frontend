@@ -1,7 +1,13 @@
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
-import { LeadList, type LeadLayout } from "@/components/crm/leads/lead-list";
+import { LeadList } from "@/components/crm/leads/lead-list";
+import {
+  LEAD_LAYOUT_COOKIE,
+  parseLeadLayout,
+  type LeadLayout,
+} from "@/lib/lead-layout";
 import { getLeads } from "@/lib/api/sales";
 import { getCustomers } from "@/lib/api/customers";
 import { messages } from "@/lib/messages";
@@ -29,7 +35,11 @@ export default async function LeadsPage({
 
   const query = await searchParams;
   const page = Number(query.page) || 1;
-  const layout: LeadLayout = query.layout === "board" ? "board" : "table";
+  // URL ก่อน แล้วค่อยมุมมองที่ผู้ใช้เลือกไว้ครั้งก่อน (cookie ที่ LeadList เขียน)
+  const layout: LeadLayout =
+    parseLeadLayout(query.layout) ??
+    parseLeadLayout((await cookies()).get(LEAD_LAYOUT_COOKIE)?.value) ??
+    "table";
   // กระดานต้องเห็นทุกขั้นพร้อมกัน จึงดึงเต็มเพดานของ API (`MAX_PAGE_SIZE` = 100)
   const pageSize = layout === "board" ? 100 : 50;
 
