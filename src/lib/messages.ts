@@ -5069,32 +5069,51 @@ export const messages = {
     },
   },
   /** แท็บ "Endpoint ที่เราเรียก" ของหน้า Integrations — ปลายทางของงาน agent. */
-  integrationEndpoints: {
-    add: "เพิ่ม endpoint",
-    addTitle: "เพิ่ม endpoint",
-    editTitle: "แก้ endpoint",
+  outboundConnections: {
+    add: "เพิ่มการเชื่อมต่อ",
+    addTitle: "เพิ่มการเชื่อมต่อ",
+    editTitle: "แก้การเชื่อมต่อ",
+    editActionTitle: (label: string) => `แก้ endpoint ของ ${label}`,
     save: "บันทึก",
-    saved: "บันทึก endpoint แล้ว",
+    saved: "บันทึกการเชื่อมต่อแล้ว",
     edit: "แก้ไข",
-    empty: "ยังไม่มี endpoint — เพิ่มเพื่อให้ปุ่มของงานนั้นส่งงานมาที่ระบบนี้ได้",
-    loadFailed: "โหลด endpoint ไม่สำเร็จ",
+    empty: "ยังไม่ได้เชื่อมต่อ — เพิ่มเพื่อให้ปุ่มของงานส่งงานมาที่ระบบนี้ได้",
+    loadFailed: "โหลดการเชื่อมต่อไม่สำเร็จ",
+    active: "เปิดใช้",
+    url: "URL",
+    key: "x-api-key",
+    keyHint: "กดดูหรือคัดลอก — ทุกครั้งลงบันทึกตรวจสอบ",
+    test: "ทดสอบการเชื่อมต่อ",
+    testPassed: (status: number | null, ms: number) =>
+      `ตอบ ${status ?? "-"} ใน ${(ms / 1000).toFixed(2)} วินาที`,
+    testFailed: (problem: string) => `ไม่ผ่าน: ${problem}`,
+    testHint:
+      "เรียกงานแรกที่ตั้งไว้จริง พร้อม connection_test: true — playbook ฝั่ง agent ควรจบทันทีเมื่อเห็นค่านี้",
     columns: {
       action: "งาน",
-      url: "ปลายทาง",
-      active: "เปิดใช้",
-      key: "x-api-key",
-    },
-    fields: {
-      action: "งาน",
-      baseUrl: "Base URL",
-      baseUrlHint: "เช่น https://d80g4r2y4zcsb.cloudfront.net — ต้องเป็น https",
+      payload: "ข้อมูลที่ส่ง",
       endpointId: "Endpoint id",
-      endpointIdHint: "เช่น ep_192af84b… จากหน้า API ของ agent",
+      timeout: "หมดเวลา",
+    },
+    timeoutValue: (minutes: number) => `${minutes} นาที`,
+    notSet: "ยังไม่ได้ตั้ง",
+    fields: {
+      url: "URL ของ agent",
+      urlHint:
+        "วาง URL ทั้งเส้นจากหน้า API ของ agent ได้ เช่น https://vuvagent.say2us.com/v1/endpoints/ep_… ระบบจะแยก endpoint id ให้",
+      urlSplit: (base: string, id: string) => `URL ${base} · endpoint id ${id}`,
       apiKey: "x-api-key",
       apiKeyKeep: "เว้นว่าง = ใช้ key เดิม",
+      endpointId: "Endpoint id",
+      endpointIdHint: "วาง URL ทั้งเส้นหรือแค่ ep_… ก็ได้",
+      timeout: "หมดเวลา (นาที)",
+      timeoutHint:
+        "ถ้า agent ไม่ส่งผลกลับภายในเวลานี้ งานจะเป็น ไม่สำเร็จ — ถ้าส่งมาทีหลังก็ยังรับ",
       preview: "CTD จะเรียก",
     },
-    keyHint: "กดดูหรือคัดลอก — ทุกครั้งลงบันทึกตรวจสอบ",
+    vendors: {
+      vuvagent: "Vuvagent",
+    } as Record<string, string>,
     actions: {
       "lead.find": "Find Lead",
     } as Record<string, string>,
@@ -5174,7 +5193,7 @@ export const messages = {
       settings: "ตั้งค่า",
       keys: "กุญแจ API",
       webhooks: "Webhook",
-      endpoints: "Endpoint ที่เราเรียก",
+      endpoints: "การเชื่อมต่อที่เราเรียก",
       mcp: "MCP",
       calls: "ประวัติการเรียก",
     },
@@ -5197,7 +5216,7 @@ export const messages = {
     webhooksHint:
       "Webhook คือเราแจ้งระบบนั้นเมื่อเกิดเรื่องที่เลือกไว้ ข้อความมีแค่ id ไม่มีสิทธิ์ให้ตั้ง; secret (whsec_…) ให้ระบบนั้นตรวจว่าข้อความมาจากเรา — ระบบนั้นจะอ่านรายละเอียดได้แค่ไหน ขึ้นกับสิทธิ์ของกุญแจในแท็บกุญแจ API",
     endpointsHint:
-      "ที่อยู่ที่ CTD ส่งงานไปให้ระบบนี้ทำ เช่นปุ่ม Find Lead ส่งหัวข้อไปให้ Vuvagent หา Lead — งานหนึ่งมีได้ endpoint เดียวต่อบริษัท ระบบนั้นส่งผลกลับด้วยกุญแจในแท็บกุญแจ API",
+      "ที่อยู่และกุญแจที่ CTD ใช้ส่งงานไปให้ระบบนี้ทำ เช่นปุ่ม Find Lead ส่งหัวข้อไปให้ Vuvagent หา Lead — ตั้ง URL และ key ครั้งเดียว แล้วเลือก endpoint ของแต่ละงาน; ระบบนั้นส่งผลกลับด้วยกุญแจในแท็บกุญแจ API",
     callsVsAudit:
       "บันทึกการใช้ AI เป็นอีกมุม: ดูว่าผู้ช่วยเรียก tool อะไร ในนามใคร ได้รายการไหนกลับไป ของทั้งบริษัท",
     callsHint:
@@ -7090,6 +7109,10 @@ export const messages = {
       minutes > 0 ? `${minutes} นาที ${seconds} วินาที` : `${seconds} วินาที`,
     working: "Agent กำลังค้นหา หน้านี้จะอัปเดตเองเมื่อมีผล",
     slow: "งานนี้ใช้เวลานานกว่า 10 นาทีแล้ว ถ้ายังไม่เสร็จ ให้ตรวจสถานะที่ Vuvagent",
+    timedOut: "หมดเวลา",
+    payloadTitle: "ข้อมูลที่ส่งให้ agent",
+    payloadHint: (action: string) =>
+      `งาน ${action} — ส่งไปตามนี้ทุกครั้งที่กดค้นหา`,
     failed: "Agent ทำงานนี้ไม่สำเร็จ",
     failedNoReason: "agent ไม่ได้ส่งเหตุผลกลับมา",
     leadsTitle: (n: number) => `Lead ที่ agent สร้าง (${n})`,

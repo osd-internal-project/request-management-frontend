@@ -23,7 +23,7 @@ export interface IntegrationRow {
   active: boolean;
   api_key_count: number;
   webhook_count: number;
-  endpoint_count: number;
+  connection_count: number;
   created_at: string;
   created_by: string;
 }

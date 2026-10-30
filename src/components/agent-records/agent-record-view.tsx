@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Alert, Space, Spin, Table, Tag } from "antd";
 import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
+import Paragraph from "antd/es/typography/Paragraph";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import type {
@@ -44,6 +45,7 @@ export function AgentRecordView({ record }: { record: AgentRecordDetail }) {
           <Tag color={m.statusColor[record.status]}>
             {m.status[record.status]}
           </Tag>
+          {record.timedOutAt && <Tag>{m.timedOut}</Tag>}
         </Space>
         <Text type="secondary" className="block text-xs">
           {m.action[record.action] ?? record.action} ·{" "}
@@ -72,6 +74,24 @@ export function AgentRecordView({ record }: { record: AgentRecordDetail }) {
           description={record.error ?? m.failedNoReason}
         />
       )}
+
+      <div className="space-y-1">
+        <Title level={5} className="mb-0!">
+          {m.payloadTitle}
+        </Title>
+        <Text type="secondary" className="block text-xs">
+          {m.payloadHint(record.action)}
+        </Text>
+        <Paragraph copyable className="mb-0!">
+          <pre className="m-0 overflow-x-auto text-xs">
+            {JSON.stringify(
+              { agent_record_id: record.id, ...record.input },
+              null,
+              2,
+            )}
+          </pre>
+        </Paragraph>
+      </div>
 
       {record.action === "lead.find" && (
         <div className="space-y-2">

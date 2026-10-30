@@ -22,7 +22,7 @@ import Text from "antd/es/typography/Text";
 import Title from "antd/es/typography/Title";
 import { ApiKeyAdmin } from "@/components/admin/api-key-admin";
 import { WebhookAdmin } from "@/components/admin/webhook-admin";
-import { IntegrationEndpointAdmin } from "@/components/admin/integration-endpoint-admin";
+import { OutboundConnectionAdmin } from "@/components/admin/outbound-connection-admin";
 import {
   listIntegrationCalls,
   listIntegrations,
@@ -148,13 +148,13 @@ export function IntegrationDetail({
           },
           {
             key: "endpoints",
-            label: `${m.tabs.endpoints} (${row.endpoint_count})`,
+            label: `${m.tabs.endpoints} (${row.connection_count})`,
             children: (
               <>
                 <Paragraph type="secondary" className="text-xs">
                   {m.endpointsHint}
                 </Paragraph>
-                <IntegrationEndpointAdmin
+                <OutboundConnectionAdmin
                   integrationId={row.id}
                   onChanged={refresh}
                 />

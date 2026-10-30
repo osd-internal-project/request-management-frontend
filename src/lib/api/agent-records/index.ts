@@ -19,6 +19,8 @@ export interface AgentRecordRow {
   input: { topic?: string } & Record<string, unknown>;
   result: Record<string, unknown> | null;
   error: string | null;
+  /** set when nobody answered in time; a late answer can still finish it */
+  timedOutAt: string | null;
   createdBy: string;
   createdByName: string | null;
   createdAt: string;
