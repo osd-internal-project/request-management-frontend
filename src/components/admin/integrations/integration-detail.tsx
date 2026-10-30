@@ -43,14 +43,17 @@ const PAGE_SIZE = 20;
  * backend ไม่มี GET รายตัว — หาจากรายการของบริษัท ซึ่งมีไม่กี่แถว.
  *
  * @param mcpEndpoint URL ที่ผู้ใช้วางใน LibreChat; null = ยังไม่ได้ตั้ง env
+ * @param externalApiBase `<public>/api/v1` สำหรับตัวอย่างการเรียก; null = ยังไม่ได้ตั้ง env
  */
 export function IntegrationDetail({
   id,
   mcpEndpoint,
+  externalApiBase,
   canAudit,
 }: {
   readonly id: string;
   readonly mcpEndpoint: string | null;
+  readonly externalApiBase: string | null;
   readonly canAudit: boolean;
 }) {
   const [row, setRow] = useState<IntegrationRow | null | undefined>(undefined);
@@ -130,7 +133,10 @@ export function IntegrationDetail({
                 <Paragraph type="secondary" className="text-xs">
                   {m.keysHint}
                 </Paragraph>
-                <ApiKeyAdmin integrationId={row.id} />
+                <ApiKeyAdmin
+                  integrationId={row.id}
+                  externalApiBase={externalApiBase}
+                />
               </>
             ),
           },
@@ -156,6 +162,7 @@ export function IntegrationDetail({
                 </Paragraph>
                 <OutboundConnectionAdmin
                   integrationId={row.id}
+                  externalApiBase={externalApiBase}
                   onChanged={refresh}
                 />
               </>

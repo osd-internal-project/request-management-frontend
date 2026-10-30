@@ -26,6 +26,21 @@ export interface ApiKeyRow {
   integration_id: string | null;
 }
 
+/** ตัวอย่างการเรียกหนึ่ง route — สร้างจาก OpenAPI ฝั่ง backend ไม่ใช่เขียนมือ. */
+export interface ApiExample {
+  operationId: string;
+  tag: string;
+  summary: string;
+  method: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
+  /** ไม่มี `/api/v1` นำหน้า เช่น `/agent-records/{id}` */
+  path: string;
+  scopes: string[];
+  /** route ต้องมี `X-Acting-User` */
+  actingUser: boolean;
+  query: Record<string, unknown>;
+  body: unknown;
+}
+
 /** คำตอบตอนออกกุญแจ / ออกใหม่ — `key` คือค่าเต็ม. */
 export interface IssuedApiKey extends ApiKeyRow {
   key: string;
@@ -94,6 +109,13 @@ export async function rotateApiKey(
   return adminApi<IssuedApiKey>(`api-keys/${id}/rotate`, { method: "POST" });
 }
 
+/** route ที่กุญแจใบนี้เรียกได้ครบทุก scope — กุญแจของบริษัทอื่นได้ 404. */
+export async function getApiKeyExamples(
+  id: string,
+): Promise<ClientResult<ApiExample[]>> {
+  return adminApi<ApiExample[]>(`api-keys/${id}/examples`);
+}
+
 /** Grouped for `import apiKeys from …` at call sites. */
 const apiKeys = {
   listApiKeyScopes,
@@ -103,6 +125,7 @@ const apiKeys = {
   revokeApiKey,
   revealApiKey,
   rotateApiKey,
+  getApiKeyExamples,
 };
 
 export default apiKeys;

@@ -20,6 +20,7 @@ export default async function AdminIntegrationDetailPage({
     <IntegrationDetail
       id={id}
       mcpEndpoint={base ? `${base}/api/v1/mcp` : null}
+      externalApiBase={base ? `${base}/api/v1` : null}
       canAudit={can(session, "admin.ai.audit")}
     />
   );

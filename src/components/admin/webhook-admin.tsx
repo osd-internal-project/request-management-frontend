@@ -12,6 +12,7 @@ import {
   Input,
   Modal,
   Popover,
+  Select,
   Space,
   Spin,
   Table,
@@ -22,7 +23,13 @@ import Paragraph from "antd/es/typography/Paragraph";
 import { GroupedPicker } from "@/components/admin/integrations/grouped-picker";
 import { SecretField, unwrap } from "@/components/admin/integrations/secret-field";
 import {
+  WEBHOOK_VERIFY_SNIPPET,
+  webhookRequestFor,
+} from "@/components/admin/integrations/api-example";
+import { CodeBlock } from "@/components/admin/integrations/code-block";
+import {
   createWebhook,
+  getWebhookExamples,
   listWebhookDeliveries,
   listWebhookEvents,
   listWebhooks,
@@ -32,6 +39,7 @@ import {
   testWebhook,
   updateWebhook,
   type WebhookDelivery,
+  type WebhookExample,
   type WebhookRow,
   type WebhookWithSecret,
 } from "@/lib/api/webhooks";
@@ -99,6 +107,7 @@ export function WebhookAdmin({
   const [secret, setSecret] = useState<WebhookWithSecret | null>(null);
   const [history, setHistory] = useState<WebhookRow | null>(null);
   const [deliveries, setDeliveries] = useState<WebhookDelivery[] | null>(null);
+  const [examplesFor, setExamplesFor] = useState<WebhookRow | null>(null);
 
   const refresh = useCallback(
     () =>
@@ -283,9 +292,12 @@ export function WebhookAdmin({
             {
               title: m.columnActions,
               key: "actions",
-              width: 200,
+              width: 340,
               render: (_, row) => (
-                <span className="flex gap-1">
+                <span className="flex items-center gap-1">
+                  <Button type="link" size="small" onClick={() => setExamplesFor(row)}>
+                    {m.examples}
+                  </Button>
                   <Button size="small" onClick={() => open(row)}>
                     {m.edit}
                   </Button>
@@ -369,6 +381,12 @@ export function WebhookAdmin({
         {secret && <SecretField hint="whsec_…" value={secret.secret} />}
       </Modal>
 
+      <WebhookExampleDrawer
+        key={examplesFor?.id ?? "closed"}
+        row={examplesFor}
+        onClose={() => setExamplesFor(null)}
+      />
+
       <Drawer
         open={history !== null}
         title={`${m.history} · ${history?.name ?? ""}`}
@@ -435,5 +453,67 @@ export function WebhookAdmin({
         )}
       </Drawer>
     </div>
+  );
+}
+
+/** สิ่งที่ปลายทางได้รับต่อ event ที่ subscription นี้ฟัง แล้วโค้ดตรวจลายเซ็น. */
+function WebhookExampleDrawer({
+  row,
+  onClose,
+}: {
+  readonly row: WebhookRow | null;
+  readonly onClose: () => void;
+}) {
+  const [examples, setExamples] = useState<WebhookExample[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [event, setEvent] = useState<string | undefined>(row?.events[0]);
+
+  useEffect(() => {
+    if (!row) return;
+    void getWebhookExamples(row.events).then((result) => {
+      if (!result.ok) return setError(result.message);
+      setExamples(result.data);
+    });
+  }, [row]);
+
+  const current = examples?.find((example) => example.event === event);
+
+  return (
+    <Drawer
+      open={row !== null}
+      title={m.examplesTitle(row?.name ?? "")}
+      size="min(900px, 100vw)"
+      onClose={onClose}
+    >
+      {error ? (
+        <Alert type="error" showIcon title={m.examplesLoadFailed} description={error} />
+      ) : !examples || !row ? (
+        <div className="flex h-64 items-center justify-center">
+          <Spin />
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <Select
+            className="w-full max-w-sm"
+            value={event}
+            onChange={setEvent}
+            options={row.events.map((code) => ({
+              value: code,
+              label: m.eventLabel[code] ? `${m.eventLabel[code]} · ${code}` : code,
+            }))}
+          />
+          {current && <CodeBlock code={webhookRequestFor(current, row.url)} />}
+          <div className="space-y-1 pt-2">
+            <Paragraph strong className="mb-0!">
+              {m.verifyTitle}
+            </Paragraph>
+            <Paragraph type="secondary" className="mb-0! text-xs">
+              {m.verifyHint}
+            </Paragraph>
+          </div>
+          <CodeBlock code={WEBHOOK_VERIFY_SNIPPET} />
+        </div>
+      )}
+    </Drawer>
   );
 }

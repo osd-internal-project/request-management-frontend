@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Alert, Space, Spin, Table, Tag } from "antd";
 import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
-import Paragraph from "antd/es/typography/Paragraph";
+import { CodeBlock } from "@/components/admin/integrations/code-block";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import type {
@@ -82,15 +82,13 @@ export function AgentRecordView({ record }: { record: AgentRecordDetail }) {
         <Text type="secondary" className="block text-xs">
           {m.payloadHint(record.action)}
         </Text>
-        <Paragraph copyable className="mb-0!">
-          <pre className="m-0 overflow-x-auto text-xs">
-            {JSON.stringify(
-              { agent_record_id: record.id, ...record.input },
-              null,
-              2,
-            )}
-          </pre>
-        </Paragraph>
+        <CodeBlock
+          code={JSON.stringify(
+            { agent_record_id: record.id, ...record.input },
+            null,
+            2,
+          )}
+        />
       </div>
 
       {record.action === "lead.find" && (
