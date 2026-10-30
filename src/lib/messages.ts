@@ -5029,6 +5029,13 @@ export const messages = {
     issuedBody:
       "ส่งกุญแจนี้ให้ผู้ดูแลระบบปลายทาง — ดูย้อนหลังได้ที่คอลัมน์กุญแจ ทุกครั้งที่ดูถูกบันทึกไว้",
     issuedDone: "ปิด",
+
+    examples: "ตัวอย่างการเรียก",
+    examplesTitle: (name: string) => `ตัวอย่างการเรียก · ${name}`,
+    examplesEmpty: "กุญแจนี้ยังไม่มี scope ที่เรียก route ใดได้",
+    examplesLoadFailed: "โหลดตัวอย่างไม่สำเร็จ",
+    examplesScopes: (scopes: string) => `ต้องมีสิทธิ์ ${scopes}`,
+    exampleActingUser: "<อีเมลพนักงาน>",
   },
 
   /** G-07 — webhook ขาออก: แจ้งเว็บภายนอกเมื่อเกิด event ของบริษัท. */
@@ -5117,6 +5124,26 @@ export const messages = {
     actions: {
       "lead.find": "Find Lead",
     } as Record<string, string>,
+    roundTripTitle: (label: string) => `ไป-กลับของงาน ${label}`,
+    roundTripOut:
+      "① CTD ส่งงานให้ Vuvagent · ใช้ x-api-key ของ Vuvagent (ตั้งในการ์ดนี้)",
+    roundTripBack:
+      "② Vuvagent ยิงกลับมาที่ CTD · ใช้กุญแจ rfk_ จากแท็บกุญแจ API",
+    vuvagentKeyPlaceholder: "<x-api-key ของ Vuvagent>",
+    sampleTopic: "บริษัทโลจิสติกส์ในภาคตะวันออก",
+    keyReady: (name: string, prefix: string) => `พร้อม: ${name} (${prefix}…)`,
+    keyMissing:
+      "ยังไม่มีกุญแจที่สร้าง Lead และปิดงานได้ — ออกกุญแจ preset ai-lead-finder ในแท็บกุญแจ API",
+    keyLoadFailed: "โหลดกุญแจ API ไม่สำเร็จ",
+    stepIntake: "ส่ง Lead ที่หาเจอ ทีละราย",
+    stepDone: "ปิดงานว่าสำเร็จ",
+    stepFailed: "หรือปิดงานว่าไม่สำเร็จ",
+    sampleFailedError: "หา lead ไม่เจอในหัวข้อนี้",
+    roundTripCodes: [
+      "ตอบ 404 เมื่อ id เป็นงานของบริษัทอื่น",
+      "ตอบ 409 เมื่องานนี้ปิดไปแล้ว",
+      "งานที่หมดเวลาไปแล้ว ยังส่งผลมาปิดได้",
+    ],
   },
   integrations: {
     title: "ระบบภายนอก",
@@ -5201,6 +5228,8 @@ export const messages = {
     mcpEndpoint: "MCP Server URL",
     mcpEndpointUnset:
       "ยังไม่แสดง เพราะผู้ดูแลระบบยังไม่ได้ตั้ง EXTERNAL_API_PUBLIC_URL ของเว็บ เป็นที่อยู่ external-service ที่คนนอกเห็น เช่น https://ctd-dev.osd.co.th/external-api — ตั้งแล้ว URL จะขึ้นที่นี่",
+    exampleBaseUnset:
+      "ตัวอย่างใช้ <EXTERNAL_API_PUBLIC_URL> แทนที่อยู่จริง เพราะผู้ดูแลระบบยังไม่ได้ตั้ง EXTERNAL_API_PUBLIC_URL ของเว็บ เช่น https://ctd-dev.osd.co.th/external-api",
     mcpCredential:
       "MCP ไม่มีกุญแจแยก — ถ้าเลือก OAuth ใน LibreChat ผู้ใช้ login ด้วยบัญชีของตัวเอง ไม่ต้องตั้งอะไรเพิ่ม; ถ้าใช้กุญแจ ให้ใช้กุญแจ rfk_ จาก tab กุญแจ API ของระบบนี้",
     mcpHowTo: "เชื่อม LibreChat",
@@ -5328,6 +5357,13 @@ export const messages = {
     columnAt: "เวลา",
     columnAttempts: "ครั้งที่",
     columnResult: "ผล",
+
+    examples: "ตัวอย่างที่ปลายทางจะได้รับ",
+    examplesTitle: (name: string) => `ตัวอย่างที่ปลายทางจะได้รับ · ${name}`,
+    examplesLoadFailed: "โหลดตัวอย่างไม่สำเร็จ",
+    verifyTitle: "ตรวจลายเซ็นฝั่งปลายทาง (Node)",
+    verifyHint:
+      "HMAC-SHA256 ของ timestamp.body ด้วย secret เทียบกับ X-Webhook-Signature แบบเวลาคงที่ ใช้ body ดิบก่อน parse และปฏิเสธ timestamp ที่ห่างเกิน 5 นาที",
   },
 
   workflowTriggers: {

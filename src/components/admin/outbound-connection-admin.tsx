@@ -21,6 +21,19 @@ import {
   unwrap,
 } from "@/components/admin/integrations/secret-field";
 import {
+  agentTaskCurl,
+  curlFor,
+  intakeForAgent,
+  SAMPLE_AGENT_RECORD_ID,
+} from "@/components/admin/integrations/api-example";
+import { CodeBlock } from "@/components/ui/code-block";
+import {
+  getApiKeyExamples,
+  listApiKeys,
+  type ApiExample,
+  type ApiKeyRow,
+} from "@/lib/api/api-keys";
+import {
   createOutboundConnection,
   endpointUrl,
   listAgentActions,
@@ -60,9 +73,11 @@ interface ActionLine extends AgentActionInfo {
  */
 export function OutboundConnectionAdmin({
   integrationId,
+  externalApiBase,
   onChanged,
 }: {
   integrationId: string;
+  externalApiBase: string | null;
   onChanged: () => void;
 }) {
   const { message } = App.useApp();
@@ -128,6 +143,7 @@ export function OutboundConnectionAdmin({
           key={row.id}
           row={row}
           actions={actions.filter((action) => action.vendor === row.vendor)}
+          externalApiBase={externalApiBase}
           onEdit={() => setEditing(row)}
           onChanged={replace}
         />
@@ -154,11 +170,13 @@ export function OutboundConnectionAdmin({
 function ConnectionCard({
   row,
   actions,
+  externalApiBase,
   onEdit,
   onChanged,
 }: {
   row: OutboundConnectionRow;
   actions: AgentActionInfo[];
+  externalApiBase: string | null;
   onEdit: () => void;
   onChanged: (row: OutboundConnectionRow) => void;
 }) {
@@ -321,6 +339,13 @@ function ConnectionCard({
             },
           ]}
         />
+        {lines.some((line) => line.endpoint) && (
+          <AgentRoundTrip
+            row={row}
+            lines={lines}
+            externalApiBase={externalApiBase}
+          />
+        )}
       </div>
       <ActionModal
         key={editingAction?.action ?? "closed"}
@@ -337,6 +362,143 @@ function ConnectionCard({
         }}
       />
     </Card>
+  );
+}
+
+const LEAD_CREATE = "integration.crm.lead.create";
+const RECORD_UPDATE = "integration.agent.record.update";
+
+/** The calls Vuvagent makes back, cut from the served catalogue of a key that can make them. */
+interface ReturnCalls {
+  key: ApiKeyRow;
+  intake: ApiExample | undefined;
+  done: ApiExample | undefined;
+}
+
+/**
+ * ① CTD → Vuvagent and ② Vuvagent → CTD for each action with an endpoint.
+ * ② needs a ready key: without one the examples would name a key that cannot make the calls.
+ */
+function AgentRoundTrip({
+  row,
+  lines,
+  externalApiBase,
+}: {
+  row: OutboundConnectionRow;
+  lines: ActionLine[];
+  externalApiBase: string | null;
+}) {
+  // undefined = loading, null = no ready key
+  const [calls, setCalls] = useState<ReturnCalls | null | undefined>(undefined);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    void listApiKeys().then(async (keys) => {
+      if (!keys.ok) return setError(keys.message);
+      const key = keys.data.find(
+        (item) =>
+          item.integration_id === row.integration_id &&
+          item.status === "active" &&
+          item.scopes.includes(LEAD_CREATE) &&
+          item.scopes.includes(RECORD_UPDATE),
+      );
+      if (!key) return setCalls(null);
+      const examples = await getApiKeyExamples(key.id);
+      if (!examples.ok) return setError(examples.message);
+      const find = (method: string, path: string) =>
+        examples.data.find((item) => item.method === method && item.path === path);
+      setCalls({
+        key,
+        intake: find("POST", "/crm/leads/intake"),
+        done: find("PATCH", "/agent-records/{id}"),
+      });
+    });
+  }, [row.integration_id]);
+
+  const curl = (example: ApiExample) =>
+    calls ? curlFor(example, { externalApiBase, keyPrefix: calls.key.prefix }) : "";
+  // the same id step ① sent, so the reader sees which task is being closed
+  const done = calls?.done && {
+    ...calls.done,
+    path: calls.done.path.replace("{id}", SAMPLE_AGENT_RECORD_ID),
+  };
+
+  return (
+    <>
+      {lines.map(
+        (line) =>
+          line.endpoint && (
+            <div
+              key={line.action}
+              className="space-y-2 border-t border-[var(--app-border-soft)] pt-3"
+            >
+              <Text strong>
+                {m.roundTripTitle(m.actions[line.action] ?? line.action)}
+              </Text>
+              <Text type="secondary" className="block text-xs">
+                {m.roundTripOut}
+              </Text>
+              <CodeBlock
+                code={agentTaskCurl(
+                  row.base_url,
+                  line.endpoint.endpoint_id,
+                  line.payload_fields,
+                )}
+              />
+              <Text type="secondary" className="block text-xs">
+                {m.roundTripBack}
+              </Text>
+              {error && (
+                <Alert
+                  type="error"
+                  showIcon
+                  title={m.keyLoadFailed}
+                  description={error}
+                />
+              )}
+              {calls === null && (
+                <Alert type="warning" showIcon title={m.keyMissing} />
+              )}
+              {calls && (
+                <>
+                  <Text type="success" className="block text-xs">
+                    {m.keyReady(calls.key.name, calls.key.prefix)}
+                  </Text>
+                  {!externalApiBase && (
+                    <Text type="warning" className="block text-xs">
+                      {messages.integrations.exampleBaseUnset}
+                    </Text>
+                  )}
+                  {calls.intake && (
+                    <>
+                      <Text className="block text-xs">{m.stepIntake}</Text>
+                      <CodeBlock code={curl(intakeForAgent(calls.intake))} />
+                    </>
+                  )}
+                  {done && (
+                    <>
+                      <Text className="block text-xs">{m.stepDone}</Text>
+                      <CodeBlock code={curl(done)} />
+                      <Text className="block text-xs">{m.stepFailed}</Text>
+                      <CodeBlock
+                        code={curl({
+                          ...done,
+                          body: { status: "failed", error: m.sampleFailedError },
+                        })}
+                      />
+                    </>
+                  )}
+                </>
+              )}
+              <ul className="m-0 list-disc pl-5 text-xs text-[var(--app-text-secondary)]">
+                {m.roundTripCodes.map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
+            </div>
+          ),
+      )}
+    </>
   );
 }
 

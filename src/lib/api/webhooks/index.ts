@@ -45,6 +45,24 @@ export interface WebhookPayload {
   integration_id?: string;
 }
 
+/** body ที่ปลายทางได้รับต่อ event — สร้างจาก OpenAPI ฝั่ง backend. */
+export interface WebhookExample {
+  event: string;
+  summary: string;
+  body: unknown;
+}
+
+/** ไม่ส่ง event = ทุก event. */
+export async function getWebhookExamples(
+  events: readonly string[] = [],
+): Promise<ClientResult<WebhookExample[]>> {
+  return adminApi<WebhookExample[]>(
+    events.length
+      ? `webhooks/examples?events=${encodeURIComponent(events.join(","))}`
+      : "webhooks/examples",
+  );
+}
+
 export async function listWebhookEvents(): Promise<
   ClientResult<{ code: string }[]>
 > {
@@ -122,6 +140,7 @@ const webhooks = {
   redeliverWebhook,
   listWebhookDeliveries,
   testWebhook,
+  getWebhookExamples,
 };
 
 export default webhooks;

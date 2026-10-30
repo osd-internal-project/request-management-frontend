@@ -6,6 +6,7 @@ import {
   App,
   Button,
   Card,
+  Drawer,
   Dropdown,
   Input,
   InputNumber,
@@ -21,6 +22,7 @@ import { MoreOutlined } from "@ant-design/icons";
 import Paragraph from "antd/es/typography/Paragraph";
 import Text from "antd/es/typography/Text";
 import {
+  getApiKeyExamples,
   issueApiKey,
   listApiKeys,
   listApiKeyScopes,
@@ -28,9 +30,12 @@ import {
   revokeApiKey,
   rotateApiKey,
   updateApiKeyScopes,
+  type ApiExample,
   type ApiKeyRow,
   type IssuedApiKey,
 } from "@/lib/api/api-keys";
+import { curlFor } from "@/components/admin/integrations/api-example";
+import { CodeBlock } from "@/components/ui/code-block";
 import { GroupedPicker } from "@/components/admin/integrations/grouped-picker";
 import { SecretField, unwrap } from "@/components/admin/integrations/secret-field";
 import {
@@ -146,10 +151,15 @@ function ScopeCount({ codes }: { readonly codes: readonly string[] }) {
  * — หน้านี้ไม่เก็บมันไว้ที่ไหนนอกจาก state ของช่องที่แสดงมัน
  *
  * `integrationId` = แสดงเฉพาะกุญแจของระบบนั้น และออกใบใหม่ให้ระบบนั้น.
+ * `externalApiBase` = ที่อยู่ในตัวอย่างการเรียก; null = ยังไม่ได้ตั้ง env.
  */
 export function ApiKeyAdmin({
   integrationId,
-}: { readonly integrationId?: string } = {}) {
+  externalApiBase = null,
+}: {
+  readonly integrationId?: string;
+  readonly externalApiBase?: string | null;
+} = {}) {
   // antd's `message` from context, so it inherits the app theme.
   const { message, modal } = App.useApp();
   const [rows, setRows] = useState<ApiKeyRow[] | null>(null);
@@ -160,6 +170,7 @@ export function ApiKeyAdmin({
   const [issued, setIssued] = useState<IssuedApiKey | null>(null);
   const [editing, setEditing] = useState<ApiKeyRow | null>(null);
   const [editScopes, setEditScopes] = useState<string[]>([]);
+  const [examplesFor, setExamplesFor] = useState<ApiKeyRow | null>(null);
 
   const [name, setName] = useState("");
   const [sourceCode, setSourceCode] = useState("");
@@ -389,10 +400,13 @@ export function ApiKeyAdmin({
             {
               title: m.columnActions,
               key: "actions",
-              width: 140,
+              width: 260,
               render: (_, row) =>
                 row.status === "active" && (
-                  <span className="flex gap-1">
+                  <span className="flex items-center gap-1">
+                    <Button type="link" size="small" onClick={() => setExamplesFor(row)}>
+                      {m.examples}
+                    </Button>
                     <Button size="small" onClick={() => startEdit(row)}>
                       {m.editScopes}
                     </Button>
@@ -415,6 +429,13 @@ export function ApiKeyAdmin({
           ]}
         />
       </Card>
+
+      <ApiExamplesDrawer
+        key={examplesFor?.id ?? "closed"}
+        row={examplesFor}
+        externalApiBase={externalApiBase}
+        onClose={() => setExamplesFor(null)}
+      />
 
       <Modal
         open={issuing}
@@ -534,5 +555,110 @@ export function ApiKeyAdmin({
         {issued && <SecretField hint={`${issued.prefix}…`} value={issued.key} />}
       </Modal>
     </div>
+  );
+}
+
+/** route ที่กุญแจเรียกได้ จัดตาม tag ซ้าย · curl ของตัวที่เลือกขวา. */
+function ApiExamplesDrawer({
+  row,
+  externalApiBase,
+  onClose,
+}: {
+  readonly row: ApiKeyRow | null;
+  readonly externalApiBase: string | null;
+  readonly onClose: () => void;
+}) {
+  const [examples, setExamples] = useState<ApiExample[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!row) return;
+    void getApiKeyExamples(row.id).then((result) => {
+      if (!result.ok) return setError(result.message);
+      setExamples(result.data);
+      setSelected(result.data[0]?.operationId ?? null);
+    });
+  }, [row]);
+
+  const byTag = new Map<string, ApiExample[]>();
+  for (const example of examples ?? []) {
+    byTag.set(example.tag, [...(byTag.get(example.tag) ?? []), example]);
+  }
+  const current = examples?.find((example) => example.operationId === selected);
+
+  function body() {
+    if (error) {
+      return (
+        <Alert type="error" showIcon title={m.examplesLoadFailed} description={error} />
+      );
+    }
+    if (!examples) {
+      return (
+        <div className="flex h-64 items-center justify-center">
+          <Spin />
+        </div>
+      );
+    }
+    if (examples.length === 0) return <Text type="secondary">{m.examplesEmpty}</Text>;
+    return (
+      <div className="grid gap-4 md:grid-cols-[18rem_minmax(0,1fr)]">
+        <nav className="space-y-3 md:max-h-[calc(100vh-12rem)] md:overflow-y-auto">
+          {[...byTag].map(([tag, items]) => (
+            <div key={tag}>
+              <Text type="secondary" className="text-xs">
+                {tag}
+              </Text>
+              <ul className="m-0 list-none p-0">
+                {items.map((example) => (
+                  <li key={example.operationId}>
+                    <button
+                      type="button"
+                      onClick={() => setSelected(example.operationId)}
+                      className={`w-full cursor-pointer rounded-md border-0 px-2 py-1.5 text-left ${
+                        example.operationId === selected
+                          ? "bg-[var(--app-primary-soft)]"
+                          : "bg-transparent hover:bg-[var(--app-bg)]"
+                      }`}
+                    >
+                      <span className="block text-sm">{example.summary}</span>
+                      <code className="text-xs text-[var(--app-text-secondary)]">
+                        {example.method} {example.path}
+                      </code>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </nav>
+        {current && row && (
+          <div className="min-w-0 space-y-2">
+            <CodeBlock
+              code={curlFor(current, { externalApiBase, keyPrefix: row.prefix })}
+            />
+            <Text type="secondary" className="text-xs">
+              {m.examplesScopes(current.scopes.join(", "))}
+            </Text>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <Drawer
+      open={row !== null}
+      title={m.examplesTitle(row?.name ?? "")}
+      size="min(900px, 100vw)"
+      onClose={onClose}
+    >
+      <div className="space-y-3">
+        {!externalApiBase && (
+          <Alert type="warning" showIcon title={messages.integrations.exampleBaseUnset} />
+        )}
+        {body()}
+      </div>
+    </Drawer>
   );
 }
