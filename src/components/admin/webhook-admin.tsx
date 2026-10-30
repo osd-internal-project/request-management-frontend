@@ -26,7 +26,7 @@ import {
   WEBHOOK_VERIFY_SNIPPET,
   webhookRequestFor,
 } from "@/components/admin/integrations/api-example";
-import { CodeBlock } from "@/components/admin/integrations/code-block";
+import { CodeBlock } from "@/components/ui/code-block";
 import {
   createWebhook,
   getWebhookExamples,

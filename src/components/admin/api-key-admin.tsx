@@ -35,7 +35,7 @@ import {
   type IssuedApiKey,
 } from "@/lib/api/api-keys";
 import { curlFor } from "@/components/admin/integrations/api-example";
-import { CodeBlock } from "@/components/admin/integrations/code-block";
+import { CodeBlock } from "@/components/ui/code-block";
 import { GroupedPicker } from "@/components/admin/integrations/grouped-picker";
 import { SecretField, unwrap } from "@/components/admin/integrations/secret-field";
 import {

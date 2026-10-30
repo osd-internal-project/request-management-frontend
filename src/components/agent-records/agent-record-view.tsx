@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Alert, Space, Spin, Table, Tag } from "antd";
 import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
-import { CodeBlock } from "@/components/admin/integrations/code-block";
+import { CodeBlock } from "@/components/ui/code-block";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import type {

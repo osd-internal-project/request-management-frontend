@@ -26,7 +26,7 @@ import {
   intakeForAgent,
   SAMPLE_AGENT_RECORD_ID,
 } from "@/components/admin/integrations/api-example";
-import { CodeBlock } from "@/components/admin/integrations/code-block";
+import { CodeBlock } from "@/components/ui/code-block";
 import {
   getApiKeyExamples,
   listApiKeys,
@@ -490,9 +490,11 @@ function AgentRoundTrip({
                   )}
                 </>
               )}
-              <Text type="secondary" className="block text-xs">
-                {m.roundTripCodes}
-              </Text>
+              <ul className="m-0 list-disc pl-5 text-xs text-[var(--app-text-secondary)]">
+                {m.roundTripCodes.map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
             </div>
           ),
       )}
