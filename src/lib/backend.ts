@@ -71,6 +71,8 @@ export const CORE_SERVICE_PREFIXES = [
   "/disbursements",
   "/cost-centers",
   "/leads",
+  // Find Lead jobs handed to Vuvagent, and their live status stream
+  "/agent-records",
   "/opportunities",
   "/quotations",
   "/sale-orders",
@@ -147,6 +149,8 @@ export const CORE_SERVICE_PREFIXES = [
   "/admin/api-keys",
   "/admin/webhooks",
   "/admin/integrations",
+  // not covered by the line above: `integration-` is not `integrations`
+  "/admin/integration-endpoints",
   "/admin/workflow-triggers",
   "/process-logs",
   "/admin/erp-sync",
