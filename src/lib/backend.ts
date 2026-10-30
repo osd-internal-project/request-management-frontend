@@ -149,8 +149,7 @@ export const CORE_SERVICE_PREFIXES = [
   "/admin/api-keys",
   "/admin/webhooks",
   "/admin/integrations",
-  // not covered by the line above: `integration-` is not `integrations`
-  "/admin/integration-endpoints",
+  "/admin/outbound-connections",
   "/admin/workflow-triggers",
   "/process-logs",
   "/admin/erp-sync",
