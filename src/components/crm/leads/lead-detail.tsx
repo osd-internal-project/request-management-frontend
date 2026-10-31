@@ -196,7 +196,7 @@ export function LeadDetailView({
   const disqualified = isLeadLost(lead.status);
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-4">
       {error && <Alert type="error" showIcon title={error} />}
 
       {lead.status === "converted" && lead.convertedOpportunity && (
@@ -321,7 +321,7 @@ export function LeadDetailView({
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[280px_minmax(0,1fr)_300px]">
         {/* ซ้าย — ผู้ติดต่อ + บริษัท/ที่อยู่ */}
-        <div className="space-y-3">
+        <div className="flex flex-col gap-4">
           <Card size="small">
             <div className="flex items-start gap-3">
               <Avatar size={40} className="shrink-0 bg-blue-600!">
@@ -441,7 +441,7 @@ export function LeadDetailView({
               key: "details",
               label: md.tabs.details,
               children: (
-                <div className="space-y-3">
+                <div className="flex flex-col gap-4">
                   <DiscoveryCard
                     lead={lead}
                     editable={editable}
@@ -541,7 +541,7 @@ export function LeadDetailView({
         />
 
         {/* ขวา — ปุ่มลัด + กิจกรรมค้าง + Focus */}
-        <div className="space-y-3">
+        <div className="flex flex-col gap-4">
           {editable && (
             <Card size="small">
               <div className="grid grid-cols-4 gap-2">

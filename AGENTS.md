@@ -103,3 +103,7 @@ Page context sent through `window.LibreChatWidgets[publicId]` never reached the 
 App Router StrictMode mounts effects twice and a removed `<script>` still executes, so two v1.js
 instances exist → bind to the instance whose `document.currentScript` is this mount's script
 (`librechat-widget.tsx`) and `destroy()` the rest; read the vendor script before wiring its API.
+
+## Spacing between antd components
+
+`space-y-*` between antd `Card`s did nothing — the lead-detail cards touched after a "margin fix" → antd's unlayered `margin: 0` reset beats Tailwind v4's `@layer utilities` → stack antd components with `flex flex-col gap-*` on the parent, never `space-y-*` / `mt-*` on the child (31 Oct 2026).
