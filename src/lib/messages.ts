@@ -5077,27 +5077,24 @@ export const messages = {
   },
   /** แท็บ "Endpoint ที่เราเรียก" ของหน้า Integrations — ปลายทางของงาน agent. */
   outboundConnections: {
-    add: "เพิ่มการเชื่อมต่อ",
-    addTitle: "เพิ่มการเชื่อมต่อ",
-    editTitle: "แก้การเชื่อมต่อ",
-    editActionTitle: (label: string) => `แก้ endpoint ของ ${label}`,
+    setUp: "ตั้งการเชื่อมต่อ",
+    addTitle: (label: string) => `ตั้งการเชื่อมต่อของ ${label}`,
+    editTitle: (label: string) => `แก้การเชื่อมต่อของ ${label}`,
     save: "บันทึก",
     saved: "บันทึกการเชื่อมต่อแล้ว",
     edit: "แก้ไข",
-    empty: "ยังไม่ได้เชื่อมต่อ — เพิ่มเพื่อให้ปุ่มของงานส่งงานมาที่ระบบนี้ได้",
     loadFailed: "โหลดการเชื่อมต่อไม่สำเร็จ",
     active: "เปิดใช้",
     url: "URL",
     key: "x-api-key",
     keyHint: "กดดูหรือคัดลอก — ทุกครั้งลงบันทึกตรวจสอบ",
-    test: "ทดสอบการเชื่อมต่อ",
+    test: "ทดสอบ",
     testPassed: (status: number | null, ms: number) =>
       `ตอบ ${status ?? "-"} ใน ${(ms / 1000).toFixed(2)} วินาที`,
     testFailed: (problem: string) => `ไม่ผ่าน: ${problem}`,
     testHint:
-      "เรียกงานแรกที่ตั้งไว้จริง พร้อม connection_test: true — playbook ฝั่ง agent ควรจบทันทีเมื่อเห็นค่านี้",
+      "ปุ่มทดสอบเรียก agent นี้จริง พร้อม connection_test: true — playbook ฝั่ง agent ควรจบทันทีเมื่อเห็นค่านี้",
     columns: {
-      action: "งาน",
       payload: "ข้อมูลที่ส่ง",
       endpointId: "Endpoint id",
       timeout: "หมดเวลา",
@@ -5126,7 +5123,7 @@ export const messages = {
     } as Record<string, string>,
     roundTripTitle: (label: string) => `ไป-กลับของงาน ${label}`,
     roundTripOut:
-      "① CTD ส่งงานให้ Vuvagent · ใช้ x-api-key ของ Vuvagent (ตั้งในการ์ดนี้)",
+      "① CTD ส่งงานให้ agent นี้ · ใช้ x-api-key ของ agent (ตั้งในกล่องนี้)",
     roundTripBack:
       "② Vuvagent ยิงกลับมาที่ CTD · ใช้กุญแจ rfk_ จากแท็บกุญแจ API",
     vuvagentKeyPlaceholder: "<x-api-key ของ Vuvagent>",

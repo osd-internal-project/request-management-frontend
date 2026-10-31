@@ -5,24 +5,22 @@
  * Services: core-service — `/admin/outbound-connections/*`; ใช้ตอนส่งงานของ
  * agent (`POST /leads/find` → `POST {base_url}/v1/endpoints/{endpoint_id}`)
  *
+ * หนึ่งแถวต่อหนึ่งงาน — ที่ Vuvagent หนึ่งงานคือหนึ่ง agent มี URL และ key ของตัวเอง.
  * `api_key` ไม่อยู่ในคำตอบใด ๆ ยกเว้น `revealOutboundConnectionKey` (ลง audit ทุกครั้ง)
  */
 
 import { adminApi, type ClientResult } from "../client";
 
-export interface ActionEndpoint {
-  action: string;
-  endpoint_id: string;
-  timeout_minutes: number;
-}
-
 export interface OutboundConnectionRow {
   id: string;
   integration_id: string;
   vendor: string;
+  action: string;
   base_url: string;
+  endpoint_id: string;
+  /** the row's own, or the action's default when it set none */
+  timeout_minutes: number;
   active: boolean;
-  endpoints: ActionEndpoint[];
   created_at: string;
   updated_at: string;
 }
@@ -46,9 +44,9 @@ export interface OutboundConnectionPayload {
   base_url?: string;
   /** Omitted on update = keep the stored key. */
   api_key?: string;
+  endpoint_id?: string;
+  timeout_minutes?: number;
   active?: boolean;
-  /** The whole set — an action left out has no endpoint. */
-  endpoints?: ActionEndpoint[];
 }
 
 export async function listOutboundConnections(
@@ -68,9 +66,10 @@ export async function listAgentActions(): Promise<
 export async function createOutboundConnection(
   payload: OutboundConnectionPayload & {
     integration_id: string;
-    vendor: string;
+    action: string;
     base_url: string;
     api_key: string;
+    endpoint_id: string;
   },
 ): Promise<ClientResult<OutboundConnectionRow>> {
   return adminApi<OutboundConnectionRow>("outbound-connections", {
@@ -97,11 +96,9 @@ export async function revealOutboundConnectionKey(
 
 export async function testOutboundConnection(
   id: string,
-  action: string,
 ): Promise<ClientResult<ConnectionTestResult>> {
   return adminApi<ConnectionTestResult>(`outbound-connections/${id}/test`, {
     method: "POST",
-    body: JSON.stringify({ action }),
   });
 }
 
