@@ -1346,7 +1346,8 @@ export interface LeadDetail extends LeadRow {
     status: TargetAccountStatus;
   } | null;
   /** CD-85 — the company wants Discovery done before a deal (the workflow decides). */
-  discovery_required: boolean;
+  discovery_required: boolean;  /** what an intake channel (form, AI agent) sent with no column of its own */
+  intakeData: Record<string, unknown> | null;
 }
 
 /** CD-85 — บริษัทเป้าหมายของแกน Getter. */

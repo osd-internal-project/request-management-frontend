@@ -36,6 +36,9 @@ import {
   PhoneOutlined,
   PlusOutlined,
 } from "@ant-design/icons";
+import { IntakeDataList } from "./intake-data-list";
+import { LeadFieldsCard, type LeadField } from "./lead-fields-card";
+import { LeadFocusCard } from "./lead-focus-card";
 import {
   ConvertLeadModal,
   DisqualifyLeadModal,
@@ -158,6 +161,37 @@ export function LeadDetailView({
     else void setStatus(target);
   }
 
+  const companyFields: LeadField[] = [
+    { label: md.fields.name, value: lead.name },
+    { label: md.fields.nameEn, value: lead.nameEn || null },
+    { label: md.fields.taxId, value: lead.taxId || null },
+    { label: md.fields.industry, value: lead.industry || null },
+    { label: md.fields.companySize, value: lead.companySize || null },
+    {
+      label: md.fields.employeeCount,
+      value:
+        lead.employeeCount === null
+          ? null
+          : lead.employeeCount.toLocaleString("th-TH"),
+    },
+    { label: md.fields.productGroup, value: lead.productGroup || null },
+    { label: md.fields.subProduct, value: lead.subProduct || null },
+    {
+      label: md.fields.projectRevenue,
+      value:
+        lead.projectRevenue === null
+          ? null
+          : `${formatAmount(lead.projectRevenue)} THB`,
+    },
+  ];
+  const addressFields: LeadField[] = [
+    { label: md.fields.addressLine, value: lead.addressLine || null },
+    { label: md.fields.district, value: lead.district || null },
+    { label: md.fields.province, value: lead.province || null },
+    { label: md.fields.postalCode, value: lead.postalCode || null },
+    { label: md.fields.country, value: lead.country || null },
+  ];
+
   const currentStep = PIPELINE.indexOf(lead.status);
   const disqualified = isLeadLost(lead.status);
 
@@ -192,11 +226,7 @@ export function LeadDetailView({
       {/* หัว */}
       <div className="flex items-start justify-between gap-3">
         <div>
-          <Link href={ROUTES.leads}>
-            <Text type="secondary" className="text-xs">
-              ← {md.backToList}
-            </Text>
-          </Link>
+          <Link href={ROUTES.leads}>← {md.backToList}</Link>
           <Title level={4} className="mb-1! mt-1!">
             {lead.name}
           </Title>
@@ -204,7 +234,9 @@ export function LeadDetailView({
             <Tag color={m.statusColor[lead.status]}>
               {m.status[lead.status] ?? lead.status}
             </Tag>
-            {lead.sourceCode && <Tag>{lead.sourceCode}</Tag>}
+            {lead.sourceCode && (
+              <Tag bordered={false}>{md.sourceLabel(lead.sourceCode)}</Tag>
+            )}
             {lead.campaign && (
               <Link href={`${ROUTES.leads}?campaign_id=${lead.campaign.id}`}>
                 <Tag color="purple">
@@ -248,34 +280,48 @@ export function LeadDetailView({
       <Card size="small">
         <Steps
           size="small"
+          progressDot
           current={disqualified ? PIPELINE.length : currentStep}
           status={lead.status === "converted" ? "finish" : "process"}
           onChange={editable && !busy ? onStep : undefined}
           items={[
-            ...PIPELINE.map((status) => ({
-              title: status === "converted" ? md.convertStep : m.status[status],
+            ...PIPELINE.map((status, index) => ({
+              title: (
+                <Tooltip
+                  title={
+                    status === "converted" ? md.convertStep : m.status[status]
+                  }
+                >
+                  <span
+                    className={`whitespace-nowrap ${index === currentStep ? "font-semibold" : ""}`}
+                  >
+                    {md.pipelineShort[status] ?? m.status[status]}
+                  </span>
+                </Tooltip>
+              ),
               disabled: !editable,
               // คัดออก = ออกจาก pipeline ไม่ใช่ผ่านทุกขั้น — ทุกขั้นค้างเป็น wait
-              ...(disqualified ? { status: "wait" as const } : {}),
+              ...(disqualified
+                ? { status: "wait" as const }
+                : index < currentStep
+                  ? { status: "finish" as const }
+                  : {}),
             })),
             ...(disqualified
               ? [{ title: m.status[lead.status], status: "error" as const }]
               : []),
           ]}
         />
-        <div className="mt-2 flex items-center justify-between">
-          <Text className="text-xs">
-            {md.statusLabel}: <b>{m.status[lead.status] ?? lead.status}</b>
+        {(editable || !open) && (
+          <Text type="secondary" className="mt-2 block text-right text-xs">
+            {editable ? md.pipelineHint : md.pipelineClosed}
           </Text>
-          <Text type="secondary" className="text-xs">
-            {editable ? md.pipelineHint : open ? "" : md.pipelineClosed}
-          </Text>
-        </div>
+        )}
       </Card>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[280px_minmax(0,1fr)_300px]">
-        {/* ซ้าย — ผู้ติดต่อ */}
-        <div className="space-y-4">
+        {/* ซ้าย — ผู้ติดต่อ + บริษัท/ที่อยู่ */}
+        <div className="space-y-3">
           <Card size="small">
             <div className="flex items-start gap-3">
               <Avatar size={40} className="shrink-0 bg-blue-600!">
@@ -321,15 +367,17 @@ export function LeadDetailView({
                 >
                   {md.contactCard.logActivity}
                 </Button>
-                <Button
-                  size="small"
-                  icon={<MailOutlined />}
-                  disabled={!lead.email}
-                  href={lead.email ? `mailto:${lead.email}` : undefined}
-                  onClick={() => setLogging("email")}
-                >
-                  {md.contactCard.sendEmail}
-                </Button>
+                <Tooltip title={lead.email ? undefined : md.noEmailHint}>
+                  <Button
+                    size="small"
+                    icon={<MailOutlined />}
+                    disabled={!lead.email}
+                    href={lead.email ? `mailto:${lead.email}` : undefined}
+                    onClick={() => setLogging("email")}
+                  >
+                    {md.contactCard.sendEmail}
+                  </Button>
+                </Tooltip>
               </Space>
             )}
           </Card>
@@ -373,6 +421,17 @@ export function LeadDetailView({
               </Text>
             )}
           </Card>
+
+          <LeadFieldsCard
+            title={md.sections.company}
+            fields={companyFields}
+            onEdit={editable ? () => setEditing(true) : null}
+          />
+          <LeadFieldsCard
+            title={md.sections.address}
+            fields={addressFields}
+            onEdit={editable ? () => setEditing(true) : null}
+          />
         </div>
 
         {/* กลาง — รายละเอียด / กิจกรรม */}
@@ -382,175 +441,70 @@ export function LeadDetailView({
               key: "details",
               label: md.tabs.details,
               children: (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <DiscoveryCard
                     lead={lead}
                     editable={editable}
                     onEdit={() => setDiscovering(true)}
                   />
-                  <Collapse
-                    size="small"
-                    items={[
-                      {
-                        key: "lead",
-                        label: md.sections.lead,
-                        children: (
-                          <Descriptions size="small" column={{ xs: 1, md: 2 }}>
-                            <Descriptions.Item label={md.fields.source}>
-                              {dash(lead.sourceCode)}
-                            </Descriptions.Item>
-                            <Descriptions.Item label={md.fields.owner}>
-                              {dash(lead.owner?.displayName)}
-                            </Descriptions.Item>
-                            <Descriptions.Item label={md.fields.customer}>
-                              {lead.customer ? (
-                                <Link
-                                  href={ROUTES.customerDetail(lead.customer.id)}
-                                >
-                                  {lead.customer.customerCode} ·{" "}
-                                  {lead.customer.nameTh}
-                                  {lead.customer.branchName
-                                    ? ` · ${lead.customer.branchName}`
-                                    : ""}
-                                </Link>
-                              ) : (
-                                "—"
-                              )}
-                            </Descriptions.Item>
-                            <Descriptions.Item label={md.fields.convertedTo}>
-                              {lead.convertedOpportunity ? (
-                                <Link
-                                  href={ROUTES.opportunityDetail(
-                                    lead.convertedOpportunity.id,
-                                  )}
-                                >
-                                  {lead.convertedOpportunity.opportunityCode} ·{" "}
-                                  {lead.convertedOpportunity.title}
-                                </Link>
-                              ) : (
-                                "—"
-                              )}
-                            </Descriptions.Item>
-                            <Descriptions.Item label={md.fields.createdAt}>
-                              {formatWhen(lead.createdAt)}
-                            </Descriptions.Item>
-                            <Descriptions.Item label={md.fields.updatedAt}>
-                              {formatWhen(lead.updatedAt)}
-                            </Descriptions.Item>
-                            {lead.disqualifyReason && (
-                              <Descriptions.Item
-                                label={md.fields.disqualifyReason}
-                                span={2}
-                              >
-                                {lead.disqualifyReason}
-                              </Descriptions.Item>
-                            )}
-                            <Descriptions.Item label={md.fields.note} span={2}>
-                              <span className="whitespace-pre-wrap">
-                                {dash(lead.note)}
-                              </span>
-                            </Descriptions.Item>
-                          </Descriptions>
-                        ),
-                      },
-                    ]}
-                  />
-
-                  <Card
-                    size="small"
-                    title={md.sections.company}
-                    extra={
-                      editable ? (
-                        <Button
-                          type="link"
-                          size="small"
-                          icon={<EditOutlined />}
-                          onClick={() => setEditing(true)}
-                        />
-                      ) : null
-                    }
-                  >
-                    <Descriptions size="small" column={1} bordered>
-                      <Descriptions.Item label={md.fields.name}>
-                        {lead.name}
-                      </Descriptions.Item>
-                      <Descriptions.Item label={md.fields.nameEn}>
-                        {dash(lead.nameEn)}
-                      </Descriptions.Item>
-                      <Descriptions.Item label={md.fields.taxId}>
-                        {dash(lead.taxId)}
-                      </Descriptions.Item>
-                      <Descriptions.Item label={md.fields.industry}>
-                        {dash(lead.industry)}
-                      </Descriptions.Item>
-                      <Descriptions.Item label={md.fields.companySize}>
-                        {dash(lead.companySize)}
-                      </Descriptions.Item>
-                      <Descriptions.Item label={md.fields.employeeCount}>
-                        {lead.employeeCount === null
-                          ? "—"
-                          : lead.employeeCount.toLocaleString("th-TH")}
-                      </Descriptions.Item>
-                      <Descriptions.Item label={md.fields.source}>
-                        {dash(lead.sourceCode)}
-                      </Descriptions.Item>
-                      <Descriptions.Item label={md.fields.productGroup}>
-                        {dash(lead.productGroup)}
-                      </Descriptions.Item>
-                      <Descriptions.Item label={md.fields.subProduct}>
-                        {dash(lead.subProduct)}
-                      </Descriptions.Item>
-                      <Descriptions.Item label={md.fields.projectRevenue}>
-                        {lead.projectRevenue === null
-                          ? "—"
-                          : `${formatAmount(lead.projectRevenue)} THB`}
-                      </Descriptions.Item>
+                  <Card size="small" title={md.sections.lead}>
+                    <Descriptions size="small" column={{ xs: 1, md: 2 }}>
                       <Descriptions.Item label={md.fields.owner}>
-                        {lead.owner ? (
-                          <Space size={6}>
-                            <Avatar size="small">
-                              {initials(lead.owner.displayName)}
-                            </Avatar>
-                            {lead.owner.displayName}
-                          </Space>
+                        {dash(lead.owner?.displayName)}
+                      </Descriptions.Item>
+                      <Descriptions.Item label={md.fields.customer}>
+                        {lead.customer ? (
+                          <Link href={ROUTES.customerDetail(lead.customer.id)}>
+                            {lead.customer.customerCode} ·{" "}
+                            {lead.customer.nameTh}
+                            {lead.customer.branchName
+                              ? ` · ${lead.customer.branchName}`
+                              : ""}
+                          </Link>
                         ) : (
                           "—"
                         )}
                       </Descriptions.Item>
-                    </Descriptions>
-                  </Card>
-
-                  <Card
-                    size="small"
-                    title={md.sections.address}
-                    extra={
-                      editable ? (
-                        <Button
-                          type="link"
-                          size="small"
-                          icon={<EditOutlined />}
-                          onClick={() => setEditing(true)}
-                        />
-                      ) : null
-                    }
-                  >
-                    <Descriptions size="small" column={1} bordered>
-                      <Descriptions.Item label={md.fields.addressLine}>
-                        {dash(lead.addressLine)}
+                      <Descriptions.Item label={md.fields.convertedTo}>
+                        {lead.convertedOpportunity ? (
+                          <Link
+                            href={ROUTES.opportunityDetail(
+                              lead.convertedOpportunity.id,
+                            )}
+                          >
+                            {lead.convertedOpportunity.opportunityCode} ·{" "}
+                            {lead.convertedOpportunity.title}
+                          </Link>
+                        ) : (
+                          "—"
+                        )}
                       </Descriptions.Item>
-                      <Descriptions.Item label={md.fields.district}>
-                        {dash(lead.district)}
+                      <Descriptions.Item label={md.fields.updatedAt}>
+                        {formatWhen(lead.updatedAt)}
                       </Descriptions.Item>
-                      <Descriptions.Item label={md.fields.province}>
-                        {dash(lead.province)}
-                      </Descriptions.Item>
-                      <Descriptions.Item label={md.fields.postalCode}>
-                        {dash(lead.postalCode)}
-                      </Descriptions.Item>
-                      <Descriptions.Item label={md.fields.country}>
-                        {lead.country}
+                      {lead.disqualifyReason && (
+                        <Descriptions.Item
+                          label={md.fields.disqualifyReason}
+                          span={2}
+                        >
+                          {lead.disqualifyReason}
+                        </Descriptions.Item>
+                      )}
+                      <Descriptions.Item label={md.fields.note} span={2}>
+                        <span className="whitespace-pre-wrap">
+                          {dash(lead.note)}
+                        </span>
                       </Descriptions.Item>
                     </Descriptions>
+                    {lead.intakeData &&
+                      Object.keys(lead.intakeData).length > 0 && (
+                        <div className="mt-3 border-t border-gray-100 pt-3">
+                          <Text strong className="mb-1 block text-xs">
+                            {md.sections.intake}
+                          </Text>
+                          <IntakeDataList data={lead.intakeData} />
+                        </div>
+                      )}
                   </Card>
                 </div>
               ),
@@ -586,8 +540,8 @@ export function LeadDetailView({
           ]}
         />
 
-        {/* ขวา — ปุ่มลัด + กิจกรรมค้าง */}
-        <div className="space-y-4">
+        {/* ขวา — ปุ่มลัด + กิจกรรมค้าง + Focus */}
+        <div className="space-y-3">
           {editable && (
             <Card size="small">
               <div className="grid grid-cols-4 gap-2">
@@ -636,6 +590,7 @@ export function LeadDetailView({
           <Card
             size="small"
             title={ma.upcoming}
+            styles={{ title: { whiteSpace: "normal" } }}
             extra={
               editable ? (
                 <Button
@@ -684,6 +639,8 @@ export function LeadDetailView({
               </Text>
             )}
           </Card>
+
+          <LeadFocusCard />
         </div>
       </div>
 
@@ -807,30 +764,23 @@ function DiscoveryCard({
             title={mdisc.requiredWarning}
           />
         )}
-      <Descriptions size="small" column={1} bordered>
+      <div className="grid grid-cols-1 gap-x-6 gap-y-3 md:grid-cols-2">
         {(["need", "budget", "decision_maker", "timeframe"] as const).map(
           (item) => (
-            <Descriptions.Item
-              key={item}
-              label={
-                <Space size={4}>
-                  {missing.has(item) ? (
-                    <CloseCircleOutlined className="text-orange-500" />
-                  ) : (
-                    <CheckCircleFilled className="text-green-600" />
-                  )}
-                  {mdisc.item[item]}
-                </Space>
-              }
-            >
-              <span className="whitespace-pre-wrap">{value(item)}</span>
-            </Descriptions.Item>
+            <div key={item} className="min-w-0">
+              <Space size={4} className="text-xs text-gray-500">
+                {missing.has(item) ? (
+                  <CloseCircleOutlined className="text-orange-500" />
+                ) : (
+                  <CheckCircleFilled className="text-green-600" />
+                )}
+                {mdisc.item[item]}
+              </Space>
+              <div className="whitespace-pre-wrap">{value(item)}</div>
+            </div>
           ),
         )}
-      </Descriptions>
-      <Text type="secondary" className="mt-2 block text-xs">
-        {mdisc.hint}
-      </Text>
+      </div>
     </Card>
   );
 }
