@@ -8,7 +8,7 @@
  */
 
 import { apiGet, type ApiResult } from "../core";
-import type { LeadStatus, Paginated } from "../types";
+import type { Paginated } from "../types";
 
 export type AgentRecordStatus = "processing" | "done" | "failed";
 
@@ -27,17 +27,7 @@ export interface AgentRecordRow {
   updatedAt: string;
 }
 
-export interface AgentRecordLead {
-  id: string;
-  name: string;
-  contactName: string | null;
-  status: LeadStatus;
-  createdAt: string;
-}
-
-export interface AgentRecordDetail extends AgentRecordRow {
-  leads: AgentRecordLead[];
-}
+export type AgentRecordDetail = AgentRecordRow;
 
 /** What `/agent-records/stream` pushes as event `record`. */
 export interface AgentRecordStamp {

@@ -7151,14 +7151,13 @@ export const messages = {
       `งาน ${action} — ส่งไปตามนี้ทุกครั้งที่กดค้นหา`,
     failed: "Agent ทำงานนี้ไม่สำเร็จ",
     failedNoReason: "agent ไม่ได้ส่งเหตุผลกลับมา",
-    leadsTitle: (n: number) => `Lead ที่ agent สร้าง (${n})`,
-    leadsEmpty: "ยังไม่มี Lead จากงานนี้",
-    leadColumns: {
-      name: "ชื่อ",
-      contact: "ผู้ติดต่อ",
-      status: "สถานะ",
-      createdAt: "สร้างเมื่อ",
-    },
+    resultTitle: "ผลลัพธ์จาก agent",
+    /** keys Vuvagent sends in `result`; any other key shows under its own name */
+    resultLabels: {
+      leads_found: "Lead ที่พบ",
+      leads_created: "Lead ที่สร้าง",
+    } as Record<string, string>,
+    goToLeads: "ไปหน้า Lead",
     loadFailed: "โหลดรายการงานของ agent ไม่สำเร็จ",
   },
 
@@ -7175,7 +7174,6 @@ export const messages = {
       fromTarget: "จากบริษัทเป้าหมาย",
       discovery: {
         title: "Discovery — ก่อนเปิดโอกาสการขาย",
-        hint: "สิ่งที่ต้องรู้ก่อนเปิดดีล: ความต้องการ งบ ผู้ตัดสินใจ และกรอบเวลา",
         edit: "บันทึก Discovery",
         saved: "บันทึก Discovery แล้ว",
         complete: "ครบแล้ว",
@@ -7291,11 +7289,32 @@ export const messages = {
         created: "เพิ่ม Lead แล้ว",
         saved: "บันทึกแล้ว",
       },
+      /** การ์ด Focus — agent หาข้อมูลของ Lead (ยังไม่เชื่อม agent). */
+      focus: {
+        title: "Focus",
+        run: "Focus",
+        notConnected: "ยังไม่ได้เชื่อม agent Focus",
+        placeholder: "ผลจาก agent จะแสดงที่นี่",
+      },
       /** หน้ารายละเอียด Lead — pipeline + ข้อมูล + กิจกรรม (10 ก.ย. 2569). */
       detail: {
         backToList: "กลับหน้า Lead",
-        statusLabel: "สถานะ",
         pipelineHint: "คลิกขั้นเพื่อเลื่อนสถานะ",
+        /** ชื่อขั้นบน pipeline ให้พอดีบรรทัดเดียว — ชื่อเต็มอยู่ใน tooltip */
+        pipelineShort: {
+          new: "ใหม่",
+          cannot_contact: "ติดต่อไม่ได้",
+          contacted: "ติดต่อได้",
+          qualified: "Qualified",
+          proposal: "Proposal",
+          negotiation: "Negotiation",
+          converted: "Won",
+        } as Record<string, string>,
+        sourceLabel: (code: string) => `ที่มา: ${code}`,
+        noEmailHint: "ยังไม่มีอีเมล เพิ่มได้ที่ปุ่มแก้ไข",
+        showEmpty: (n: number) => `แสดงช่องที่ยังว่าง (${n})`,
+        hideEmpty: "ซ่อนช่องที่ยังว่าง",
+        noCompanyInfo: "ยังไม่มีข้อมูล เพิ่มได้จากปุ่มแก้ไข",
         pipelineClosed: "Lead นี้ปิดแล้ว",
         convertStep: "Won — แปลงเป็นโอกาสการขาย",
         statusChanged: "เปลี่ยนสถานะแล้ว",
@@ -7319,6 +7338,7 @@ export const messages = {
           lead: "ข้อมูล Lead",
           company: "ข้อมูลบริษัท/ลูกค้าเป้าหมาย",
           address: "ข้อมูลที่อยู่",
+          intake: "ข้อมูลจากช่องทางรับเข้า",
         },
         fields: {
           name: "ชื่อบริษัท/ลูกค้า",
@@ -7327,14 +7347,12 @@ export const messages = {
           industry: "อุตสาหกรรม",
           companySize: "ขนาดบริษัท",
           employeeCount: "จำนวนพนักงาน",
-          source: "แหล่งที่มา",
           productGroup: "Product Group",
           subProduct: "Sub Product",
           projectRevenue: "Project Revenue",
           owner: "ผู้รับผิดชอบ",
           customer: "ลูกค้าในทะเบียน",
           note: "บันทึก",
-          createdAt: "รับเข้าเมื่อ",
           updatedAt: "แก้ไขล่าสุด",
           disqualifyReason: "เหตุผลที่คัดออก",
           convertedTo: "โอกาสการขาย",

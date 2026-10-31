@@ -3,21 +3,17 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Alert, Space, Spin, Table, Tag } from "antd";
+import { Alert, Button, Card, Descriptions, Space, Spin, Tag } from "antd";
 import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
 import { CodeBlock } from "@/components/ui/code-block";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
-import type {
-  AgentRecordDetail,
-  AgentRecordLead,
-} from "@/lib/api/agent-records";
+import type { AgentRecordDetail } from "@/lib/api/agent-records";
 import { formatDateTime, formatElapsed } from "./format";
 import { useAgentRecordStream } from "./use-agent-record-stream";
 
 const m = messages.agentRecords;
-const leadStatus = messages.sales.leads;
 /** Past this the page says so; Vuvagent has no timeout we can read. */
 const SLOW_MS = 10 * 60_000;
 
@@ -35,7 +31,14 @@ export function AgentRecordView({ record }: { record: AgentRecordDetail }) {
 
   return (
     <div className="space-y-4">
-      <Link href={ROUTES.agentRecords}>{m.back}</Link>
+      <div className="flex items-center justify-between">
+        <Link href={ROUTES.agentRecords}>{m.back}</Link>
+        {record.action === "lead.find" && (
+          <Link href={ROUTES.leads}>
+            <Button size="small">{m.goToLeads}</Button>
+          </Link>
+        )}
+      </div>
 
       <div>
         <Space wrap align="center">
@@ -91,48 +94,18 @@ export function AgentRecordView({ record }: { record: AgentRecordDetail }) {
         />
       </div>
 
-      {record.action === "lead.find" && (
-        <div className="space-y-2">
-          <Title level={5} className="mb-0!">
-            {m.leadsTitle(record.leads.length)}
-          </Title>
-          <Table
-            rowKey="id"
-            size="small"
-            dataSource={record.leads}
-            pagination={false}
-            locale={{ emptyText: m.leadsEmpty }}
-            scroll={{ x: true }}
-            columns={[
-              {
-                title: m.leadColumns.name,
-                key: "name",
-                render: (_: unknown, lead: AgentRecordLead) => (
-                  <Link href={ROUTES.leadDetail(lead.id)}>{lead.name}</Link>
-                ),
-              },
-              {
-                title: m.leadColumns.contact,
-                dataIndex: "contactName",
-                render: (name: string | null) => name ?? "-",
-              },
-              {
-                title: m.leadColumns.status,
-                dataIndex: "status",
-                render: (status: AgentRecordLead["status"]) => (
-                  <Tag color={leadStatus.statusColor[status]}>
-                    {leadStatus.status[status] ?? status}
-                  </Tag>
-                ),
-              },
-              {
-                title: m.leadColumns.createdAt,
-                dataIndex: "createdAt",
-                render: formatDateTime,
-              },
-            ]}
-          />
-        </div>
+      {record.result && (
+        <Card size="small" title={m.resultTitle}>
+          <Descriptions size="small" column={{ xs: 1, md: 2 }}>
+            {Object.entries(record.result).map(([key, value]) => (
+              <Descriptions.Item key={key} label={m.resultLabels[key] ?? key}>
+                {typeof value === "object" && value !== null
+                  ? JSON.stringify(value)
+                  : String(value)}
+              </Descriptions.Item>
+            ))}
+          </Descriptions>
+        </Card>
       )}
     </div>
   );
