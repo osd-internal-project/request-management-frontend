@@ -73,6 +73,7 @@ All user-facing text lives in `src/lib/messages.ts`. No Thai string literals in
 components.
 
 UI work: invoke both `pstack:poteto-mode` and `frontend-design` on every new user message that touches UI (user corrected this repeatedly, 30 Oct 2026).
+Invoking is not using: before proposing a layout, read the whole screen file and its sibling detail pages, and turn the frontend-design output into plan items — the lead-detail "re-layout" shrank to one card title through per-item questions (31 Oct 2026).
 
 ## A page must not fetch what its viewer cannot read
 
