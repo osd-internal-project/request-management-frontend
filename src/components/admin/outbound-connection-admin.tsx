@@ -6,13 +6,13 @@ import {
   App,
   Button,
   Card,
+  Collapse,
   Form,
   Input,
   InputNumber,
   Modal,
   Space,
   Switch,
-  Table,
   Tag,
 } from "antd";
 import Text from "antd/es/typography/Text";
@@ -42,7 +42,6 @@ import {
   splitVuvagentUrl,
   testOutboundConnection,
   updateOutboundConnection,
-  type ActionEndpoint,
   type AgentActionInfo,
   type ConnectionTestResult,
   type OutboundConnectionRow,
@@ -51,7 +50,6 @@ import type { ClientResult } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
 
 const m = messages.outboundConnections;
-const VENDOR = "vuvagent";
 
 function errorText(result: Extract<ClientResult<unknown>, { ok: false }>) {
   return result.details?.length
@@ -62,14 +60,9 @@ function errorText(result: Extract<ClientResult<unknown>, { ok: false }>) {
     : result.message;
 }
 
-/** One row of the actions table: what the action sends, joined with what this company set. */
-interface ActionLine extends AgentActionInfo {
-  endpoint: ActionEndpoint | null;
-}
-
 /**
- * การเชื่อมต่อที่ CTD ใช้ส่งงานของ agent ไปให้ระบบนี้ (`admin.integration.manage`) —
- * URL และ key ตั้งครั้งเดียวต่อ vendor; แต่ละงานเลือก endpoint และเวลาหมดของตัวเอง.
+ * การเชื่อมต่อที่ CTD ใช้ส่งงานของ agent (`admin.integration.manage`) — หนึ่งกล่องต่อหนึ่งงาน:
+ * ที่ Vuvagent หนึ่งงานคือหนึ่ง agent มี URL, key, endpoint และเวลาหมดของตัวเอง.
  */
 export function OutboundConnectionAdmin({
   integrationId,
@@ -83,12 +76,8 @@ export function OutboundConnectionAdmin({
   const { message } = App.useApp();
   const [rows, setRows] = useState<OutboundConnectionRow[]>([]);
   const [actions, setActions] = useState<AgentActionInfo[]>([]);
-  const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  // null = closed, "new" = add, a row = edit
-  const [editing, setEditing] = useState<OutboundConnectionRow | "new" | null>(
-    null,
-  );
+  const [editing, setEditing] = useState<AgentActionInfo | null>(null);
 
   // state is set only when the answers arrive, as `webhook-admin.tsx` does
   const load = useCallback(
@@ -97,7 +86,6 @@ export function OutboundConnectionAdmin({
         listOutboundConnections(integrationId),
         listAgentActions(),
       ]).then(([connections, catalog]) => {
-        setLoading(false);
         if (!connections.ok) return setLoadError(connections.message);
         if (!catalog.ok) return setLoadError(catalog.message);
         setLoadError(null);
@@ -118,8 +106,12 @@ export function OutboundConnectionAdmin({
     onChanged();
   }
 
+  const vendors = [...new Set(actions.map((action) => action.vendor))];
+  const rowOf = (action: string) =>
+    rows.find((row) => row.action === action) ?? null;
+
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-3">
       {loadError && (
         <Alert
           type="error"
@@ -128,33 +120,29 @@ export function OutboundConnectionAdmin({
           description={loadError}
         />
       )}
-      {!loading && rows.length === 0 && !loadError && (
-        <Card size="small">
-          <Space direction="vertical">
-            <Text type="secondary">{m.empty}</Text>
-            <Button type="primary" onClick={() => setEditing("new")}>
-              {m.add}
-            </Button>
-          </Space>
+      {vendors.map((vendor) => (
+        <Card key={vendor} size="small" title={m.vendors[vendor] ?? vendor}>
+          <div className="flex flex-col gap-3">
+            {actions
+              .filter((action) => action.vendor === vendor)
+              .map((action) => (
+                <AgentBox
+                  key={action.action}
+                  action={action}
+                  row={rowOf(action.action)}
+                  externalApiBase={externalApiBase}
+                  onEdit={() => setEditing(action)}
+                  onChanged={replace}
+                />
+              ))}
+          </div>
         </Card>
-      )}
-      {rows.map((row) => (
-        <ConnectionCard
-          key={row.id}
-          row={row}
-          actions={actions.filter((action) => action.vendor === row.vendor)}
-          externalApiBase={externalApiBase}
-          onEdit={() => setEditing(row)}
-          onChanged={replace}
-        />
       ))}
-      <ConnectionModal
-        key={
-          editing === null ? "closed" : editing === "new" ? "new" : editing.id
-        }
-        editing={editing}
+      <AgentModal
+        key={editing?.action ?? "closed"}
+        action={editing}
+        row={editing ? rowOf(editing.action) : null}
         integrationId={integrationId}
-        firstAction={actions.find((action) => action.vendor === VENDOR)}
         onClose={() => setEditing(null)}
         onSaved={() => {
           setEditing(null);
@@ -167,15 +155,28 @@ export function OutboundConnectionAdmin({
   );
 }
 
-function ConnectionCard({
+function PayloadFields({ fields }: { fields: string[] }) {
+  return (
+    <Space wrap size={4}>
+      {fields.map((field) => (
+        <Text key={field} code className="text-xs">
+          {field}
+        </Text>
+      ))}
+    </Space>
+  );
+}
+
+/** One agent: set → everything about it in one box; not set → what it sends and a button. */
+function AgentBox({
+  action,
   row,
-  actions,
   externalApiBase,
   onEdit,
   onChanged,
 }: {
-  row: OutboundConnectionRow;
-  actions: AgentActionInfo[];
+  action: AgentActionInfo;
+  row: OutboundConnectionRow | null;
   externalApiBase: string | null;
   onEdit: () => void;
   onChanged: (row: OutboundConnectionRow) => void;
@@ -183,185 +184,125 @@ function ConnectionCard({
   const { message } = App.useApp();
   const [testing, setTesting] = useState(false);
   const [tested, setTested] = useState<ConnectionTestResult | null>(null);
-  const [editingAction, setEditingAction] = useState<ActionLine | null>(null);
+  const label = m.actions[action.action] ?? action.action;
 
-  const lines: ActionLine[] = actions.map((action) => ({
-    ...action,
-    endpoint: row.endpoints.find((item) => item.action === action.action) ?? null,
-  }));
-  const firstSet = row.endpoints[0];
-
-  async function save(payload: Parameters<typeof updateOutboundConnection>[1]) {
-    const result = await updateOutboundConnection(row.id, payload);
-    if (!result.ok) {
-      message.error(errorText(result));
-      return false;
-    }
+  async function setActive(active: boolean) {
+    if (!row) return;
+    const result = await updateOutboundConnection(row.id, { active });
+    if (!result.ok) return void message.error(errorText(result));
     onChanged(result.data);
     message.success(m.saved);
-    return true;
   }
 
   async function test() {
-    if (!firstSet) return;
+    if (!row) return;
     setTesting(true);
-    const result = await testOutboundConnection(row.id, firstSet.action);
+    const result = await testOutboundConnection(row.id);
     setTesting(false);
-    if (!result.ok) {
-      message.error(errorText(result));
-      return;
-    }
+    if (!result.ok) return void message.error(errorText(result));
     setTested(result.data);
   }
 
+  const title = (
+    <Space size={8}>
+      <Text strong>{label}</Text>
+      <Text code className="text-xs">
+        {action.action}
+      </Text>
+    </Space>
+  );
+
+  if (!row) {
+    return (
+      <div className="flex flex-col gap-2 rounded-md border border-dashed border-[var(--app-border-soft)] p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          {title}
+          <Button type="primary" size="small" onClick={onEdit}>
+            {m.setUp}
+          </Button>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <Text type="warning">{m.notSet}</Text>
+          <Text type="secondary">{m.columns.payload}</Text>
+          <PayloadFields fields={action.payload_fields} />
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <Card
-      size="small"
-      title={m.vendors[row.vendor] ?? row.vendor}
-      extra={
-        <Space>
+    <div className="flex flex-col gap-2 rounded-md border border-[var(--app-border-soft)] p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        {title}
+        <Space wrap>
           <Text type="secondary" className="text-xs">
             {m.active}
           </Text>
           <Switch
             size="small"
             checked={row.active}
-            onChange={(active) => void save({ active })}
+            onChange={(active) => void setActive(active)}
           />
+          <Button size="small" onClick={() => void test()} loading={testing}>
+            {m.test}
+          </Button>
           <Button type="link" size="small" onClick={onEdit}>
             {m.edit}
           </Button>
         </Space>
-      }
-    >
-      <div className="space-y-3">
-        <div className="grid grid-cols-[7rem_1fr] items-center gap-x-3 gap-y-2">
-          <Text type="secondary">{m.url}</Text>
-          <Text code copyable className="text-xs">
-            {row.base_url}
-          </Text>
-          <Text type="secondary">{m.key}</Text>
-          <SecretField
-            hint={m.keyHint}
-            load={async () =>
-              unwrap(
-                await revealOutboundConnectionKey(row.id),
-                (data) => data.api_key,
-              )
-            }
-          />
-        </div>
-
-        <Space wrap align="center">
-          <Button
-            onClick={() => void test()}
-            loading={testing}
-            disabled={!firstSet}
-          >
-            {m.test}
-          </Button>
-          {tested && (
-            <Tag color={tested.ok ? "success" : "error"}>
-              {tested.ok
-                ? m.testPassed(tested.status, tested.ms)
-                : m.testFailed(tested.problem ?? String(tested.status))}
-            </Tag>
-          )}
-        </Space>
-        <Text type="secondary" className="block text-xs">
-          {m.testHint}
-        </Text>
-
-        <Table
-          rowKey="action"
-          size="small"
-          dataSource={lines}
-          pagination={false}
-          scroll={{ x: true }}
-          columns={[
-            {
-              title: m.columns.action,
-              key: "action",
-              render: (_: unknown, line: ActionLine) => (
-                <Space direction="vertical" size={0}>
-                  <Text>{m.actions[line.action] ?? line.action}</Text>
-                  <Text code className="text-xs">
-                    {line.action}
-                  </Text>
-                </Space>
-              ),
-            },
-            {
-              title: m.columns.payload,
-              key: "payload",
-              render: (_: unknown, line: ActionLine) => (
-                <Space wrap size={4}>
-                  {line.payload_fields.map((field) => (
-                    <Text key={field} code className="text-xs">
-                      {field}
-                    </Text>
-                  ))}
-                </Space>
-              ),
-            },
-            {
-              title: m.columns.endpointId,
-              key: "endpoint",
-              render: (_: unknown, line: ActionLine) =>
-                line.endpoint ? (
-                  <Text code copyable className="text-xs">
-                    {line.endpoint.endpoint_id}
-                  </Text>
-                ) : (
-                  <Text type="warning">{m.notSet}</Text>
-                ),
-            },
-            {
-              title: m.columns.timeout,
-              key: "timeout",
-              render: (_: unknown, line: ActionLine) =>
-                m.timeoutValue(
-                  line.endpoint?.timeout_minutes ??
-                    line.default_timeout_minutes,
-                ),
-            },
-            {
-              key: "edit",
-              render: (_: unknown, line: ActionLine) => (
-                <Button
-                  type="link"
-                  size="small"
-                  onClick={() => setEditingAction(line)}
-                >
-                  {m.edit}
-                </Button>
-              ),
-            },
-          ]}
-        />
-        {lines.some((line) => line.endpoint) && (
-          <AgentRoundTrip
-            row={row}
-            lines={lines}
-            externalApiBase={externalApiBase}
-          />
-        )}
       </div>
-      <ActionModal
-        key={editingAction?.action ?? "closed"}
-        line={editingAction}
-        baseUrl={row.base_url}
-        onClose={() => setEditingAction(null)}
-        onSave={async (endpoint) => {
-          const others = row.endpoints.filter(
-            (item) => item.action !== endpoint.action,
-          );
-          if (await save({ endpoints: [...others, endpoint] })) {
-            setEditingAction(null);
+      {tested && (
+        <Tag className="self-start" color={tested.ok ? "success" : "error"}>
+          {tested.ok
+            ? m.testPassed(tested.status, tested.ms)
+            : m.testFailed(tested.problem ?? String(tested.status))}
+        </Tag>
+      )}
+      <div className="grid grid-cols-[7rem_1fr] items-center gap-x-3 gap-y-2">
+        <Text type="secondary">{m.url}</Text>
+        <Text code copyable className="text-xs">
+          {row.base_url}
+        </Text>
+        <Text type="secondary">{m.key}</Text>
+        <SecretField
+          hint={m.keyHint}
+          load={async () =>
+            unwrap(
+              await revealOutboundConnectionKey(row.id),
+              (data) => data.api_key,
+            )
           }
-        }}
+        />
+        <Text type="secondary">{m.columns.endpointId}</Text>
+        <Text code copyable className="text-xs">
+          {row.endpoint_id}
+        </Text>
+        <Text type="secondary">{m.columns.timeout}</Text>
+        <Text>{m.timeoutValue(row.timeout_minutes)}</Text>
+        <Text type="secondary">{m.columns.payload}</Text>
+        <PayloadFields fields={action.payload_fields} />
+      </div>
+      <Text type="secondary" className="text-xs">
+        {m.testHint}
+      </Text>
+      <Collapse
+        ghost
+        size="small"
+        items={[
+          {
+            key: "round-trip",
+            label: m.roundTripTitle(label),
+            children: (
+              <AgentRoundTrip
+                row={row}
+                payloadFields={action.payload_fields}
+                externalApiBase={externalApiBase}
+              />
+            ),
+          },
+        ]}
       />
-    </Card>
+    </div>
   );
 }
 
@@ -376,16 +317,16 @@ interface ReturnCalls {
 }
 
 /**
- * ① CTD → Vuvagent and ② Vuvagent → CTD for each action with an endpoint.
- * ② needs a ready key: without one the examples would name a key that cannot make the calls.
+ * ① CTD → this agent and ② the agent → CTD. ② needs a ready key: without one the
+ * examples would name a key that cannot make the calls.
  */
 function AgentRoundTrip({
   row,
-  lines,
+  payloadFields,
   externalApiBase,
 }: {
   row: OutboundConnectionRow;
-  lines: ActionLine[];
+  payloadFields: string[];
   externalApiBase: string | null;
 }) {
   // undefined = loading, null = no ready key
@@ -424,150 +365,131 @@ function AgentRoundTrip({
   };
 
   return (
-    <>
-      {lines.map(
-        (line) =>
-          line.endpoint && (
-            <div
-              key={line.action}
-              className="space-y-2 border-t border-[var(--app-border-soft)] pt-3"
-            >
-              <Text strong>
-                {m.roundTripTitle(m.actions[line.action] ?? line.action)}
-              </Text>
-              <Text type="secondary" className="block text-xs">
-                {m.roundTripOut}
-              </Text>
-              <CodeBlock
-                code={agentTaskCurl(
-                  row.base_url,
-                  line.endpoint.endpoint_id,
-                  line.payload_fields,
-                )}
-              />
-              <Text type="secondary" className="block text-xs">
-                {m.roundTripBack}
-              </Text>
-              {error && (
-                <Alert
-                  type="error"
-                  showIcon
-                  title={m.keyLoadFailed}
-                  description={error}
-                />
-              )}
-              {calls === null && (
-                <Alert type="warning" showIcon title={m.keyMissing} />
-              )}
-              {calls && (
-                <>
-                  <Text type="success" className="block text-xs">
-                    {m.keyReady(calls.key.name, calls.key.prefix)}
-                  </Text>
-                  {!externalApiBase && (
-                    <Text type="warning" className="block text-xs">
-                      {messages.integrations.exampleBaseUnset}
-                    </Text>
-                  )}
-                  {calls.intake && (
-                    <>
-                      <Text className="block text-xs">{m.stepIntake}</Text>
-                      <CodeBlock code={curl(intakeForAgent(calls.intake))} />
-                    </>
-                  )}
-                  {done && (
-                    <>
-                      <Text className="block text-xs">{m.stepDone}</Text>
-                      <CodeBlock code={curl(done)} />
-                      <Text className="block text-xs">{m.stepFailed}</Text>
-                      <CodeBlock
-                        code={curl({
-                          ...done,
-                          body: { status: "failed", error: m.sampleFailedError },
-                        })}
-                      />
-                    </>
-                  )}
-                </>
-              )}
-              <ul className="m-0 list-disc pl-5 text-xs text-[var(--app-text-secondary)]">
-                {m.roundTripCodes.map((line) => (
-                  <li key={line}>{line}</li>
-                ))}
-              </ul>
-            </div>
-          ),
+    <div className="flex flex-col gap-2">
+      <Text type="secondary" className="block text-xs">
+        {m.roundTripOut}
+      </Text>
+      <CodeBlock
+        code={agentTaskCurl(row.base_url, row.endpoint_id, payloadFields)}
+      />
+      <Text type="secondary" className="block text-xs">
+        {m.roundTripBack}
+      </Text>
+      {error && (
+        <Alert
+          type="error"
+          showIcon
+          title={m.keyLoadFailed}
+          description={error}
+        />
       )}
-    </>
+      {calls === null && (
+        <Alert type="warning" showIcon title={m.keyMissing} />
+      )}
+      {calls && (
+        <>
+          <Text type="success" className="block text-xs">
+            {m.keyReady(calls.key.name, calls.key.prefix)}
+          </Text>
+          {!externalApiBase && (
+            <Text type="warning" className="block text-xs">
+              {messages.integrations.exampleBaseUnset}
+            </Text>
+          )}
+          {calls.intake && (
+            <>
+              <Text className="block text-xs">{m.stepIntake}</Text>
+              <CodeBlock code={curl(intakeForAgent(calls.intake))} />
+            </>
+          )}
+          {done && (
+            <>
+              <Text className="block text-xs">{m.stepDone}</Text>
+              <CodeBlock code={curl(done)} />
+              <Text className="block text-xs">{m.stepFailed}</Text>
+              <CodeBlock
+                code={curl({
+                  ...done,
+                  body: { status: "failed", error: m.sampleFailedError },
+                })}
+              />
+            </>
+          )}
+        </>
+      )}
+      <ul className="m-0 list-disc pl-5 text-xs text-[var(--app-text-secondary)]">
+        {m.roundTripCodes.map((line) => (
+          <li key={line}>{line}</li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
-interface ConnectionValues {
+interface AgentValues {
   url: string;
+  endpoint: string;
   api_key?: string;
+  timeout_minutes: number;
 }
 
-function ConnectionModal({
-  editing,
+/** Set up or edit one agent. A pasted endpoint URL fills the endpoint id as well. */
+function AgentModal({
+  action,
+  row,
   integrationId,
-  firstAction,
   onClose,
   onSaved,
 }: {
-  editing: OutboundConnectionRow | "new" | null;
+  action: AgentActionInfo | null;
+  row: OutboundConnectionRow | null;
   integrationId: string;
-  firstAction: AgentActionInfo | undefined;
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const [form] = Form.useForm<ConnectionValues>();
+  const [form] = Form.useForm<AgentValues>();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const row = editing !== null && editing !== "new" ? editing : null;
-  const split = splitVuvagentUrl(
-    Form.useWatch("url", form) ?? row?.base_url ?? "",
-  );
+  const url = splitVuvagentUrl(Form.useWatch("url", form) ?? row?.base_url ?? "");
+  const typed = Form.useWatch("endpoint", form) ?? "";
+  const endpointId =
+    url.endpointId ?? (splitVuvagentUrl(typed).endpointId ?? typed.trim());
+  const label = action ? (m.actions[action.action] ?? action.action) : "";
 
-  async function save(values: ConnectionValues) {
+  async function save(values: AgentValues) {
+    if (!action) return;
     setBusy(true);
     setError(null);
     const apiKey = values.api_key?.trim() || undefined;
-    const { baseUrl, endpointId } = splitVuvagentUrl(values.url);
-    // a pasted endpoint URL on a new connection also sets the first action's endpoint
-    const endpoints =
-      endpointId && firstAction
-        ? [
-            {
-              action: firstAction.action,
-              endpoint_id: endpointId,
-              timeout_minutes: firstAction.default_timeout_minutes,
-            },
-          ]
-        : undefined;
+    const split = splitVuvagentUrl(values.url);
+    const endpoint =
+      split.endpointId ??
+      splitVuvagentUrl(values.endpoint ?? "").endpointId ??
+      (values.endpoint ?? "").trim();
     const result = row
       ? await updateOutboundConnection(row.id, {
-          base_url: baseUrl,
+          base_url: split.baseUrl,
           api_key: apiKey,
+          endpoint_id: endpoint,
+          timeout_minutes: values.timeout_minutes,
         })
       : await createOutboundConnection({
           integration_id: integrationId,
-          vendor: VENDOR,
-          base_url: baseUrl,
+          action: action.action,
+          base_url: split.baseUrl,
           api_key: apiKey ?? "",
-          endpoints,
+          endpoint_id: endpoint,
+          timeout_minutes: values.timeout_minutes,
         });
     setBusy(false);
-    if (!result.ok) {
-      setError(errorText(result));
-      return;
-    }
+    if (!result.ok) return setError(errorText(result));
     onSaved();
   }
 
   return (
     <Modal
-      open={editing !== null}
-      title={row ? m.editTitle : m.addTitle}
+      open={action !== null}
+      title={row ? m.editTitle(label) : m.addTitle(label)}
       okText={m.save}
       confirmLoading={busy}
       onCancel={onClose}
@@ -575,24 +497,39 @@ function ConnectionModal({
       destroyOnHidden
     >
       {error && <Alert className="mb-3" type="error" showIcon title={error} />}
-      <Form<ConnectionValues>
+      <Form<AgentValues>
         form={form}
         layout="vertical"
-        initialValues={{ url: row?.base_url }}
+        initialValues={{
+          url: row?.base_url,
+          endpoint: row?.endpoint_id,
+          timeout_minutes:
+            row?.timeout_minutes ?? action?.default_timeout_minutes,
+        }}
         onFinish={(values) => void save(values)}
       >
         <Form.Item
           name="url"
           label={m.fields.url}
           extra={
-            split.endpointId
-              ? m.fields.urlSplit(split.baseUrl, split.endpointId)
+            url.endpointId
+              ? m.fields.urlSplit(url.baseUrl, url.endpointId)
               : m.fields.urlHint
           }
           rules={[{ required: true }]}
         >
           <Input />
         </Form.Item>
+        {!url.endpointId && (
+          <Form.Item
+            name="endpoint"
+            label={m.fields.endpointId}
+            extra={m.fields.endpointIdHint}
+            rules={[{ required: true }]}
+          >
+            <Input />
+          </Form.Item>
+        )}
         <Form.Item
           name="api_key"
           label={m.fields.apiKey}
@@ -602,74 +539,6 @@ function ConnectionModal({
             autoComplete="off"
             placeholder={row ? m.fields.apiKeyKeep : undefined}
           />
-        </Form.Item>
-      </Form>
-    </Modal>
-  );
-}
-
-interface ActionValues {
-  endpoint: string;
-  timeout_minutes: number;
-}
-
-function ActionModal({
-  line,
-  baseUrl,
-  onClose,
-  onSave,
-}: {
-  line: ActionLine | null;
-  baseUrl: string;
-  onClose: () => void;
-  onSave: (endpoint: ActionEndpoint) => Promise<void>;
-}) {
-  const [form] = Form.useForm<ActionValues>();
-  const [busy, setBusy] = useState(false);
-  const typed = Form.useWatch("endpoint", form) ?? "";
-  const endpointId = splitVuvagentUrl(typed).endpointId ?? typed.trim();
-
-  async function save(values: ActionValues) {
-    if (!line) return;
-    setBusy(true);
-    await onSave({
-      action: line.action,
-      endpoint_id:
-        splitVuvagentUrl(values.endpoint).endpointId ?? values.endpoint.trim(),
-      timeout_minutes: values.timeout_minutes,
-    });
-    setBusy(false);
-  }
-
-  return (
-    <Modal
-      open={line !== null}
-      title={
-        line ? m.editActionTitle(m.actions[line.action] ?? line.action) : ""
-      }
-      okText={m.save}
-      confirmLoading={busy}
-      onCancel={onClose}
-      onOk={() => form.submit()}
-      destroyOnHidden
-    >
-      <Form<ActionValues>
-        form={form}
-        layout="vertical"
-        initialValues={{
-          endpoint: line?.endpoint?.endpoint_id,
-          timeout_minutes:
-            line?.endpoint?.timeout_minutes ?? line?.default_timeout_minutes,
-        }}
-        onFinish={(values) => void save(values)}
-      >
-        <Form.Item
-          name="endpoint"
-          label={m.fields.endpointId}
-          extra={m.fields.endpointIdHint}
-          rules={[{ required: true }]}
-        >
-          <Input />
         </Form.Item>
         <Form.Item
           name="timeout_minutes"
@@ -683,7 +552,7 @@ function ActionModal({
           <Text type="secondary" className="text-xs">
             {m.fields.preview}{" "}
             <Text code className="text-xs">
-              {endpointUrl(baseUrl, endpointId)}
+              {endpointUrl(url.baseUrl, endpointId)}
             </Text>
           </Text>
         )}
