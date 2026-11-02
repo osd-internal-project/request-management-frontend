@@ -151,6 +151,7 @@ export const CORE_SERVICE_PREFIXES = [
   "/admin/integrations",
   "/admin/outbound-connections",
   "/admin/workflow-triggers",
+  "/admin/assignment-rules",
   "/process-logs",
   "/admin/erp-sync",
   "/admin/approval-matrix",

@@ -1257,6 +1257,7 @@ export const messages = {
     adminRequestTypes: "ประเภทคำขอ",
     adminSla: "เวลาทำการและวันหยุด",
     adminOrg: "ผังทีมและสิทธิ์",
+    adminAssignmentRules: "ตารางทีม (จัดคนรับงาน)",
     adminUsers: "ผู้ใช้",
     adminAudit: "Audit Log",
     adminProcessLogs: "บันทึกกระบวนการ 7 ขั้น",
@@ -1648,6 +1649,7 @@ export const messages = {
       "integration.service.asset.manage": "เปิดใบสั่งงานบริการแทนผู้ใช้",
       "integration.assistant.read": "ผู้ช่วย AI อ่านสรุปงานแทนผู้ใช้",
       "integration.process.log": "บันทึกกระบวนการ 7 ขั้นจาก OSD Workflow",
+      "integration.process.dispatch": "OSD Workflow จัดคนรับงานตามตารางทีม และแจ้งเตือนคนในบริษัท",
       "integration.kb.read": "อ่านบทความที่เผยแพร่ให้ลูกค้า (AI)",
       "integration.service.care.manage": "คุยกับลูกค้าผ่านช่องทาง (AI CARE)",
       "integration.smart.prospect.create": "ส่งรายชื่อเป้าหมายเข้า AI SMART",
@@ -5120,6 +5122,7 @@ export const messages = {
     } as Record<string, string>,
     actions: {
       "lead.find": "Find Lead",
+      "lead.research": "วิจัย Lead",
     } as Record<string, string>,
     roundTripTitle: (label: string) => `ไป-กลับของงาน ${label}`,
     roundTripOut:
@@ -5128,6 +5131,7 @@ export const messages = {
       "② Vuvagent ยิงกลับมาที่ CTD · ใช้กุญแจ rfk_ จากแท็บกุญแจ API",
     vuvagentKeyPlaceholder: "<x-api-key ของ Vuvagent>",
     sampleTopic: "บริษัทโลจิสติกส์ในภาคตะวันออก",
+    sampleFocus: "ช่องทางบริการลูกค้าและผู้ตัดสินใจ",
     keyReady: (name: string, prefix: string) => `พร้อม: ${name} (${prefix}…)`,
     keyMissing:
       "ยังไม่มีกุญแจที่สร้าง Lead และปิดงานได้ — ออกกุญแจ preset ai-lead-finder ในแท็บกุญแจ API",
@@ -5363,6 +5367,56 @@ export const messages = {
       "HMAC-SHA256 ของ timestamp.body ด้วย secret เทียบกับ X-Webhook-Signature แบบเวลาคงที่ ใช้ body ดิบก่อน parse และปฏิเสธ timestamp ที่ห่างเกิน 5 นาที",
   },
 
+  assignmentRules: {
+    title: "ตารางทีม",
+    subtitle:
+      "งานของแต่ละบทบาทไปทีมไหน — OSD Workflow ถามตารางนี้ทุกครั้งที่จัดคน: กฎแรกที่ตรงและมีคนว่างชนะ, ข้ามคนลาเต็มวัน, งานเปิดน้อยสุดก่อน เท่ากันวนคิว, ไม่ตรงกฎส่งคนรับสำรอง",
+    role: "บทบาท",
+    add: "เพิ่มกฎ",
+    edit: "แก้กฎ",
+    empty: "ยังไม่มีกฎของบทบาทนี้ — ทุกงานไปที่คนรับสำรอง",
+    loadFailed: "โหลดตารางทีมไม่สำเร็จ",
+    columnOrder: "ลำดับ",
+    columnName: "ชื่อกฎ",
+    columnConditions: "เงื่อนไข",
+    columnTeam: "ทีม",
+    columnStatus: "สถานะ",
+    anyWork: "ทุกงาน",
+    active: "ใช้อยู่",
+    inactive: "ปิด",
+    deactivate: "ปิดกฎ",
+    activate: "เปิดกฎ",
+    name: "ชื่อกฎ",
+    namePlaceholder: "เช่น ลูกค้าธนาคาร → ทีมขายองค์กร",
+    team: "ทีม (จากผังองค์กร)",
+    sortOrder: "ลำดับ (น้อยตรวจก่อน)",
+    conditionsHint:
+      "เว้นว่างทุกช่อง = รับทุกงาน · ใส่หลายค่าได้ ตรงค่าใดค่าหนึ่งก็ผ่าน · งานที่ไม่มีค่าในช่องที่ตั้งไว้ไม่ผ่านกฎ",
+    valuesPlaceholder: "พิมพ์แล้วกด Enter",
+    save: "บันทึก",
+    saved: "บันทึกแล้ว",
+    roleSettings: "ค่าของบทบาท",
+    fallback: "คนรับสำรอง",
+    fallbackHint:
+      "รับงานเมื่อไม่ตรงกฎใด หรือทีมที่ตรงไม่มีคนว่าง (เช่น Sales Manager) · ไม่ตั้ง = ส่งหัวหน้าทีมที่ตรงกฎ",
+    loadTypes: "ประเภทคำขอที่นับเป็นงานเปิด",
+    loadTypesHint:
+      "ใช้นับว่าใครถืองานอยู่กี่ใบ (เช่น SOL) — พนักงานขายนับจาก Lead/ดีล ผู้จัดการโครงการนับจากโครงการ",
+    preview: "ลองจับคู่",
+    previewRun: "ดูว่าใครจะได้งาน",
+    previewResult: (name: string, reason: string) => `${name} · ${reason}`,
+    reason: {
+      matched: "ตรงกฎ",
+      fallback: "คนรับสำรอง",
+      kept: "มีเจ้าของอยู่แล้ว",
+    } as Record<string, string>,
+    history: "การจัดคนล่าสุด",
+    columnWhen: "เวลา",
+    columnResource: "งาน",
+    columnPerson: "ผู้ได้รับ",
+    columnReason: "ที่มา",
+    noHistory: "ยังไม่มีการจัดคน",
+  },
   workflowTriggers: {
     title: "เริ่ม Workflow อัตโนมัติ",
     subtitle:
@@ -7013,6 +7067,8 @@ export const messages = {
       approval_case: "งานอนุมัติ",
       opportunity: "โอกาสการขาย",
       notification_digest: "สรุปรายวัน",
+      lead: "Lead",
+      project: "โครงการ",
     } as Record<string, string>,
     preferences: {
       title: "ช่องทางการแจ้งเตือน",
@@ -7114,6 +7170,7 @@ export const messages = {
     back: "กลับไปหน้ารายการ",
     action: {
       "lead.find": "Find Lead",
+      "lead.research": "วิจัย Lead",
     } as Record<string, string>,
     status: {
       processing: "กำลังทำ",
@@ -7155,6 +7212,7 @@ export const messages = {
       leads_created: "Lead ที่สร้าง",
     } as Record<string, string>,
     goToLeads: "ไปหน้า Lead",
+    goToLead: "ดูผลที่หน้า Lead",
     loadFailed: "โหลดรายการงานของ agent ไม่สำเร็จ",
   },
 
@@ -7286,12 +7344,27 @@ export const messages = {
         created: "เพิ่ม Lead แล้ว",
         saved: "บันทึกแล้ว",
       },
-      /** การ์ด Focus — agent หาข้อมูลของ Lead (ยังไม่เชื่อม agent). */
+      /** การ์ด Focus — งาน `lead.research`; ผลคือ `lead.data` ที่ Vuvagent เขียนเอง. */
       focus: {
         title: "Focus",
-        run: "Focus",
-        notConnected: "ยังไม่ได้เชื่อม agent Focus",
-        placeholder: "ผลจาก agent จะแสดงที่นี่",
+        run: "วิจัย",
+        rerun: "วิจัยใหม่",
+        focusPlaceholder: "อยากให้เน้นเรื่องอะไร (ไม่บังคับ)",
+        running: "Agent กำลังวิจัย Lead นี้",
+        viewJob: "ดูงาน",
+        failed: "Agent วิจัยไม่สำเร็จ เปิดหน้างานเพื่อดูเหตุผล",
+        empty: "ยังไม่มีผลวิจัย กดวิจัยเพื่อให้ agent หาข้อมูลของ Lead นี้",
+        fit: "เหมาะกับเรา",
+        source: "เปิดแหล่งข้อมูล",
+        sections: {
+          products: "ผลิตภัณฑ์ที่เหมาะ",
+          talking: "ประเด็นพูดคุย",
+          pains: "ปัญหาบริการลูกค้า",
+          signals: "ความเคลื่อนไหวล่าสุด",
+          people: "ผู้ตัดสินใจ",
+          channels: "ช่องทางของลูกค้า",
+          sources: "แหล่งข้อมูล",
+        },
       },
       /** หน้ารายละเอียด Lead — pipeline + ข้อมูล + กิจกรรม (10 ก.ย. 2569). */
       detail: {

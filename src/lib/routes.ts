@@ -183,6 +183,7 @@ export const ROUTES = {
   adminSla: `${HOME_PATH}/admin/sla`,
   /** Screen A3 — ผังทีมและสิทธิ์ */
   adminOrg: `${HOME_PATH}/admin/org`,
+  adminAssignmentRules: `${HOME_PATH}/admin/assignment-rules`,
   /** Read-only Keycloak user directory. */
   adminUsers: `${HOME_PATH}/admin/users`,
   /** SUP-04 — Audit log */

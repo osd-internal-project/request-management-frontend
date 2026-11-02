@@ -824,6 +824,15 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     group: messages.nav.adminGroup,
     section: messages.nav.adminSectionAccess,
   },
+  /** ตารางทีม — OSD Workflow จัดคนรับงานของแต่ละบทบาทจากตารางนี้. */
+  {
+    label: messages.nav.adminAssignmentRules,
+    href: ROUTES.adminAssignmentRules,
+    icon: "org",
+    permissions: ["admin.org.manage"],
+    group: messages.nav.adminGroup,
+    section: messages.nav.adminSectionAccess,
+  },
   {
     label: messages.nav.adminUsers,
     href: ROUTES.adminUsers,
