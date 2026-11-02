@@ -21,6 +21,9 @@ export function notificationHref(notification: AppNotification): string | null {
       return ROUTES.requestDetail(notification.resourceId);
     case "opportunity":
       return ROUTES.opportunityDetail(notification.resourceId);
+    // ตารางทีม — a Lead handed to a salesperson
+    case "lead":
+      return ROUTES.leadDetail(notification.resourceId);
     case "approval_case":
       return ROUTES.myWork;
     case "contract_obligation":
