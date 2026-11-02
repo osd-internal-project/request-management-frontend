@@ -123,6 +123,8 @@ export function LeadDetailView({
   const editable = canManage && open;
 
   const { pending, done } = splitActivities(lead.activities);
+  // `research` is the lead.research agent's; the rest came with the lead
+  const { research, ...intake } = lead.intakeData ?? {};
 
   async function setStatus(status: LeadStatus) {
     if (status === lead.status) return;
@@ -496,15 +498,14 @@ export function LeadDetailView({
                         </span>
                       </Descriptions.Item>
                     </Descriptions>
-                    {lead.intakeData &&
-                      Object.keys(lead.intakeData).length > 0 && (
-                        <div className="mt-3 border-t border-gray-100 pt-3">
-                          <Text strong className="mb-1 block text-xs">
-                            {md.sections.intake}
-                          </Text>
-                          <IntakeDataList data={lead.intakeData} />
-                        </div>
-                      )}
+                    {Object.keys(intake).length > 0 && (
+                      <div className="mt-3 border-t border-gray-100 pt-3">
+                        <Text strong className="mb-1 block text-xs">
+                          {md.sections.intake}
+                        </Text>
+                        <IntakeDataList data={intake} />
+                      </div>
+                    )}
                   </Card>
                 </div>
               ),
@@ -642,7 +643,7 @@ export function LeadDetailView({
 
           <LeadFocusCard
             leadId={lead.id}
-            data={lead.data}
+            research={research}
             canStart={editable}
           />
         </div>
