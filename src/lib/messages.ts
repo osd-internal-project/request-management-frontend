@@ -5122,7 +5122,7 @@ export const messages = {
     } as Record<string, string>,
     actions: {
       "lead.find": "Find Lead",
-      "lead.research": "วิจัย Lead",
+      "lead.research": "Research Lead",
     } as Record<string, string>,
     roundTripTitle: (label: string) => `ไป-กลับของงาน ${label}`,
     roundTripOut:
@@ -7170,7 +7170,7 @@ export const messages = {
     back: "กลับไปหน้ารายการ",
     action: {
       "lead.find": "Find Lead",
-      "lead.research": "วิจัย Lead",
+      "lead.research": "Research Lead",
     } as Record<string, string>,
     status: {
       processing: "กำลังทำ",
@@ -7344,27 +7344,16 @@ export const messages = {
         created: "เพิ่ม Lead แล้ว",
         saved: "บันทึกแล้ว",
       },
-      /** การ์ด Focus — งาน `lead.research`; ผลคือ `lead.data` ที่ Vuvagent เขียนเอง. */
+      /** การ์ด Research Lead — งาน `lead.research`; ผลคือ `intakeData.research` ที่ Vuvagent เขียนเอง. */
       focus: {
-        title: "Focus",
-        run: "วิจัย",
-        rerun: "วิจัยใหม่",
+        title: "Research Lead",
+        run: "Focus",
         focusPlaceholder: "อยากให้เน้นเรื่องอะไร (ไม่บังคับ)",
         running: "Agent กำลังวิจัย Lead นี้",
         viewJob: "ดูงาน",
         failed: "Agent วิจัยไม่สำเร็จ เปิดหน้างานเพื่อดูเหตุผล",
         empty: "ยังไม่มีผลวิจัย กดวิจัยเพื่อให้ agent หาข้อมูลของ Lead นี้",
-        fit: "เหมาะกับเรา",
-        source: "เปิดแหล่งข้อมูล",
-        sections: {
-          products: "ผลิตภัณฑ์ที่เหมาะ",
-          talking: "ประเด็นพูดคุย",
-          pains: "ปัญหาบริการลูกค้า",
-          signals: "ความเคลื่อนไหวล่าสุด",
-          people: "ผู้ตัดสินใจ",
-          channels: "ช่องทางของลูกค้า",
-          sources: "แหล่งข้อมูล",
-        },
+        expand: "Expand",
       },
       /** หน้ารายละเอียด Lead — pipeline + ข้อมูล + กิจกรรม (10 ก.ย. 2569). */
       detail: {
