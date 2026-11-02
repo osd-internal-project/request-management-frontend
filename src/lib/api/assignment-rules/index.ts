@@ -37,6 +37,8 @@ export interface AssignmentHistoryRow {
   role: string;
   resource_type: string;
   resource_id: string;
+  /** "Lead <ชื่อ>" หรือ "<type> <id>" — backend ประกอบให้ */
+  resource_label: string;
   user_id: string;
   rule_id: string | null;
   org_unit_id: string | null;

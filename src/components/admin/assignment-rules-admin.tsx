@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import {
   Alert,
   App,
@@ -33,6 +34,7 @@ import {
 } from "@/lib/api/assignment-rules";
 import type { ClientResult } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
+import { ROUTES } from "@/lib/routes";
 
 const m = messages.assignmentRules;
 
@@ -228,7 +230,9 @@ function RolePanel({
   }
 
   async function toggle(rule: AssignmentRule) {
-    const result = await updateAssignmentRule(rule.id, { active: !rule.active });
+    const result = await updateAssignmentRule(rule.id, {
+      active: !rule.active,
+    });
     if (!result.ok) return void notify.error(errorText(result));
     await onChanged();
   }
@@ -395,7 +399,14 @@ function RolePanel({
             },
             {
               title: m.columnResource,
-              render: (_, row) => `${row.resource_type} ${row.resource_id}`,
+              render: (_, row) =>
+                row.resource_type === "lead" ? (
+                  <Link href={ROUTES.leadDetail(row.resource_id)}>
+                    {row.resource_label}
+                  </Link>
+                ) : (
+                  row.resource_label
+                ),
             },
             {
               title: m.columnPerson,
