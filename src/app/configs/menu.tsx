@@ -101,7 +101,10 @@ export type MenuIconKey =
   | "kbReview"
   | "kbField"
   | "kbAi"
-  | "kbGaps";
+  | "kbGaps"
+  | "workflowTrigger"
+  | "assignmentRule"
+  | "processLog";
 
 export interface MenuEntry {
   label: string;
@@ -828,7 +831,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
   {
     label: messages.nav.adminAssignmentRules,
     href: ROUTES.adminAssignmentRules,
-    icon: "org",
+    icon: "assignmentRule",
     permissions: ["admin.org.manage"],
     group: messages.nav.adminGroup,
     section: messages.nav.adminSectionAccess,
@@ -853,7 +856,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
   {
     label: messages.nav.adminProcessLogs,
     href: ROUTES.adminProcessLogs,
-    icon: "audit",
+    icon: "processLog",
     permissions: ["audit.read"],
     group: messages.nav.adminGroup,
     section: messages.nav.adminSectionAudit,
@@ -913,7 +916,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
   {
     label: messages.nav.adminWorkflowTriggers,
     href: ROUTES.adminWorkflowTriggers,
-    icon: "apiKey",
+    icon: "workflowTrigger",
     permissions: ["admin.integration.manage"],
     group: messages.nav.adminGroup,
     section: messages.nav.adminSectionIntegrations,
