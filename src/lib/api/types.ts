@@ -1348,6 +1348,8 @@ export interface LeadDetail extends LeadRow {
   /** CD-85 — the company wants Discovery done before a deal (the workflow decides). */
   discovery_required: boolean;  /** what an intake channel (form, AI agent) sent with no column of its own */
   intakeData: Record<string, unknown> | null;
+  /** what the `lead.research` agent found — the agent's JSON, no schema of ours */
+  data: Record<string, unknown> | null;
 }
 
 /** CD-85 — บริษัทเป้าหมายของแกน Getter. */

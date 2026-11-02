@@ -640,7 +640,11 @@ export function LeadDetailView({
             )}
           </Card>
 
-          <LeadFocusCard />
+          <LeadFocusCard
+            leadId={lead.id}
+            data={lead.data}
+            canStart={editable}
+          />
         </div>
       </div>
 

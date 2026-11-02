@@ -7,6 +7,7 @@ const UNSET_BASE = "<EXTERNAL_API_PUBLIC_URL>/api/v1";
 
 /** The id the round-trip examples share, so step ① and step ② visibly name the same task. */
 export const SAMPLE_AGENT_RECORD_ID = "6f6bd3a7-7308-4d2e-a4de-75e1f89b6871";
+const SAMPLE_LEAD_ID = "4639c50a-28b3-4847-b285-121bf3fc0722";
 
 /** Single-quotes a value for a POSIX shell; `'` becomes `'\''`. */
 function shellQuote(value: string): string {
@@ -100,6 +101,8 @@ export function agentTaskCurl(
   const sample: Record<string, string> = {
     agent_record_id: SAMPLE_AGENT_RECORD_ID,
     topic: m.sampleTopic,
+    lead_id: SAMPLE_LEAD_ID,
+    focus: m.sampleFocus,
   };
   return curl(
     "POST",

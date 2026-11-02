@@ -5122,6 +5122,7 @@ export const messages = {
     } as Record<string, string>,
     actions: {
       "lead.find": "Find Lead",
+      "lead.research": "วิจัย Lead",
     } as Record<string, string>,
     roundTripTitle: (label: string) => `ไป-กลับของงาน ${label}`,
     roundTripOut:
@@ -5130,6 +5131,7 @@ export const messages = {
       "② Vuvagent ยิงกลับมาที่ CTD · ใช้กุญแจ rfk_ จากแท็บกุญแจ API",
     vuvagentKeyPlaceholder: "<x-api-key ของ Vuvagent>",
     sampleTopic: "บริษัทโลจิสติกส์ในภาคตะวันออก",
+    sampleFocus: "ช่องทางบริการลูกค้าและผู้ตัดสินใจ",
     keyReady: (name: string, prefix: string) => `พร้อม: ${name} (${prefix}…)`,
     keyMissing:
       "ยังไม่มีกุญแจที่สร้าง Lead และปิดงานได้ — ออกกุญแจ preset ai-lead-finder ในแท็บกุญแจ API",
@@ -7168,6 +7170,7 @@ export const messages = {
     back: "กลับไปหน้ารายการ",
     action: {
       "lead.find": "Find Lead",
+      "lead.research": "วิจัย Lead",
     } as Record<string, string>,
     status: {
       processing: "กำลังทำ",
@@ -7209,6 +7212,7 @@ export const messages = {
       leads_created: "Lead ที่สร้าง",
     } as Record<string, string>,
     goToLeads: "ไปหน้า Lead",
+    goToLead: "ดูผลที่หน้า Lead",
     loadFailed: "โหลดรายการงานของ agent ไม่สำเร็จ",
   },
 
@@ -7340,12 +7344,27 @@ export const messages = {
         created: "เพิ่ม Lead แล้ว",
         saved: "บันทึกแล้ว",
       },
-      /** การ์ด Focus — agent หาข้อมูลของ Lead (ยังไม่เชื่อม agent). */
+      /** การ์ด Focus — งาน `lead.research`; ผลคือ `lead.data` ที่ Vuvagent เขียนเอง. */
       focus: {
         title: "Focus",
-        run: "Focus",
-        notConnected: "ยังไม่ได้เชื่อม agent Focus",
-        placeholder: "ผลจาก agent จะแสดงที่นี่",
+        run: "วิจัย",
+        rerun: "วิจัยใหม่",
+        focusPlaceholder: "อยากให้เน้นเรื่องอะไร (ไม่บังคับ)",
+        running: "Agent กำลังวิจัย Lead นี้",
+        viewJob: "ดูงาน",
+        failed: "Agent วิจัยไม่สำเร็จ เปิดหน้างานเพื่อดูเหตุผล",
+        empty: "ยังไม่มีผลวิจัย กดวิจัยเพื่อให้ agent หาข้อมูลของ Lead นี้",
+        fit: "เหมาะกับเรา",
+        source: "เปิดแหล่งข้อมูล",
+        sections: {
+          products: "ผลิตภัณฑ์ที่เหมาะ",
+          talking: "ประเด็นพูดคุย",
+          pains: "ปัญหาบริการลูกค้า",
+          signals: "ความเคลื่อนไหวล่าสุด",
+          people: "ผู้ตัดสินใจ",
+          channels: "ช่องทางของลูกค้า",
+          sources: "แหล่งข้อมูล",
+        },
       },
       /** หน้ารายละเอียด Lead — pipeline + ข้อมูล + กิจกรรม (10 ก.ย. 2569). */
       detail: {
