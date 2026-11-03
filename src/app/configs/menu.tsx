@@ -227,14 +227,14 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     label: messages.nav.targetAccounts,
     href: ROUTES.targetAccounts,
     icon: "targetAccount",
-    permissions: ["crm.sales.read"],
+    permissions: ["crm.lead.read"],
     group: messages.nav.crmGroup,
   },
   {
     label: messages.nav.leads,
     href: ROUTES.leads,
     icon: "lead",
-    permissions: ["crm.sales.read"],
+    permissions: ["crm.lead.read"],
     group: messages.nav.crmGroup,
   },
   /** งานของ AI agent — สิทธิ์ `read` ของทุก action ใน `AGENT_ACTIONS` (backend); มีอย่างใดก็เห็นเมนู. */
@@ -242,7 +242,7 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     label: messages.nav.agentRecords,
     href: ROUTES.agentRecords,
     icon: "agentRecord",
-    permissions: ["crm.sales.read"],
+    permissions: ["crm.lead.read"],
     group: messages.nav.crmGroup,
   },
   {

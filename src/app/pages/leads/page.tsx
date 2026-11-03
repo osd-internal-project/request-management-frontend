@@ -31,7 +31,7 @@ export default async function LeadsPage({
   }>;
 }) {
   const session = await getSession();
-  if (!can(session, "crm.sales.read")) redirect(HOME_PATH);
+  if (!can(session, "crm.lead.read")) redirect(HOME_PATH);
 
   const query = await searchParams;
   const page = Number(query.page) || 1;
@@ -83,7 +83,8 @@ export default async function LeadsPage({
         }}
         layout={layout}
         customers={customersResult?.ok ? customersResult.data.data : []}
-        canManage={can(session, "crm.sales.manage")}
+        canManage={can(session, "crm.lead.manage")}
+        canSeeDeals={can(session, "crm.sales.read")}
       />
     </div>
   );

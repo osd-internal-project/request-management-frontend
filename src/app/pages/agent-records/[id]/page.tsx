@@ -5,7 +5,7 @@ import { HOME_PATH } from "@/lib/routes";
 import { canAny, getSession } from "@/lib/session";
 
 /** The `read` right of every action in the backend's `AGENT_ACTIONS`. */
-const READ_PERMISSIONS = ["crm.sales.read"];
+const READ_PERMISSIONS = ["crm.lead.read"];
 
 /** หนึ่งงานของ agent — Find Lead พาเข้ามาที่นี่ทันทีหลังกดค้นหา. */
 export default async function AgentRecordPage({

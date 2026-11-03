@@ -1,5 +1,6 @@
 import { Alert, Button } from "antd";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
 import { MyWork, type WorkTab } from "@/components/requests/my-work";
@@ -29,6 +30,8 @@ import { statusFilterArgs } from "@/lib/work-filters";
  * tabs is what says the page is broken, and a tab that renders nothing at all
  * would make three working tabs look like a crash.
  */
+const EMPTY_TAB: WorkTab = { rows: [], total: 0 };
+
 function toTab(
   result: Awaited<ReturnType<typeof requests.getRequests>>,
 ): WorkTab {
@@ -62,6 +65,13 @@ export default async function MyWorkPage({
   if (session?.user.pending_org_assignment) {
     return <PendingAssignment />;
   }
+
+  // Every tab here is a request list; a seller who holds only `crm.lead.*`
+  // would get four 403s and a red banner, so they land on their own work.
+  if (!can(session, "request.read") && can(session, "crm.lead.read")) {
+    redirect(ROUTES.leads);
+  }
+  const readsRequests = can(session, "request.read");
 
   /**
    * Four tabs, four queries, each narrowing what the caller may already see.
@@ -103,11 +113,11 @@ export default async function MyWorkPage({
     awaitingResult,
   ] =
     await Promise.all([
-      requests.getRequests({ ...filterArgs, view: "involved" }),
-      requests.getRequests({ ...filterArgs, view: "created" }),
-      requests.getRequests({ ...filterArgs, view: "incoming" }),
+      readsRequests ? requests.getRequests({ ...filterArgs, view: "involved" }) : null,
+      readsRequests ? requests.getRequests({ ...filterArgs, view: "created" }) : null,
+      readsRequests ? requests.getRequests({ ...filterArgs, view: "incoming" }) : null,
       decides ? requests.getRequests({ ...filterArgs, view: "approver" }) : null,
-      requests.getRequestTypes(),
+      can(session, "request.create") ? requests.getRequestTypes() : null,
       /*
         The badge count, unfiltered on purpose: "you owe three decisions" must
         not change because somebody narrowed the table to one request type.
@@ -150,13 +160,13 @@ export default async function MyWorkPage({
       )}
 
       <MyWork
-        involved={toTab(involvedResult)}
-        created={toTab(createdResult)}
-        incoming={toTab(incomingResult)}
+        involved={involvedResult ? toTab(involvedResult) : EMPTY_TAB}
+        created={createdResult ? toTab(createdResult) : EMPTY_TAB}
+        incoming={incomingResult ? toTab(incomingResult) : EMPTY_TAB}
         approver={approverResult ? toTab(approverResult) : null}
         awaiting={awaitingResult?.ok ? awaitingResult.data.total : 0}
         filters={filters}
-        types={typesResult.ok ? typesResult.data : []}
+        types={typesResult?.ok ? typesResult.data : []}
         session={session}
       />
     </div>

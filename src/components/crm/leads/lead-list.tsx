@@ -48,6 +48,7 @@ export function LeadList({
   layout,
   customers,
   canManage,
+  canSeeDeals,
 }: {
   rows: LeadRow[];
   total: number;
@@ -63,6 +64,8 @@ export function LeadList({
   layout: LeadLayout;
   customers: CustomerRow[];
   canManage: boolean;
+  /** `crm.sales.read` — see `LeadDetailView` */
+  canSeeDeals: boolean;
 }) {
   const router = useRouter();
   const [formOpen, setFormOpen] = useState(false);
@@ -167,6 +170,7 @@ export function LeadList({
             rows={rows}
             total={total}
             canManage={canManage}
+            canSeeDeals={canSeeDeals}
             onEdit={(lead) => {
               setEditing(lead);
               setFormOpen(true);
@@ -277,17 +281,22 @@ export function LeadList({
                   <Tag color={m.statusColor[status]}>
                     {m.status[status] ?? status}
                   </Tag>
-                  {row.convertedOpportunity && (
-                    <Link
-                      href={ROUTES.opportunityDetail(
-                        row.convertedOpportunity.id,
-                      )}
-                    >
+                  {row.convertedOpportunity &&
+                    (canSeeDeals ? (
+                      <Link
+                        href={ROUTES.opportunityDetail(
+                          row.convertedOpportunity.id,
+                        )}
+                      >
+                        <Text type="secondary" className="text-xs">
+                          {row.convertedOpportunity.opportunityCode}
+                        </Text>
+                      </Link>
+                    ) : (
                       <Text type="secondary" className="text-xs">
                         {row.convertedOpportunity.opportunityCode}
                       </Text>
-                    </Link>
-                  )}
+                    ))}
                 </Space>
               ),
             },
@@ -363,9 +372,11 @@ export function LeadList({
         lead={converting}
         customers={customers}
         onClose={() => setConverting(null)}
-        onDone={(opportunityId) =>
-          router.push(ROUTES.opportunityDetail(opportunityId))
-        }
+        onDone={(opportunityId) => {
+          setConverting(null);
+          if (canSeeDeals) router.push(ROUTES.opportunityDetail(opportunityId));
+          else router.refresh();
+        }}
       />
     </div>
   );

@@ -10,7 +10,7 @@ import { canAny, getSession } from "@/lib/session";
 
 const PAGE_SIZE = 20;
 /** The `read` right of every action in the backend's `AGENT_ACTIONS`. */
-const READ_PERMISSIONS = ["crm.sales.read"];
+const READ_PERMISSIONS = ["crm.lead.read"];
 
 /** งานของ AI agent — เห็นเฉพาะ action ที่มีสิทธิ์ดู; backend กรองแถวให้. Gate-before-fetch. */
 export default async function AgentRecordsPage({

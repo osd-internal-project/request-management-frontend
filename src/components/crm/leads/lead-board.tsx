@@ -62,6 +62,7 @@ export function LeadBoard({
   rows,
   total,
   canManage,
+  canSeeDeals,
   onEdit,
   onConvert,
   onDisqualify,
@@ -70,6 +71,7 @@ export function LeadBoard({
   rows: LeadRow[];
   total: number;
   canManage: boolean;
+  canSeeDeals: boolean;
   onEdit: (lead: LeadRow) => void;
   onConvert: (lead: LeadRow) => void;
   onDisqualify: (lead: LeadRow, closeAs?: LostStatus) => void;
@@ -178,6 +180,7 @@ export function LeadBoard({
                       key={lead.id}
                       lead={lead}
                       canManage={canManage}
+                      canSeeDeals={canSeeDeals}
                       draggable={draggable(lead)}
                       busy={busyId === lead.id}
                       onDragStart={() => setDragging(lead)}
@@ -210,6 +213,7 @@ export function LeadBoard({
 function LeadCard({
   lead,
   canManage,
+  canSeeDeals,
   draggable,
   busy,
   onDragStart,
@@ -220,6 +224,7 @@ function LeadCard({
 }: {
   lead: LeadRow;
   canManage: boolean;
+  canSeeDeals: boolean;
   draggable: boolean;
   busy: boolean;
   onDragStart: () => void;
@@ -267,13 +272,18 @@ function LeadCard({
 
         {lead.sourceCode && <Tag className="m-0! mt-1">{lead.sourceCode}</Tag>}
 
-        {lead.convertedOpportunity && (
-          <Link href={ROUTES.opportunityDetail(lead.convertedOpportunity.id)}>
+        {lead.convertedOpportunity &&
+          (canSeeDeals ? (
+            <Link href={ROUTES.opportunityDetail(lead.convertedOpportunity.id)}>
+              <Text type="secondary" className="text-xs">
+                {lead.convertedOpportunity.opportunityCode}
+              </Text>
+            </Link>
+          ) : (
             <Text type="secondary" className="text-xs">
               {lead.convertedOpportunity.opportunityCode}
             </Text>
-          </Link>
-        )}
+          ))}
 
         {isLeadLost(lead.status) && lead.disqualifyReason && (
           <Text type="secondary" className="text-xs">
