@@ -8,12 +8,12 @@ import { can, getSession } from "@/lib/session";
 
 /**
  * นำเข้า Lead จาก Excel — สูตรเดียวกับ CM-10 (import ลูกค้า) แต่เป็นงานฝ่ายขาย:
- * gate ด้วย `crm.sales.manage` ไม่ใช่ admin; backend ตรวจซ้ำ (อีเมล/เบอร์) และ
+ * gate ด้วย `crm.lead.manage` ไม่ใช่ admin; backend ตรวจซ้ำ (อีเมล/เบอร์) และ
  * re-validate ทุกแถว.
  */
 export default async function LeadImportPage() {
   const session = await getSession();
-  if (!can(session, "crm.sales.manage")) redirect(HOME_PATH);
+  if (!can(session, "crm.lead.manage")) redirect(HOME_PATH);
 
   return (
     <div className="space-y-4">

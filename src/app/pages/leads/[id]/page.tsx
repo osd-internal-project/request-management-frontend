@@ -16,7 +16,7 @@ export default async function LeadDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const session = await getSession();
-  if (!can(session, "crm.sales.read")) redirect(HOME_PATH);
+  if (!can(session, "crm.lead.read")) redirect(HOME_PATH);
 
   const { id } = await params;
 
@@ -34,7 +34,8 @@ export default async function LeadDetailPage({
     <LeadDetailView
       lead={leadResult.data}
       customers={customersResult?.ok ? customersResult.data.data : []}
-      canManage={can(session, "crm.sales.manage")}
+      canManage={can(session, "crm.lead.manage")}
+      canSeeDeals={can(session, "crm.sales.read")}
     />
   );
 }

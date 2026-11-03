@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { Alert, App, Button, Card, Checkbox, Empty, Input, Modal, Space, Spin, Tag, Tooltip } from "antd";
+import { Alert, App, Button, Card, Empty, Input, Modal, Space, Spin, Tag, Tooltip } from "antd";
 import Text from "antd/es/typography/Text";
 import Paragraph from "antd/es/typography/Paragraph";
 import {
@@ -21,9 +21,10 @@ import type {
   RoleHolder,
   RoleRow,
 } from "@/lib/api/types";
-import { messages, thaiForPermission } from "@/lib/messages";
+import { messages } from "@/lib/messages";
 import { ORG_UNIT_LEVELS } from "@/lib/org/org-levels";
 import { SearchSelect } from "@/components/ui/search-select";
+import { RolePermissionMatrix } from "./role-permission-matrix";
 
 /**
  * §5.4 guardrail 1 — the permissions a role holding `admin.*` may not have.
@@ -63,6 +64,17 @@ const GROUPS = [
     modules: ["presales"],
     label: messages.roleAdmin.groups.presales,
   },
+  { key: "pm", modules: ["pm", "delivery"], label: messages.roleAdmin.groups.pm },
+  { key: "service", modules: ["service"], label: messages.roleAdmin.groups.service },
+  { key: "pricing", modules: ["pricing"], label: messages.roleAdmin.groups.pricing },
+  {
+    key: "disbursement",
+    modules: ["disbursement"],
+    label: messages.roleAdmin.groups.disbursement,
+  },
+  { key: "legal", modules: ["legal", "esign"], label: messages.roleAdmin.groups.legal },
+  { key: "hr", modules: ["hr"], label: messages.roleAdmin.groups.hr },
+  { key: "kb", modules: ["kb"], label: messages.roleAdmin.groups.kb },
   {
     key: "adminAudit",
     modules: ["admin", "audit"],
@@ -468,57 +480,14 @@ export function RolePermissionAdmin({
                     {group.label}
                   </Text>
 
-                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                    {rows.map((permission) => {
-                      // ล็อกเฉพาะช่องที่ยังไม่ติ๊ก — กันการ *เพิ่ม* สิทธิ์ต้องห้าม
-                      // ช่องที่ติ๊กอยู่แล้วต้องเอาออกได้เสมอ ไม่อย่างนั้น role ที่ถือ
-                      // ทั้งสองอย่างมาก่อน (เช่น `uat_superadmin`) จะแก้ให้ถูกไม่ได้เลย
-                      // เพราะช่องกดไม่ได้ แต่ทุกการบันทึกยังส่งค่านั้นไปโดน 422
-                      const forbidden =
-                        holdsAdmin &&
-                        FORBIDDEN_WITH_ADMIN.includes(permission.code);
-                      const locked =
-                        forbidden && !checked.includes(permission.code);
-                      // ติ๊กค้างอยู่ทั้งที่ต้องห้าม — backend จะปฏิเสธทุกการบันทึกจนกว่า
-                      // จะเอาออก บอกไว้ตรงนี้ ไม่ใช่ให้ไปเจอเอาตอนกดบันทึกแล้วไม่ผ่าน
-                      const conflicting = forbidden && !locked;
-
-                      return (
-                        <Tooltip
-                          key={permission.code}
-                          title={
-                            forbidden
-                              ? messages.roleAdmin.adminLockedHint
-                              : null
-                          }
-                        >
-                          <label
-                            className={`flex items-start gap-2 rounded border p-2 ${
-                              conflicting
-                                ? "border-red-400"
-                                : "border-black/5"
-                            } ${locked ? "opacity-50" : ""}`}
-                          >
-                            <Checkbox
-                              checked={checked.includes(permission.code)}
-                              disabled={locked}
-                              onChange={(event) =>
-                                toggle(permission.code, event.target.checked)
-                              }
-                            />
-                            <span className="min-w-0">
-                              <code className="block truncate text-xs">
-                                {permission.code}
-                              </code>
-                              <Text type="secondary" className="text-xs">
-                                {thaiForPermission(permission.code)}
-                              </Text>
-                            </span>
-                          </label>
-                        </Tooltip>
-                      );
-                    })}
-                  </div>
+                  <RolePermissionMatrix
+                    codes={rows.map((permission) => permission.code)}
+                    checked={checked}
+                    isForbidden={(code) =>
+                      holdsAdmin && FORBIDDEN_WITH_ADMIN.includes(code)
+                    }
+                    onToggle={toggle}
+                  />
 
                   {group.key === "adminAudit" && holdsAdmin && (
                     <Paragraph type="secondary" className="mt-2! mb-0! text-xs">

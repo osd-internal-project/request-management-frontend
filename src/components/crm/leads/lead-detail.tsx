@@ -104,10 +104,13 @@ export function LeadDetailView({
   lead,
   customers,
   canManage,
+  canSeeDeals,
 }: {
   lead: LeadDetail;
   customers: CustomerRow[];
   canManage: boolean;
+  /** `crm.sales.read` — a lead-only seller keeps the deal's name but not a link to a page that redirects them home */
+  canSeeDeals: boolean;
 }) {
   const router = useRouter();
   const { message } = App.useApp();
@@ -207,11 +210,13 @@ export function LeadDetailView({
           showIcon
           title={md.convertedBanner(lead.convertedOpportunity.opportunityCode)}
           action={
-            <Link href={ROUTES.opportunityDetail(lead.convertedOpportunity.id)}>
-              <Button size="small" type="primary">
-                {md.openOpportunity}
-              </Button>
-            </Link>
+            canSeeDeals ? (
+              <Link href={ROUTES.opportunityDetail(lead.convertedOpportunity.id)}>
+                <Button size="small" type="primary">
+                  {md.openOpportunity}
+                </Button>
+              </Link>
+            ) : undefined
           }
         />
       )}
@@ -468,7 +473,7 @@ export function LeadDetailView({
                         )}
                       </Descriptions.Item>
                       <Descriptions.Item label={md.fields.convertedTo}>
-                        {lead.convertedOpportunity ? (
+                        {lead.convertedOpportunity && canSeeDeals ? (
                           <Link
                             href={ROUTES.opportunityDetail(
                               lead.convertedOpportunity.id,
@@ -477,6 +482,8 @@ export function LeadDetailView({
                             {lead.convertedOpportunity.opportunityCode} ·{" "}
                             {lead.convertedOpportunity.title}
                           </Link>
+                        ) : lead.convertedOpportunity ? (
+                          `${lead.convertedOpportunity.opportunityCode} · ${lead.convertedOpportunity.title}`
                         ) : (
                           "—"
                         )}
@@ -671,9 +678,11 @@ export function LeadDetailView({
         lead={converting ? lead : null}
         customers={customers}
         onClose={() => setConverting(false)}
-        onDone={(opportunityId) =>
-          router.push(ROUTES.opportunityDetail(opportunityId))
-        }
+        onDone={(opportunityId) => {
+          setConverting(false);
+          if (canSeeDeals) router.push(ROUTES.opportunityDetail(opportunityId));
+          else router.refresh();
+        }}
       />
       <ActivityModal
         key={logging ? `log-${logging}` : "log-closed"}

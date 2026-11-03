@@ -23,7 +23,7 @@ export default async function TargetAccountsPage({
   }>;
 }) {
   const session = await getSession();
-  if (!can(session, "crm.sales.read")) redirect(HOME_PATH);
+  if (!can(session, "crm.lead.read")) redirect(HOME_PATH);
 
   const query = await searchParams;
   const page = Number(query.page) || 1;
@@ -65,7 +65,7 @@ export default async function TargetAccountsPage({
             priority: query.priority,
             view,
           }}
-          canManage={can(session, "crm.sales.manage")}
+          canManage={can(session, "crm.lead.manage")}
         />
       ) : (
         <Alert
