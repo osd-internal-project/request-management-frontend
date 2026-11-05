@@ -200,6 +200,8 @@ export const ROUTES = {
   adminIntegrationDetail: (id: string) => `${HOME_PATH}/admin/integrations/${id}`,
   /** เหตุการณ์ใน CTD → เริ่ม workflow บน OSD Workflow. */
   adminWorkflowTriggers: `${HOME_PATH}/admin/workflow-triggers`,
+  /** งานขายอัตโนมัติ — mailbox + Microsoft Graph ต่อบริษัท. */
+  adminMailSettings: `${HOME_PATH}/admin/mail-settings`,
   /** CD-275 */
   adminLlm: `${HOME_PATH}/admin/llm`,
   /** CD-279 */

@@ -5,6 +5,7 @@ import type { Session } from "@/lib/session";
 /** A string, not a component: menus are built on the server and cross to the client. */
 export type MenuIconKey =
   | "inbox"
+  | "salesMail"
   | "obligation"
   | "newRequest"
   | "allWork"
@@ -917,6 +918,14 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     label: messages.nav.adminWorkflowTriggers,
     href: ROUTES.adminWorkflowTriggers,
     icon: "workflowTrigger",
+    permissions: ["admin.integration.manage"],
+    group: messages.nav.adminGroup,
+    section: messages.nav.adminSectionIntegrations,
+  },
+  {
+    label: messages.nav.adminMailSettings,
+    href: ROUTES.adminMailSettings,
+    icon: "salesMail",
     permissions: ["admin.integration.manage"],
     group: messages.nav.adminGroup,
     section: messages.nav.adminSectionIntegrations,
