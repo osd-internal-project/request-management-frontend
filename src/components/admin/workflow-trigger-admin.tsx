@@ -343,8 +343,8 @@ export function WorkflowTriggerAdmin() {
                   setTypeCodes(
                     values
                       .map((value) =>
-                        // request types are uppercase, lead statuses lowercase
-                        filterKind === "lead_status"
+                        // request types are uppercase; lead statuses and email intents lowercase
+                        filterKind !== "request_type"
                           ? value.trim().toLowerCase()
                           : value.trim().toUpperCase(),
                       )

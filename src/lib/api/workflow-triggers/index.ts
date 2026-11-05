@@ -18,7 +18,8 @@ export interface WorkflowTriggerEvent {
   filter_kind: WorkflowTriggerFilterKind | null;
 }
 
-export type WorkflowTriggerFilterKind = "request_type" | "lead_status";
+export type WorkflowTriggerFilterKind =
+  "request_type" | "lead_status" | "email_intent";
 
 export type WorkflowStartStatus = "pending" | "sending" | "started" | "dead";
 

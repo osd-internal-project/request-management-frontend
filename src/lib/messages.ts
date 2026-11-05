@@ -1248,6 +1248,7 @@ export const messages = {
     adminCrm: "ตั้งค่า CRM",
     adminIntegrations: "ระบบภายนอก",
     adminWorkflowTriggers: "เริ่ม Workflow อัตโนมัติ",
+    adminMailSettings: "อีเมลงานขาย",
     adminErpSync: "คิวส่ง SAP",
     adminLlm: "LLM Gateway",
     adminAiAudit: "บันทึกการใช้ AI",
@@ -5486,6 +5487,46 @@ export const messages = {
     columnReason: "ที่มา",
     noHistory: "ยังไม่มีการจัดคน",
   },
+  mailSettings: {
+    title: "อีเมลงานขาย",
+    subtitle:
+      "mailbox ที่ระบบใช้ส่งอีเมลขอบคุณ/ใบเสนอราคา และอ่านคำตอบของลูกค้า — ตั้งแยกต่อบริษัท บันทึกแล้วมีผลทันที",
+    loadFailed: "โหลดการตั้งค่าไม่สำเร็จ",
+    sourceEnv:
+      "บริษัทนี้ยังไม่เคยตั้งบนหน้านี้ — ตอนนี้ใช้ค่าจาก env ของ server (MAIL_*) บันทึกที่นี่แล้วจะใช้ค่าของหน้านี้แทน",
+    mode: "โหมด",
+    modes: {
+      off: "ปิด — ส่งอีเมลไม่ได้",
+      mock: "จำลอง — ไม่ส่งออกจริง (ทดสอบ flow)",
+      graph: "ส่งจริง — Microsoft 365 (Graph)",
+    } as Record<string, string>,
+    mailbox: "Mailbox ที่ใช้ส่ง",
+    mailboxHint:
+      "shared mailbox ของบริษัท (ระหว่างรอ IT ใช้ mailbox M365 ของผู้พัฒนาได้) — ต้องเป็นอีเมลบน Microsoft 365",
+    senderName: "ชื่อผู้ส่ง (ไม่บังคับ)",
+    graphTitle: "App ใน Entra ID (Microsoft Graph)",
+    graphHint:
+      "IT ลงทะเบียน App ให้สิทธิ์ Mail.Send + Mail.ReadWrite แบบ Application กด Grant admin consent และจำกัดให้ใช้ได้เฉพาะ mailbox นี้ (Application Access Policy)",
+    tenantId: "Directory (tenant) ID",
+    clientId: "Application (client) ID",
+    clientSecret: "Client secret",
+    clientSecretKeep: "ตั้งแล้ว •••• — เว้นว่างเพื่อใช้ค่าเดิม",
+    clientSecretHint: "เก็บแบบเข้ารหัส ไม่แสดงกลับ — ใส่ใหม่เมื่อ secret หมดอายุ",
+    save: "บันทึก",
+    saved: "บันทึกแล้ว",
+    test: "ส่งอีเมลทดสอบ",
+    testTo: "ส่งทดสอบถึง (ว่าง = อีเมลของคุณ)",
+    testHint: "ทดสอบด้วยค่าที่กรอกอยู่ ยังไม่ต้องบันทึก",
+    testOk: (mailbox: string, to: string) =>
+      `ส่งจาก ${mailbox} ถึง ${to} แล้ว — ตรวจกล่องจดหมายผู้รับ`,
+    testOkMock: (to: string) =>
+      `โหมดจำลอง: ระบบรับคำสั่งส่งถึง ${to} แล้ว (ไม่มีอีเมลออกจริง)`,
+    testFailed: (error: string) => `ส่งไม่สำเร็จ: ${error}`,
+    lastTest: "ทดสอบล่าสุด",
+    lastTestOk: "สำเร็จ",
+    lastTestFailed: "ไม่สำเร็จ",
+    problem: "ใช้งานไม่ได้",
+  },
   workflowTriggers: {
     title: "เริ่ม Workflow อัตโนมัติ",
     subtitle:
@@ -5528,6 +5569,11 @@ export const messages = {
         placeholder: "สถานะ Lead (เว้นว่าง = ทุกการเปลี่ยนสถานะ)",
         hint: "พิมพ์รหัสสถานะจากตั้งค่า CRM → สถานะ Lead แล้วกด Enter เช่น qualified (ผ่านคัดกรอง)",
         only: (codes: string) => `เฉพาะสถานะ ${codes}`,
+      },
+      email_intent: {
+        placeholder: "ผลจัดประเภทคำตอบ (เว้นว่าง = ทุกคำตอบ)",
+        hint: "interested (สนใจ) · needs_info (ขอข้อมูล) · not_interested (ไม่สนใจ) · confirmed (ยืนยันใบเสนอราคา) · purchase_order (ส่ง PO) · unclear (ไม่ชัดเจน)",
+        only: (codes: string) => `เฉพาะคำตอบ ${codes}`,
       },
     },
     formChannelId: "Channel ID",
