@@ -5529,6 +5529,11 @@ export const messages = {
         hint: "พิมพ์รหัสสถานะจากตั้งค่า CRM → สถานะ Lead แล้วกด Enter เช่น qualified (ผ่านคัดกรอง)",
         only: (codes: string) => `เฉพาะสถานะ ${codes}`,
       },
+      email_intent: {
+        placeholder: "ผลจัดประเภทคำตอบ (เว้นว่าง = ทุกคำตอบ)",
+        hint: "interested (สนใจ) · needs_info (ขอข้อมูล) · not_interested (ไม่สนใจ) · confirmed (ยืนยันใบเสนอราคา) · purchase_order (ส่ง PO) · unclear (ไม่ชัดเจน)",
+        only: (codes: string) => `เฉพาะคำตอบ ${codes}`,
+      },
     },
     formChannelId: "Channel ID",
     formChannelIdHint:
