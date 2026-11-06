@@ -5572,7 +5572,7 @@ export const messages = {
       },
       email_intent: {
         placeholder: "ผลจัดประเภทคำตอบ (เว้นว่าง = ทุกคำตอบ)",
-        hint: "interested (สนใจ) · needs_info (ขอข้อมูล) · not_interested (ไม่สนใจ) · confirmed (ยืนยันใบเสนอราคา) · purchase_order (ส่ง PO) · unclear (ไม่ชัดเจน)",
+        hint: "interested (สนใจ) · needs_info (ขอข้อมูล) · not_interested (ไม่สนใจ) · confirmed (ยืนยันใบเสนอราคา) · negotiation (ขอต่อรอง/ส่วนลด) · purchase_order (ส่ง PO) · unclear (ไม่ชัดเจน)",
         only: (codes: string) => `เฉพาะคำตอบ ${codes}`,
       },
     },
@@ -7506,6 +7506,20 @@ export const messages = {
           noContact: "ยังไม่มีผู้ติดต่อ — เพิ่มได้จากปุ่มแก้ไข",
           primary: "ผู้ติดต่อหลัก",
           all: (n: string) => `ผู้ติดต่อทั้งหมด (${n})`,
+        },
+        /** แก้การ์ด "ข้อมูล Lead" — ผู้รับผิดชอบ / ลูกค้าในทะเบียน / บันทึก (6 พ.ย. 2569). */
+        infoEdit: {
+          title: "แก้ไขข้อมูล Lead",
+          save: "บันทึก",
+          saved: "บันทึกข้อมูล Lead แล้ว",
+          ownerPlaceholder: "เลือกผู้รับผิดชอบ",
+          ownerSelf: (name: string) => `${name} (ฉัน)`,
+          ownerOnlySelf:
+            "ไม่มีสิทธิ์ดูรายชื่อพนักงาน (user.read) — เลือกได้เฉพาะรับเป็นของตัวเอง",
+          ownerHint:
+            "โอนให้คนอื่นแล้ว ถ้าคุณมองเห็นเฉพาะ Lead ของตัวเอง ใบนี้จะหายจากรายการของคุณ",
+          customerPlaceholder: "ว่าง = ผู้มุ่งหวัง (ยังไม่อยู่ในทะเบียน)",
+          customerNoAccess: "ไม่มีสิทธิ์อ่านทะเบียนลูกค้า (crm.customer.read)",
         },
         tabs: { details: "รายละเอียด", activities: "กิจกรรม" },
         sections: {

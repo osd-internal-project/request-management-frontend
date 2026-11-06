@@ -586,3 +586,204 @@ export function ConvertLeadModal({
     </Modal>
   );
 }
+
+/** A person the owner picker can offer — `DirectoryUser` trimmed to what it shows. */
+export interface LeadOwnerOption {
+  id: string;
+  displayName: string;
+}
+
+/**
+ * แก้การ์ด "ข้อมูล Lead" — ผู้รับผิดชอบ, แหล่งที่มา, ลูกค้าในทะเบียน, บันทึก.
+ *
+ * Two routes, both `crm.lead.manage`: the fields go through `PATCH leads/{id}`
+ * and the owner through `PATCH leads/{id}/owner` (audit + race guard live there).
+ * Fields first: once the lead is handed to someone else a seller who sees only
+ * their own leads can no longer reach it, and the second write would 404.
+ * Mount it only while open, so every opening starts from the lead as it is now.
+ */
+export function LeadInfoModal({
+  open,
+  lead,
+  customers,
+  canReadCustomers,
+  people,
+  me,
+  onClose,
+  onSaved,
+}: {
+  open: boolean;
+  lead: LeadRow & { owner: LeadOwnerOption | null };
+  customers: CustomerRow[];
+  canReadCustomers: boolean;
+  /** Empty when the viewer lacks `user.read` — then only "take it myself" is offered. */
+  people: LeadOwnerOption[];
+  me: LeadOwnerOption;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const mi = m.detail.infoEdit;
+  const { message } = App.useApp();
+  const [ownerId, setOwnerId] = useState<string | undefined>(
+    lead.owner?.id ?? undefined,
+  );
+  const [customerId, setCustomerId] = useState<string | undefined>(
+    lead.customerId ?? undefined,
+  );
+  const [note, setNote] = useState(lead.note ?? "");
+  const [source, setSource] = useState(lead.sourceCode ?? "");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // the current owner and the viewer stay pickable even outside the directory page
+  const ownerOptions = [me, ...(lead.owner ? [lead.owner] : []), ...people]
+    .filter(
+      (person, index, all) =>
+        all.findIndex((other) => other.id === person.id) === index,
+    )
+    .map((person) => ({
+      value: person.id,
+      label:
+        person.id === me.id
+          ? mi.ownerSelf(person.displayName)
+          : person.displayName,
+    }));
+
+  const customerOptions = [
+    ...(lead.customer &&
+    !customers.some((customer) => customer.id === lead.customer?.id)
+      ? [
+          {
+            value: lead.customer.id,
+            label: `${lead.customer.customerCode} · ${lead.customer.nameTh}`,
+          },
+        ]
+      : []),
+    ...customers.map((customer) => ({
+      value: customer.id,
+      label: `${customer.customerCode} · ${customer.nameTh}${
+        customer.branchName ? ` (${customer.branchName})` : ""
+      }`,
+    })),
+  ];
+
+  const ownerChanged = ownerId !== undefined && ownerId !== lead.owner?.id;
+  const trimmedNote = note.trim();
+  const fields: Record<string, unknown> = {};
+  if (trimmedNote !== (lead.note ?? "").trim()) {
+    fields.note = trimmedNote || null;
+  }
+  if (source.trim() !== (lead.sourceCode ?? "").trim()) {
+    fields.source_code = source.trim() || null;
+  }
+  if (canReadCustomers && (customerId ?? null) !== (lead.customerId ?? null)) {
+    fields.customer_id = customerId ?? null;
+  }
+
+  async function save() {
+    setBusy(true);
+    setError(null);
+
+    if (Object.keys(fields).length > 0) {
+      const result = await appApi(`leads/${lead.id}`, {
+        method: "PATCH",
+        body: JSON.stringify(fields),
+      });
+      if (!result.ok) {
+        setBusy(false);
+        setError(result.message);
+        return;
+      }
+    }
+
+    if (ownerChanged) {
+      // claiming from the pool keeps the backend's race guard: no owner_user_id
+      const claim = !lead.owner && ownerId === me.id;
+      const result = await appApi(`leads/${lead.id}/owner`, {
+        method: "PATCH",
+        body: JSON.stringify(claim ? {} : { owner_user_id: ownerId }),
+      });
+      if (!result.ok) {
+        setBusy(false);
+        setError(result.message);
+        return;
+      }
+    }
+
+    setBusy(false);
+    message.success(mi.saved);
+    onSaved();
+  }
+
+  return (
+    <Modal
+      open={open}
+      title={mi.title}
+      okText={mi.save}
+      okButtonProps={{
+        disabled: !ownerChanged && Object.keys(fields).length === 0,
+      }}
+      confirmLoading={busy}
+      onCancel={onClose}
+      onOk={() => void save()}
+      mask={{ closable: false }}
+      destroyOnHidden
+    >
+      {error && <Alert type="error" showIcon title={error} className="mb-3" />}
+      <Form layout="vertical" size="small">
+        <Form.Item
+          label={m.detail.fields.owner}
+          extra={
+            people.length === 0
+              ? mi.ownerOnlySelf
+              : ownerChanged && ownerId !== me.id
+                ? mi.ownerHint
+                : undefined
+          }
+        >
+          <SearchSelect
+            className="w-full"
+            placeholder={mi.ownerPlaceholder}
+            value={ownerId}
+            onChange={(value) =>
+              setOwnerId((value as string | undefined) || undefined)
+            }
+            options={ownerOptions}
+          />
+        </Form.Item>
+        <Form.Item label={m.columns.source}>
+          <Input
+            maxLength={64}
+            placeholder={m.form.source}
+            value={source}
+            onChange={(event) => setSource(event.target.value)}
+          />
+        </Form.Item>
+        <Form.Item
+          label={m.detail.fields.customer}
+          extra={canReadCustomers ? undefined : mi.customerNoAccess}
+        >
+          <SearchSelect
+            className="w-full"
+            allowClear
+            disabled={!canReadCustomers}
+            placeholder={mi.customerPlaceholder}
+            value={customerId}
+            onChange={(value) =>
+              setCustomerId((value as string | undefined) || undefined)
+            }
+            options={customerOptions}
+          />
+        </Form.Item>
+        <Form.Item label={m.detail.fields.note}>
+          <Input.TextArea
+            rows={4}
+            maxLength={2000}
+            value={note}
+            onChange={(event) => setNote(event.target.value)}
+          />
+        </Form.Item>
+      </Form>
+    </Modal>
+  );
+}

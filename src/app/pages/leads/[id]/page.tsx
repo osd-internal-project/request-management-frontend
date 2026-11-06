@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { LeadDetailView } from "@/components/crm/leads/lead-detail";
 import { getCustomers } from "@/lib/api/customers";
 import { getLead } from "@/lib/api/sales";
+import { getAllDirectoryUsers } from "@/lib/api/users";
 import { HOME_PATH } from "@/lib/routes";
 import { can, getSession } from "@/lib/session";
 
@@ -20,10 +21,17 @@ export default async function LeadDetailPage({
 
   const { id } = await params;
 
-  const [leadResult, customersResult] = await Promise.all([
+  const canManage = can(session, "crm.lead.manage");
+  const canReadCustomers = can(session, "crm.customer.read");
+
+  const [leadResult, customersResult, usersResult] = await Promise.all([
     getLead(id),
-    can(session, "crm.customer.read")
+    canReadCustomers
       ? getCustomers({ page: 1, page_size: 100 })
+      : Promise.resolve(null),
+    // the owner picker only — GET /users is `user.read`
+    canManage && can(session, "user.read")
+      ? getAllDirectoryUsers()
       : Promise.resolve(null),
   ]);
 
@@ -34,8 +42,14 @@ export default async function LeadDetailPage({
     <LeadDetailView
       lead={leadResult.data}
       customers={customersResult?.ok ? customersResult.data.data : []}
-      canManage={can(session, "crm.lead.manage")}
+      canManage={canManage}
       canSeeDeals={can(session, "crm.sales.read")}
+      canReadCustomers={canReadCustomers}
+      people={(usersResult?.ok ? usersResult.data : []).map((user) => ({
+        id: user.id,
+        displayName: user.displayName,
+      }))}
+      me={{ id: session!.user.id, displayName: session!.user.display_name }}
     />
   );
 }
