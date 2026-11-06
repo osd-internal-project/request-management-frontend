@@ -7507,6 +7507,20 @@ export const messages = {
           primary: "ผู้ติดต่อหลัก",
           all: (n: string) => `ผู้ติดต่อทั้งหมด (${n})`,
         },
+        /** แก้การ์ด "ข้อมูล Lead" — ผู้รับผิดชอบ / ลูกค้าในทะเบียน / บันทึก (6 พ.ย. 2569). */
+        infoEdit: {
+          title: "แก้ไขข้อมูล Lead",
+          save: "บันทึก",
+          saved: "บันทึกข้อมูล Lead แล้ว",
+          ownerPlaceholder: "เลือกผู้รับผิดชอบ",
+          ownerSelf: (name: string) => `${name} (ฉัน)`,
+          ownerOnlySelf:
+            "ไม่มีสิทธิ์ดูรายชื่อพนักงาน (user.read) — เลือกได้เฉพาะรับเป็นของตัวเอง",
+          ownerHint:
+            "โอนให้คนอื่นแล้ว ถ้าคุณมองเห็นเฉพาะ Lead ของตัวเอง ใบนี้จะหายจากรายการของคุณ",
+          customerPlaceholder: "ว่าง = ผู้มุ่งหวัง (ยังไม่อยู่ในทะเบียน)",
+          customerNoAccess: "ไม่มีสิทธิ์อ่านทะเบียนลูกค้า (crm.customer.read)",
+        },
         tabs: { details: "รายละเอียด", activities: "กิจกรรม" },
         sections: {
           lead: "ข้อมูล Lead",

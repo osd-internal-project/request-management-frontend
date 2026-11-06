@@ -43,6 +43,8 @@ import {
   ConvertLeadModal,
   DisqualifyLeadModal,
   LeadFormModal,
+  LeadInfoModal,
+  type LeadOwnerOption,
   isLeadLost,
   isLeadOpen,
 } from "@/components/crm/leads/lead-actions";
@@ -105,10 +107,18 @@ export function LeadDetailView({
   customers,
   canManage,
   canSeeDeals,
+  canReadCustomers,
+  people,
+  me,
 }: {
   lead: LeadDetail;
   customers: CustomerRow[];
   canManage: boolean;
+  /** `crm.customer.read` — without it the customer picker stays read-only */
+  canReadCustomers: boolean;
+  /** owner picker; empty without `user.read` */
+  people: LeadOwnerOption[];
+  me: LeadOwnerOption;
   /** `crm.sales.read` — a lead-only seller keeps the deal's name but not a link to a page that redirects them home */
   canSeeDeals: boolean;
 }) {
@@ -117,6 +127,7 @@ export function LeadDetailView({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [editingInfo, setEditingInfo] = useState(false);
   const [disqualifying, setDisqualifying] = useState(false);
   const [converting, setConverting] = useState(false);
   const [logging, setLogging] = useState<LeadActivityType | null>(null);
@@ -211,7 +222,9 @@ export function LeadDetailView({
           title={md.convertedBanner(lead.convertedOpportunity.opportunityCode)}
           action={
             canSeeDeals ? (
-              <Link href={ROUTES.opportunityDetail(lead.convertedOpportunity.id)}>
+              <Link
+                href={ROUTES.opportunityDetail(lead.convertedOpportunity.id)}
+              >
                 <Button size="small" type="primary">
                   {md.openOpportunity}
                 </Button>
@@ -454,10 +467,27 @@ export function LeadDetailView({
                     editable={editable}
                     onEdit={() => setDiscovering(true)}
                   />
-                  <Card size="small" title={md.sections.lead}>
+                  <Card
+                    size="small"
+                    title={md.sections.lead}
+                    extra={
+                      editable ? (
+                        <Button
+                          type="link"
+                          size="small"
+                          icon={<EditOutlined />}
+                          aria-label={md.infoEdit.title}
+                          onClick={() => setEditingInfo(true)}
+                        />
+                      ) : null
+                    }
+                  >
                     <Descriptions size="small" column={{ xs: 1, md: 2 }}>
                       <Descriptions.Item label={md.fields.owner}>
                         {dash(lead.owner?.displayName)}
+                      </Descriptions.Item>
+                      <Descriptions.Item label={m.columns.source}>
+                        {dash(lead.sourceCode)}
                       </Descriptions.Item>
                       <Descriptions.Item label={md.fields.customer}>
                         {lead.customer ? (
@@ -488,7 +518,10 @@ export function LeadDetailView({
                           "—"
                         )}
                       </Descriptions.Item>
-                      <Descriptions.Item label={md.fields.updatedAt}>
+                      <Descriptions.Item
+                        label={md.fields.updatedAt}
+                        span="filled"
+                      >
                         {formatWhen(lead.updatedAt)}
                       </Descriptions.Item>
                       {lead.disqualifyReason && (
@@ -499,7 +532,7 @@ export function LeadDetailView({
                           {lead.disqualifyReason}
                         </Descriptions.Item>
                       )}
-                      <Descriptions.Item label={md.fields.note} span={2}>
+                      <Descriptions.Item label={md.fields.note} span="filled">
                         <span className="whitespace-pre-wrap">
                           {dash(lead.note)}
                         </span>
@@ -665,6 +698,21 @@ export function LeadDetailView({
           router.refresh();
         }}
       />
+      {editingInfo && (
+        <LeadInfoModal
+          open
+          lead={lead}
+          customers={customers}
+          canReadCustomers={canReadCustomers}
+          people={people}
+          me={me}
+          onClose={() => setEditingInfo(false)}
+          onSaved={() => {
+            setEditingInfo(false);
+            router.refresh();
+          }}
+        />
+      )}
       <DisqualifyLeadModal
         lead={disqualifying ? lead : null}
         onClose={() => setDisqualifying(false)}
