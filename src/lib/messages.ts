@@ -5572,7 +5572,7 @@ export const messages = {
       },
       email_intent: {
         placeholder: "ผลจัดประเภทคำตอบ (เว้นว่าง = ทุกคำตอบ)",
-        hint: "interested (สนใจ) · needs_info (ขอข้อมูล) · not_interested (ไม่สนใจ) · confirmed (ยืนยันใบเสนอราคา) · purchase_order (ส่ง PO) · unclear (ไม่ชัดเจน)",
+        hint: "interested (สนใจ) · needs_info (ขอข้อมูล) · not_interested (ไม่สนใจ) · confirmed (ยืนยันใบเสนอราคา) · negotiation (ขอต่อรอง/ส่วนลด) · purchase_order (ส่ง PO) · unclear (ไม่ชัดเจน)",
         only: (codes: string) => `เฉพาะคำตอบ ${codes}`,
       },
     },
