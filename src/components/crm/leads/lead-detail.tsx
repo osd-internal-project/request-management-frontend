@@ -38,6 +38,7 @@ import {
 } from "@ant-design/icons";
 import { IntakeDataList } from "./intake-data-list";
 import { LeadFieldsCard, type LeadField } from "./lead-fields-card";
+import { LeadFilesCard } from "./lead-files-card";
 import { LeadFocusCard } from "./lead-focus-card";
 import {
   ConvertLeadModal,
@@ -57,6 +58,7 @@ import {
   splitActivities,
 } from "@/components/crm/activity-list";
 import { appApi } from "@/lib/api/client";
+import type { LeadFile } from "@/lib/api/sales";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import type {
@@ -104,6 +106,7 @@ function initials(name: string): string {
  */
 export function LeadDetailView({
   lead,
+  files,
   customers,
   canManage,
   canSeeDeals,
@@ -112,6 +115,8 @@ export function LeadDetailView({
   me,
 }: {
   lead: LeadDetail;
+  /** ไฟล์บน Lead — proposal ที่อีเมลขอบคุณแนบไป */
+  files: LeadFile[];
   customers: CustomerRow[];
   canManage: boolean;
   /** `crm.customer.read` — without it the customer picker stays read-only */
@@ -680,6 +685,8 @@ export function LeadDetailView({
               </Text>
             )}
           </Card>
+
+          <LeadFilesCard leadId={lead.id} files={files} canManage={canManage} />
 
           <LeadFocusCard
             leadId={lead.id}

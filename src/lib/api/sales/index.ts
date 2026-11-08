@@ -51,6 +51,24 @@ export async function getLead(id: string): Promise<ApiResult<LeadDetail>> {
   return apiGet(`leads/${id}`);
 }
 
+/** ไฟล์บน Lead (6 พ.ย. 2569) — ล่าสุดก่อน. */
+export interface LeadFile {
+  id: string;
+  lead_id: string;
+  kind: "proposal" | "other";
+  file_name: string;
+  mime_type: string;
+  size_bytes: number;
+  /** user = คนวางเอง · agent = AI (Vuvagent) วางผ่าน API */
+  source: "user" | "agent";
+  uploaded_by: string | null;
+  uploaded_at: string;
+}
+
+export async function getLeadFiles(id: string): Promise<ApiResult<LeadFile[]>> {
+  return apiGet(`leads/${id}/files`);
+}
+
 /** CD-85 — บริษัทเป้าหมาย (high → low, oldest first). */
 export async function getTargetAccounts(options?: {
   search?: string;
