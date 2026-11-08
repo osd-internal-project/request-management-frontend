@@ -7473,6 +7473,26 @@ export const messages = {
       /** หน้ารายละเอียด Lead — pipeline + ข้อมูล + กิจกรรม (10 ก.ย. 2569). */
       detail: {
         backToList: "กลับหน้า Lead",
+        /** ไฟล์บน Lead (6 พ.ย. 2569) — proposal ที่อีเมลขอบคุณแนบไป */
+        files: {
+          title: "ไฟล์",
+          upload: "วางไฟล์",
+          kindLabel: "ประเภท",
+          kinds: {
+            proposal: "Proposal",
+            other: "อื่น ๆ",
+          } as Record<string, string>,
+          hint: "Proposal ฉบับล่าสุดจะแนบไปกับอีเมลขอบคุณเมื่อ Lead เข้าขั้น Negotiation · PDF, Word, PowerPoint, Excel, รูป ≤ 20 MB",
+          empty: "ยังไม่มีไฟล์",
+          byAgent: "AI วาง",
+          latestProposal: "ฉบับที่จะแนบ",
+          uploaded: "วางไฟล์แล้ว",
+          uploadFailed: (reason: string) => `วางไฟล์ไม่สำเร็จ: ${reason}`,
+          remove: "นำออก",
+          removeConfirm: "นำไฟล์นี้ออกจาก Lead?",
+          removed: "นำไฟล์ออกแล้ว",
+          tooLarge: "ไฟล์ใหญ่เกิน 20 MB",
+        },
         pipelineHint: "คลิกขั้นเพื่อเลื่อนสถานะ",
         /** ชื่อขั้นบน pipeline ให้พอดีบรรทัดเดียว — ชื่อเต็มอยู่ใน tooltip */
         pipelineShort: {

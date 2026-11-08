@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { LeadDetailView } from "@/components/crm/leads/lead-detail";
 import { getCustomers } from "@/lib/api/customers";
-import { getLead } from "@/lib/api/sales";
+import { getLead, getLeadFiles } from "@/lib/api/sales";
 import { getAllDirectoryUsers } from "@/lib/api/users";
 import { HOME_PATH } from "@/lib/routes";
 import { can, getSession } from "@/lib/session";
@@ -24,16 +24,18 @@ export default async function LeadDetailPage({
   const canManage = can(session, "crm.lead.manage");
   const canReadCustomers = can(session, "crm.customer.read");
 
-  const [leadResult, customersResult, usersResult] = await Promise.all([
-    getLead(id),
-    canReadCustomers
-      ? getCustomers({ page: 1, page_size: 100 })
-      : Promise.resolve(null),
-    // the owner picker only — GET /users is `user.read`
-    canManage && can(session, "user.read")
-      ? getAllDirectoryUsers()
-      : Promise.resolve(null),
-  ]);
+  const [leadResult, filesResult, customersResult, usersResult] =
+    await Promise.all([
+      getLead(id),
+      getLeadFiles(id),
+      canReadCustomers
+        ? getCustomers({ page: 1, page_size: 100 })
+        : Promise.resolve(null),
+      // the owner picker only — GET /users is `user.read`
+      canManage && can(session, "user.read")
+        ? getAllDirectoryUsers()
+        : Promise.resolve(null),
+    ]);
 
   // SCOPE-03: outside the caller's reach the backend answers 404 — render the same.
   if (!leadResult.ok) notFound();
@@ -41,6 +43,7 @@ export default async function LeadDetailPage({
   return (
     <LeadDetailView
       lead={leadResult.data}
+      files={filesResult.ok ? filesResult.data : []}
       customers={customersResult?.ok ? customersResult.data.data : []}
       canManage={canManage}
       canSeeDeals={can(session, "crm.sales.read")}
