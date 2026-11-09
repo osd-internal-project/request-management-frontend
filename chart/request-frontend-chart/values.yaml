@@ -1,0 +1,82 @@
+# Next.js standalone (Dockerfile: EXPOSE 3000, node server.js). Calls the backend services server-side over the cluster network.
+appName: request-frontend
+ingressName: request-frontend-ingress
+configmapName: request-frontend-config
+secretName: request-frontend-secret
+namespace: request-management
+
+replicaCount: 1
+
+image:
+  # The pipeline overrides repository and tag.
+  repository: swr.ap-southeast-2.myhuaweicloud.com/osd-internal/request-frontend-fe
+  tag: "1.0.0"
+  pullPolicy: IfNotPresent
+
+imagePullSecretName: huawei-swr-secret
+
+containerPort: 3000
+
+strategy:
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
+
+service:
+  type: ClusterIP
+  port: 8883
+  targetPort: 3000
+
+ingress:
+  enabled: true
+  className: traefik
+  host: ctd-uat.osd.co.th
+  path: /
+  pathType: Prefix
+  tls:
+    enabled: true
+    secretName: request-tls
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+
+# Origin only, no path: the app appends /api/v1 itself (BACKEND_PREFIX).
+configmap:
+  NODE_ENV: "production"
+  PORT: "3000"
+  HOSTNAME: "0.0.0.0"
+  APP_ORIGIN: "https://ctd-uat.osd.co.th"
+  USER_SERVICE_URL: "http://request-user-service.request-management.svc.cluster.local:8884"
+  CORE_SERVICE_URL: "http://request-core-service.request-management.svc.cluster.local:8885"
+  EXTERNAL_SERVICE_URL: "http://request-external-service.request-management.svc.cluster.local:8886"
+  RUN_NUMBER_SERVICE_URL: "http://request-run-number-service.request-management.svc.cluster.local:8887"
+  SESSION_IDLE_TIMEOUT_SECONDS: "900"
+  SESSION_REFRESH_INTERVAL_SECONDS: "300"
+
+# No secrets on UAT: CUSTOMER_INTAKE_API_KEY / LEAD_INTAKE_API_KEY are only for the public intake forms.
+secrets: {}
+
+autoscaling:
+  enabled: false
+
+livenessProbe:
+  enabled: true
+  path: /api/health
+  initialDelaySeconds: 20
+  periodSeconds: 10
+  timeoutSeconds: 5
+
+readinessProbe:
+  enabled: true
+  path: /api/health
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  timeoutSeconds: 3
+
+resources:
+  requests:
+    memory: "160Mi"
+    cpu: "25m"
+  limits:
+    memory: "384Mi"
+    cpu: "500m"

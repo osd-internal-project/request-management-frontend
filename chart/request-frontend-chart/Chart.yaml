@@ -1,0 +1,6 @@
+apiVersion: v2
+name: request-frontend
+description: Helm chart for the request-management frontend (Next.js standalone)
+type: application
+version: 1.0.0
+appVersion: "1.0.0"

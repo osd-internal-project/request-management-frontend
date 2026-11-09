@@ -1,0 +1,5 @@
+# UAT (cluster kube-osd-uat): same values as values.yaml, kept as the env file the pipeline passes with -f.
+namespace: request-management
+replicaCount: 1
+autoscaling:
+  enabled: false
