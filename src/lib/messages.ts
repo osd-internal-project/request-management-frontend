@@ -5193,6 +5193,8 @@ export const messages = {
     actions: {
       "lead.find": "Find Lead",
       "lead.research": "Research Lead",
+      "lead.suggest_products": "แนะนำสินค้า",
+      "lead.write_proposal": "เขียน proposal",
     } as Record<string, string>,
     roundTripTitle: (label: string) => `ไป-กลับของงาน ${label}`,
     roundTripOut:
@@ -7286,6 +7288,8 @@ export const messages = {
     action: {
       "lead.find": "Find Lead",
       "lead.research": "Research Lead",
+      "lead.suggest_products": "แนะนำสินค้า",
+      "lead.write_proposal": "เขียน proposal",
     } as Record<string, string>,
     status: {
       processing: "กำลังทำ",
@@ -7469,6 +7473,22 @@ export const messages = {
         failed: "Agent วิจัยไม่สำเร็จ เปิดหน้างานเพื่อดูเหตุผล",
         empty: "ยังไม่มีผลวิจัย กดวิจัยเพื่อให้ agent หาข้อมูลของ Lead นี้",
         expand: "Expand",
+      },
+      /** การ์ด Proposal — Proposal Writer ของ Vuvagent (docs/lead-proposal.md ฝั่ง backend). */
+      proposal: {
+        title: "Proposal",
+        suggest: "แนะนำสินค้า",
+        write: "เขียน proposal",
+        suggesting: "Agent กำลังเลือกสินค้าที่เหมาะกับ Lead นี้",
+        writing: (product: string) =>
+          `Agent กำลังเขียน proposal ของ ${product} (ใช้เวลา 2–6 นาที)`,
+        viewJob: "ดูงาน",
+        suggestFailed: "Agent แนะนำสินค้าไม่สำเร็จ เปิดหน้างานเพื่อดูเหตุผล",
+        writeFailed: "Agent เขียน proposal ไม่สำเร็จ เปิดหน้างานเพื่อดูเหตุผล",
+        notStored: (date: string) =>
+          `ระบบเก็บไฟล์ไว้ที่ Lead ไม่สำเร็จ ดาวน์โหลดเองได้ถึง ${date}`,
+        download: "ดาวน์โหลด proposal",
+        empty: "ยังไม่มีสินค้าที่แนะนำ กดแนะนำสินค้าเพื่อให้ agent เลือกจากข้อมูลของ Lead นี้",
       },
       /** หน้ารายละเอียด Lead — pipeline + ข้อมูล + กิจกรรม (10 ก.ย. 2569). */
       detail: {

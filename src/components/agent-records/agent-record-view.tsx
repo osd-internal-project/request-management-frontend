@@ -38,7 +38,7 @@ export function AgentRecordView({ record }: { record: AgentRecordDetail }) {
             <Button size="small">{m.goToLeads}</Button>
           </Link>
         )}
-        {record.action === "lead.research" &&
+        {record.action !== "lead.find" &&
           typeof record.input.lead_id === "string" && (
             <Link href={ROUTES.leadDetail(record.input.lead_id)}>
               <Button size="small">{m.goToLead}</Button>
