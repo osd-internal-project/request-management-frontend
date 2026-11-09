@@ -40,6 +40,7 @@ import { IntakeDataList } from "./intake-data-list";
 import { LeadFieldsCard, type LeadField } from "./lead-fields-card";
 import { LeadFilesCard } from "./lead-files-card";
 import { LeadFocusCard } from "./lead-focus-card";
+import { LeadProposalCard } from "./lead-proposal-card";
 import {
   ConvertLeadModal,
   DisqualifyLeadModal,
@@ -142,8 +143,12 @@ export function LeadDetailView({
   const editable = canManage && open;
 
   const { pending, done } = splitActivities(lead.activities);
-  // `research` is the lead.research agent's; the rest came with the lead
-  const { research, ...intake } = lead.intakeData ?? {};
+  // `research` and `product_suggestions` are the agents'; the rest came with the lead
+  const {
+    research,
+    product_suggestions: productSuggestions,
+    ...intake
+  } = lead.intakeData ?? {};
 
   async function setStatus(status: LeadStatus) {
     if (status === lead.status) return;
@@ -691,6 +696,12 @@ export function LeadDetailView({
           <LeadFocusCard
             leadId={lead.id}
             research={research}
+            canStart={editable}
+          />
+
+          <LeadProposalCard
+            leadId={lead.id}
+            suggestions={productSuggestions}
             canStart={editable}
           />
         </div>
