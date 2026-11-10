@@ -60,6 +60,7 @@ import {
 } from "@/components/crm/activity-list";
 import { appApi } from "@/lib/api/client";
 import type { LeadFile } from "@/lib/api/sales";
+import type { AgentRecordRow } from "@/lib/api/agent-records";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import type {
@@ -108,6 +109,7 @@ function initials(name: string): string {
 export function LeadDetailView({
   lead,
   files,
+  running,
   customers,
   canManage,
   canSeeDeals,
@@ -118,6 +120,8 @@ export function LeadDetailView({
   lead: LeadDetail;
   /** ไฟล์บน Lead — proposal ที่อีเมลขอบคุณแนบไป */
   files: LeadFile[];
+  /** งาน agent ของ Lead นี้ที่ยัง `processing` — newest first */
+  running: AgentRecordRow[];
   customers: CustomerRow[];
   canManage: boolean;
   /** `crm.customer.read` — without it the customer picker stays read-only */
@@ -481,6 +485,7 @@ export function LeadDetailView({
                   <LeadFocusCard
                     leadId={lead.id}
                     research={research}
+                    running={running}
                     canStart={editable}
                   />
                   <LeadProposalCard
@@ -488,6 +493,7 @@ export function LeadDetailView({
                     suggestions={productSuggestions}
                     selected={selectedProduct}
                     latest={files.find((file) => file.kind === "proposal")}
+                    running={running}
                     canStart={editable}
                   />
                   <Card

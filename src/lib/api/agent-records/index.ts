@@ -38,11 +38,13 @@ export interface AgentRecordStamp {
 
 export async function getAgentRecords(options: {
   status?: string;
+  lead_id?: string;
   page: number;
   page_size: number;
 }): Promise<ApiResult<Paginated<AgentRecordRow>>> {
   const params = new URLSearchParams();
   if (options.status) params.set("status", options.status);
+  if (options.lead_id) params.set("lead_id", options.lead_id);
   params.set("page", String(options.page));
   params.set("page_size", String(options.page_size));
   return apiGet(`agent-records?${params.toString()}`);

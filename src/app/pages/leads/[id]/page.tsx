@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { LeadDetailView } from "@/components/crm/leads/lead-detail";
+import { getAgentRecords } from "@/lib/api/agent-records";
 import { getCustomers } from "@/lib/api/customers";
 import { getLead, getLeadFiles } from "@/lib/api/sales";
 import { getAllDirectoryUsers } from "@/lib/api/users";
@@ -24,7 +25,7 @@ export default async function LeadDetailPage({
   const canManage = can(session, "crm.lead.manage");
   const canReadCustomers = can(session, "crm.customer.read");
 
-  const [leadResult, filesResult, customersResult, usersResult] =
+  const [leadResult, filesResult, customersResult, usersResult, runningResult] =
     await Promise.all([
       getLead(id),
       getLeadFiles(id),
@@ -35,6 +36,13 @@ export default async function LeadDetailPage({
       canManage && can(session, "user.read")
         ? getAllDirectoryUsers()
         : Promise.resolve(null),
+      // agent jobs still running, so a reload keeps watching them; the backend filters rows per action right
+      getAgentRecords({
+        status: "processing",
+        lead_id: id,
+        page: 1,
+        page_size: 10,
+      }),
     ]);
 
   // SCOPE-03: outside the caller's reach the backend answers 404 — render the same.
@@ -44,6 +52,7 @@ export default async function LeadDetailPage({
     <LeadDetailView
       lead={leadResult.data}
       files={filesResult.ok ? filesResult.data : []}
+      running={runningResult.ok ? runningResult.data.data : []}
       customers={customersResult?.ok ? customersResult.data.data : []}
       canManage={canManage}
       canSeeDeals={can(session, "crm.sales.read")}
