@@ -7526,6 +7526,9 @@ export const messages = {
         title: "Proposal",
         suggest: "แนะนำสินค้า",
         write: "เขียน proposal",
+        save: "บันทึกสินค้าที่เลือก",
+        selected: "สินค้าที่เลือก",
+        pickFirst: "เลือกสินค้า 1 ตัวแล้วกดบันทึกก่อนเขียน proposal",
         suggesting: "Agent กำลังเลือกสินค้าที่เหมาะกับ Lead นี้",
         writing: (product: string) =>
           `Agent กำลังเขียน proposal ของ ${product} (ใช้เวลา 2–6 นาที)`,

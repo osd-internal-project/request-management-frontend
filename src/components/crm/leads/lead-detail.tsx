@@ -143,10 +143,11 @@ export function LeadDetailView({
   const editable = canManage && open;
 
   const { pending, done } = splitActivities(lead.activities);
-  // `research` and `product_suggestions` are the agents'; the rest came with the lead
+  // `research` and `product_suggestions` are the agents', `selected_product` the sale's; the rest came with the lead
   const {
     research,
     product_suggestions: productSuggestions,
+    selected_product: selectedProduct,
     ...intake
   } = lead.intakeData ?? {};
 
@@ -482,6 +483,13 @@ export function LeadDetailView({
                     research={research}
                     canStart={editable}
                   />
+                  <LeadProposalCard
+                    leadId={lead.id}
+                    suggestions={productSuggestions}
+                    selected={selectedProduct}
+                    latest={files.find((file) => file.kind === "proposal")}
+                    canStart={editable}
+                  />
                   <Card
                     size="small"
                     title={md.sections.lead}
@@ -697,13 +705,6 @@ export function LeadDetailView({
           </Card>
 
           <LeadFilesCard leadId={lead.id} files={files} canManage={canManage} />
-
-          <LeadProposalCard
-            leadId={lead.id}
-            suggestions={productSuggestions}
-            latest={files.find((file) => file.kind === "proposal")}
-            canStart={editable}
-          />
         </div>
       </div>
 
