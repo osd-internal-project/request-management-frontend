@@ -4,8 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Alert, Button, Card, Spin, Typography } from "antd";
+import { CheckCircleFilled, DownloadOutlined } from "@ant-design/icons";
 import { appApi } from "@/lib/api/client";
 import type { AgentRecordDetail } from "@/lib/api/agent-records";
+import type { LeadFile } from "@/lib/api/sales";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import { useAgentRecordStream } from "@/components/agent-records/use-agent-record-stream";
@@ -40,16 +42,18 @@ function suggestionsOf(value: unknown): Suggestion[] {
 
 /**
  * การ์ด Proposal — Proposal Writer ของ Vuvagent สองขั้น: `lead.suggest_products`
- * แล้ว `lead.write_proposal` ของสินค้าที่ sale เลือก. ไฟล์ที่ได้ขึ้นที่การ์ดไฟล์
- * (kind=proposal); ที่นี่แสดงแค่ลิงก์สำรองเมื่อ CTD เก็บไฟล์ไม่สำเร็จ.
+ * แล้ว `lead.write_proposal` ของสินค้าที่ sale เลือก. ไฟล์ที่ได้อยู่ที่การ์ดไฟล์
+ * (kind=proposal); ที่นี่แสดงไฟล์ล่าสุด และลิงก์สำรองเมื่อ CTD เก็บไฟล์ไม่สำเร็จ.
  */
 export function LeadProposalCard({
   leadId,
   suggestions: raw,
+  latest,
   canStart,
 }: {
   leadId: string;
   suggestions: unknown;
+  latest: LeadFile | undefined;
   canStart: boolean;
 }) {
   const router = useRouter();
@@ -135,6 +139,32 @@ export function LeadProposalCard({
       }
     >
       <div className="flex flex-col gap-2">
+        {latest && (
+          <div className="flex items-start gap-2 rounded border border-[#b7eb8f] bg-[#f6ffed] px-2 py-1.5">
+            <CheckCircleFilled className="mt-1 text-[#52c41a]" />
+            <div className="flex min-w-0 flex-1 flex-col">
+              <Text strong className="text-xs">
+                {mp.ready}
+              </Text>
+              <a
+                href={`/api/app/leads/${leadId}/files/${latest.id}`}
+                className="block truncate text-sm"
+                title={latest.file_name}
+              >
+                <DownloadOutlined className="mr-1" />
+                {latest.file_name}
+              </a>
+              <Text type="secondary" className="text-xs">
+                {new Date(latest.uploaded_at).toLocaleString("th-TH", {
+                  day: "numeric",
+                  month: "short",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </Text>
+            </div>
+          </div>
+        )}
         {suggestions.map((row) => (
           <div key={row.product} className="flex items-start gap-2">
             <div className="flex min-w-0 flex-1 flex-col">
