@@ -143,6 +143,8 @@ export const CORE_SERVICE_PREFIXES = [
   "/keeper",
   "/products",
   "/notifications",
+  // D-Callcenter softphone — SIP lines + call log
+  "/softphone",
   "/requests",
   "/request-types",
   "/reports",
