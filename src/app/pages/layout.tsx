@@ -62,6 +62,7 @@ export default async function DashboardLayout({
       }}
       menus={accessMenuItems(session, biDashboards)}
       canReadNotifications={session.permissions.includes("notification.read")}
+      canUsePhoneWorkspace={session.permissions.includes("phone.workspace.use")}
       chatWidget={await chatWidget}
     >
       {/* AUTH-02. The two durations are server env, so they reach the browser
