@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Alert, Button, Card, Spin, Typography } from "antd";
+import { Alert, Button, Card, Divider, Radio, Spin, Typography } from "antd";
 import { CheckCircleFilled, DownloadOutlined } from "@ant-design/icons";
 import { appApi } from "@/lib/api/client";
 import type { AgentRecordDetail } from "@/lib/api/agent-records";
@@ -42,22 +42,32 @@ function suggestionsOf(value: unknown): Suggestion[] {
 
 /**
  * การ์ด Proposal — Proposal Writer ของ Vuvagent สองขั้น: `lead.suggest_products`
- * แล้ว `lead.write_proposal` ของสินค้าที่ sale เลือก. ไฟล์ที่ได้อยู่ที่การ์ดไฟล์
+ * แล้ว `lead.write_proposal` ของสินค้า 1 ตัวที่ sale เลือกและบันทึกไว้ใน `intakeData.selected_product`. ไฟล์ที่ได้อยู่ที่การ์ดไฟล์
  * (kind=proposal); ที่นี่แสดงไฟล์ล่าสุด และลิงก์สำรองเมื่อ CTD เก็บไฟล์ไม่สำเร็จ.
  */
 export function LeadProposalCard({
   leadId,
   suggestions: raw,
+  selected,
   latest,
   canStart,
 }: {
   leadId: string;
   suggestions: unknown;
+  selected: unknown;
   latest: LeadFile | undefined;
   canStart: boolean;
 }) {
   const router = useRouter();
   const suggestions = suggestionsOf(raw);
+  // a pick from an older suggestion round no longer counts
+  const saved =
+    typeof selected === "string" &&
+    suggestions.some((row) => row.product === selected)
+      ? selected
+      : null;
+  const [choice, setChoice] = useState<string | null>(saved);
+  const [saving, setSaving] = useState(false);
   const [job, setJob] = useState<Job | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -112,6 +122,22 @@ export function LeadProposalCard({
     setJob(next(result.data.id));
   }
 
+  async function save() {
+    if (!choice) return;
+    setSaving(true);
+    setError(null);
+    const result = await appApi(`leads/${leadId}/intake-data`, {
+      method: "PATCH",
+      body: JSON.stringify({ data: { selected_product: choice } }),
+    });
+    setSaving(false);
+    if (!result.ok) {
+      setError(result.message);
+      return;
+    }
+    router.refresh();
+  }
+
   const running = job !== null;
 
   return (
@@ -139,6 +165,69 @@ export function LeadProposalCard({
       }
     >
       <div className="flex flex-col gap-2">
+        {suggestions.length > 0 && (
+          <Radio.Group
+            value={choice}
+            disabled={!canStart || running}
+            onChange={(e) => setChoice(e.target.value as string)}
+            className="flex! flex-col gap-2"
+          >
+            {suggestions.map((row) => (
+              <Radio key={row.product} value={row.product}>
+                <div className="flex min-w-0 flex-col">
+                  <Text strong>{row.product}</Text>
+                  {row.reason && (
+                    <Text type="secondary" className="text-xs">
+                      {row.reason}
+                    </Text>
+                  )}
+                </div>
+              </Radio>
+            ))}
+          </Radio.Group>
+        )}
+        {suggestions.length > 0 && canStart && (
+          <div className="flex justify-end">
+            <Button
+              size="small"
+              loading={saving}
+              disabled={!choice || choice === saved || running}
+              onClick={() => void save()}
+            >
+              {mp.save}
+            </Button>
+          </div>
+        )}
+        {suggestions.length > 0 && (
+          <>
+            <Divider className="my-1!" />
+            {saved ? (
+              <div className="flex items-center gap-2">
+                <Text className="min-w-0 flex-1">
+                  {mp.selected}: <Text strong>{saved}</Text>
+                </Text>
+                {canStart && (
+                  <Button
+                    size="small"
+                    type="primary"
+                    disabled={running || busy}
+                    onClick={() =>
+                      void start("proposal", { product: saved }, (recordId) => ({
+                        kind: "write",
+                        recordId,
+                        product: saved,
+                      }))
+                    }
+                  >
+                    {mp.write}
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <Text type="secondary">{mp.pickFirst}</Text>
+            )}
+          </>
+        )}
         {latest && (
           <div className="flex items-start gap-2 rounded border border-[#b7eb8f] bg-[#f6ffed] px-2 py-1.5">
             <CheckCircleFilled className="mt-1 text-[#52c41a]" />
@@ -165,37 +254,6 @@ export function LeadProposalCard({
             </div>
           </div>
         )}
-        {suggestions.map((row) => (
-          <div key={row.product} className="flex items-start gap-2">
-            <div className="flex min-w-0 flex-1 flex-col">
-              <Text strong>{row.product}</Text>
-              {row.reason && (
-                <Text type="secondary" className="text-xs">
-                  {row.reason}
-                </Text>
-              )}
-            </div>
-            {canStart && (
-              <Button
-                size="small"
-                disabled={running || busy}
-                onClick={() =>
-                  void start(
-                    "proposal",
-                    { product: row.product },
-                    (recordId) => ({
-                      kind: "write",
-                      recordId,
-                      product: row.product,
-                    }),
-                  )
-                }
-              >
-                {mp.write}
-              </Button>
-            )}
-          </div>
-        ))}
         {error && <Alert type="error" showIcon title={error} />}
         {fallback && (
           <Alert
