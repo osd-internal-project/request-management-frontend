@@ -5,6 +5,8 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 COPY package.json yarn.lock ./
+# The softphone is a `file:` dependency on a tarball kept in the repo.
+COPY vendor ./vendor
 RUN yarn install --frozen-lockfile
 
 COPY . .

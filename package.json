@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@D-Callcenter/softphone-provider": "file:./vendor/D-Callcenter-softphone-provider-1.1.13.tgz",
     "@ant-design/icons": "^6.3.2",
     "antd": "^6.6.1",
     "exceljs": "^4.4.0",

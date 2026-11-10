@@ -10,6 +10,7 @@ import {
   Splitter,
 } from "antd";
 import { MenuOutlined } from "@ant-design/icons";
+import dynamic from "next/dynamic";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { MenuEntry } from "@/app/configs/menu";
@@ -28,6 +29,11 @@ import { NotificationBell } from "@/components/notifications/notification-bell";
 import { messages } from "@/lib/messages";
 
 const { Header, Content, Footer, Sider } = Layout;
+
+const SoftphoneRoot = dynamic(
+  () => import("@/components/softphone/softphone-root"),
+  { ssr: false },
+);
 
 const currentYear = new Date().getFullYear();
 
@@ -266,6 +272,8 @@ export function AppShell({
       >
         {chat.hasOpened && !isDesktop && chatPanel}
       </Drawer>
+
+      <SoftphoneRoot />
     </Layout>
   );
 }
