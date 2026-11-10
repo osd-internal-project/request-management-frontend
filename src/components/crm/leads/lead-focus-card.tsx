@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Alert, Button, Card, Input, Modal, Spin, Typography } from "antd";
 import { ExpandOutlined } from "@ant-design/icons";
 import { appApi } from "@/lib/api/client";
+import type { AgentRecordRow } from "@/lib/api/agent-records";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import { useAgentRecordStream } from "@/components/agent-records/use-agent-record-stream";
@@ -20,15 +21,19 @@ const mf = messages.sales.leads.focus;
 export function LeadFocusCard({
   leadId,
   research,
+  running: runningRows,
   canStart,
 }: {
   leadId: string;
   research: unknown;
+  running: AgentRecordRow[];
   canStart: boolean;
 }) {
   const router = useRouter();
   const [focus, setFocus] = useState("");
-  const [recordId, setRecordId] = useState<string | null>(null);
+  const [recordId, setRecordId] = useState<string | null>(
+    () => runningRows.find((row) => row.action === "lead.research")?.id ?? null,
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);

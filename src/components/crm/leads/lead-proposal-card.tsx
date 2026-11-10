@@ -6,7 +6,10 @@ import { useRouter } from "next/navigation";
 import { Alert, Button, Card, Divider, Radio, Spin, Typography } from "antd";
 import { CheckCircleFilled, DownloadOutlined } from "@ant-design/icons";
 import { appApi } from "@/lib/api/client";
-import type { AgentRecordDetail } from "@/lib/api/agent-records";
+import type {
+  AgentRecordDetail,
+  AgentRecordRow,
+} from "@/lib/api/agent-records";
 import type { LeadFile } from "@/lib/api/sales";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
@@ -40,6 +43,24 @@ function suggestionsOf(value: unknown): Suggestion[] {
   });
 }
 
+/** The newest still-running proposal job, so a reload keeps watching it. */
+function runningJob(rows: AgentRecordRow[]): Job | null {
+  for (const row of rows) {
+    if (row.action === "lead.suggest_products") {
+      return { kind: "suggest", recordId: row.id };
+    }
+    if (row.action === "lead.write_proposal") {
+      const { product } = row.input;
+      return {
+        kind: "write",
+        recordId: row.id,
+        product: typeof product === "string" ? product : "",
+      };
+    }
+  }
+  return null;
+}
+
 /**
  * การ์ด Proposal — Proposal Writer ของ Vuvagent สองขั้น: `lead.suggest_products`
  * แล้ว `lead.write_proposal` ของสินค้า 1 ตัวที่ sale เลือกและบันทึกไว้ใน `intakeData.selected_product`. ไฟล์ที่ได้อยู่ที่การ์ดไฟล์
@@ -50,12 +71,14 @@ export function LeadProposalCard({
   suggestions: raw,
   selected,
   latest,
+  running: runningRows,
   canStart,
 }: {
   leadId: string;
   suggestions: unknown;
   selected: unknown;
   latest: LeadFile | undefined;
+  running: AgentRecordRow[];
   canStart: boolean;
 }) {
   const router = useRouter();
@@ -68,7 +91,7 @@ export function LeadProposalCard({
       : null;
   const [choice, setChoice] = useState<string | null>(saved);
   const [saving, setSaving] = useState(false);
-  const [job, setJob] = useState<Job | null>(null);
+  const [job, setJob] = useState<Job | null>(() => runningJob(runningRows));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fallback, setFallback] = useState<{
