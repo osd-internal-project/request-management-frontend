@@ -26,6 +26,8 @@ import { menuEntryFor, ModuleNav } from "@/components/layout/module-nav";
 import { NavRail } from "@/components/layout/nav-rail";
 import { CompanySwitcher } from "@/components/layout/company-switcher";
 import { NotificationBell } from "@/components/notifications/notification-bell";
+import { PhoneToggleButton } from "@/components/layout/phone/phone-toggle-button";
+import { PhoneWorkspacePanel } from "@/components/layout/phone/phone-workspace-panel";
 import { messages } from "@/lib/messages";
 
 const { Header, Content, Footer, Sider } = Layout;
@@ -60,6 +62,7 @@ export function AppShell({
   user,
   menus,
   canReadNotifications,
+  canUsePhoneWorkspace,
   chatWidget,
   children,
 }: {
@@ -67,6 +70,8 @@ export function AppShell({
   menus: MenuEntry[];
   /** SUP-03 — no bell (and no polling) for someone who cannot read the inbox. */
   canReadNotifications: boolean;
+  /** `phone.workspace.use` — no button and no panel without it. */
+  canUsePhoneWorkspace: boolean;
   /** Null when the LibreChat env is unset — the panel says so instead. */
   chatWidget: ChatWidgetConfig | null;
   children: React.ReactNode;
@@ -76,6 +81,18 @@ export function AppShell({
   const screens = Grid.useBreakpoint();
   const [navOpen, setNavOpen] = useState(false);
   const chat = useChatDock();
+  // The phone and the AI chat share the right side, one at a time.
+  const [phoneOpen, setPhoneOpen] = useState(false);
+
+  function togglePhone() {
+    if (!phoneOpen) chat.close();
+    setPhoneOpen(!phoneOpen);
+  }
+
+  function toggleChat() {
+    setPhoneOpen(false);
+    chat.toggle();
+  }
 
   useEffect(() => {
     const entry = menuEntryFor(pathname, menus);
@@ -227,39 +244,48 @@ export function AppShell({
                   {user.displayName.charAt(0)}
                 </Avatar>
               </Dropdown>
-              <ChatToggleButton open={chat.isOpen} onClick={chat.toggle} />
+              {canUsePhoneWorkspace && (
+                <PhoneToggleButton open={phoneOpen} onClick={togglePhone} />
+              )}
+              <ChatToggleButton open={chat.isOpen} onClick={toggleChat} />
             </div>
           </div>
         </Header>
 
         {/* Both panels always render: swapping the tree on toggle would remount
             `children` (losing form state) and the widget (losing the conversation). */}
-        <Splitter
-          className="min-h-0 flex-1"
-          classNames={{ dragger: chat.isOpen ? undefined : "hidden!" }}
-          {...chat.splitter}
-        >
-          <Splitter.Panel className="relative overflow-hidden!">
-            {/* The app's only scroll region: viewport height minus the header. */}
-            <Content className="h-full overflow-y-auto">
-              <div className="p-3 md:p-6">{children}</div>
+        <div className="flex min-h-0 flex-1">
+          <Splitter
+            className="min-w-0 flex-1"
+            classNames={{ dragger: chat.isOpen ? undefined : "hidden!" }}
+            {...chat.splitter}
+          >
+            <Splitter.Panel className="relative overflow-hidden!">
+              {/* The app's only scroll region: viewport height minus the header. */}
+              <Content className="h-full overflow-y-auto">
+                <div className="p-3 md:p-6">{children}</div>
 
-              <Footer className="text-center">
-                {messages.app.name} ©{currentYear}
-              </Footer>
-            </Content>
+                <Footer className="text-center">
+                  {messages.app.name} ©{currentYear}
+                </Footer>
+              </Content>
 
-            {chat.isSnapPreview && (
-              <div className="absolute inset-0 flex items-center justify-center bg-white/80 p-4 text-center font-medium text-[var(--app-text-muted)]">
-                {messages.chat.snapHint}
-              </div>
-            )}
-          </Splitter.Panel>
+              {chat.isSnapPreview && (
+                <div className="absolute inset-0 flex items-center justify-center bg-white/80 p-4 text-center font-medium text-[var(--app-text-muted)]">
+                  {messages.chat.snapHint}
+                </div>
+              )}
+            </Splitter.Panel>
 
-          <Splitter.Panel {...chat.chatPanel}>
-            {chat.hasOpened && isDesktop && chatPanel}
-          </Splitter.Panel>
-        </Splitter>
+            <Splitter.Panel {...chat.chatPanel}>
+              {chat.hasOpened && isDesktop && chatPanel}
+            </Splitter.Panel>
+          </Splitter>
+
+          {canUsePhoneWorkspace && (
+            <PhoneWorkspacePanel open={phoneOpen} onClose={() => setPhoneOpen(false)} />
+          )}
+        </div>
       </Layout>
 
       <Drawer

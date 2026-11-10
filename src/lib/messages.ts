@@ -1282,6 +1282,13 @@ export const messages = {
     switchFailed: "สลับบริษัทไม่สำเร็จ",
   },
 
+  phone: {
+    title: "โทรศัพท์",
+    toggle: "เปิด/ปิดแผงโทรศัพท์",
+    collapse: "ย่อ",
+    collapseHint: "ซ่อนแผงโทรศัพท์ (สายยังไม่หลุด)",
+    notConfigured: "ยังไม่ได้ตั้งค่า workspace โทรศัพท์",
+  },
   chat: {
     title: "ผู้ช่วย AI",
     toggle: "เปิด/ปิดผู้ช่วย AI",
