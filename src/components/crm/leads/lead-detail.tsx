@@ -477,6 +477,11 @@ export function LeadDetailView({
                     editable={editable}
                     onEdit={() => setDiscovering(true)}
                   />
+                  <LeadFocusCard
+                    leadId={lead.id}
+                    research={research}
+                    canStart={editable}
+                  />
                   <Card
                     size="small"
                     title={md.sections.lead}
@@ -591,7 +596,7 @@ export function LeadDetailView({
           ]}
         />
 
-        {/* ขวา — ปุ่มลัด + กิจกรรมค้าง + Focus */}
+        {/* ขวา — ปุ่มลัด + กิจกรรมค้าง + ไฟล์ + Proposal */}
         <div className="flex flex-col gap-4">
           {editable && (
             <Card size="small">
@@ -693,15 +698,10 @@ export function LeadDetailView({
 
           <LeadFilesCard leadId={lead.id} files={files} canManage={canManage} />
 
-          <LeadFocusCard
-            leadId={lead.id}
-            research={research}
-            canStart={editable}
-          />
-
           <LeadProposalCard
             leadId={lead.id}
             suggestions={productSuggestions}
+            latest={files.find((file) => file.kind === "proposal")}
             canStart={editable}
           />
         </div>

@@ -7528,6 +7528,7 @@ export const messages = {
         notStored: (date: string) =>
           `ระบบเก็บไฟล์ไว้ที่ Lead ไม่สำเร็จ ดาวน์โหลดเองได้ถึง ${date}`,
         download: "ดาวน์โหลด proposal",
+        ready: "ได้ไฟล์ proposal แล้ว",
         empty: "ยังไม่มีสินค้าที่แนะนำ กดแนะนำสินค้าเพื่อให้ agent เลือกจากข้อมูลของ Lead นี้",
       },
       /** หน้ารายละเอียด Lead — pipeline + ข้อมูล + กิจกรรม (10 ก.ย. 2569). */
