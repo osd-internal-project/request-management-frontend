@@ -66,12 +66,6 @@ jobs:
           echo "tag=${VER}-${SHA}" >> "$GITHUB_OUTPUT"
           echo "📦 ${VER} → tag ${VER}-${SHA}"
 
-      - name: Build Docker Image
-        run: |
-          docker build --platform linux/amd64 \
-            -t ${{ env.APP_NAME }}:${{ steps.pkg.outputs.tag }} \
-            -f ./Dockerfile .
-
       # --password-stdin, not -p: with -p the login key is visible in the
       # runner's process list and docker prints a warning about it.
       - name: Login to Huawei Cloud SWR
@@ -80,21 +74,24 @@ jobs:
             | docker login -u "${{ secrets.HUAWEI_REGISTRY_USERNAME }}" \
                 --password-stdin "${{ env.REGISTRY }}"
 
-      - name: Tag and Push Docker Image
-        run: |
-          LOCAL=${{ env.APP_NAME }}:${{ steps.pkg.outputs.tag }}
-          REMOTE=${{ env.REGISTRY }}/${{ env.SWR_ORG }}/${LOCAL}
-          docker tag "${LOCAL}" "${REMOTE}"
-          docker push "${REMOTE}"
-          echo "- \`${REMOTE}\`" >> "$GITHUB_STEP_SUMMARY"
+      - uses: docker/setup-buildx-action@v3
 
-      - name: Cleanup Docker Images
-        if: always()
-        run: |
-          LOCAL=${{ env.APP_NAME }}:${{ steps.pkg.outputs.tag }}
-          docker rmi "${LOCAL}" || true
-          docker rmi "${{ env.REGISTRY }}/${{ env.SWR_ORG }}/${LOCAL}" || true
-          docker image prune -f
+      # Pushed from buildx with a GitHub Actions layer cache: the builder's
+      # `yarn install` is reused while yarn.lock is unchanged, and pushing
+      # from buildx skips layers SWR already holds.
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.SWR_ORG }}/${{ env.APP_NAME }}:${{ steps.pkg.outputs.tag }}
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
+
+      - name: Record Image
+        run: echo "- \`${{ env.REGISTRY }}/${{ env.SWR_ORG }}/${{ env.APP_NAME }}:${{ steps.pkg.outputs.tag }}\`" >> "$GITHUB_STEP_SUMMARY"
 
   deploy:
     needs: build-and-push
