@@ -31,6 +31,7 @@ export type MenuIconKey =
   | "llm"
   | "aiAudit"
   | "chatWidget"
+  | "softphone"
   | "companyDocuments"
   | "salesTarget"
   | "salesReport"
@@ -954,6 +955,15 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     href: ROUTES.adminChatWidget,
     icon: "chatWidget",
     permissions: ["admin.chat-widget.manage"],
+    group: messages.nav.adminGroup,
+    section: messages.nav.adminSectionIntegrations,
+  },
+  /** เลขต่อ SIP ของ softphone ต่อผู้ใช้ — รหัสเก็บแบบเข้ารหัส ไม่แสดงบนจอ. */
+  {
+    label: messages.nav.adminSoftphone,
+    href: ROUTES.adminSoftphone,
+    icon: "softphone",
+    permissions: ["admin.softphone.manage"],
     group: messages.nav.adminGroup,
     section: messages.nav.adminSectionIntegrations,
   },
