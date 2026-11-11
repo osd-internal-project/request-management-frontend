@@ -7502,6 +7502,23 @@ export const messages = {
       /** หน้ารายละเอียด Lead — pipeline + ข้อมูล + กิจกรรม (10 ก.ย. 2569). */
       detail: {
         backToList: "กลับหน้า Lead",
+        /** งานขายอัตโนมัติ (11 พ.ย. 2569) — workflow ติดเพราะอะไร */
+        automation: {
+          title: "งานขายอัตโนมัติ",
+          blocked: "workflow งานขายไม่ทำงาน",
+          blockedHint: "แก้ตามรายการด้านล่าง — ระบบไม่เริ่ม workflow ซ้ำเอง ถ้าหยุดไปแล้วให้ผู้ดูแล workflow ทำต่อหรือทำเอง",
+          ready: "พร้อมทำงาน",
+          stopped: (when: string) => `หยุดเมื่อ ${when}`,
+          howToFix: "วิธีแก้",
+          details: "สิ่งที่แต่ละขั้นต้องมี",
+          actions: {
+            send_lead_email: "ส่งอีเมลขอบคุณ + proposal",
+            convert_lead: "แปลงเป็นโอกาสการขาย",
+            create_standard_quotation: "ทำใบเสนอราคาจากราคามาตรฐาน",
+            send_quotation_email: "ส่งใบเสนอราคาทางอีเมล",
+            accept_quotation: "บันทึกลูกค้ายืนยัน",
+          } as Record<string, string>,
+        },
         /** ไฟล์บน Lead (6 พ.ย. 2569) — proposal ที่อีเมลขอบคุณแนบไป */
         files: {
           title: "ไฟล์",
