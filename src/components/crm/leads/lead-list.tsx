@@ -318,13 +318,15 @@ export function LeadList({
                           >
                             {m.actions.edit}
                           </Button>
-                          <Button
-                            size="small"
-                            type="primary"
-                            onClick={() => setConverting(row)}
-                          >
-                            {m.actions.convert}
-                          </Button>
+                          {!row.convertedOpportunity && (
+                            <Button
+                              size="small"
+                              type="primary"
+                              onClick={() => setConverting(row)}
+                            >
+                              {m.actions.convert}
+                            </Button>
+                          )}
                           <Button
                             size="small"
                             danger

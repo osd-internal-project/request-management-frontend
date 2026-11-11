@@ -7581,7 +7581,12 @@ export const messages = {
         hideEmpty: "ซ่อนช่องที่ยังว่าง",
         noCompanyInfo: "ยังไม่มีข้อมูล เพิ่มได้จากปุ่มแก้ไข",
         pipelineClosed: "Lead นี้ปิดแล้ว",
-        convertStep: "Won — แปลงเป็นโอกาสการขาย",
+        convertStep:
+          "Won — เกิดเองเมื่อลูกค้ายืนยันใบเสนอราคา/ส่ง PO หรือเปิดใบสั่งขาย",
+        wonHint:
+          "Won เกิดเองเมื่อลูกค้ายืนยันใบเสนอราคา/ส่ง PO หรือเปิดใบสั่งขาย — ย้ายเองไม่ได้",
+        dealOpenBanner: (code: string) =>
+          `Lead นี้เปิดโอกาสการขาย ${code} แล้ว — จะเป็น Won เมื่อลูกค้ายืนยันใบเสนอราคา/ส่ง PO หรือเปิดใบสั่งขาย`,
         statusChanged: "เปลี่ยนสถานะแล้ว",
         edit: "แก้ไข",
         convertedBanner: (code: string) =>

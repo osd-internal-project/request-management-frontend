@@ -116,8 +116,9 @@ export function LeadBoard({
     setHovered(null);
     if (!lead || !accepts(status)) return;
 
-    // ปลายทางต้องกรอกข้อมูลเพิ่มก่อน จึงเปิด modal แทนการยิง PATCH
-    if (status === "converted") onConvert(lead);
+    // Won ไม่ใช่ขั้นที่ลากไปเอง — Lead ปิดเมื่อลูกค้ายืนยันใบเสนอราคาหรือเปิดใบสั่งขาย
+    if (status === "converted") message.info(m.detail.wonHint);
+    // คัดออกต้องกรอกเหตุผลก่อน จึงเปิด modal แทนการยิง PATCH
     else if (isLeadLost(status)) onDisqualify(lead, status);
     else void move(lead, status);
   }
@@ -305,7 +306,9 @@ function LeadCard({
               trigger={["click"]}
               menu={{
                 items: [
-                  { key: "convert", label: m.actions.convert },
+                  ...(lead.convertedOpportunity
+                    ? []
+                    : [{ key: "convert", label: m.actions.convert }]),
                   {
                     key: "disqualify",
                     label: m.actions.disqualify,
