@@ -5662,55 +5662,13 @@ export const messages = {
 
   /** ใบเสนอราคาฉบับพิมพ์ (A4) */
   quotationPrint: {
-    docTitle: "ใบเสนอราคา",
-    docTitleEn: "QUOTATION",
-    print: "พิมพ์ / บันทึก PDF",
+    print: "พิมพ์",
+    download: "ดาวน์โหลด PDF",
     back: "กลับไปหน้าใบเสนอราคา",
     printHint:
-      'ในหน้าต่างพิมพ์ เลือก "บันทึกเป็น PDF" เพื่อได้ไฟล์ — ตั้งกระดาษ A4 และปิด "ส่วนหัวและท้ายกระดาษ"',
-    draftWatermark: "ร่าง",
+      "เอกสารนี้เป็นไฟล์เดียวกับที่แนบอีเมลถึงลูกค้า — พิมพ์บนกระดาษ A4 ขนาดจริง (100%)",
     draftBanner:
-      'ใบนี้ยังไม่ผ่านการอนุมัติ — ฉบับพิมพ์มีลายน้ำ "ร่าง" และไม่ควรส่งลูกค้า',
-    taxId: "เลขประจำตัวผู้เสียภาษี",
-    tel: "โทร",
-    email: "อีเมล",
-    no: "เลขที่",
-    version: "ฉบับที่",
-    date: "วันที่",
-    validUntil: "ยืนราคาถึง",
-    customer: "ลูกค้า",
-    customerCode: "รหัสลูกค้า",
-    address: "ที่อยู่",
-    attention: "เรียน",
-    subject: "เรื่อง",
-    salesperson: "ผู้เสนอราคา",
-    paymentTerms: "เงื่อนไขการชำระเงิน",
-    col: {
-      no: "ลำดับ",
-      description: "รายการ",
-      qty: "จำนวน",
-      unit: "หน่วย",
-      unitPrice: "ราคา/หน่วย",
-      discount: "ส่วนลด",
-      amount: "จำนวนเงิน",
-    },
-    subtotal: "รวมเป็นเงิน",
-    discount: "หักส่วนลด",
-    net: "ยอดหลังหักส่วนลด",
-    vat: (pct: string) => `ภาษีมูลค่าเพิ่ม ${pct}%`,
-    grandTotal: "ยอดรวมทั้งสิ้น",
-    note: "หมายเหตุ",
-    terms: "เงื่อนไข",
-    signQuoter: "ผู้เสนอราคา",
-    signApprover: "ผู้อนุมัติ",
-    signCustomer: "ลูกค้ายืนยันการสั่งซื้อ",
-    signDate: "วันที่ ______/______/______",
-    loadFailed: "โหลดใบเสนอราคาไม่สำเร็จ",
-    /** CD-196 */
-    monthlyTerm: (months: number) =>
-      `ราคาต่อเดือน × ${months} เดือน (ยอดรวมทั้งระยะสัญญา)`,
-    lumpSum: "ราคาเหมาทั้งงาน",
-    monthlyRecurring: "ค่าบริการรายเดือน (รวมอยู่ในยอดแล้ว)",
+      'ใบนี้ยังไม่ผ่านการอนุมัติ — ไฟล์มีลายน้ำ "ร่าง" และไม่ควรส่งลูกค้า',
   },
   /** CD-194 ราคามาตรฐาน */
   /** CD-207 — ต้นทุนบุคลากร (ส่วนหนึ่งของ CD-17 HR) */
@@ -7544,6 +7502,23 @@ export const messages = {
       /** หน้ารายละเอียด Lead — pipeline + ข้อมูล + กิจกรรม (10 ก.ย. 2569). */
       detail: {
         backToList: "กลับหน้า Lead",
+        /** งานขายอัตโนมัติ (11 พ.ย. 2569) — workflow ติดเพราะอะไร */
+        automation: {
+          title: "งานขายอัตโนมัติ",
+          blocked: "workflow งานขายไม่ทำงาน",
+          blockedHint: "แก้ตามรายการด้านล่าง — ระบบไม่เริ่ม workflow ซ้ำเอง ถ้าหยุดไปแล้วให้ผู้ดูแล workflow ทำต่อหรือทำเอง",
+          ready: "พร้อมทำงาน",
+          stopped: (when: string) => `หยุดเมื่อ ${when}`,
+          howToFix: "วิธีแก้",
+          details: "สิ่งที่แต่ละขั้นต้องมี",
+          actions: {
+            send_lead_email: "ส่งอีเมลขอบคุณ + proposal",
+            convert_lead: "แปลงเป็นโอกาสการขาย",
+            create_standard_quotation: "ทำใบเสนอราคาจากราคามาตรฐาน",
+            send_quotation_email: "ส่งใบเสนอราคาทางอีเมล",
+            accept_quotation: "บันทึกลูกค้ายืนยัน",
+          } as Record<string, string>,
+        },
         /** ไฟล์บน Lead (6 พ.ย. 2569) — proposal ที่อีเมลขอบคุณแนบไป */
         files: {
           title: "ไฟล์",
@@ -8234,6 +8209,11 @@ export const messages = {
         contact: "ผู้ติดต่อ",
         validUntil: "ใช้ได้ถึง",
         paymentTerms: "เงื่อนไขการชำระเงิน",
+        deliveryTime: "ระยะเวลาส่งมอบ (Delivery Time)",
+        warranty: "การรับประกัน (Warranty)",
+        customerFax: "โทรสารลูกค้า",
+        sellerMobile: "มือถือผู้เสนอราคา",
+        printedOnly: "พิมพ์บนใบเสนอราคา — เว้นว่างได้",
         note: "หมายเหตุ",
         title: "เรื่อง",
         linesTitle: "รายการ",
@@ -9147,6 +9127,7 @@ export const messages = {
         branch: "สำนักงานใหญ่ / สาขา",
         address: "ที่อยู่",
         phone: "โทรศัพท์",
+        fax: "โทรสาร",
         email: "อีเมล",
         website: "เว็บไซต์",
         terms: "เงื่อนไขมาตรฐานท้ายใบเสนอราคา",

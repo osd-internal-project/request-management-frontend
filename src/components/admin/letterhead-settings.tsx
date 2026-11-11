@@ -20,6 +20,7 @@ type Field =
   | "letterhead_branch"
   | "letterhead_address"
   | "letterhead_phone"
+  | "letterhead_fax"
   | "letterhead_email"
   | "letterhead_website"
   | "quotation_terms";
@@ -32,6 +33,7 @@ function initial(config: CrmConfig): Record<Field, string> {
     letterhead_branch: config.letterheadBranch ?? "",
     letterhead_address: config.letterheadAddress ?? "",
     letterhead_phone: config.letterheadPhone ?? "",
+    letterhead_fax: config.letterheadFax ?? "",
     letterhead_email: config.letterheadEmail ?? "",
     letterhead_website: config.letterheadWebsite ?? "",
     quotation_terms: config.quotationTerms ?? "",
@@ -152,6 +154,7 @@ export function LetterheadSettings({
           />
         </div>
         {text("letterhead_phone", ml.phone, 100)}
+        {text("letterhead_fax", ml.fax, 100)}
         {text("letterhead_email", ml.email, 255)}
         {text("letterhead_website", ml.website, 255)}
         <div className="md:col-span-2">

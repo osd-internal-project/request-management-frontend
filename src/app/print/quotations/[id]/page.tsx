@@ -6,9 +6,10 @@ import { HOME_PATH, SESSION_EXPIRED_PATH } from "@/lib/routes";
 import { can, getSession } from "@/lib/session";
 
 /**
- * ใบเสนอราคาฉบับพิมพ์ — นอก `/pages` จึงไม่มี app shell (เมนู/หัวหน้าจอ) ติดลง
- * กระดาษ. การป้องกันยังครบ: proxy บังคับ login ทุก path, หน้านี้ gate สิทธิ์เอง
- * และ backend ตัดต้นทุน/margin ออกจากข้อมูลชุดนี้ทั้งหมด.
+ * ใบเสนอราคาฉบับพิมพ์ — นอก `/pages` จึงไม่มี app shell (เมนู/หัวหน้าจอ). แสดง
+ * ไฟล์ PDF ตามแบบฟอร์มบริษัทที่ backend วาด. การป้องกันยังครบ: proxy บังคับ
+ * login ทุก path, หน้านี้ gate สิทธิ์เอง และ backend ตัดต้นทุน/margin ออกจาก
+ * ข้อมูลชุดนี้ทั้งหมด.
  */
 type Params = { params: Promise<{ id: string }> };
 
@@ -33,5 +34,12 @@ export default async function QuotationPrintPage({ params }: Params) {
   // SCOPE-03: unseen answers 404 — render the same.
   if (!result.ok) notFound();
 
-  return <QuotationPrint view={result.data} />;
+  const { quotationNo, version } = result.data.quotation;
+  return (
+    <QuotationPrint
+      id={id}
+      fileName={`${quotationNo}${version > 1 ? `-v${version}` : ""}.pdf`}
+      isFinal={result.data.isFinal}
+    />
+  );
 }
