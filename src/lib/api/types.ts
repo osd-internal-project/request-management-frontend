@@ -1554,6 +1554,10 @@ export interface QuotationDetail extends QuotationRow {
   partyTaxId: string | null;
   contactName: string | null;
   paymentTerms: string | null;
+  deliveryTime: string | null;
+  warranty: string | null;
+  partyFax: string | null;
+  sellerMobile: string | null;
   note: string | null;
   subtotal: Money;
   discountTotal: Money;
@@ -1887,6 +1891,7 @@ export interface CrmConfig {
   letterheadBranch: string | null;
   letterheadAddress: string | null;
   letterheadPhone: string | null;
+  letterheadFax: string | null;
   letterheadEmail: string | null;
   letterheadWebsite: string | null;
   /** data URL (png/jpeg/webp). */
@@ -1988,8 +1993,14 @@ export interface QuotationPrintView {
     branch: string | null;
     address: string | null;
     contactName: string | null;
+    phone: string | null;
+    email: string | null;
   };
-  seller: { name: string; email: string | null } | null;
+  seller: {
+    name: string;
+    email: string | null;
+    phone: string | null;
+  } | null;
   letterhead: {
     nameTh: string;
     nameEn: string | null;
@@ -1997,6 +2008,7 @@ export interface QuotationPrintView {
     branch: string | null;
     address: string | null;
     phone: string | null;
+    fax: string | null;
     email: string | null;
     website: string | null;
     logo: string | null;
