@@ -188,7 +188,8 @@ export function LeadDetailView({
 
   function onStep(index: number) {
     const target = PIPELINE[index];
-    if (target === "converted") setConverting(true);
+    // Won is not a step someone takes: the customer's confirmation closes the Lead
+    if (target === "converted") message.info(md.wonHint);
     else void setStatus(target);
   }
 
@@ -230,11 +231,15 @@ export function LeadDetailView({
     <div className="flex flex-col gap-4">
       {error && <Alert type="error" showIcon title={error} />}
 
-      {lead.status === "converted" && lead.convertedOpportunity && (
+      {lead.convertedOpportunity && !disqualified && (
         <Alert
-          type="success"
+          type={lead.status === "converted" ? "success" : "info"}
           showIcon
-          title={md.convertedBanner(lead.convertedOpportunity.opportunityCode)}
+          title={
+            lead.status === "converted"
+              ? md.convertedBanner(lead.convertedOpportunity.opportunityCode)
+              : md.dealOpenBanner(lead.convertedOpportunity.opportunityCode)
+          }
           action={
             canSeeDeals ? (
               <Link
@@ -301,9 +306,11 @@ export function LeadDetailView({
             <Button icon={<EditOutlined />} onClick={() => setEditing(true)}>
               {md.edit}
             </Button>
-            <Button type="primary" onClick={() => setConverting(true)}>
-              {m.actions.convert}
-            </Button>
+            {!lead.convertedOpportunity && (
+              <Button type="primary" onClick={() => setConverting(true)}>
+                {m.actions.convert}
+              </Button>
+            )}
             <Button danger onClick={() => setDisqualifying(true)}>
               {m.actions.disqualify}
             </Button>
