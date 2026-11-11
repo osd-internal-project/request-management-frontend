@@ -10,7 +10,9 @@ import {
   getLostReasons,
   getQuotations,
   getDealMargin,
+  getOpportunitySalesAutomation,
 } from "@/lib/api/sales";
+import { SalesAutomationCard } from "@/components/crm/leads/sales-automation-card";
 import { getRequests, getRequestTypes } from "@/lib/api/requests";
 import { getDealSolutions } from "@/lib/api/presales";
 import { getCustomers } from "@/lib/api/customers";
@@ -62,6 +64,7 @@ export default async function OpportunityDetailPage({
     teamsResult,
     solutionsResult,
     marginResult,
+    automationResult,
   ] = await Promise.all([
     getLostReasons(),
     canReadRequests
@@ -107,6 +110,8 @@ export default async function OpportunityDetailPage({
       : Promise.resolve(null),
     // CD-199 — same `crm.sales.read`; cost and margin masked by the API.
     getDealMargin(id),
+    // why the sales workflow stopped — same `crm.sales.read`
+    getOpportunitySalesAutomation(id),
   ]);
   const contractCode = opportunityResult.data.contractRequestTypeCode ?? null;
   const contractTypeName =
@@ -126,7 +131,11 @@ export default async function OpportunityDetailPage({
     null;
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-4">
+      {/* why the sales workflow stopped (11 พ.ย. 2569) */}
+      <SalesAutomationCard
+        status={automationResult.ok ? automationResult.data : null}
+      />
       {/* CD-205 — this customer's past pricing exceptions, on other deals. */}
       <PastPricingExceptions opportunityId={opportunityResult.data.id} />
       <OpportunityDetailView

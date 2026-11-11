@@ -69,6 +69,47 @@ export async function getLeadFiles(id: string): Promise<ApiResult<LeadFile[]>> {
   return apiGet(`leads/${id}/files`);
 }
 
+/** งานขายอัตโนมัติ (11 พ.ย. 2569) — สิ่งที่แต่ละ workflow ต้องมี + เหตุที่ติดล่าสุด. */
+export interface SalesAutomationCheck {
+  key: string;
+  ok: boolean;
+  label: string;
+  detail: string | null;
+}
+
+export interface SalesAutomationStatus {
+  /** บริษัทมี trigger งานขายอย่างน้อยหนึ่งตัว — ไม่มี = ไม่แสดงการ์ด */
+  in_use: boolean;
+  ok: boolean;
+  issues: {
+    id: string;
+    step: string;
+    action: string;
+    code: string;
+    message: string;
+    hint: string | null;
+    occurred_at: string;
+  }[];
+  steps: {
+    key: "base" | "intro" | "quote" | "close";
+    label: string;
+    ok: boolean;
+    checks: SalesAutomationCheck[];
+  }[];
+}
+
+export async function getLeadSalesAutomation(
+  id: string,
+): Promise<ApiResult<SalesAutomationStatus>> {
+  return apiGet(`leads/${id}/sales-automation`);
+}
+
+export async function getOpportunitySalesAutomation(
+  id: string,
+): Promise<ApiResult<SalesAutomationStatus>> {
+  return apiGet(`opportunities/${id}/sales-automation`);
+}
+
 /** CD-85 — บริษัทเป้าหมาย (high → low, oldest first). */
 export async function getTargetAccounts(options?: {
   search?: string;
