@@ -1659,7 +1659,8 @@ export const messages = {
       "request.sensitive.read": "เห็น margin",
       "approval.decide": "อนุมัติ",
       "approval.delegate": "มอบอำนาจ",
-      "approval.history.read": "ประวัติอำนาจ",
+      "approval.history.read": "ประวัติอนุมัติที่ตัวเองเกี่ยวข้อง",
+      "approval.history.read.all": "ประวัติอนุมัติทั้งบริษัท",
       "report.request.read": "รายงานทีม",
       "report.dashboard.read": "แดชบอร์ด",
       "user.read": "ค้นผู้ใช้",
@@ -4949,6 +4950,9 @@ export const messages = {
     formLockCompanyHint:
       "เปิดสำหรับแดชบอร์ดที่อ่าน Data Mart (เช่น ผู้บริหาร · ภาพรวมรายสัปดาห์) — ผู้ดูเห็นเฉพาะข้อมูลบริษัทที่เลือกอยู่และเปลี่ยนไม่ได้ · แดชบอร์ดใน Metabase ต้องมีตัวแปร company ที่ล็อกไว้ (ดู docs/metabase.md) ไม่งั้นจะเปิดไม่ขึ้น",
     lockCompanyTag: "เฉพาะบริษัทผู้ดู",
+    allCompaniesTag: "เห็นข้อมูลทุกบริษัท",
+    allCompaniesHint:
+      "แดชบอร์ดนี้ยังไม่กรองตามบริษัท ผู้ดูทุกคนจะเห็นข้อมูลของทุกบริษัท — ตั้งตัวแปร company ที่ล็อกไว้ใน Metabase ก่อน แล้วเปิด \"กรองตามบริษัทของผู้ดู\"",
     saved: "บันทึกแล้ว",
     deactivated: "ปิดใช้งานแดชบอร์ดแล้ว",
 
