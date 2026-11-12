@@ -22,6 +22,7 @@ import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
 import dayjs from "dayjs";
 import { ProductPicker } from "@/components/crm/quotations/product-picker";
+import { ManualProductsButton } from "@/components/pricing/manual-products-button";
 import { appApi } from "@/lib/api/client";
 import type { VendorCost } from "@/lib/api/pricing/client";
 import { messages } from "@/lib/messages";
@@ -182,6 +183,7 @@ export function VendorCostList({ canManage }: { canManage: boolean }) {
             <Button loading={busy} onClick={() => void sync()}>
               {m.sync}
             </Button>
+            <ManualProductsButton />
             <Button type="primary" onClick={() => setDraft(emptyDraft())}>
               {m.add}
             </Button>

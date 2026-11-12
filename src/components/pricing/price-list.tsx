@@ -29,6 +29,7 @@ import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
 import dayjs from "dayjs";
 import { ProductPicker } from "@/components/crm/quotations/product-picker";
+import { ManualProductsButton } from "@/components/pricing/manual-products-button";
 import { appApi } from "@/lib/api/client";
 import {
   getPriceVersions,
@@ -278,29 +279,32 @@ export function PriceList({
           <Text type="secondary">{mp.hint}</Text>
         </div>
         {canManage && (
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() =>
-              setDraft({
-                scope: special ? "customer" : "standard",
-                targetId: null,
-                targetLabel: "",
-                productCode: "",
-                productName: "",
-                priceModel: "unit",
-                currency: "THB",
-                unitPrice: null,
-                validFrom: dayjs().format("YYYY-MM-DD"),
-                validTo: null,
-                note: "",
-                started: false,
-                reason: "",
-              })
-            }
-          >
-            {mp.add}
-          </Button>
+          <Space wrap>
+            <ManualProductsButton />
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() =>
+                setDraft({
+                  scope: special ? "customer" : "standard",
+                  targetId: null,
+                  targetLabel: "",
+                  productCode: "",
+                  productName: "",
+                  priceModel: "unit",
+                  currency: "THB",
+                  unitPrice: null,
+                  validFrom: dayjs().format("YYYY-MM-DD"),
+                  validTo: null,
+                  note: "",
+                  started: false,
+                  reason: "",
+                })
+              }
+            >
+              {mp.add}
+            </Button>
+          </Space>
         )}
       </div>
 
