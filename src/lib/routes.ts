@@ -192,6 +192,10 @@ export const ROUTES = {
   adminAssignmentRules: `${HOME_PATH}/admin/assignment-rules`,
   /** Read-only Keycloak user directory. */
   adminUsers: `${HOME_PATH}/admin/users`,
+  /** P5 ระดับระบบ — ผู้ใช้ทุกบริษัท, บริษัท, role กลาง/ระบบ. */
+  systemUsers: `${HOME_PATH}/system/users`,
+  systemCompanies: `${HOME_PATH}/system/companies`,
+  systemRoles: `${HOME_PATH}/system/roles`,
   /** SUP-04 — Audit log */
   adminAudit: `${HOME_PATH}/admin/audit`,
   /** บันทึกกระบวนการ End-to-End 7 ขั้น ที่ OSD Workflow เขียนเข้ามา. */

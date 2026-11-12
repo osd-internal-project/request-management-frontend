@@ -106,7 +106,10 @@ function columnsFor(
   // แล้วบันทึกไม่ได้คือการเชิญให้คนลองแล้วเจอ 422
   //
   // กรองด้วย `type` ไม่ใช่ชื่อ module: module เป็นที่เก็บ `type` เป็นคำตอบ
-  const human = permissions.filter((permission) => permission.type !== "service");
+  // P5: `system.*` belongs to system roles (/system/roles); a company role holding it is a 422.
+  const human = permissions.filter(
+    (permission) => permission.type !== "service" && permission.module !== "system",
+  );
 
   const placed = new Set<string>(GROUPS.flatMap((group) => [...group.modules]));
 

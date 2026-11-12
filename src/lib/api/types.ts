@@ -2354,3 +2354,44 @@ export interface DealMargin {
   /** CD-202 */
   minMarginByWorkType?: Record<string, number>;
 }
+
+/** P5 `GET /system/users` row — every company the person belongs to, not just the active one. */
+export interface SystemUser {
+  id: string;
+  username: string;
+  displayName: string;
+  email: string | null;
+  status: "ACTIVE" | "SUSPENDED";
+  suspendedAt: string | null;
+  suspendReason: string | null;
+  primaryCompanyId: string | null;
+  companies: {
+    isPrimary: boolean;
+    company: { id: string; code: string; name: string; active: boolean };
+  }[];
+  systemRoles: { role: { id: string; code: string; name: string } }[];
+}
+
+/** P5 `GET /system/companies`. */
+export interface SystemCompany {
+  id: string;
+  code: string;
+  name: string;
+  docPrefix: string;
+  active: boolean;
+  createdAt: string;
+  _count: { users: number };
+}
+
+/** P5 `GET /system/roles` — roles no company owns. */
+export interface SharedRole {
+  id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  level: "COMPANY" | "SYSTEM";
+  active: boolean;
+  isSystem: boolean;
+  permissions: RolePermissionRow[];
+  _count: { users: number; systemUsers: number };
+}
