@@ -1739,6 +1739,7 @@ export const messages = {
       "integration.process.log": "บันทึกกระบวนการ 7 ขั้นจาก OSD Workflow",
       "integration.process.dispatch": "OSD Workflow จัดคนรับงานตามตารางทีม และแจ้งเตือนคนในบริษัท",
       "integration.kb.read": "อ่านบทความที่เผยแพร่ให้ลูกค้า (AI)",
+      "service.care.read.all": "ดูแชตลูกค้าทั้งบริษัท",
       "integration.service.care.manage": "คุยกับลูกค้าผ่านช่องทาง (AI CARE)",
       "integration.smart.prospect.create": "ส่งรายชื่อเป้าหมายเข้า AI SMART",
       "integration.smart.call.update": "รายงานผลการโทร (D-Callcenter)",
@@ -3779,7 +3780,7 @@ export const messages = {
     newType: "+ เพิ่มประเภท",
     newTypeTitle: "เพิ่มประเภทคำขอ",
     code: "รหัสประเภท",
-    codeHint: "ตัวพิมพ์ใหญ่ ตัวเลข หรือขีดล่าง · เปลี่ยนภายหลังไม่ได้",
+    codeHint: "ตัวพิมพ์ใหญ่ ตัวเลข _ หรือ - · เปลี่ยนภายหลังไม่ได้",
     codePlaceholder: "NDA",
     namePlaceholder: "ขอจัดทำ NDA",
     /** The placeholder field a new type starts with; the API refuses an empty schema. */
