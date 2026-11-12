@@ -9,6 +9,7 @@ import { requestColumns } from "@/components/requests/my-work";
 import { SearchSelect } from "@/components/ui/search-select";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
+import { WORK_PAGE_SIZE } from "@/lib/work-filters";
 import type { Session } from "@/lib/session-shape";
 
 /**
@@ -20,12 +21,17 @@ import type { Session } from "@/lib/session-shape";
  */
 export function LedWork({
   rows,
+  total,
+  page,
   types,
   filters,
   leadsUnits,
   session,
 }: {
   rows: RequestRow[];
+  /** The server's count for the whole filter; `rows` is one page of it. */
+  total: number;
+  page: number;
   types: { code: string; name: string }[];
   filters: {
     status?: string;
@@ -50,6 +56,8 @@ export function LedWork({
     const next = new URLSearchParams(params.toString());
     if (value) next.set(key, value);
     else next.delete(key);
+    // A new filter is a new list; page 3 of the old one means nothing.
+    if (key !== "page") next.delete("page");
 
     router.push(
       next.size ? `${ROUTES.allWork}?${next.toString()}` : ROUTES.allWork,
@@ -101,7 +109,14 @@ export function LedWork({
           size="small"
           dataSource={rows}
           columns={requestColumns(now, session)}
-          pagination={{ pageSize: 20, hideOnSinglePage: true }}
+          pagination={{
+            current: page,
+            pageSize: WORK_PAGE_SIZE,
+            total,
+            hideOnSinglePage: true,
+            showSizeChanger: false,
+            onChange: (next) => apply("page", next > 1 ? String(next) : undefined),
+          }}
           scroll={{ x: true }}
           onRow={(row) => ({
             className: "cursor-pointer",

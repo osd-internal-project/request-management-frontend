@@ -5,6 +5,7 @@ import { LedWork } from "@/components/requests/led-work";
 import requests from "@/lib/api/requests";
 import { messages } from "@/lib/messages";
 import { getSession } from "@/lib/session";
+import { pageOf, WORK_PAGE_SIZE } from "@/lib/work-filters";
 
 /**
  * H2.3 — งานทั้งหมด.
@@ -27,9 +28,11 @@ export default async function AllWorkPage({
     type_code?: string;
     q?: string;
     overdue?: string;
+    page?: string;
   }>;
 }) {
   const [session, query] = await Promise.all([getSession(), searchParams]);
+  const page = pageOf(query.page);
 
   const filters = {
     status: query.status,
@@ -44,7 +47,8 @@ export default async function AllWorkPage({
       type_code: filters.typeCode,
       q: filters.q,
       overdue: filters.overdue,
-      page_size: 100,
+      page,
+      page_size: WORK_PAGE_SIZE,
     }),
     requests.getRequestTypes(),
   ]);
@@ -61,6 +65,8 @@ export default async function AllWorkPage({
       {result.ok ? (
         <LedWork
           rows={result.data.data}
+          total={result.data.total}
+          page={page}
           types={types.ok ? types.data : []}
           filters={filters}
           /*

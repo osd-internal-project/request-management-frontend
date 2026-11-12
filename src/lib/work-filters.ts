@@ -41,3 +41,12 @@ export function statusFilterArgs(value: string | undefined): {
 
   return { status: chosen };
 }
+
+/** Rows per page on the work lists — the server pages, so this is what one page is. */
+export const WORK_PAGE_SIZE = 20;
+
+/** `?page=` read leniently: anything that is not a positive whole number is page 1. */
+export function pageOf(value: string | undefined): number {
+  const page = Number(value);
+  return Number.isInteger(page) && page > 1 ? page : 1;
+}

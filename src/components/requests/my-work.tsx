@@ -18,7 +18,7 @@ import Text from "antd/es/typography/Text";
 import { messages } from "@/lib/messages";
 import { SearchSelect } from "@/components/ui/search-select";
 import { ROUTES } from "@/lib/routes";
-import { ALL_FILTER, OPEN_FILTER } from "@/lib/work-filters";
+import { ALL_FILTER, OPEN_FILTER, WORK_PAGE_SIZE } from "@/lib/work-filters";
 import { RequestRowActions } from "@/components/requests/request-row-actions";
 import { DueCell } from "@/components/requests/due-badge";
 import {
@@ -198,16 +198,15 @@ export function requestColumns(now: number, session: Session | null = null) {
 }
 
 /**
- * One tab's worth of work: the rows this page fetched, and how many exist.
- *
- * The two are not the same number. The page asks for 100 rows, and the tab
- * label used to print how many came back — so a queue of 140 read `100`, and
- * every tab silently agreed with itself while disagreeing with the database.
+ * One tab's worth of work: one page of rows, which page it is, and how many
+ * exist. The server pages (P3): the list used to stop at the first 100 rows
+ * while the count said more, and nothing past row 100 could be opened.
  */
 export interface WorkTab {
   readonly rows: RequestRow[];
   /** The server's count for the whole filter, not the page. */
   readonly total: number;
+  readonly page: number;
 }
 
 export function MyWork({
@@ -266,6 +265,8 @@ export function MyWork({
     const next = new URLSearchParams(params.toString());
     if (value) next.set(key, value);
     else next.delete(key);
+    // A new filter or tab is a new list; page 3 of the old one means nothing.
+    if (key !== "page") next.delete("page");
 
     router.push(next.size ? `${ROUTES.myWork}?${next.toString()}` : ROUTES.myWork);
   }
@@ -273,12 +274,12 @@ export function MyWork({
   const columns = requestColumns(now, session);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
-  const table = (rows: RequestRow[], emptyText: string, selectable = false) =>
-    rows.length ? (
+  const table = (tab: WorkTab, emptyText: string, selectable = false) =>
+    tab.rows.length ? (
       <Table
         rowKey="id"
         size="small"
-        dataSource={rows}
+        dataSource={tab.rows}
         columns={columns}
         rowSelection={
           selectable
@@ -293,7 +294,14 @@ export function MyWork({
               }
             : undefined
         }
-        pagination={{ pageSize: 20, hideOnSinglePage: true }}
+        pagination={{
+          current: tab.page,
+          pageSize: WORK_PAGE_SIZE,
+          total: tab.total,
+          hideOnSinglePage: true,
+          showSizeChanger: false,
+          onChange: (page) => apply("page", page > 1 ? String(page) : undefined),
+        }}
         scroll={{ x: true }}
         onRow={(row) => ({
           className: "cursor-pointer",
@@ -370,16 +378,18 @@ export function MyWork({
         not empty-for-now, it is empty-forever. The page skips its query too.
       */}
       <Tabs
+        activeKey={params.get("tab") ?? "involved"}
+        onChange={(key) => apply("tab", key === "involved" ? undefined : key)}
         items={[
           {
             key: "involved",
             label: `${messages.myWork.tabInvolved} · ${involved.total}`,
-            children: table(involved.rows, messages.myWork.empty),
+            children: table(involved, messages.myWork.empty),
           },
           {
             key: "created",
             label: `${messages.myWork.tabCreated} · ${created.total}`,
-            children: table(created.rows, messages.myWork.empty),
+            children: table(created, messages.myWork.empty),
           },
           /*
             The queue that makes the ticket model work. Without it the person a
@@ -390,7 +400,7 @@ export function MyWork({
           {
             key: "incoming",
             label: `${messages.myWork.tabIncoming} · ${incoming.total}`,
-            children: table(incoming.rows, messages.myWork.emptyIncoming),
+            children: table(incoming, messages.myWork.emptyIncoming),
           },
           ...(approver
             ? [
@@ -417,7 +427,7 @@ export function MyWork({
                         onClear={() => setSelectedIds([])}
                       />
                       {table(
-                        approver.rows,
+                        approver,
                         messages.myWork.emptyApprovals,
                         can(session, "approval.decide"),
                       )}
