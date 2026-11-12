@@ -53,6 +53,10 @@ export const LOGOUT_PATH = "/api/auth/logout";
  */
 export const SESSION_EXPIRED_PATH = `${LOGOUT_PATH}?reason=session_expired`;
 
+/** The account was switched off in this app (H2); Keycloak still signs it in. */
+export const USER_SUSPENDED_REASON = "user_suspended";
+export const SUSPENDED_LOGOUT_PATH = `${LOGOUT_PATH}?reason=${USER_SUSPENDED_REASON}`;
+
 /**
  * The full CTD screen map (spec §16 mockups).
  *
