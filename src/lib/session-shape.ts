@@ -29,6 +29,8 @@ export interface Session {
   active_company_id: string;
   roles: string[];
   permissions: string[];
+  /** P5 `system.*`, apart from the company's; absent from a backend older than 12 พ.ย. 2569. */
+  system_permissions?: string[];
   /**
    * Whether this person heads any group. Gates the "งานทั้งหมด" screen in the
    * menu — a page that can only ever be empty reads as one that failed.
@@ -55,4 +57,9 @@ export function canAny(
   permissions: readonly string[],
 ): boolean {
   return permissions.some((permission) => can(session, permission));
+}
+
+/** System-plane check (`/system/*`) — the backend re-checks it on every call. */
+export function canSystem(session: Session | null, permission: string): boolean {
+  return session?.system_permissions?.includes(permission) ?? false;
 }

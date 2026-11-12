@@ -10,6 +10,7 @@ import {
   BookCheck,
   BookOpen,
   Bot,
+  Building2,
   BotMessageSquare,
   BrainCircuit,
   Briefcase,
@@ -102,6 +103,7 @@ import {
   Wrench,
   Zap,
   type LucideIcon,
+  ShieldUser,
 } from "lucide-react";
 import type { MenuIconKey } from "@/app/configs/menu";
 
@@ -187,6 +189,8 @@ const MENU_ICONS: Record<MenuIconKey, LucideIcon> = {
   kbField: Lightbulb,
   kbAi: BotMessageSquare,
   kbGaps: CircleHelp,
+  systemCompany: Building2,
+  systemRole: ShieldUser,
   hrMandays: ChartGantt,
   hrLaborCost: Coins,
   pricingVendorCost: Receipt,

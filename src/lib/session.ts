@@ -92,5 +92,5 @@ async function errorCodeOf(response: Response): Promise<string | null> {
   component must import from `./session-shape` directly — reaching them through
   here drags `next/headers` into the browser bundle.
 */
-export { can, canAny } from "./session-shape";
+export { can, canAny, canSystem } from "./session-shape";
 export type { Session } from "./session-shape";
