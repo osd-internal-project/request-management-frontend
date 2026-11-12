@@ -1029,6 +1029,20 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     systemPermissions: ["system.role.manage"],
     group: messages.nav.systemGroup,
   },
+  {
+    label: messages.nav.systemIntegrations,
+    href: ROUTES.systemIntegrations,
+    icon: "apiKey",
+    systemPermissions: ["system.integration.manage"],
+    group: messages.nav.systemGroup,
+  },
+  {
+    label: messages.nav.systemAudit,
+    href: ROUTES.systemAudit,
+    icon: "audit",
+    systemPermissions: ["system.audit.read"],
+    group: messages.nav.systemGroup,
+  },
 ];
 
 /** The rail icon for each module, keyed by `MenuEntry.group`. */

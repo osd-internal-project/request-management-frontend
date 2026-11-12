@@ -44,12 +44,16 @@ const LOGOUT_ROUTE = "/api/auth/logout";
 export interface ShellCompany {
   id: string;
   name: string;
+  /** P6: reachable through the system plane rather than a membership. */
+  viaSystem?: boolean;
 }
 
 export interface ShellUser {
   displayName: string;
   companies: ShellCompany[];
   activeCompanyId: string | null;
+  /** P6: the active company was entered through the system plane. */
+  enteredAsSystem: boolean;
 }
 
 /**
@@ -263,7 +267,19 @@ export function AppShell({
             <Splitter.Panel className="relative overflow-hidden!">
               {/* The app's only scroll region: viewport height minus the header. */}
               <Content className="h-full overflow-y-auto">
-                <div className="p-3 md:p-6">{children}</div>
+                <div className="p-3 md:p-6">
+                  {user.enteredAsSystem && (
+                    <div
+                      role="status"
+                      className="mb-4 rounded-md border-l-4 border-[var(--app-warning)] bg-[color-mix(in_srgb,var(--app-warning)_12%,white)] px-4 py-2 text-[var(--app-text)]"
+                    >
+                      {messages.nav.enteredAsSystem(
+                        user.companies.find((c) => c.id === user.activeCompanyId)?.name ?? "",
+                      )}
+                    </div>
+                  )}
+                  {children}
+                </div>
 
                 <Footer className="text-center">
                   {messages.app.name} ©{currentYear}

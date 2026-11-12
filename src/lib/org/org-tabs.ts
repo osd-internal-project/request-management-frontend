@@ -13,8 +13,8 @@
  * `(role, resource) → level` row could never express. `ScopeRulesAdmin` below
  * it stays read-only and states the rules that live in code.
  *
- * `GET/PUT /admin/scope-rules` and the `scope_rules` table still exist and are
- * still unread by any authorisation path.
+ * The `scope_rules` table is kept (123 rows on .55) but its API was removed in
+ * P9 (13 พ.ย. 2569); nothing reads it.
  *
  * Kept in a plain module rather than beside the component: the component is
  * `"use client"`, and a value exported from a client module and imported by a

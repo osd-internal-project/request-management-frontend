@@ -9,7 +9,14 @@
  * — ห้ามเก็บไว้ที่ไหนนอกจาก state ของช่องที่แสดงมัน
  */
 
-import { adminApi, type ClientResult } from "../client";
+import { adminApi, appApi, type ClientResult } from "../client";
+
+/** P8: `system` = keys no company owns, behind `/system/api-keys` (system.integration.manage). */
+export type KeyScope = "company" | "system";
+
+function keyApi<T>(scope: KeyScope, path: string, init?: RequestInit) {
+  return scope === "system" ? appApi<T>(`system/${path}`, init) : adminApi<T>(path, init);
+}
 
 export interface ApiKeyRow {
   id: string;
@@ -60,19 +67,20 @@ export interface IssueApiKeyPayload {
 }
 
 /** สิทธิ์ที่ออกให้กุญแจได้ — มาจาก catalog ฝั่ง backend ไม่ใช่รายการเขียนมือ. */
-export async function listApiKeyScopes(): Promise<ClientResult<ApiKeyScope[]>> {
-  return adminApi<ApiKeyScope[]>("api-keys/scopes");
+export async function listApiKeyScopes(scope: KeyScope = "company"): Promise<ClientResult<ApiKeyScope[]>> {
+  return keyApi<ApiKeyScope[]>(scope, "api-keys/scopes");
 }
 
 /** กุญแจของบริษัทที่กำลังทำงานอยู่ — ไม่มีค่ากุญแจในคำตอบ มีแต่ prefix. */
-export async function listApiKeys(): Promise<ClientResult<ApiKeyRow[]>> {
-  return adminApi<ApiKeyRow[]>("api-keys");
+export async function listApiKeys(scope: KeyScope = "company"): Promise<ClientResult<ApiKeyRow[]>> {
+  return keyApi<ApiKeyRow[]>(scope, "api-keys");
 }
 
 export async function issueApiKey(
   payload: IssueApiKeyPayload,
+  scope: KeyScope = "company",
 ): Promise<ClientResult<IssuedApiKey>> {
-  return adminApi<IssuedApiKey>("api-keys", {
+  return keyApi<IssuedApiKey>(scope, "api-keys", {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -82,8 +90,9 @@ export async function issueApiKey(
 export async function updateApiKeyScopes(
   id: string,
   scopes: string[],
+  scope: KeyScope = "company",
 ): Promise<ClientResult<ApiKeyRow>> {
-  return adminApi<ApiKeyRow>(`api-keys/${id}/scopes`, {
+  return keyApi<ApiKeyRow>(scope, `api-keys/${id}/scopes`, {
     method: "PATCH",
     body: JSON.stringify({ scopes }),
   });
@@ -91,29 +100,33 @@ export async function updateApiKeyScopes(
 
 export async function revokeApiKey(
   id: string,
+  scope: KeyScope = "company",
 ): Promise<ClientResult<ApiKeyRow>> {
-  return adminApi<ApiKeyRow>(`api-keys/${id}/revoke`, { method: "POST" });
+  return keyApi<ApiKeyRow>(scope, `api-keys/${id}/revoke`, { method: "POST" });
 }
 
 /** ค่าเต็มของกุญแจ — กุญแจที่ออกก่อน 26 ต.ค. 2569 ได้ 422 (ต้องออกใหม่). */
 export async function revealApiKey(
   id: string,
+  scope: KeyScope = "company",
 ): Promise<ClientResult<{ key: string }>> {
-  return adminApi<{ key: string }>(`api-keys/${id}/secret`);
+  return keyApi<{ key: string }>(scope, `api-keys/${id}/secret`);
 }
 
 /** ออกใบใหม่สิทธิ์เดิม แล้วเพิกถอนใบเดิมทันที. */
 export async function rotateApiKey(
   id: string,
+  scope: KeyScope = "company",
 ): Promise<ClientResult<IssuedApiKey>> {
-  return adminApi<IssuedApiKey>(`api-keys/${id}/rotate`, { method: "POST" });
+  return keyApi<IssuedApiKey>(scope, `api-keys/${id}/rotate`, { method: "POST" });
 }
 
 /** route ที่กุญแจใบนี้เรียกได้ครบทุก scope — กุญแจของบริษัทอื่นได้ 404. */
 export async function getApiKeyExamples(
   id: string,
+  scope: KeyScope = "company",
 ): Promise<ClientResult<ApiExample[]>> {
-  return adminApi<ApiExample[]>(`api-keys/${id}/examples`);
+  return keyApi<ApiExample[]>(scope, `api-keys/${id}/examples`);
 }
 
 /** Grouped for `import apiKeys from …` at call sites. */

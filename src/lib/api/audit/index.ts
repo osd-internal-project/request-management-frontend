@@ -19,6 +19,8 @@ export interface AuditQuery {
   /** ISO 8601. */
   from?: string;
   to?: string;
+  /** `/system/audit` only. */
+  company_id?: string;
 }
 
 /**
@@ -30,6 +32,8 @@ export interface AuditQuery {
  */
 export async function getAuditLogs(
   options?: AuditQuery,
+  /** P8: `system` = every company, `/system/audit` (system.audit.read). */
+  scope: "company" | "system" = "company",
 ): Promise<ApiResult<Paginated<AuditLogRow>>> {
   const params = new URLSearchParams();
   params.set("page", String(options?.page ?? 1));
@@ -42,12 +46,14 @@ export async function getAuditLogs(
     "resource_id",
     "from",
     "to",
+    "company_id",
   ] as const) {
     const value = options?.[key];
     if (value) params.set(key, value);
   }
 
-  return apiGet<Paginated<AuditLogRow>>(`/audit-logs?${params.toString()}`);
+  const path = scope === "system" ? "/system/audit" : "/audit-logs";
+  return apiGet<Paginated<AuditLogRow>>(`${path}?${params.toString()}`);
 }
 
 /** Grouped for `import auditApi from …` at call sites. */

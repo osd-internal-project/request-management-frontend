@@ -25,12 +25,16 @@ export interface Session {
     name: string;
     doc_prefix: string;
     is_primary: boolean;
+    /** P6: entered through the system plane, not a membership. */
+    via?: "system";
   }[];
   active_company_id: string;
   roles: string[];
   permissions: string[];
   /** P5 `system.*`, apart from the company's; absent from a backend older than 12 พ.ย. 2569. */
   system_permissions?: string[];
+  /** P6: `system` = working in the active company with its admin role, not as a member. */
+  tenant_access?: "member" | "system";
   /**
    * Whether this person heads any group. Gates the "งานทั้งหมด" screen in the
    * menu — a page that can only ever be empty reads as one that failed.

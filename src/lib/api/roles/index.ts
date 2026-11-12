@@ -13,7 +13,6 @@ import type {
   PermissionRow,
   RoleHolder,
   RoleRow,
-  ScopeRuleRow,
 } from "../types";
 
 /** §5.4 — the catalog is declared in code and read-only here. */
@@ -38,11 +37,6 @@ export async function getRoleHolders(
   return apiGet<RoleHolder[]>(`/admin/roles/${roleId}/users`);
 }
 
-/** SCOPE-01 — takes effect immediately, no deploy (§5.4). */
-export async function getScopeRules(): Promise<ApiResult<ScopeRuleRow[]>> {
-  return apiGet<ScopeRuleRow[]>("/admin/scope-rules");
-}
-
 /** ROLE-03 — re-evaluated on every login and refresh. */
 export async function getKeycloakRoleMappings(): Promise<
   ApiResult<KeycloakRoleMappingRow[]>
@@ -55,7 +49,6 @@ const roles = {
   getPermissions,
   getRoles,
   getRoleHolders,
-  getScopeRules,
   getKeycloakRoleMappings,
 };
 

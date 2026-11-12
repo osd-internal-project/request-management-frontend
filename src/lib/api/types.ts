@@ -934,6 +934,8 @@ export interface ApprovalMatrixVersion {
 export interface AuditLogRow {
   id: string;
   createdAt: string;
+  /** null = a system-level event (no company) */
+  companyId: string | null;
   actorUsername: string | null;
   eventType: string;
   resourceType: string | null;
@@ -1001,14 +1003,6 @@ export interface RoleHolder {
   source: "KEYCLOAK_MAPPING" | "MANUAL";
   grantedAt: string;
   grantedByDisplayName: string | null;
-}
-
-/** SCOPE-01 — (role, resource) → how far that role sees. */
-export interface ScopeRuleRow {
-  id: string;
-  roleId: string;
-  resource: string;
-  scope: "own" | "team" | "department" | "company" | "all";
 }
 
 /** ROLE-03 — a Keycloak client role (`request-form`) bound to a system role, per company. */

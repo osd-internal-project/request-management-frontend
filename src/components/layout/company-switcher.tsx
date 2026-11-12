@@ -1,13 +1,27 @@
 "use client";
 
 import { useState } from "react";
-import { App } from "antd";
+import { App, type SelectProps } from "antd";
 import { messages } from "@/lib/messages";
 import { SearchSelect } from "@/components/ui/search-select";
 
 export interface SwitcherCompany {
   id: string;
   name: string;
+  /** P6: listed under "บริษัทอื่น (ระดับระบบ)" — not a membership. */
+  viaSystem?: boolean;
+}
+
+/** Memberships flat as before; a second group only when the system plane adds companies. */
+function groupedOptions(companies: readonly SwitcherCompany[]): SelectProps["options"] {
+  const toOption = (company: SwitcherCompany) => ({ value: company.id, label: company.name });
+  const mine = companies.filter((company) => !company.viaSystem).map(toOption);
+  const others = companies.filter((company) => company.viaSystem).map(toOption);
+  if (!others.length) return mine;
+  return [
+    { label: messages.nav.myCompanies, options: mine },
+    { label: messages.nav.otherCompaniesGroup, options: others },
+  ];
 }
 
 /**
@@ -83,10 +97,7 @@ export function CompanySwitcher({
         loading={switching}
         onChange={switchTo}
         style={{ minWidth: 150 }}
-        options={companies.map((company) => ({
-          value: company.id,
-          label: company.name,
-        }))}
+        options={groupedOptions(companies)}
       />
     </div>
   );
