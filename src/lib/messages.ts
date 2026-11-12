@@ -1188,6 +1188,8 @@ export const messages = {
     systemUsers: "ผู้ใช้ทุกบริษัท",
     systemCompanies: "บริษัท",
     systemRoles: "Role กลางและ role ระบบ",
+    systemIntegrations: "กุญแจและระบบภายนอกระดับระบบ",
+    systemAudit: "Audit ทั้งระบบ",
     legalGroup: "ฝ่ายกฎหมาย",
     pmGroup: "โครงการ",
     projects: "โครงการ",
@@ -1293,6 +1295,11 @@ export const messages = {
     logout: "ออกจากระบบ",
     company: "บริษัท",
     switchFailed: "สลับบริษัทไม่สำเร็จ",
+    myCompanies: "บริษัทของฉัน",
+    otherCompaniesGroup: "บริษัทอื่น (ระดับระบบ)",
+    /** P6 — shown on every page while working in a company through the system plane. */
+    enteredAsSystem: (company: string) =>
+      `คุณกำลังทำงานใน ${company} ด้วยสิทธิ์ผู้ดูแลของบริษัทนี้ โดยไม่ได้เป็นสมาชิก การเข้าแต่ละครั้งถูกบันทึก`,
   },
 
   phone: {
@@ -1376,6 +1383,23 @@ export const messages = {
     editRolesHint:
       "role ที่มาจาก Keycloak ถอนที่นี่ไม่ได้ — ต้องแก้ที่ Keycloak · ที่ผูกมือไว้ถอนได้",
     fromKeycloak: "จาก Keycloak",
+    /** P7 — per-person GRANT/REVOKE at the foot of the role dialog. */
+    overrides: {
+      title: "สิทธิ์รายคน",
+      hint: "เพิ่มหรือตัดสิทธิ์ให้คนนี้คนเดียวในบริษัทนี้ บันทึกทันทีเมื่อกดบันทึกสิทธิ์ ไม่ต้องกดตกลงด้านล่าง",
+      effective: (total: number, fromRoles: number, plus: number, minus: number) =>
+        `สิทธิ์ที่ได้จริง ${total} (จาก role ${fromRoles}, +${plus} −${minus})`,
+      grant: "เพิ่ม",
+      revoke: "ตัด",
+      until: (date: string) => `ถึง ${date}`,
+      noExpiry: "ไม่มีวันหมดอายุ",
+      lapsed: "(หมดอายุแล้ว)",
+      remove: "ถอน",
+      permission: "เลือกสิทธิ์",
+      reason: "เหตุผล (บังคับ)",
+      expires: "วันหมดอายุ (ไม่บังคับ)",
+      save: "บันทึกสิทธิ์",
+    },
     manualGrant: "ผูกมือ",
     leadFromCompany:
       "เลือกหัวหน้าได้จากคนทั้งบริษัท ไม่จำเป็นต้องเป็นสมาชิกหน่วยงานนี้",
@@ -4970,11 +4994,16 @@ export const messages = {
     title: "Audit Log",
     subtitle: "บันทึกอย่างเดียว แก้ไขหรือลบไม่ได้ (SUP-04)",
     columns: {
+      company: "บริษัท",
       time: "เวลา",
       actor: "ผู้กระทำ",
       event: "เหตุการณ์",
       resource: "รายการ",
     },
+    /** P8 `/system/audit` — a row with no company. */
+    systemLevel: "ระดับระบบ",
+    systemTitle: "Audit ทั้งระบบ",
+    systemSubtitle: "ทุกบริษัทและงานระดับระบบ บันทึกอย่างเดียว แก้ไขหรือลบไม่ได้",
     empty: "ยังไม่มีเหตุการณ์ในช่วงที่เลือก",
 
     /** §11.7 — only the filters the API actually accepts. */

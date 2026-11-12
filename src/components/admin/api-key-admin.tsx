@@ -33,6 +33,7 @@ import {
   type ApiExample,
   type ApiKeyRow,
   type IssuedApiKey,
+  type KeyScope,
 } from "@/lib/api/api-keys";
 import { curlFor } from "@/components/admin/integrations/api-example";
 import { CodeBlock } from "@/components/ui/code-block";
@@ -156,9 +157,12 @@ function ScopeCount({ codes }: { readonly codes: readonly string[] }) {
 export function ApiKeyAdmin({
   integrationId,
   externalApiBase = null,
+  scope = "company",
 }: {
   readonly integrationId?: string;
   readonly externalApiBase?: string | null;
+  /** P8: `system` lists and issues keys no company owns. */
+  readonly scope?: KeyScope;
 } = {}) {
   // antd's `message` from context, so it inherits the app theme.
   const { message, modal } = App.useApp();
@@ -183,7 +187,7 @@ export function ApiKeyAdmin({
   // asynchronous when the effect below calls this on mount.
   const refresh = useCallback(
     () =>
-      listApiKeys().then((result) => {
+      listApiKeys(scope).then((result) => {
         if (!result.ok) return setError(result.message);
         setRows(
           integrationId
@@ -196,7 +200,7 @@ export function ApiKeyAdmin({
 
   useEffect(() => {
     void refresh();
-    void listApiKeyScopes().then((result) => {
+    void listApiKeyScopes(scope).then((result) => {
       if (result.ok) setScopes(result.data.map((scope) => scope.code));
     });
     if (integrationId) {
@@ -230,7 +234,7 @@ export function ApiKeyAdmin({
       scopes: chosenScopes,
       ...(expiresInDays ? { expires_in_days: expiresInDays } : {}),
       ...(integrationId ? { integration_id: integrationId } : {}),
-    });
+    }, scope);
 
     setBusy(false);
     if (!result.ok) {
@@ -261,7 +265,7 @@ export function ApiKeyAdmin({
     if (!editing) return;
 
     setBusy(true);
-    const result = await updateApiKeyScopes(editing.id, editScopes);
+    const result = await updateApiKeyScopes(editing.id, editScopes, scope);
     setBusy(false);
 
     if (!result.ok) {
@@ -275,7 +279,7 @@ export function ApiKeyAdmin({
   }
 
   async function revoke(row: ApiKeyRow) {
-    const result = await revokeApiKey(row.id);
+    const result = await revokeApiKey(row.id, scope);
     if (!result.ok) {
       message.error(result.message);
       return;
@@ -302,7 +306,7 @@ export function ApiKeyAdmin({
       okText: m.rotate,
       okButtonProps: { danger: true },
       onOk: async () => {
-        const result = await rotateApiKey(row.id);
+        const result = await rotateApiKey(row.id, scope);
         if (!result.ok) return void message.error(result.message);
         setIssued(result.data);
         await refresh();
@@ -362,7 +366,7 @@ export function ApiKeyAdmin({
                   <SecretField
                     hint={`${row.prefix}…`}
                     load={() =>
-                      revealApiKey(row.id).then((result) =>
+                      revealApiKey(row.id, scope).then((result) =>
                         unwrap(result, (data) => data.key),
                       )
                     }
@@ -434,6 +438,7 @@ export function ApiKeyAdmin({
         key={examplesFor?.id ?? "closed"}
         row={examplesFor}
         externalApiBase={externalApiBase}
+        scope={scope}
         onClose={() => setExamplesFor(null)}
       />
 
@@ -562,10 +567,12 @@ export function ApiKeyAdmin({
 function ApiExamplesDrawer({
   row,
   externalApiBase,
+  scope,
   onClose,
 }: {
   readonly row: ApiKeyRow | null;
   readonly externalApiBase: string | null;
+  readonly scope: KeyScope;
   readonly onClose: () => void;
 }) {
   const [examples, setExamples] = useState<ApiExample[] | null>(null);
@@ -574,7 +581,7 @@ function ApiExamplesDrawer({
 
   useEffect(() => {
     if (!row) return;
-    void getApiKeyExamples(row.id).then((result) => {
+    void getApiKeyExamples(row.id, scope).then((result) => {
       if (!result.ok) return setError(result.message);
       setExamples(result.data);
       setSelected(result.data[0]?.operationId ?? null);

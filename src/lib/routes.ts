@@ -196,6 +196,8 @@ export const ROUTES = {
   systemUsers: `${HOME_PATH}/system/users`,
   systemCompanies: `${HOME_PATH}/system/companies`,
   systemRoles: `${HOME_PATH}/system/roles`,
+  systemIntegrations: `${HOME_PATH}/system/integrations`,
+  systemAudit: `${HOME_PATH}/system/audit`,
   /** SUP-04 — Audit log */
   adminAudit: `${HOME_PATH}/admin/audit`,
   /** บันทึกกระบวนการ End-to-End 7 ขั้น ที่ OSD Workflow เขียนเข้ามา. */
