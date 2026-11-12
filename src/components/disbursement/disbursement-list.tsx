@@ -9,6 +9,7 @@ import type { DisbursementRow } from "@/lib/api/disbursement";
 import type { Paginated } from "@/lib/api/types";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
+import { pageOf, WORK_PAGE_SIZE } from "@/lib/work-filters";
 import { baht, STATUS_COLOR, thaiDate } from "./format";
 
 const m = messages.disbursement;
@@ -47,16 +48,25 @@ export function DisbursementList({ canSeeAll }: { readonly canSeeAll: boolean })
   const scope: "mine" | "all" =
     !canSeeAll || search.get("scope") === "mine" ? "mine" : "all";
 
-  const key = `${preset}|${kind ?? ""}|${scope}`;
+  // The server pages (P3): asking for 100 rows hid everything after row 100.
+  const page = pageOf(search.get("page") ?? undefined);
+
+  const key = `${preset}|${kind ?? ""}|${scope}|${page}`;
   const [loaded, setLoaded] = useState<{
     key: string;
     rows: DisbursementRow[];
+    total: number;
     error: string | null;
   } | null>(null);
 
   useEffect(() => {
     let live = true;
-    const params = new URLSearchParams({ page_size: "100", scope, ...PRESETS[preset] });
+    const params = new URLSearchParams({
+      page: String(page),
+      page_size: String(WORK_PAGE_SIZE),
+      scope,
+      ...PRESETS[preset],
+    });
     if (kind) params.set("kind", kind);
     void appApi<Paginated<DisbursementRow>>(`disbursements?${params.toString()}`).then(
       (result) => {
@@ -64,6 +74,7 @@ export function DisbursementList({ canSeeAll }: { readonly canSeeAll: boolean })
         setLoaded({
           key,
           rows: result.ok ? result.data.data : [],
+          total: result.ok ? result.data.total : 0,
           error: result.ok ? null : result.message,
         });
       },
@@ -71,12 +82,14 @@ export function DisbursementList({ canSeeAll }: { readonly canSeeAll: boolean })
     return () => {
       live = false;
     };
-  }, [key, preset, kind, scope]);
+  }, [key, preset, kind, scope, page]);
 
   function setParam(name: string, value: string | undefined) {
     const next = new URLSearchParams(search.toString());
     if (value) next.set(name, value);
     else next.delete(name);
+    // A new queue, kind or scope is a new list; its page 1 is where to start.
+    if (name !== "page") next.delete("page");
     router.replace(`${pathname}?${next.toString()}`);
   }
 
@@ -122,7 +135,14 @@ export function DisbursementList({ canSeeAll }: { readonly canSeeAll: boolean })
         dataSource={rows}
         locale={{ emptyText: m.empty }}
         scroll={{ x: 960 }}
-        pagination={rows.length > 20 ? { pageSize: 20 } : false}
+        pagination={{
+          current: page,
+          pageSize: WORK_PAGE_SIZE,
+          total: loaded?.total ?? 0,
+          hideOnSinglePage: true,
+          showSizeChanger: false,
+          onChange: (next) => setParam("page", next > 1 ? String(next) : undefined),
+        }}
         columns={[
           {
             title: m.columns.docNo,

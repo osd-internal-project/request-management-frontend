@@ -10,7 +10,7 @@ import requests from "@/lib/api/requests";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import { can, getSession } from "@/lib/session";
-import { statusFilterArgs } from "@/lib/work-filters";
+import { pageOf, statusFilterArgs, WORK_PAGE_SIZE } from "@/lib/work-filters";
 
 /**
  * §16 หน้าที่ 2 — งานค้างของฉัน. The landing page after login.
@@ -23,21 +23,21 @@ import { statusFilterArgs } from "@/lib/work-filters";
  * One tab, from one result.
  *
  * The count comes from the envelope's `total`, not from how many rows arrived:
- * the page asks for 100, and a queue longer than that would otherwise label
- * itself `100` for ever.
+ * the server sends one page, and the label is the whole queue.
  *
  * A failed call yields an empty tab reading zero — the error banner above the
  * tabs is what says the page is broken, and a tab that renders nothing at all
  * would make three working tabs look like a crash.
  */
-const EMPTY_TAB: WorkTab = { rows: [], total: 0 };
+const EMPTY_TAB: WorkTab = { rows: [], total: 0, page: 1 };
 
 function toTab(
   result: Awaited<ReturnType<typeof requests.getRequests>>,
+  page: number,
 ): WorkTab {
   return result.ok
-    ? { rows: result.data.data, total: result.data.total }
-    : { rows: [], total: 0 };
+    ? { rows: result.data.data, total: result.data.total, page }
+    : { rows: [], total: 0, page };
 }
 
 export default async function MyWorkPage({
@@ -48,10 +48,16 @@ export default async function MyWorkPage({
     type_code?: string;
     q?: string;
     overdue?: string;
+    tab?: string;
+    page?: string;
   }>;
 }) {
   const session = await getSession();
   const query = await searchParams;
+
+  // Only the tab on screen moves off page 1; the others still need their totals.
+  const activeTab = query.tab ?? "involved";
+  const pageFor = (tab: string) => (tab === activeTab ? pageOf(query.page) : 1);
 
   const filters = {
     status: query.status,
@@ -93,7 +99,7 @@ export default async function MyWorkPage({
     type_code: filters.typeCode,
     q: filters.q,
     overdue: filters.overdue,
-    page_size: 100,
+    page_size: WORK_PAGE_SIZE,
   };
 
   /*
@@ -113,10 +119,10 @@ export default async function MyWorkPage({
     awaitingResult,
   ] =
     await Promise.all([
-      readsRequests ? requests.getRequests({ ...filterArgs, view: "involved" }) : null,
-      readsRequests ? requests.getRequests({ ...filterArgs, view: "created" }) : null,
-      readsRequests ? requests.getRequests({ ...filterArgs, view: "incoming" }) : null,
-      decides ? requests.getRequests({ ...filterArgs, view: "approver" }) : null,
+      readsRequests ? requests.getRequests({ ...filterArgs, view: "involved", page: pageFor("involved") }) : null,
+      readsRequests ? requests.getRequests({ ...filterArgs, view: "created", page: pageFor("created") }) : null,
+      readsRequests ? requests.getRequests({ ...filterArgs, view: "incoming", page: pageFor("incoming") }) : null,
+      decides ? requests.getRequests({ ...filterArgs, view: "approver", page: pageFor("approver") }) : null,
       can(session, "request.create") ? requests.getRequestTypes() : null,
       /*
         The badge count, unfiltered on purpose: "you owe three decisions" must
@@ -160,10 +166,10 @@ export default async function MyWorkPage({
       )}
 
       <MyWork
-        involved={involvedResult ? toTab(involvedResult) : EMPTY_TAB}
-        created={createdResult ? toTab(createdResult) : EMPTY_TAB}
-        incoming={incomingResult ? toTab(incomingResult) : EMPTY_TAB}
-        approver={approverResult ? toTab(approverResult) : null}
+        involved={involvedResult ? toTab(involvedResult, pageFor("involved")) : EMPTY_TAB}
+        created={createdResult ? toTab(createdResult, pageFor("created")) : EMPTY_TAB}
+        incoming={incomingResult ? toTab(incomingResult, pageFor("incoming")) : EMPTY_TAB}
+        approver={approverResult ? toTab(approverResult, pageFor("approver")) : null}
         awaiting={awaitingResult?.ok ? awaitingResult.data.total : 0}
         filters={filters}
         types={typesResult?.ok ? typesResult.data : []}
