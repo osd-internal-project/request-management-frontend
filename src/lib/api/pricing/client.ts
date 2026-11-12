@@ -256,12 +256,17 @@ export async function listPricingExceptions(
   return appApi(`pricing/exceptions?${params.toString()}`);
 }
 
-/** CD-206 — a supplier's cost SAP holds for a product, with its date. */
+/**
+ * CD-206 — a supplier's cost for a product, with its date: read from SAP, or
+ * typed in (`manual`) by a company with no ERP connected yet.
+ */
 export interface VendorCost {
+  /** Present on the Pricing list; a `manual` row is edited by it. */
+  id?: string;
   productCode: string;
   vendorCode: string;
   vendorName: string | null;
-  source: "purchase_order" | "special_price";
+  source: "purchase_order" | "special_price" | "manual";
   /** Absent for a viewer who may not see cost. */
   unitCost?: number;
   currency: string;
@@ -282,6 +287,9 @@ export async function lookupVendorCosts(
 
 /** Same words the server stores on the line's cost source. */
 export function vendorCostLabel(cost: VendorCost): string {
+  if (cost.source === "manual") {
+    return `กรอกเอง${cost.docNo ? ` ${cost.docNo}` : ""} · ${cost.vendorName ?? cost.vendorCode}`;
+  }
   const doc =
     cost.source === "purchase_order"
       ? `ใบสั่งซื้อ ${cost.docNo ?? ""}`.trim()
