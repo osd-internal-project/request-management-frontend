@@ -3,6 +3,7 @@ import { apiGet, type ApiResult } from "../core";
 import type {
   MarkupRule,
   PriceStatus,
+  ProductBundle,
   ProductPriceRow,
   QuotationApprovalImpact,
 } from "./client";
@@ -26,6 +27,11 @@ export async function getPrices(query: {
 /** CD-200 — markup rules in priority order. */
 export async function getMarkupRules(): Promise<ApiResult<MarkupRule[]>> {
   return apiGet("pricing/markup-rules");
+}
+
+/** ชุดรายการของ product — every bundle of the company, items priced. */
+export async function getProductBundles(): Promise<ApiResult<ProductBundle[]>> {
+  return apiGet("pricing/product-bundles");
 }
 
 /** CD-203 — the discount's effect on the quotation a price request approves. */

@@ -42,6 +42,7 @@ import { LeadContactsCard } from "./lead-contacts-card";
 import { LeadFilesCard } from "./lead-files-card";
 import { LeadFocusCard } from "./lead-focus-card";
 import { LeadProposalCard } from "./lead-proposal-card";
+import { LeadQuoteItemsCard } from "./lead-quote-items-card";
 import {
   ConvertLeadModal,
   DisqualifyLeadModal,
@@ -153,6 +154,8 @@ export function LeadDetailView({
     research,
     product_suggestions: productSuggestions,
     selected_product: selectedProduct,
+    // the quotation's items, adjusted for this Lead — shown on their own card
+    products: listedProducts,
     ...intake
   } = lead.intakeData ?? {};
 
@@ -470,6 +473,17 @@ export function LeadDetailView({
                     latest={files.find((file) => file.kind === "proposal")}
                     running={running}
                     canStart={editable}
+                  />
+                  <LeadQuoteItemsCard
+                    leadId={lead.id}
+                    product={
+                      (typeof selectedProduct === "string" &&
+                        selectedProduct.trim()) ||
+                      lead.subProduct?.trim() ||
+                      null
+                    }
+                    listed={listedProducts}
+                    canEdit={editable}
                   />
                   <Card
                     size="small"
