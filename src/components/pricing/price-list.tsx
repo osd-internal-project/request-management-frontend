@@ -560,6 +560,7 @@ export function PriceList({
                 </div>
               ) : (
                 <ProductPicker
+                  canAdd={canManage}
                   value={draft.productCode}
                   onPick={(product) =>
                     setDraft({

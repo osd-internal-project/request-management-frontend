@@ -356,6 +356,7 @@ export function VendorCostList({ canManage }: { canManage: boolean }) {
                 </div>
               ) : (
                 <ProductPicker
+                  canAdd={canManage}
                   value={draft.productCode}
                   onPick={(product) =>
                     setDraft({ ...draft, productCode: product.code })

@@ -17,12 +17,28 @@ export interface ProductRow {
   active: boolean;
 }
 
-export async function searchProducts(search: string): Promise<ClientResult<ProductRow[]>> {
-  const query = search.trim() ? `?search=${encodeURIComponent(search.trim())}` : "";
+export async function searchProducts(
+  search: string,
+): Promise<ClientResult<ProductRow[]>> {
+  const query = search.trim()
+    ? `?search=${encodeURIComponent(search.trim())}`
+    : "";
   return appApi<ProductRow[]>(`products${query}`);
 }
 
+/** ยังไม่มี ERP — ฝ่ายราคาเพิ่มสินค้าเอง (สิทธิ์ `pricing.price.manage`). */
+export async function createProduct(input: {
+  code: string;
+  name: string;
+  unit?: string;
+}): Promise<ClientResult<ProductRow>> {
+  return appApi<ProductRow>("products", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
 /** Grouped for `import products from …` at call sites. */
-const products = { searchProducts };
+const products = { searchProducts, createProduct };
 
 export default products;
