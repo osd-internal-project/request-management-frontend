@@ -1,7 +1,7 @@
 import { Alert } from "antd";
 import { Info, RefreshCw } from "lucide-react";
 import { loginErrorMessage, messages } from "@/lib/messages";
-import { AUTH_LOGIN_PATH } from "@/lib/routes";
+import { AUTH_LOGIN_PATH, USER_SUSPENDED_REASON } from "@/lib/routes";
 
 /**
  * The one screen shown in place of Keycloak's login form.
@@ -22,7 +22,9 @@ export default async function ReconnectPage({
   searchParams: Promise<{ error?: string; from?: string }>;
 }) {
   const { error, from } = await searchParams;
-  const errorMessage = loginErrorMessage(error);
+  const suspended = error === USER_SUSPENDED_REASON;
+  const errorMessage = suspended ? null : loginErrorMessage(error);
+  const copy = suspended ? messages.login.suspended : messages.login.reconnect;
 
   const retryHref = from
     ? `${AUTH_LOGIN_PATH}?from=${encodeURIComponent(from)}`
@@ -33,10 +35,10 @@ export default async function ReconnectPage({
       <div className="w-full max-w-[546px]">
         <header className="mb-8 text-left">
           <h1 className="text-[32px] leading-tight font-bold tracking-[-0.035em] text-[#28323c]">
-            {messages.login.reconnect.title}
+            {copy.title}
           </h1>
           <p className="mt-4 text-[18px] leading-7 text-[#5a6875]">
-            {messages.login.reconnect.subtitle}
+            {copy.subtitle}
           </p>
         </header>
 
@@ -49,22 +51,26 @@ export default async function ReconnectPage({
           />
         )}
 
-        <a
-          href={retryHref}
-          className="flex min-h-[58px] w-full items-center justify-center gap-4 rounded-xl bg-[#3B82F6] px-6 text-[18px] font-bold text-white transition-colors hover:bg-[#2563EB] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3B82F6]"
-        >
-          <RefreshCw className="size-6" strokeWidth={2.25} aria-hidden="true" />
-          <span>{messages.login.reconnect.retryButton}</span>
-        </a>
+        {!suspended && (
+          <>
+            <a
+              href={retryHref}
+              className="flex min-h-[58px] w-full items-center justify-center gap-4 rounded-xl bg-[#3B82F6] px-6 text-[18px] font-bold text-white transition-colors hover:bg-[#2563EB] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3B82F6]"
+            >
+              <RefreshCw className="size-6" strokeWidth={2.25} aria-hidden="true" />
+              <span>{messages.login.reconnect.retryButton}</span>
+            </a>
 
-        <div className="mt-5 flex gap-4 rounded-xl bg-[#e7eef4] px-5 py-5 text-[#3d5a70]">
-          <Info className="mt-0.5 size-6 shrink-0" strokeWidth={2} aria-hidden="true" />
-          <p className="text-[16px] leading-7">{messages.login.reconnect.hint}</p>
-        </div>
+            <div className="mt-5 flex gap-4 rounded-xl bg-[#e7eef4] px-5 py-5 text-[#3d5a70]">
+              <Info className="mt-0.5 size-6 shrink-0" strokeWidth={2} aria-hidden="true" />
+              <p className="text-[16px] leading-7">{messages.login.reconnect.hint}</p>
+            </div>
+          </>
+        )}
 
         <div className="mt-9 border-t border-[#ddd8d2] pt-6 text-[16px] leading-7 text-[#7b8792]">
           <p>
-            {messages.login.reconnect.contactPrefix}{" "}
+            {copy.contactPrefix}{" "}
             <a
               href="mailto:it-support@company.co.th"
               className="font-medium text-[#3d5d77] underline underline-offset-2"

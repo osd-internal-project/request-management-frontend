@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import type { Session } from "./session-shape";
 import {
   AUTH_COOKIE,
@@ -7,6 +8,7 @@ import {
   companyHeader,
   USER_SERVICE_URL,
 } from "./backend";
+import { SUSPENDED_LOGOUT_PATH } from "./routes";
 
 
 /**
@@ -44,8 +46,9 @@ async function fetchMe(
   token: string,
   companyId: string | undefined,
 ): Promise<Session | null> {
+  let response: Response;
   try {
-    const response = await fetch(`${USER_SERVICE_URL}${BACKEND_PREFIX}/auth/me`, {
+    response = await fetch(`${USER_SERVICE_URL}${BACKEND_PREFIX}/auth/me`, {
       headers: {
         Authorization: `Bearer ${token}`,
         ...companyHeader(companyId),
@@ -54,10 +57,31 @@ async function fetchMe(
       // has to disappear here within one token lifetime (ROLE-03).
       cache: "no-store",
     });
+  } catch {
+    return null;
+  }
 
-    if (!response.ok) return null;
+  // Signing in again cannot help a suspended account, so say why instead of
+  // sending the browser back to Keycloak. Outside the try: redirect() throws.
+  if (response.status === 403 && (await errorCodeOf(response)) === "USER_SUSPENDED") {
+    redirect(SUSPENDED_LOGOUT_PATH);
+  }
 
+  if (!response.ok) return null;
+
+  try {
     return (await response.json()) as Session;
+  } catch {
+    return null;
+  }
+}
+
+async function errorCodeOf(response: Response): Promise<string | null> {
+  try {
+    const body: unknown = await response.json();
+    return typeof body === "object" && body !== null && "code" in body
+      ? String(body.code)
+      : null;
   } catch {
     return null;
   }
