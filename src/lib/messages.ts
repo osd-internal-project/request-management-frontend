@@ -8346,7 +8346,17 @@ export const messages = {
         removeLine: "ลบ",
         noLines: "ยังไม่มีรายการ — เพิ่มอย่างน้อยหนึ่งรายการก่อนยื่น",
         productPlaceholder: "ค้นรหัส/ชื่อสินค้า (ว่าง = บริการ)",
-        productNotFound: "ไม่พบในรายการสินค้าจาก SAP",
+        productNotFound: "ไม่พบในรายการสินค้า",
+        productAdd: (code: string) =>
+          code ? `+ เพิ่มสินค้า "${code}"` : "+ เพิ่มสินค้าใหม่",
+        productAddTitle: "เพิ่มสินค้า (กรอกเอง)",
+        productAddHint:
+          "ใช้ขณะยังไม่ได้เชื่อม SAP — เมื่อ SAP มีรหัสเดียวกัน ข้อมูลจาก SAP จะแทนที่",
+        productCode: "รหัสสินค้า (ไม่มีช่องว่าง)",
+        productName: "ชื่อสินค้า",
+        productUnit: "หน่วย (ถ้ามี)",
+        productSave: "เพิ่มสินค้า",
+        productAdded: (code: string) => `เพิ่มสินค้า ${code} แล้ว`,
         /** CD-194 */
         priceFilled: (code: string, price: string, source: string) =>
           `เติม${source}ของ ${code}: ${price}`,
