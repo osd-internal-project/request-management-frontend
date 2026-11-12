@@ -38,7 +38,42 @@ export async function createProduct(input: {
   });
 }
 
+/** สินค้าที่กรอกเอง — มี `id` สำหรับแก้ชื่อ/ลบ. */
+export interface ManualProduct extends ProductRow {
+  id: string;
+}
+
+export async function listManualProducts(): Promise<
+  ClientResult<ManualProduct[]>
+> {
+  return appApi<ManualProduct[]>("products/manual");
+}
+
+/** แก้ชื่อ/หน่วย — รหัสแก้ไม่ได้ (ราคา ต้นทุน และเอกสารอ้างรหัส). */
+export async function updateProduct(
+  id: string,
+  input: { name: string; unit: string },
+): Promise<ClientResult<ManualProduct>> {
+  return appApi<ManualProduct>(`products/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
+}
+
+/** ลบ = เลิกขาย: หายจากช่องค้น เอกสารเก่ายังอ้างรหัสได้. */
+export async function removeProduct(
+  id: string,
+): Promise<ClientResult<{ id: string }>> {
+  return appApi<{ id: string }>(`products/${id}`, { method: "DELETE" });
+}
+
 /** Grouped for `import products from …` at call sites. */
-const products = { searchProducts, createProduct };
+const products = {
+  searchProducts,
+  createProduct,
+  listManualProducts,
+  updateProduct,
+  removeProduct,
+};
 
 export default products;
