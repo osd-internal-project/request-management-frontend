@@ -38,6 +38,7 @@ import {
 } from "@ant-design/icons";
 import { IntakeDataList } from "./intake-data-list";
 import { LeadFieldsCard, type LeadField } from "./lead-fields-card";
+import { LeadContactsCard } from "./lead-contacts-card";
 import { LeadFilesCard } from "./lead-files-card";
 import { LeadFocusCard } from "./lead-focus-card";
 import { LeadProposalCard } from "./lead-proposal-card";
@@ -424,45 +425,12 @@ export function LeadDetailView({
             )}
           </Card>
 
-          <Card
-            size="small"
-            title={md.contactCard.all(lead.contactName ? "1" : "0")}
-            extra={
-              editable ? (
-                <Button
-                  type="link"
-                  size="small"
-                  icon={<PlusOutlined />}
-                  onClick={() => setEditing(true)}
-                />
-              ) : null
-            }
-          >
-            {lead.contactName ? (
-              <div className="flex items-start gap-2">
-                <Avatar size="small">{initials(lead.contactName)}</Avatar>
-                <div className="min-w-0 text-xs">
-                  <div className="font-medium">
-                    {lead.contactName}{" "}
-                    <Tooltip title={md.contactCard.primary}>
-                      <span className="text-amber-500">★</span>
-                    </Tooltip>
-                  </div>
-                  {lead.contactPosition && (
-                    <Text type="secondary" className="block">
-                      {lead.contactPosition}
-                    </Text>
-                  )}
-                  {lead.email && <div className="truncate">{lead.email}</div>}
-                  {lead.phone && <div>{lead.phone}</div>}
-                </div>
-              </div>
-            ) : (
-              <Text type="secondary" className="text-xs">
-                {md.contactCard.noContact}
-              </Text>
-            )}
-          </Card>
+          <LeadContactsCard
+            leadId={lead.id}
+            leadName={lead.name}
+            contacts={lead.contacts ?? []}
+            editable={editable}
+          />
 
           <LeadFieldsCard
             title={md.sections.company}

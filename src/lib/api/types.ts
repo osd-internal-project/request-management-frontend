@@ -1323,6 +1323,17 @@ export interface OpportunityActivity extends SalesActivity {
 }
 
 /** `GET /leads/:id` — หน้ารายละเอียด Lead. */
+/** ผู้ติดต่อของ Lead — ผู้ติดต่อหลักไม่มีแถวของตัวเอง id คือคำว่า `primary` */
+export interface LeadContact {
+  id: string;
+  /** `null` = ผู้ติดต่อหลักที่มีแค่เบอร์หรืออีเมล */
+  name: string | null;
+  position: string | null;
+  phone: string | null;
+  email: string | null;
+  isPrimary: boolean;
+}
+
 export interface LeadDetail extends LeadRow {
   customer: {
     id: string;
@@ -1337,6 +1348,8 @@ export interface LeadDetail extends LeadRow {
     stage: OpportunityStage;
   } | null;
   owner: { id: string; displayName: string } | null;
+  /** ผู้ติดต่อทั้งหมด — หลักก่อน (`id = "primary"`) แล้วตามด้วยคนที่เพิ่มทีหลัง */
+  contacts: LeadContact[];
   activities: LeadActivity[];
   /** CD-85 — the target account this lead came from. */
   targetAccount: {
