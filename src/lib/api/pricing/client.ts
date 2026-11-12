@@ -126,6 +126,36 @@ export interface MarkupRule {
   active: boolean;
 }
 
+/** ชุดรายการของ product (12 พ.ย. 2569) — one item of a bundle, as the screens read it. */
+export interface ProductBundleItem {
+  productCode: string;
+  /** null = the code is not (or no longer) in the SAP catalog. */
+  productName: string | null;
+  unit: string | null;
+  quantity: number;
+  termMonths: number | null;
+  /** false = always quoted; true = the salesperson adds it on the Lead. */
+  optional: boolean;
+  /** Standard price in effect today (THB); null = none. */
+  unitPrice: number | null;
+  priceModel: string | null;
+}
+
+export interface ProductBundle {
+  id: string;
+  name: string;
+  note: string;
+  active: boolean;
+  items: ProductBundleItem[];
+}
+
+/** The bundle in use for a product name on a Lead — null when none is set up. */
+export async function matchProductBundle(
+  name: string,
+): Promise<ClientResult<{ bundle: ProductBundle | null }>> {
+  return appApi(`pricing/product-bundles/match?name=${encodeURIComponent(name)}`);
+}
+
 export interface MarkupOptions {
   groups: { code: string; name: string }[];
   segments: { id: string; label: string }[];
