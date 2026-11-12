@@ -137,6 +137,8 @@ export const ROUTES = {
   pricingPrices: `${HOME_PATH}/pricing/prices`,
   /** CD-200 — markup rules. */
   pricingMarkup: `${HOME_PATH}/pricing/markup`,
+  /** ชุดรายการของ product — item ที่ใบเสนอราคาของ product หนึ่งต้องมี. */
+  pricingBundles: `${HOME_PATH}/pricing/bundles`,
   /** CD-205 — ทะเบียนข้อยกเว้นด้านราคา. */
   pricingExceptions: `${HOME_PATH}/pricing/exceptions`,
   /** CD-208 — วิเคราะห์ราคาและกำไร. */

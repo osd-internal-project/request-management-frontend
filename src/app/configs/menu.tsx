@@ -58,6 +58,7 @@ export type MenuIconKey =
   | "project"
   | "pricingPrice"
   | "pricingMarkup"
+  | "pricingBundle"
   | "pricingException"
   | "pricingAnalytics"
   | "hrLaborRate"
@@ -331,6 +332,14 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     label: messages.nav.pricingMarkup,
     href: ROUTES.pricingMarkup,
     icon: "pricingMarkup",
+    permissions: ["pricing.price.read", "pricing.price.manage"],
+    group: messages.nav.pricingGroup,
+  },
+  /** ชุดรายการของ product (12 พ.ย. 2569) — which SAP items a product's quotation carries. */
+  {
+    label: messages.nav.pricingBundles,
+    href: ROUTES.pricingBundles,
+    icon: "pricingBundle",
     permissions: ["pricing.price.read", "pricing.price.manage"],
     group: messages.nav.pricingGroup,
   },
