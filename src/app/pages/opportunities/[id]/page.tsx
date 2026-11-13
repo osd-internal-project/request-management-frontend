@@ -135,6 +135,8 @@ export default async function OpportunityDetailPage({
       {/* why the sales workflow stopped (11 พ.ย. 2569) */}
       <SalesAutomationCard
         status={automationResult.ok ? automationResult.data : null}
+        target={{ kind: "opportunities", id: opportunityResult.data.id }}
+        canStart={canManage}
       />
       {/* CD-205 — this customer's past pricing exceptions, on other deals. */}
       <PastPricingExceptions opportunityId={opportunityResult.data.id} />

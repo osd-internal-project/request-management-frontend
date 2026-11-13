@@ -95,6 +95,9 @@ export interface SalesAutomationStatus {
     label: string;
     ok: boolean;
     checks: SalesAutomationCheck[];
+    /** กด "เริ่ม" ขั้นนี้จากการ์ดได้ — ของที่ต้องมีครบและไม่มีรอบที่กำลังเริ่ม */
+    can_start: boolean;
+    start_note: string | null;
   }[];
 }
 
