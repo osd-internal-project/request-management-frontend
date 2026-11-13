@@ -10,6 +10,7 @@ import {
   Checkbox,
   InputNumber,
   Popconfirm,
+  Select,
   Table,
   Tag,
 } from "antd";
@@ -18,6 +19,7 @@ import Text from "antd/es/typography/Text";
 import { ProductPicker } from "@/components/crm/quotations/product-picker";
 import { appApi } from "@/lib/api/client";
 import {
+  getProductBundleOptions,
   matchProductBundle,
   type ProductBundle,
 } from "@/lib/api/pricing/client";
@@ -70,18 +72,23 @@ const money = (value: number) =>
 /**
  * รายการในใบเสนอราคา (12 พ.ย. 2569) — what a quotation for this Lead will
  * carry: the Lead's own list when the salesperson adjusted it, else the
- * mandatory items of the bundle of its product. Adjusting writes
+ * mandatory items of the bundle picked on this card
+ * (`intakeData.selected_bundle`, 13 พ.ย. 2569 — one product can have a bundle
+ * per size), else of the bundle named after its product. Adjusting writes
  * `intakeData.products`; "use the bundle" drops that key again.
  */
 export function LeadQuoteItemsCard({
   leadId,
   product,
+  bundleName,
   listed: rawListed,
   canEdit,
 }: {
   readonly leadId: string;
   /** The product picked on the proposal card, else Sub Product. */
   readonly product: string | null;
+  /** The bundle picked for this Lead — wins over the product's name. */
+  readonly bundleName: string | null;
   readonly listed: unknown;
   readonly canEdit: boolean;
 }) {
@@ -92,18 +99,40 @@ export function LeadQuoteItemsCard({
   const [nextKey, setNextKey] = useState(0);
   const [busy, setBusy] = useState(false);
 
+  const [options, setOptions] = useState<string[]>([]);
+
   useEffect(() => {
     let live = true;
-    if (!product) return;
-    void matchProductBundle(product).then((result) => {
-      if (live) setBundle(result.ok ? result.data.bundle : null);
+    // the same order the backend reads: the picked bundle, else the product's
+    const names = [bundleName, product].filter(
+      (name): name is string => !!name,
+    );
+    void (async () => {
+      let found: ProductBundle | null = null;
+      for (const name of names) {
+        const result = await matchProductBundle(name);
+        found = result.ok ? result.data.bundle : null;
+        if (found) break;
+      }
+      if (live) setBundle(found);
+    })();
+    return () => {
+      live = false;
+    };
+  }, [bundleName, product]);
+
+  useEffect(() => {
+    let live = true;
+    if (!canEdit) return;
+    void getProductBundleOptions().then((result) => {
+      if (live && result.ok) setOptions(result.data.names);
     });
     return () => {
       live = false;
     };
-  }, [product]);
+  }, [canEdit]);
 
-  const inUse = product ? bundle : null;
+  const inUse = bundleName || product ? bundle : null;
   const listed = listedOf(rawListed);
   const own = listed.length > 0;
   const known = new Map(
@@ -166,11 +195,14 @@ export function LeadQuoteItemsCard({
     );
   }
 
-  async function write(products: unknown, done: string) {
+  const write = (products: unknown, done: string) =>
+    patchIntake({ products }, done);
+
+  async function patchIntake(data: Record<string, unknown>, done: string) {
     setBusy(true);
     const result = await appApi(`leads/${leadId}/intake-data`, {
       method: "PATCH",
-      body: JSON.stringify({ data: { products } }),
+      body: JSON.stringify({ data }),
     });
     setBusy(false);
     if (!result.ok) {
@@ -242,6 +274,30 @@ export function LeadQuoteItemsCard({
       }
     >
       <div className="flex flex-col gap-3">
+        {canEdit && !editing && options.length > 0 && (
+          <label className="flex flex-wrap items-center gap-2">
+            <Text type="secondary">{mq.bundle}</Text>
+            <Select
+              className="min-w-64 flex-1"
+              size="small"
+              showSearch
+              allowClear={!!bundleName}
+              disabled={busy}
+              placeholder={mq.bundlePlaceholder}
+              value={inUse?.name}
+              options={options.map((name) => ({ value: name, label: name }))}
+              onChange={(name?: string) =>
+                void patchIntake(
+                  { selected_bundle: name ?? null },
+                  name ? mq.bundleSaved : mq.bundleCleared,
+                )
+              }
+            />
+          </label>
+        )}
+        {!editing && own && bundleName && (
+          <Text type="secondary">{mq.bundleOverridden}</Text>
+        )}
         {!editing && rows.length === 0 && (
           <Text type="secondary">
             {product ? mq.noBundle(product) : mq.noProduct}

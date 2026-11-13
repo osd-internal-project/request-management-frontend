@@ -154,6 +154,8 @@ export function LeadDetailView({
     research,
     product_suggestions: productSuggestions,
     selected_product: selectedProduct,
+    // the bundle picked for this Lead — its own control on the quote-items card
+    selected_bundle: selectedBundle,
     // the quotation's items, adjusted for this Lead — shown on their own card
     products: listedProducts,
     ...intake
@@ -480,6 +482,11 @@ export function LeadDetailView({
                       (typeof selectedProduct === "string" &&
                         selectedProduct.trim()) ||
                       lead.subProduct?.trim() ||
+                      null
+                    }
+                    bundleName={
+                      (typeof selectedBundle === "string" &&
+                        selectedBundle.trim()) ||
                       null
                     }
                     listed={listedProducts}

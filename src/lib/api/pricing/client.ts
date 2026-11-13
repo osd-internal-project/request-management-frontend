@@ -156,6 +156,13 @@ export async function matchProductBundle(
   return appApi(`pricing/product-bundles/match?name=${encodeURIComponent(name)}`);
 }
 
+/** The bundles a salesperson can pick for a Lead — active ones, by name. */
+export async function getProductBundleOptions(): Promise<
+  ClientResult<{ names: string[] }>
+> {
+  return appApi("pricing/product-bundles/options");
+}
+
 export interface MarkupOptions {
   groups: { code: string; name: string }[];
   segments: { id: string; label: string }[];
