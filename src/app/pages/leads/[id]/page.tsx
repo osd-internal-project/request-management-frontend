@@ -61,6 +61,8 @@ export default async function LeadDetailPage({
     <div className="flex flex-col gap-4">
       <SalesAutomationCard
         status={automationResult.ok ? automationResult.data : null}
+        target={{ kind: "leads", id }}
+        canStart={canManage}
       />
       <LeadDetailView
         lead={leadResult.data}

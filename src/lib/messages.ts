@@ -7748,11 +7748,16 @@ export const messages = {
         automation: {
           title: "งานขายอัตโนมัติ",
           blocked: "workflow งานขายไม่ทำงาน",
-          blockedHint: "แก้ตามรายการด้านล่าง — ระบบไม่เริ่ม workflow ซ้ำเอง ถ้าหยุดไปแล้วให้ผู้ดูแล workflow ทำต่อหรือทำเอง",
+          blockedHint: "แก้ตามรายการด้านล่าง — ระบบไม่เริ่ม workflow ซ้ำเอง แก้ครบแล้วกด เริ่ม ที่ขั้นนั้น หรือทำต่อเอง",
           ready: "พร้อมทำงาน",
           stopped: (when: string) => `หยุดเมื่อ ${when}`,
           howToFix: "วิธีแก้",
           details: "สิ่งที่แต่ละขั้นต้องมี",
+          start: "เริ่ม",
+          startConfirmTitle: (step: string) => `เริ่ม workflow ของขั้นนี้อีกครั้ง?\n${step}`,
+          startConfirmBody: "workflow จะทำขั้นนี้ใหม่ตั้งแต่ต้น — ถ้ารอบก่อนส่งอีเมลหรือใบเสนอราคาไปแล้ว ลูกค้าจะได้รับซ้ำ",
+          startQueued: "สั่งเริ่มแล้ว — workflow จะเริ่มภายในไม่กี่วินาที",
+          startableHint: "แก้ครบแล้วกด เริ่ม ที่ขั้นนั้นใน \"สิ่งที่แต่ละขั้นต้องมี\" เพื่อให้ workflow ทำงานอีกครั้ง",
           actions: {
             send_lead_email: "ส่งอีเมลขอบคุณ + proposal",
             convert_lead: "แปลงเป็นโอกาสการขาย",
