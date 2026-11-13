@@ -33,6 +33,15 @@ interface DraftItem {
   quantity: number | null;
   termMonths: number | null;
   optional: boolean;
+  fixedQuantity: boolean;
+}
+
+interface DraftQuestion {
+  row: number;
+  /** kept so answers already collected stay tied to the question */
+  key?: string;
+  question: string;
+  hints: string;
 }
 
 interface Draft {
@@ -41,6 +50,7 @@ interface Draft {
   note: string;
   active: boolean;
   items: DraftItem[];
+  questions: DraftQuestion[];
 }
 
 const money = (value: number) =>
@@ -91,10 +101,17 @@ export function BundleList({
     quantity: 1,
     termMonths: null,
     optional: false,
+    fixedQuantity: false,
   });
 
   function openNew() {
-    setDraft({ name: "", note: "", active: true, items: [blankItem(0)] });
+    setDraft({
+      name: "",
+      note: "",
+      active: true,
+      items: [blankItem(0)],
+      questions: [],
+    });
     setNextKey(1);
   }
 
@@ -111,9 +128,29 @@ export function BundleList({
         quantity: item.quantity,
         termMonths: item.termMonths,
         optional: item.optional,
+        fixedQuantity: item.fixedQuantity ?? false,
+      })),
+      questions: (row.requirements ?? []).map((question, index) => ({
+        row: index,
+        key: question.key,
+        question: question.question,
+        hints: question.hints.join(", "),
       })),
     });
-    setNextKey(row.items.length);
+    setNextKey(Math.max(row.items.length, row.requirements?.length ?? 0));
+  }
+
+  function patchQuestion(row: number, patch: Partial<DraftQuestion>) {
+    setDraft((current) =>
+      current
+        ? {
+            ...current,
+            questions: current.questions.map((question) =>
+              question.row === row ? { ...question, ...patch } : question,
+            ),
+          }
+        : current,
+    );
   }
 
   function patchItem(key: number, patch: Partial<DraftItem>) {
@@ -148,7 +185,18 @@ export function BundleList({
         quantity: item.quantity,
         term_months: item.termMonths,
         optional: item.optional,
+        fixed_quantity: item.fixedQuantity,
       })),
+      requirements: draft.questions
+        .filter((question) => question.question.trim())
+        .map((question) => ({
+          ...(question.key ? { key: question.key } : {}),
+          question: question.question.trim(),
+          hints: question.hints
+            .split(",")
+            .map((hint) => hint.trim())
+            .filter(Boolean),
+        })),
     });
     const result = draft.id
       ? await appApi(`pricing/product-bundles/${draft.id}`, {
@@ -239,8 +287,16 @@ export function BundleList({
                     key: "quantity",
                     width: 110,
                     align: "right",
-                    render: (_: unknown, item) =>
-                      `${item.quantity}${item.unit ? ` ${item.unit}` : ""}`,
+                    render: (_: unknown, item) => (
+                      <Space size={4}>
+                        {`${item.quantity}${item.unit ? ` ${item.unit}` : ""}`}
+                        {item.fixedQuantity && (
+                          <Tooltip title={mb.fixedHint}>
+                            <Tag>{mb.fixedTag}</Tag>
+                          </Tooltip>
+                        )}
+                      </Space>
+                    ),
                   },
                   {
                     title: mb.termMonths,
@@ -269,7 +325,7 @@ export function BundleList({
             {
               title: mb.items,
               key: "items",
-              width: 170,
+              width: 260,
               render: (_: unknown, row) => {
                 const extra = row.items.filter((item) => item.optional).length;
                 const unpriced = row.items.some(
@@ -278,6 +334,11 @@ export function BundleList({
                 return (
                   <Space size={6}>
                     {mb.itemCount(row.items.length - extra, extra)}
+                    {row.requirements?.length > 0 && (
+                      <Tag color="blue">
+                        {mb.questionCount(row.requirements.length)}
+                      </Tag>
+                    )}
                     {unpriced && (
                       <Tooltip title={mb.noPriceHint}>
                         <Tag color="orange">{mb.noPrice}</Tag>
@@ -372,7 +433,7 @@ export function BundleList({
                 size="small"
                 dataSource={draft.items}
                 pagination={false}
-                scroll={{ x: 700 }}
+                scroll={{ x: 800 }}
                 columns={[
                   {
                     title: mb.product,
@@ -445,6 +506,22 @@ export function BundleList({
                     ),
                   },
                   {
+                    title: (
+                      <Tooltip title={mb.fixedHint}>{mb.fixedSwitch}</Tooltip>
+                    ),
+                    key: "fixed",
+                    width: 100,
+                    render: (_: unknown, item) => (
+                      <Switch
+                        size="small"
+                        checked={item.fixedQuantity}
+                        onChange={(fixedQuantity) =>
+                          patchItem(item.key, { fixedQuantity })
+                        }
+                      />
+                    ),
+                  },
+                  {
                     key: "remove",
                     width: 44,
                     render: (_: unknown, item) => (
@@ -486,6 +563,77 @@ export function BundleList({
                 {filled.length > 0 && !hasMain && (
                   <Text type="danger">{mb.needMain}</Text>
                 )}
+              </div>
+            </div>
+            <div>
+              <Text strong>{mb.requirements}</Text>
+              <div>
+                <Text type="secondary">{mb.requirementsHint}</Text>
+              </div>
+              <div className="mt-2 flex flex-col gap-2">
+                {draft.questions.map((question) => (
+                  <div
+                    key={question.row}
+                    className="grid gap-2 sm:grid-cols-[1fr_260px_auto]"
+                  >
+                    <Input
+                      maxLength={300}
+                      aria-label={mb.question}
+                      placeholder={mb.questionPlaceholder}
+                      value={question.question}
+                      onChange={(event) =>
+                        patchQuestion(question.row, {
+                          question: event.target.value,
+                        })
+                      }
+                    />
+                    <Tooltip title={mb.hintsHint}>
+                      <Input
+                        aria-label={mb.hints}
+                        placeholder={mb.hintsPlaceholder}
+                        value={question.hints}
+                        onChange={(event) =>
+                          patchQuestion(question.row, {
+                            hints: event.target.value,
+                          })
+                        }
+                      />
+                    </Tooltip>
+                    <Button
+                      type="text"
+                      danger
+                      icon={<DeleteOutlined />}
+                      aria-label={mb.removeQuestion}
+                      onClick={() =>
+                        setDraft({
+                          ...draft,
+                          questions: draft.questions.filter(
+                            (row) => row.row !== question.row,
+                          ),
+                        })
+                      }
+                    />
+                  </div>
+                ))}
+                <div>
+                  <Button
+                    size="small"
+                    icon={<PlusOutlined />}
+                    disabled={draft.questions.length >= 15}
+                    onClick={() => {
+                      setDraft({
+                        ...draft,
+                        questions: [
+                          ...draft.questions,
+                          { row: nextKey, question: "", hints: "" },
+                        ],
+                      });
+                      setNextKey(nextKey + 1);
+                    }}
+                  >
+                    {mb.addQuestion}
+                  </Button>
+                </div>
               </div>
             </div>
             <div>

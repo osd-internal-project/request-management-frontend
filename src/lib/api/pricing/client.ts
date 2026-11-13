@@ -136,6 +136,8 @@ export interface ProductBundleItem {
   termMonths: number | null;
   /** false = always quoted; true = the salesperson adds it on the Lead. */
   optional: boolean;
+  /** true = not multiplied by how many the customer asks for (a one-off fee). */
+  fixedQuantity: boolean;
   /** Standard price in effect today (THB); null = none. */
   unitPrice: number | null;
   priceModel: string | null;
@@ -147,6 +149,15 @@ export interface ProductBundle {
   note: string;
   active: boolean;
   items: ProductBundleItem[];
+  /** What to know from the customer before quoting (13 พ.ย. 2569). */
+  requirements: ProductBundleRequirement[];
+}
+
+export interface ProductBundleRequirement {
+  key: string;
+  question: string;
+  /** words that count as an answer when no AI reads the reply */
+  hints: string[];
 }
 
 /** The bundle in use for a product name on a Lead — null when none is set up. */
