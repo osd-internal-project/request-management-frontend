@@ -11,6 +11,7 @@ import {
 } from "antd";
 import { MenuOutlined } from "@ant-design/icons";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { MenuEntry } from "@/app/configs/menu";
@@ -29,6 +30,7 @@ import { NotificationBell } from "@/components/notifications/notification-bell";
 import { PhoneToggleButton } from "@/components/layout/phone/phone-toggle-button";
 import { PhoneWorkspacePanel } from "@/components/layout/phone/phone-workspace-panel";
 import { messages } from "@/lib/messages";
+import { HOME_PATH } from "@/lib/routes";
 
 const { Header, Content, Footer, Sider } = Layout;
 
@@ -185,8 +187,12 @@ export function AppShell({
           className="max-lg:hidden!"
           classNames={{ body: "flex h-full flex-col" }}
         >
-          <div className="flex h-16 w-full shrink-0 items-center justify-center">
-            <h1 className="text-xl font-bold">{messages.app.name}</h1>
+          <div className="flex h-14 w-full shrink-0 items-center justify-center border-b border-[var(--app-border)]">
+            <h1 className="m-0 text-xl font-bold">
+              <Link href={HOME_PATH} className="text-[var(--app-text)]!">
+                {messages.app.name}
+              </Link>
+            </h1>
           </div>
 
           <ModuleNav
@@ -221,7 +227,7 @@ export function AppShell({
         {/* Spans content and chat, so the chat button stays put in every mode. */}
         <Header
           style={{ padding: 0 }}
-          className="z-10 shrink-0 bg-white shadow-sm"
+          className="z-10 shrink-0 border-b border-[var(--app-border)] bg-white"
         >
           <div className="mx-3 flex h-full items-center justify-between gap-2 md:mx-4">
             <Button
@@ -236,6 +242,14 @@ export function AppShell({
               activeCompanyId={user.activeCompanyId}
             />
             <div className="flex shrink-0 items-center gap-2 md:gap-3">
+              {canUsePhoneWorkspace && (
+                <PhoneToggleButton open={phoneOpen} onClick={togglePhone} />
+              )}
+              <ChatToggleButton open={chat.isOpen} onClick={toggleChat} />
+              <span
+                aria-hidden
+                className="h-6 w-px bg-[var(--app-border)] max-md:hidden"
+              />
               {canReadNotifications && <NotificationBell />}
               <span className="text-sm text-gray-700 max-md:hidden">
                 {user.displayName}
@@ -248,10 +262,6 @@ export function AppShell({
                   {user.displayName.charAt(0)}
                 </Avatar>
               </Dropdown>
-              {canUsePhoneWorkspace && (
-                <PhoneToggleButton open={phoneOpen} onClick={togglePhone} />
-              )}
-              <ChatToggleButton open={chat.isOpen} onClick={toggleChat} />
             </div>
           </div>
         </Header>

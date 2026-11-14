@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { accessMenuItems, type BiMenuDashboard } from "../configs/menu";
 import { AppShell } from "@/components/layout/app-shell";
 import { readChatWidgetConfig } from "@/components/layout/chat/chat-config";
 import { SessionKeeper } from "@/components/layout/session-keeper";
@@ -8,6 +7,7 @@ import {
   SESSION_IDLE_TIMEOUT_SECONDS,
   SESSION_REFRESH_INTERVAL_SECONDS,
 } from "@/lib/backend";
+import { loadMenus } from "@/lib/menus";
 import { SESSION_EXPIRED_PATH } from "@/lib/routes";
 import { canSystem, getSession } from "@/lib/session";
 import type { SystemCompany } from "@/lib/api/types";
@@ -36,17 +36,9 @@ export default async function DashboardLayout({
   // unauthenticated and /login renders.
   if (!session) redirect(SESSION_EXPIRED_PATH);
 
-  // CD-92 v2: the BI entries come from configuration, already filtered per
-  // caller (team visibility) by the backend. A failed fetch just renders the
-  // menu without the BI group — the dashboards themselves still load their
-  // own data when opened.
   // Started before the BI menu so the two backend reads overlap.
   const chatWidget = readChatWidgetConfig();
-  let biDashboards: BiMenuDashboard[] = [];
-  if (session.permissions.includes("report.dashboard.read")) {
-    const menu = await apiGet<{ dashboards: BiMenuDashboard[] }>("/bi/menu");
-    if (menu.ok) biDashboards = menu.data.dashboards;
-  }
+  const menus = await loadMenus(session);
 
   let otherCompanies: SystemCompany[] = [];
   if (canSystem(session, "system.tenant.read")) {
@@ -75,7 +67,7 @@ export default async function DashboardLayout({
         ],
         enteredAsSystem: session.tenant_access === "system",
       }}
-      menus={accessMenuItems(session, biDashboards)}
+      menus={menus}
       canReadNotifications={session.permissions.includes("notification.read")}
       canUsePhoneWorkspace={session.permissions.includes("phone.workspace.use")}
       chatWidget={await chatWidget}
