@@ -152,6 +152,7 @@ export const CORE_SERVICE_PREFIXES = [
   // P8: system-owned keys live with the company ones, in core-service.
   "/system/api-keys",
   "/system/integrations",
+  "/system/outbound-connections",
   "/admin/webhooks",
   "/admin/integrations",
   "/admin/outbound-connections",

@@ -32,6 +32,7 @@ import {
   listApiKeys,
   type ApiExample,
   type ApiKeyRow,
+  type KeyScope,
 } from "@/lib/api/api-keys";
 import {
   createOutboundConnection,
@@ -68,10 +69,13 @@ export function OutboundConnectionAdmin({
   integrationId,
   externalApiBase,
   onChanged,
+  scope = "company",
 }: {
   integrationId: string;
   externalApiBase: string | null;
   onChanged: () => void;
+  /** `system` = hub ระดับระบบ (การเชื่อมต่อกลาง) */
+  scope?: KeyScope;
 }) {
   const { message } = App.useApp();
   const [rows, setRows] = useState<OutboundConnectionRow[]>([]);
@@ -83,8 +87,8 @@ export function OutboundConnectionAdmin({
   const load = useCallback(
     () =>
       Promise.all([
-        listOutboundConnections(integrationId),
-        listAgentActions(),
+        listOutboundConnections(integrationId, scope),
+        listAgentActions(scope),
       ]).then(([connections, catalog]) => {
         if (!connections.ok) return setLoadError(connections.message);
         if (!catalog.ok) return setLoadError(catalog.message);
@@ -92,7 +96,7 @@ export function OutboundConnectionAdmin({
         setRows(connections.data);
         setActions(catalog.data);
       }),
-    [integrationId],
+    [integrationId, scope],
   );
 
   useEffect(() => {
@@ -131,6 +135,7 @@ export function OutboundConnectionAdmin({
                   action={action}
                   row={rowOf(action.action)}
                   externalApiBase={externalApiBase}
+                  scope={scope}
                   onEdit={() => setEditing(action)}
                   onChanged={replace}
                 />
@@ -143,6 +148,7 @@ export function OutboundConnectionAdmin({
         action={editing}
         row={editing ? rowOf(editing.action) : null}
         integrationId={integrationId}
+        scope={scope}
         onClose={() => setEditing(null)}
         onSaved={() => {
           setEditing(null);
@@ -172,12 +178,14 @@ function AgentBox({
   action,
   row,
   externalApiBase,
+  scope,
   onEdit,
   onChanged,
 }: {
   action: AgentActionInfo;
   row: OutboundConnectionRow | null;
   externalApiBase: string | null;
+  scope: KeyScope;
   onEdit: () => void;
   onChanged: (row: OutboundConnectionRow) => void;
 }) {
@@ -188,7 +196,7 @@ function AgentBox({
 
   async function setActive(active: boolean) {
     if (!row) return;
-    const result = await updateOutboundConnection(row.id, { active });
+    const result = await updateOutboundConnection(row.id, { active }, scope);
     if (!result.ok) return void message.error(errorText(result));
     onChanged(result.data);
     message.success(m.saved);
@@ -197,7 +205,7 @@ function AgentBox({
   async function test() {
     if (!row) return;
     setTesting(true);
-    const result = await testOutboundConnection(row.id);
+    const result = await testOutboundConnection(row.id, scope);
     setTesting(false);
     if (!result.ok) return void message.error(errorText(result));
     setTested(result.data);
@@ -268,7 +276,7 @@ function AgentBox({
           hint={m.keyHint}
           load={async () =>
             unwrap(
-              await revealOutboundConnectionKey(row.id),
+              await revealOutboundConnectionKey(row.id, scope),
               (data) => data.api_key,
             )
           }
@@ -297,6 +305,7 @@ function AgentBox({
                 row={row}
                 payloadFields={action.payload_fields}
                 externalApiBase={externalApiBase}
+                scope={scope}
               />
             ),
           },
@@ -324,17 +333,19 @@ function AgentRoundTrip({
   row,
   payloadFields,
   externalApiBase,
+  scope,
 }: {
   row: OutboundConnectionRow;
   payloadFields: string[];
   externalApiBase: string | null;
+  scope: KeyScope;
 }) {
   // undefined = loading, null = no ready key
   const [calls, setCalls] = useState<ReturnCalls | null | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    void listApiKeys().then(async (keys) => {
+    void listApiKeys(scope, row.integration_id).then(async (keys) => {
       if (!keys.ok) return setError(keys.message);
       const key = keys.data.find(
         (item) =>
@@ -344,7 +355,7 @@ function AgentRoundTrip({
           item.scopes.includes(RECORD_UPDATE),
       );
       if (!key) return setCalls(null);
-      const examples = await getApiKeyExamples(key.id);
+      const examples = await getApiKeyExamples(key.id, scope);
       if (!examples.ok) return setError(examples.message);
       const find = (method: string, path: string) =>
         examples.data.find((item) => item.method === method && item.path === path);
@@ -354,7 +365,7 @@ function AgentRoundTrip({
         done: find("PATCH", "/agent-records/{id}"),
       });
     });
-  }, [row.integration_id]);
+  }, [row.integration_id, scope]);
 
   const curl = (example: ApiExample) =>
     calls ? curlFor(example, { externalApiBase, keyPrefix: calls.key.prefix }) : "";
@@ -438,12 +449,14 @@ function AgentModal({
   action,
   row,
   integrationId,
+  scope,
   onClose,
   onSaved,
 }: {
   action: AgentActionInfo | null;
   row: OutboundConnectionRow | null;
   integrationId: string;
+  scope: KeyScope;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -472,7 +485,7 @@ function AgentModal({
           api_key: apiKey,
           endpoint_id: endpoint,
           timeout_minutes: values.timeout_minutes,
-        })
+        }, scope)
       : await createOutboundConnection({
           integration_id: integrationId,
           action: action.action,
@@ -480,7 +493,7 @@ function AgentModal({
           api_key: apiKey ?? "",
           endpoint_id: endpoint,
           timeout_minutes: values.timeout_minutes,
-        });
+        }, scope);
     setBusy(false);
     if (!result.ok) return setError(errorText(result));
     onSaved();

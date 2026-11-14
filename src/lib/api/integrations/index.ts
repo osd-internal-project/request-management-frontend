@@ -7,8 +7,14 @@
  * หนึ่งระบบถือกุญแจ API และ webhook ของตัวเอง (`integration_id` บนสองตารางนั้น)
  */
 
-import { adminApi, type ClientResult } from "../client";
+import { adminApi, appApi, type ClientResult } from "../client";
+import type { KeyScope } from "../api-keys";
 import type { Paginated } from "../types";
+
+/** `system` = hub ทุกบริษัท `/system/integrations` (system.integration.manage). */
+function integrationApi<T>(scope: KeyScope, path: string, init?: RequestInit) {
+  return scope === "system" ? appApi<T>(`system/${path}`, init) : adminApi<T>(path, init);
+}
 
 /** `app` = ในนามบริษัท, `delegated` = ในนามผู้ใช้ที่ login เอง (`X-User-Token`). */
 export type IntegrationMode = "app" | "delegated";
@@ -20,6 +26,10 @@ export interface IntegrationRow {
   modes: IntegrationMode[];
   allow_acting_user: boolean;
   keycloak_client_ids: string[];
+  /** null = ระบบภายนอกกลาง */
+  company_id: string | null;
+  /** ระบบกลางเท่านั้น: บริษัทที่ใช้ได้ — ว่าง = ทุกบริษัท */
+  allowed_company_ids: string[];
   active: boolean;
   api_key_count: number;
   webhook_count: number;
@@ -58,20 +68,29 @@ export interface IntegrationCall {
   duration_ms: number;
 }
 
-export async function listIntegrations(): Promise<ClientResult<IntegrationRow[]>> {
-  return adminApi<IntegrationRow[]>("integrations");
+/**
+ * `companyId` ใช้กับ scope `system` เท่านั้น: uuid = บริษัทเดียว, `"system"` = เฉพาะของกลาง,
+ * ไม่ส่ง = ทุกบริษัท
+ */
+export async function listIntegrations(
+  scope: KeyScope = "company",
+  companyId?: string,
+): Promise<ClientResult<IntegrationRow[]>> {
+  const query = scope === "system" && companyId ? `?company_id=${encodeURIComponent(companyId)}` : "";
+  return integrationApi<IntegrationRow[]>(scope, `integrations${query}`);
 }
 
-export async function listIntegrationPresets(): Promise<
-  ClientResult<IntegrationPreset[]>
-> {
-  return adminApi<IntegrationPreset[]>("integrations/presets");
+export async function listIntegrationPresets(
+  scope: KeyScope = "company",
+): Promise<ClientResult<IntegrationPreset[]>> {
+  return integrationApi<IntegrationPreset[]>(scope, "integrations/presets");
 }
 
 export async function createIntegration(
   payload: IntegrationPayload,
+  scope: KeyScope = "company",
 ): Promise<ClientResult<IntegrationRow>> {
-  return adminApi<IntegrationRow>("integrations", {
+  return integrationApi<IntegrationRow>(scope, "integrations", {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -79,9 +98,13 @@ export async function createIntegration(
 
 export async function updateIntegration(
   id: string,
-  payload: Partial<IntegrationPayload> & { active?: boolean },
+  payload: Partial<IntegrationPayload> & {
+    active?: boolean;
+    allowed_company_ids?: string[];
+  },
+  scope: KeyScope = "company",
 ): Promise<ClientResult<IntegrationRow>> {
-  return adminApi<IntegrationRow>(`integrations/${id}`, {
+  return integrationApi<IntegrationRow>(scope, `integrations/${id}`, {
     method: "PATCH",
     body: JSON.stringify(payload),
   });
@@ -91,8 +114,10 @@ export async function listIntegrationCalls(
   id: string,
   page: number,
   pageSize: number,
+  scope: KeyScope = "company",
 ): Promise<ClientResult<Paginated<IntegrationCall>>> {
-  return adminApi<Paginated<IntegrationCall>>(
+  return integrationApi<Paginated<IntegrationCall>>(
+    scope,
     `integrations/${id}/calls?page=${page}&page_size=${pageSize}`,
   );
 }
