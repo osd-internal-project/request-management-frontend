@@ -49,6 +49,7 @@ configmap:
   USER_SERVICE_URL: "http://request-user-service.request-management.svc.cluster.local:8884"
   CORE_SERVICE_URL: "http://request-core-service.request-management.svc.cluster.local:8885"
   EXTERNAL_SERVICE_URL: "http://request-external-service.request-management.svc.cluster.local:8886"
+  EXTERNAL_API_PUBLIC_URL: "https://ctd-uat.osd.co.th/external-api"
   RUN_NUMBER_SERVICE_URL: "http://request-run-number-service.request-management.svc.cluster.local:8887"
   SESSION_IDLE_TIMEOUT_SECONDS: "900"
   SESSION_REFRESH_INTERVAL_SECONDS: "300"
