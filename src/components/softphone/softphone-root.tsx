@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   SoftPhoneProvider,
   useSoftPhoneUser,
@@ -50,9 +50,14 @@ export default function SoftphoneRoot() {
 function SoftphoneBridge({ line }: { line: Line }) {
   const auth = useSoftPhoneUser();
   const set = auth?.set;
+  const applied = useRef<Line | null>(null);
 
   useEffect(() => {
-    set?.((previous) => ({
+    // The vendor's `set` is a new function every render and always yields a new
+    // state; re-applying on each one loops forever (React #185). Once per line.
+    if (!set || applied.current === line) return;
+    applied.current = line;
+    set((previous) => ({
       ...previous,
       socketServer: line.wss_url,
       username: line.extension,
