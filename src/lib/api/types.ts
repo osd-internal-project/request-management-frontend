@@ -2372,9 +2372,23 @@ export interface SystemCompany {
   code: string;
   name: string;
   docPrefix: string;
+  baseCurrency: string;
   active: boolean;
   createdAt: string;
-  _count: { users: number };
+  /** `users` = สมาชิกทั้งหมด (รวมที่ถูกปิด) */
+  _count: { users: number; orgUnits: number };
+  suspendedMembers: number;
+  adminCount: number;
+}
+
+/** `GET /system/companies/:id` — ภาพรวมระดับองค์กร ไม่มีข้อมูลงาน */
+export interface SystemCompanyDetail extends SystemCompany {
+  admins: {
+    id: string;
+    displayName: string;
+    email: string | null;
+    status: "ACTIVE" | "SUSPENDED";
+  }[];
 }
 
 /** P5 `GET /system/roles` — roles no company owns. */

@@ -71,9 +71,16 @@ export async function listApiKeyScopes(scope: KeyScope = "company"): Promise<Cli
   return keyApi<ApiKeyScope[]>(scope, "api-keys/scopes");
 }
 
-/** กุญแจของบริษัทที่กำลังทำงานอยู่ — ไม่มีค่ากุญแจในคำตอบ มีแต่ prefix. */
-export async function listApiKeys(scope: KeyScope = "company"): Promise<ClientResult<ApiKeyRow[]>> {
-  return keyApi<ApiKeyRow[]>(scope, "api-keys");
+/**
+ * กุญแจของบริษัทที่กำลังทำงานอยู่ — ไม่มีค่ากุญแจในคำตอบ มีแต่ prefix.
+ * scope `system` + `integrationId` = กุญแจของบริษัทเจ้าของระบบนั้น (hub)
+ */
+export async function listApiKeys(
+  scope: KeyScope = "company",
+  integrationId?: string,
+): Promise<ClientResult<ApiKeyRow[]>> {
+  const query = scope === "system" && integrationId ? `?integration_id=${encodeURIComponent(integrationId)}` : "";
+  return keyApi<ApiKeyRow[]>(scope, `api-keys${query}`);
 }
 
 export async function issueApiKey(

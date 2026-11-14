@@ -197,6 +197,8 @@ export const ROUTES = {
   systemCompanies: `${HOME_PATH}/system/companies`,
   systemRoles: `${HOME_PATH}/system/roles`,
   systemIntegrations: `${HOME_PATH}/system/integrations`,
+  systemIntegrationDetail: (id: string) => `${HOME_PATH}/system/integrations/${id}`,
+  systemCompanyDetail: (id: string) => `${HOME_PATH}/system/companies/${id}`,
   systemAudit: `${HOME_PATH}/system/audit`,
   /** SUP-04 — Audit log */
   adminAudit: `${HOME_PATH}/admin/audit`,

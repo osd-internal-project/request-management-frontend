@@ -9,7 +9,13 @@
  * `api_key` ไม่อยู่ในคำตอบใด ๆ ยกเว้น `revealOutboundConnectionKey` (ลง audit ทุกครั้ง)
  */
 
-import { adminApi, type ClientResult } from "../client";
+import { adminApi, appApi, type ClientResult } from "../client";
+import type { KeyScope } from "../api-keys";
+
+/** `system` = การเชื่อมต่อกลางและของทุกบริษัท `/system/outbound-connections` */
+function connectionApi<T>(scope: KeyScope, path: string, init?: RequestInit) {
+  return scope === "system" ? appApi<T>(`system/${path}`, init) : adminApi<T>(path, init);
+}
 
 export interface OutboundConnectionRow {
   id: string;
@@ -51,16 +57,19 @@ export interface OutboundConnectionPayload {
 
 export async function listOutboundConnections(
   integrationId: string,
+  scope: KeyScope = "company",
 ): Promise<ClientResult<OutboundConnectionRow[]>> {
-  return adminApi<OutboundConnectionRow[]>(
+  return connectionApi<OutboundConnectionRow[]>(scope, 
     `outbound-connections?integration_id=${encodeURIComponent(integrationId)}`,
   );
 }
 
-export async function listAgentActions(): Promise<
+export async function listAgentActions(
+  scope: KeyScope = "company",
+): Promise<
   ClientResult<AgentActionInfo[]>
 > {
-  return adminApi<AgentActionInfo[]>("outbound-connections/actions");
+  return connectionApi<AgentActionInfo[]>(scope, "outbound-connections/actions");
 }
 
 export async function createOutboundConnection(
@@ -71,8 +80,9 @@ export async function createOutboundConnection(
     api_key: string;
     endpoint_id: string;
   },
+  scope: KeyScope = "company",
 ): Promise<ClientResult<OutboundConnectionRow>> {
-  return adminApi<OutboundConnectionRow>("outbound-connections", {
+  return connectionApi<OutboundConnectionRow>(scope, "outbound-connections", {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -81,8 +91,9 @@ export async function createOutboundConnection(
 export async function updateOutboundConnection(
   id: string,
   payload: OutboundConnectionPayload,
+  scope: KeyScope = "company",
 ): Promise<ClientResult<OutboundConnectionRow>> {
-  return adminApi<OutboundConnectionRow>(`outbound-connections/${id}`, {
+  return connectionApi<OutboundConnectionRow>(scope, `outbound-connections/${id}`, {
     method: "PATCH",
     body: JSON.stringify(payload),
   });
@@ -90,14 +101,16 @@ export async function updateOutboundConnection(
 
 export async function revealOutboundConnectionKey(
   id: string,
+  scope: KeyScope = "company",
 ): Promise<ClientResult<{ api_key: string }>> {
-  return adminApi<{ api_key: string }>(`outbound-connections/${id}/key`);
+  return connectionApi<{ api_key: string }>(scope, `outbound-connections/${id}/key`);
 }
 
 export async function testOutboundConnection(
   id: string,
+  scope: KeyScope = "company",
 ): Promise<ClientResult<ConnectionTestResult>> {
-  return adminApi<ConnectionTestResult>(`outbound-connections/${id}/test`, {
+  return connectionApi<ConnectionTestResult>(scope, `outbound-connections/${id}/test`, {
     method: "POST",
   });
 }

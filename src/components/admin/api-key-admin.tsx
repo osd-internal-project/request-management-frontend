@@ -158,11 +158,14 @@ export function ApiKeyAdmin({
   integrationId,
   externalApiBase = null,
   scope = "company",
+  requireExpiry = scope === "system",
 }: {
   readonly integrationId?: string;
   readonly externalApiBase?: string | null;
   /** P8: `system` lists and issues keys no company owns. */
   readonly scope?: KeyScope;
+  /** กุญแจกลางต้องมีวันหมดอายุ (backend บังคับ) — กุญแจของบริษัทใน hub ไม่ต้อง */
+  readonly requireExpiry?: boolean;
 } = {}) {
   // antd's `message` from context, so it inherits the app theme.
   const { message, modal } = App.useApp();
@@ -187,7 +190,7 @@ export function ApiKeyAdmin({
   // asynchronous when the effect below calls this on mount.
   const refresh = useCallback(
     () =>
-      listApiKeys(scope).then((result) => {
+      listApiKeys(scope, integrationId).then((result) => {
         if (!result.ok) return setError(result.message);
         setRows(
           integrationId
@@ -195,7 +198,7 @@ export function ApiKeyAdmin({
             : result.data,
         );
       }),
-    [integrationId],
+    [integrationId, scope],
   );
 
   useEffect(() => {
@@ -204,17 +207,17 @@ export function ApiKeyAdmin({
       if (result.ok) setScopes(result.data.map((scope) => scope.code));
     });
     if (integrationId) {
-      void listIntegrationPresets().then((result) => {
+      void listIntegrationPresets(scope).then((result) => {
         if (result.ok) setPresets(result.data);
       });
     }
-  }, [refresh, integrationId]);
+  }, [refresh, integrationId, scope]);
 
   const sourceInvalid =
     sourceCode.trim().length > 0 && !SOURCE_CODE_PATTERN.test(sourceCode.trim());
   const ready =
     name.trim().length > 0 && !sourceInvalid && sourceCode.trim().length > 0 &&
-    chosenScopes.length > 0;
+    chosenScopes.length > 0 && (!requireExpiry || (expiresInDays ?? 0) > 0);
 
   function openIssuer() {
     setName("");
@@ -516,10 +519,11 @@ export function ApiKeyAdmin({
               min={1}
               max={3650}
               value={expiresInDays}
+              status={requireExpiry && !expiresInDays ? "warning" : undefined}
               onChange={(value) => setExpiresInDays(value)}
             />
             <Text type="secondary" className="text-xs">
-              {m.formExpiresHint}
+              {requireExpiry ? m.formExpiresRequired : m.formExpiresHint}
             </Text>
           </div>
         </Space>
@@ -586,7 +590,7 @@ function ApiExamplesDrawer({
       setExamples(result.data);
       setSelected(result.data[0]?.operationId ?? null);
     });
-  }, [row]);
+  }, [row, scope]);
 
   const byTag = new Map<string, ApiExample[]>();
   for (const example of examples ?? []) {

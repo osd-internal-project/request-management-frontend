@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AutoComplete, Button, DatePicker, Input, Space } from "antd";
+import { AutoComplete, Button, DatePicker, Input, Select, Space } from "antd";
 import { useRouter, useSearchParams } from "next/navigation";
 import { messages } from "@/lib/messages";
 
@@ -19,9 +19,12 @@ const { RangePicker } = DatePicker;
 export function AuditFilters({
   eventTypes,
   resourceTypes,
+  companies,
 }: {
   readonly eventTypes: string[];
   readonly resourceTypes: string[];
+  /** `/system/audit` เท่านั้น: ตัวเลือกบริษัท + "เฉพาะระดับระบบ" (`company_id=system`) */
+  readonly companies?: readonly { id: string; code: string; name: string }[];
 }) {
   const router = useRouter();
   const params = useSearchParams();
@@ -45,6 +48,24 @@ export function AuditFilters({
 
   return (
     <Space wrap size="small" className="w-full">
+      {companies && (
+        <Select<string>
+          allowClear
+          showSearch
+          optionFilterProp="label"
+          style={{ width: 240 }}
+          placeholder={messages.audit.anyCompany}
+          value={params.get("company_id") ?? undefined}
+          onChange={(value) => apply({ company_id: value })}
+          options={[
+            { value: "system", label: messages.audit.systemOnly },
+            ...companies.map((company) => ({
+              value: company.id,
+              label: `${company.code} ${company.name}`,
+            })),
+          ]}
+        />
+      )}
       <Input
         allowClear
         style={{ width: 260 }}
