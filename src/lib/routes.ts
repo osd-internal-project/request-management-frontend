@@ -67,9 +67,9 @@ export const ROUTES = {
   home: HOME_PATH,
 
   /** Screen 2 — งานค้างของฉัน */
-  // §16 หน้าที่ 2 is the landing page itself, not a sub-route — logging in
-  // should put you straight into your work queue.
-  myWork: HOME_PATH,
+  // Moved off the landing page (2026-11-14): `/pages` is now the main menu,
+  // which every role can use; this queue needs `request.read`.
+  myWork: `${HOME_PATH}/my-work`,
   /** Screen 3 — ยื่นคำขอใหม่ */
   newRequest: `${HOME_PATH}/requests/new`,
   /** Screen 4 — รายละเอียดคำขอ */

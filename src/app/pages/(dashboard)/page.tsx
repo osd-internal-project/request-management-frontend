@@ -1,180 +1,31 @@
-import { Alert, Button } from "antd";
-import Link from "next/link";
-import { redirect } from "next/navigation";
 import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
-import { MyWork, type WorkTab } from "@/components/requests/my-work";
+import { MainMenu } from "@/components/layout/main-menu";
 import { PendingAssignment } from "@/components/requests/pending-assignment";
-import requests from "@/lib/api/requests";
-
+import { loadMenus } from "@/lib/menus";
 import { messages } from "@/lib/messages";
-import { ROUTES } from "@/lib/routes";
-import { can, getSession } from "@/lib/session";
-import { pageOf, statusFilterArgs, WORK_PAGE_SIZE } from "@/lib/work-filters";
+import { getSession } from "@/lib/session";
 
 /**
- * §16 หน้าที่ 2 — งานค้างของฉัน. The landing page after login.
- *
- * Two tabs across every request type (REQ-08). Rows are filtered by data scope
- * at the backend, so this page renders whatever it is given without deciding
- * visibility itself (SCOPE-02).
+ * The landing page after login: every menu entry this session may open.
+ * The queue that used to live here is `ROUTES.myWork`.
  */
-/**
- * One tab, from one result.
- *
- * The count comes from the envelope's `total`, not from how many rows arrived:
- * the server sends one page, and the label is the whole queue.
- *
- * A failed call yields an empty tab reading zero — the error banner above the
- * tabs is what says the page is broken, and a tab that renders nothing at all
- * would make three working tabs look like a crash.
- */
-const EMPTY_TAB: WorkTab = { rows: [], total: 0, page: 1 };
-
-function toTab(
-  result: Awaited<ReturnType<typeof requests.getRequests>>,
-  page: number,
-): WorkTab {
-  return result.ok
-    ? { rows: result.data.data, total: result.data.total, page }
-    : { rows: [], total: 0, page };
-}
-
-export default async function MyWorkPage({
-  searchParams,
-}: {
-  searchParams: Promise<{
-    status?: string;
-    type_code?: string;
-    q?: string;
-    overdue?: string;
-    tab?: string;
-    page?: string;
-  }>;
-}) {
+export default async function MainMenuPage() {
   const session = await getSession();
-  const query = await searchParams;
-
-  // Only the tab on screen moves off page 1; the others still need their totals.
-  const activeTab = query.tab ?? "involved";
-  const pageFor = (tab: string) => (tab === activeTab ? pageOf(query.page) : 1);
-
-  const filters = {
-    status: query.status,
-    typeCode: query.type_code,
-    q: query.q,
-    overdue: query.overdue === "true",
-  };
-
-  // AUTH-04: someone not yet placed in the org chart has no supervisor, so
-  // there is no step-1 approver and nothing they submit could route.
-  if (session?.user.pending_org_assignment) {
-    return <PendingAssignment />;
-  }
-
-  // Every tab here is a request list; a seller who holds only `crm.lead.*`
-  // would get four 403s and a red banner, so they land on their own work.
-  if (!can(session, "request.read") && can(session, "crm.lead.read")) {
-    redirect(ROUTES.leads);
-  }
-  const readsRequests = can(session, "request.read");
-
-  /**
-   * Four tabs, four queries, each narrowing what the caller may already see.
-   *
-   * `involved` rather than no view at all: the default also covers the groups
-   * this person heads, and a head's own queue should not fill with their
-   * department's work — that is what "งานทั้งหมด" is for.
-   *
-   * Filters go to the server rather than being applied to the fetched page:
-   * a list can run past one page, and narrowing it in the browser would report
-   * "nothing found" for matches sitting on the next one.
-   */
-  const filterArgs = {
-    /*
-      `งานค้าง` by default — the screen's own name, kept truthful. The box
-      shows which of the three it is on, so a short list is never a mystery.
-    */
-    ...statusFilterArgs(filters.status),
-    type_code: filters.typeCode,
-    q: filters.q,
-    overdue: filters.overdue,
-    page_size: WORK_PAGE_SIZE,
-  };
-
-  /*
-    "A page must not fetch what its viewer cannot read." Somebody without
-    `approval.decide` can never be named on a step, so the อนุมัติ query is a
-    guaranteed empty result and the tab a guaranteed `· 0` — which reads as a
-    page that failed to load. Skipped, and the tab hidden with it.
-  */
-  const decides = can(session, "approval.decide");
-
-  const [
-    involvedResult,
-    createdResult,
-    incomingResult,
-    approverResult,
-    typesResult,
-    awaitingResult,
-  ] =
-    await Promise.all([
-      readsRequests ? requests.getRequests({ ...filterArgs, view: "involved", page: pageFor("involved") }) : null,
-      readsRequests ? requests.getRequests({ ...filterArgs, view: "created", page: pageFor("created") }) : null,
-      readsRequests ? requests.getRequests({ ...filterArgs, view: "incoming", page: pageFor("incoming") }) : null,
-      decides ? requests.getRequests({ ...filterArgs, view: "approver", page: pageFor("approver") }) : null,
-      can(session, "request.create") ? requests.getRequestTypes() : null,
-      /*
-        The badge count, unfiltered on purpose: "you owe three decisions" must
-        not change because somebody narrowed the table to one request type.
-      */
-      decides ? requests.myWorkViews.awaiting() : null,
-    ]);
-
-  const failed = [
-    involvedResult,
-    createdResult,
-    incomingResult,
-    approverResult,
-  ].find((result) => result !== null && !result.ok);
+  // The layout already sent a missing session to SESSION_EXPIRED_PATH.
+  const menus = session ? await loadMenus(session) : [];
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <Title level={4} className="mb-0!">
-            {messages.myWork.title}
-          </Title>
-          {/* SCOPE-02: the row set is the backend's decision. Said here so a
-              short list reads as the truth rather than as a broken page. */}
-          <Text type="secondary" className="text-xs">
-            {messages.myWork.scopeNote}
-          </Text>
-        </div>
-        <Link href={ROUTES.newRequest}>
-          <Button type="primary">{messages.myWork.newRequest}</Button>
-        </Link>
+    <div className="flex flex-col gap-4">
+      {/* AUTH-04: kept from the old landing page — the first thing an unplaced user must see. */}
+      {session?.user.pending_org_assignment && <PendingAssignment />}
+      <div>
+        <Title level={3} className="mb-1!">
+          {messages.mainMenu.title}
+        </Title>
+        <Text type="secondary">{messages.mainMenu.description}</Text>
       </div>
-
-      {failed && !failed.ok && (
-        <Alert
-          type="error"
-          showIcon
-          title={messages.common.loadError}
-          description={failed.error.message}
-        />
-      )}
-
-      <MyWork
-        involved={involvedResult ? toTab(involvedResult, pageFor("involved")) : EMPTY_TAB}
-        created={createdResult ? toTab(createdResult, pageFor("created")) : EMPTY_TAB}
-        incoming={incomingResult ? toTab(incomingResult, pageFor("incoming")) : EMPTY_TAB}
-        approver={approverResult ? toTab(approverResult, pageFor("approver")) : null}
-        awaiting={awaitingResult?.ok ? awaitingResult.data.total : 0}
-        filters={filters}
-        types={typesResult?.ok ? typesResult.data : []}
-        session={session}
-      />
+      <MainMenu menus={menus} />
     </div>
   );
 }
