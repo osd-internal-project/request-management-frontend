@@ -6,7 +6,11 @@ import {
   REFRESH_COOKIE,
   USER_SERVICE_URL,
 } from "@/lib/backend";
-import { AUTH_LOGIN_PATH } from "@/lib/routes";
+import {
+  AUTH_LOGIN_PATH,
+  RECONNECT_PATH,
+  USER_SUSPENDED_REASON,
+} from "@/lib/routes";
 
 interface LogoutResponse {
   end_session_url?: string;
@@ -58,6 +62,14 @@ async function endSession(request: NextRequest): Promise<string | null> {
  */
 export async function GET(request: NextRequest) {
   const endSessionUrl = await endSession(request);
+
+  // Keycloak would sign a suspended person straight back in, so they land on
+  // the one page that can tell them why (the SSO session is ended above).
+  if (request.nextUrl.searchParams.get("reason") === USER_SUSPENDED_REASON) {
+    const page = new URL(RECONNECT_PATH, appOrigin(request));
+    page.searchParams.set("error", USER_SUSPENDED_REASON);
+    return clearSessionCookies(NextResponse.redirect(page));
+  }
 
   // Reached only when Keycloak could not be told to end the session — the
   // cookies below are still cleared, so this is a real logout either way.

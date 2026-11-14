@@ -29,11 +29,14 @@ export function AuditTable({
   page,
   pageSize,
   total,
+  companyNames,
 }: {
   rows: AuditLogRow[];
   page: number;
   pageSize: number;
   total: number;
+  /** P8 `/system/audit`: shows which company each row belongs to. */
+  companyNames?: Record<string, string>;
 }) {
   const router = useRouter();
   const params = useSearchParams();
@@ -58,6 +61,18 @@ export function AuditTable({
       }}
       scroll={{ x: true }}
       columns={[
+        ...(companyNames
+          ? [
+              {
+                title: messages.audit.columns.company,
+                key: "company",
+                render: (_: unknown, row: AuditLogRow) =>
+                  row.companyId
+                    ? (companyNames[row.companyId] ?? row.companyId)
+                    : messages.audit.systemLevel,
+              },
+            ]
+          : []),
         {
           title: messages.audit.columns.time,
           dataIndex: "createdAt",

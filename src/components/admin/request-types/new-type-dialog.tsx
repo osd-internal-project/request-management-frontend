@@ -54,7 +54,12 @@ export function NewTypeDialog({
     setBusy(false);
 
     if (result.ok) onCreated(result.data);
-    else setError(result.message);
+    else
+      setError(
+        result.details?.length
+          ? result.details.map((detail) => detail.reason).join("; ")
+          : result.message,
+      );
   }
 
   return (

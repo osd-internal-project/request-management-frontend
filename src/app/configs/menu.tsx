@@ -1,6 +1,7 @@
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import type { Session } from "@/lib/session";
+import { canSystem } from "@/lib/session-shape";
 
 /** A string, not a component: menus are built on the server and cross to the client. */
 export type MenuIconKey =
@@ -31,6 +32,7 @@ export type MenuIconKey =
   | "llm"
   | "aiAudit"
   | "chatWidget"
+  | "softphone"
   | "companyDocuments"
   | "salesTarget"
   | "salesReport"
@@ -57,6 +59,7 @@ export type MenuIconKey =
   | "project"
   | "pricingPrice"
   | "pricingMarkup"
+  | "pricingBundle"
   | "pricingException"
   | "pricingAnalytics"
   | "hrLaborRate"
@@ -105,7 +108,9 @@ export type MenuIconKey =
   | "kbGaps"
   | "workflowTrigger"
   | "assignmentRule"
-  | "processLog";
+  | "processLog"
+  | "systemCompany"
+  | "systemRole";
 
 export interface MenuEntry {
   label: string;
@@ -114,6 +119,8 @@ export interface MenuEntry {
   icon?: MenuIconKey;
   /** Shown only if the session holds at least one of these. */
   permissions?: readonly string[];
+  /** P5: the same, against `system_permissions` — the ระบบ group only. */
+  systemPermissions?: readonly string[];
   /** The module this entry belongs to, e.g. "ผู้ดูแลระบบ" — one icon in the rail. */
   group: string;
   /** Sub-heading inside the module's panel, for modules too long to scan flat. */
@@ -330,6 +337,14 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     label: messages.nav.pricingMarkup,
     href: ROUTES.pricingMarkup,
     icon: "pricingMarkup",
+    permissions: ["pricing.price.read", "pricing.price.manage"],
+    group: messages.nav.pricingGroup,
+  },
+  /** ชุดรายการของ product (12 พ.ย. 2569) — which SAP items a product's quotation carries. */
+  {
+    label: messages.nav.pricingBundles,
+    href: ROUTES.pricingBundles,
+    icon: "pricingBundle",
     permissions: ["pricing.price.read", "pricing.price.manage"],
     group: messages.nav.pricingGroup,
   },
@@ -957,6 +972,15 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     group: messages.nav.adminGroup,
     section: messages.nav.adminSectionIntegrations,
   },
+  /** เลขต่อ SIP ของ softphone ต่อผู้ใช้ — รหัสเก็บแบบเข้ารหัส ไม่แสดงบนจอ. */
+  {
+    label: messages.nav.adminSoftphone,
+    href: ROUTES.adminSoftphone,
+    icon: "softphone",
+    permissions: ["admin.softphone.manage"],
+    group: messages.nav.adminGroup,
+    section: messages.nav.adminSectionIntegrations,
+  },
   /** เอกสารบริษัท — มีวันที่ออกเอกสาร / ทั่วไป ให้ระบบภายนอกดึงผ่าน External API. */
   {
     label: messages.nav.adminDocuments,
@@ -983,6 +1007,42 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     group: messages.nav.adminGroup,
     section: messages.nav.adminSectionModules,
   },
+  /** P5 ระดับระบบ — เห็นเฉพาะคนที่ถือ `system.*` (role ระบบ ไม่ใช่ role บริษัท). */
+  {
+    label: messages.nav.systemUsers,
+    href: ROUTES.systemUsers,
+    icon: "user",
+    systemPermissions: ["system.user.read"],
+    group: messages.nav.systemGroup,
+  },
+  {
+    label: messages.nav.systemCompanies,
+    href: ROUTES.systemCompanies,
+    icon: "systemCompany",
+    systemPermissions: ["system.company.manage"],
+    group: messages.nav.systemGroup,
+  },
+  {
+    label: messages.nav.systemRoles,
+    href: ROUTES.systemRoles,
+    icon: "systemRole",
+    systemPermissions: ["system.role.manage"],
+    group: messages.nav.systemGroup,
+  },
+  {
+    label: messages.nav.systemIntegrations,
+    href: ROUTES.systemIntegrations,
+    icon: "apiKey",
+    systemPermissions: ["system.integration.manage"],
+    group: messages.nav.systemGroup,
+  },
+  {
+    label: messages.nav.systemAudit,
+    href: ROUTES.systemAudit,
+    icon: "audit",
+    systemPermissions: ["system.audit.read"],
+    group: messages.nav.systemGroup,
+  },
 ];
 
 /** The rail icon for each module, keyed by `MenuEntry.group`. */
@@ -1001,6 +1061,7 @@ export const GROUP_ICONS: Readonly<Record<string, MenuIconKey>> = {
   [messages.nav.legalGroup]: "contract",
   [messages.nav.kbGroup]: "kb",
   [messages.nav.adminGroup]: "org",
+  [messages.nav.systemGroup]: "systemRole",
 };
 
 /** One BI dashboard as the menu needs it — `key` and `title` from `GET /bi/menu`. */
@@ -1049,11 +1110,14 @@ export const accessMenuItems = (
           ...MENU_ITEMS.slice(adminStart),
         ];
 
-  return items.filter(
-    (item) =>
-      !item.permissions?.length ||
-      item.permissions.some((permission) =>
-        session.permissions.includes(permission),
-      ),
+  return items.filter((item) =>
+    item.systemPermissions?.length
+      ? item.systemPermissions.some((permission) =>
+          canSystem(session, permission),
+        )
+      : !item.permissions?.length ||
+        item.permissions.some((permission) =>
+          session.permissions.includes(permission),
+        ),
   );
 };

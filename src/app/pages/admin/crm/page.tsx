@@ -106,6 +106,7 @@ export default async function CrmAdminPage() {
                 letterheadBranch: null,
                 letterheadAddress: null,
                 letterheadPhone: null,
+                letterheadFax: null,
                 letterheadEmail: null,
                 letterheadWebsite: null,
                 letterheadLogo: null,

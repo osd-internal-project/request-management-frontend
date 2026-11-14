@@ -1,7 +1,7 @@
 "use client";
 
 import { ExportOutlined, PlusOutlined } from "@ant-design/icons";
-import { Alert, App, Button, Card, Form, Input, InputNumber, Modal, Popconfirm, Space, Spin, Switch, Table, Tag } from "antd";
+import { Alert, App, Button, Card, Form, Input, InputNumber, Modal, Popconfirm, Space, Spin, Switch, Table, Tag, Tooltip } from "antd";
 import Paragraph from "antd/es/typography/Paragraph";
 import Text from "antd/es/typography/Text";
 import Title from "antd/es/typography/Title";
@@ -90,7 +90,7 @@ export default function AdminBiPage() {
         metabase_dashboard_id: undefined as unknown as number,
         sort_order: 0,
         org_unit_ids: [],
-        lock_company: false,
+        lock_company: true,
       });
     } else {
       form.setFieldsValue({
@@ -112,7 +112,7 @@ export default function AdminBiPage() {
       metabase_dashboard_id: values.metabase_dashboard_id,
       sort_order: values.sort_order ?? 0,
       org_unit_ids: values.org_unit_ids ?? [],
-      lock_company: values.lock_company ?? false,
+      lock_company: values.lock_company ?? true,
     };
     const result =
       editing === "new" || editing === null
@@ -201,10 +201,18 @@ export default function AdminBiPage() {
               render: (title: string, row) => (
                 <span>
                   {row.active ? title : <Text type="secondary">{title}</Text>}
-                  {row.lock_company && (
+                  {row.lock_company ? (
                     <Tag color="purple" className="ml-2">
                       {messages.bi.lockCompanyTag}
                     </Tag>
+                  ) : (
+                    row.active && (
+                      <Tooltip title={messages.bi.allCompaniesHint}>
+                        <Tag color="warning" className="ml-2">
+                          {messages.bi.allCompaniesTag}
+                        </Tag>
+                      </Tooltip>
+                    )
                   )}
                 </span>
               ),

@@ -143,10 +143,15 @@ export const CORE_SERVICE_PREFIXES = [
   "/keeper",
   "/products",
   "/notifications",
+  // D-Callcenter softphone — SIP lines + call log
+  "/softphone",
   "/requests",
   "/request-types",
   "/reports",
   "/admin/api-keys",
+  // P8: system-owned keys live with the company ones, in core-service.
+  "/system/api-keys",
+  "/system/integrations",
   "/admin/webhooks",
   "/admin/integrations",
   "/admin/outbound-connections",

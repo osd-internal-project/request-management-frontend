@@ -934,6 +934,8 @@ export interface ApprovalMatrixVersion {
 export interface AuditLogRow {
   id: string;
   createdAt: string;
+  /** null = a system-level event (no company) */
+  companyId: string | null;
   actorUsername: string | null;
   eventType: string;
   resourceType: string | null;
@@ -1001,14 +1003,6 @@ export interface RoleHolder {
   source: "KEYCLOAK_MAPPING" | "MANUAL";
   grantedAt: string;
   grantedByDisplayName: string | null;
-}
-
-/** SCOPE-01 — (role, resource) → how far that role sees. */
-export interface ScopeRuleRow {
-  id: string;
-  roleId: string;
-  resource: string;
-  scope: "own" | "team" | "department" | "company" | "all";
 }
 
 /** ROLE-03 — a Keycloak client role (`request-form`) bound to a system role, per company. */
@@ -1323,6 +1317,17 @@ export interface OpportunityActivity extends SalesActivity {
 }
 
 /** `GET /leads/:id` — หน้ารายละเอียด Lead. */
+/** ผู้ติดต่อของ Lead — ผู้ติดต่อหลักไม่มีแถวของตัวเอง id คือคำว่า `primary` */
+export interface LeadContact {
+  id: string;
+  /** `null` = ผู้ติดต่อหลักที่มีแค่เบอร์หรืออีเมล */
+  name: string | null;
+  position: string | null;
+  phone: string | null;
+  email: string | null;
+  isPrimary: boolean;
+}
+
 export interface LeadDetail extends LeadRow {
   customer: {
     id: string;
@@ -1337,6 +1342,8 @@ export interface LeadDetail extends LeadRow {
     stage: OpportunityStage;
   } | null;
   owner: { id: string; displayName: string } | null;
+  /** ผู้ติดต่อทั้งหมด — หลักก่อน (`id = "primary"`) แล้วตามด้วยคนที่เพิ่มทีหลัง */
+  contacts: LeadContact[];
   activities: LeadActivity[];
   /** CD-85 — the target account this lead came from. */
   targetAccount: {
@@ -1554,6 +1561,10 @@ export interface QuotationDetail extends QuotationRow {
   partyTaxId: string | null;
   contactName: string | null;
   paymentTerms: string | null;
+  deliveryTime: string | null;
+  warranty: string | null;
+  partyFax: string | null;
+  sellerMobile: string | null;
   note: string | null;
   subtotal: Money;
   discountTotal: Money;
@@ -1887,6 +1898,7 @@ export interface CrmConfig {
   letterheadBranch: string | null;
   letterheadAddress: string | null;
   letterheadPhone: string | null;
+  letterheadFax: string | null;
   letterheadEmail: string | null;
   letterheadWebsite: string | null;
   /** data URL (png/jpeg/webp). */
@@ -1988,8 +2000,14 @@ export interface QuotationPrintView {
     branch: string | null;
     address: string | null;
     contactName: string | null;
+    phone: string | null;
+    email: string | null;
   };
-  seller: { name: string; email: string | null } | null;
+  seller: {
+    name: string;
+    email: string | null;
+    phone: string | null;
+  } | null;
   letterhead: {
     nameTh: string;
     nameEn: string | null;
@@ -1997,6 +2015,7 @@ export interface QuotationPrintView {
     branch: string | null;
     address: string | null;
     phone: string | null;
+    fax: string | null;
     email: string | null;
     website: string | null;
     logo: string | null;
@@ -2328,4 +2347,45 @@ export interface DealMargin {
   minMarginPct: number;
   /** CD-202 */
   minMarginByWorkType?: Record<string, number>;
+}
+
+/** P5 `GET /system/users` row — every company the person belongs to, not just the active one. */
+export interface SystemUser {
+  id: string;
+  username: string;
+  displayName: string;
+  email: string | null;
+  status: "ACTIVE" | "SUSPENDED";
+  suspendedAt: string | null;
+  suspendReason: string | null;
+  primaryCompanyId: string | null;
+  companies: {
+    isPrimary: boolean;
+    company: { id: string; code: string; name: string; active: boolean };
+  }[];
+  systemRoles: { role: { id: string; code: string; name: string } }[];
+}
+
+/** P5 `GET /system/companies`. */
+export interface SystemCompany {
+  id: string;
+  code: string;
+  name: string;
+  docPrefix: string;
+  active: boolean;
+  createdAt: string;
+  _count: { users: number };
+}
+
+/** P5 `GET /system/roles` — roles no company owns. */
+export interface SharedRole {
+  id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  level: "COMPANY" | "SYSTEM";
+  active: boolean;
+  isSystem: boolean;
+  permissions: RolePermissionRow[];
+  _count: { users: number; systemUsers: number };
 }

@@ -9,7 +9,8 @@ import {
   SESSION_REFRESH_INTERVAL_SECONDS,
 } from "@/lib/backend";
 import { SESSION_EXPIRED_PATH } from "@/lib/routes";
-import { getSession } from "@/lib/session";
+import { canSystem, getSession } from "@/lib/session";
+import type { SystemCompany } from "@/lib/api/types";
 
 /**
  * The authenticated shell.
@@ -47,6 +48,12 @@ export default async function DashboardLayout({
     if (menu.ok) biDashboards = menu.data.dashboards;
   }
 
+  let otherCompanies: SystemCompany[] = [];
+  if (canSystem(session, "system.tenant.read")) {
+    const answer = await apiGet<SystemCompany[]>("/system/companies");
+    if (answer.ok) otherCompanies = answer.data;
+  }
+
   return (
     <AppShell
       user={{
@@ -55,13 +62,22 @@ export default async function DashboardLayout({
         // cookie the backend refused was already dropped in `getSession`, so
         // this is the company the page actually rendered for.
         activeCompanyId: session.active_company_id,
-        companies: session.companies.map((company) => ({
-          id: company.id,
-          name: company.name,
-        })),
+        companies: [
+          ...session.companies.map((company) => ({
+            id: company.id,
+            name: company.name,
+            viaSystem: company.via === "system",
+          })),
+          // P6: the rest of the companies, for whoever may enter them.
+          ...otherCompanies
+            .filter((c) => c.active && !session.companies.some((m) => m.id === c.id))
+            .map((c) => ({ id: c.id, name: c.name, viaSystem: true })),
+        ],
+        enteredAsSystem: session.tenant_access === "system",
       }}
       menus={accessMenuItems(session, biDashboards)}
       canReadNotifications={session.permissions.includes("notification.read")}
+      canUsePhoneWorkspace={session.permissions.includes("phone.workspace.use")}
       chatWidget={await chatWidget}
     >
       {/* AUTH-02. The two durations are server env, so they reach the browser

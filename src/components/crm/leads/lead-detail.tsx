@@ -38,8 +38,11 @@ import {
 } from "@ant-design/icons";
 import { IntakeDataList } from "./intake-data-list";
 import { LeadFieldsCard, type LeadField } from "./lead-fields-card";
+import { LeadContactsCard } from "./lead-contacts-card";
 import { LeadFilesCard } from "./lead-files-card";
 import { LeadFocusCard } from "./lead-focus-card";
+import { LeadProposalCard } from "./lead-proposal-card";
+import { LeadQuoteItemsCard } from "./lead-quote-items-card";
 import {
   ConvertLeadModal,
   DisqualifyLeadModal,
@@ -59,6 +62,7 @@ import {
 } from "@/components/crm/activity-list";
 import { appApi } from "@/lib/api/client";
 import type { LeadFile } from "@/lib/api/sales";
+import type { AgentRecordRow } from "@/lib/api/agent-records";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import type {
@@ -107,6 +111,7 @@ function initials(name: string): string {
 export function LeadDetailView({
   lead,
   files,
+  running,
   customers,
   canManage,
   canSeeDeals,
@@ -117,6 +122,8 @@ export function LeadDetailView({
   lead: LeadDetail;
   /** ไฟล์บน Lead — proposal ที่อีเมลขอบคุณแนบไป */
   files: LeadFile[];
+  /** งาน agent ของ Lead นี้ที่ยัง `processing` — newest first */
+  running: AgentRecordRow[];
   customers: CustomerRow[];
   canManage: boolean;
   /** `crm.customer.read` — without it the customer picker stays read-only */
@@ -142,8 +149,17 @@ export function LeadDetailView({
   const editable = canManage && open;
 
   const { pending, done } = splitActivities(lead.activities);
-  // `research` is the lead.research agent's; the rest came with the lead
-  const { research, ...intake } = lead.intakeData ?? {};
+  // `research` and `product_suggestions` are the agents', `selected_product` the sale's; the rest came with the lead
+  const {
+    research,
+    product_suggestions: productSuggestions,
+    selected_product: selectedProduct,
+    // the bundle picked for this Lead — its own control on the quote-items card
+    selected_bundle: selectedBundle,
+    // the quotation's items, adjusted for this Lead — shown on their own card
+    products: listedProducts,
+    ...intake
+  } = lead.intakeData ?? {};
 
   async function setStatus(status: LeadStatus) {
     if (status === lead.status) return;
@@ -178,7 +194,8 @@ export function LeadDetailView({
 
   function onStep(index: number) {
     const target = PIPELINE[index];
-    if (target === "converted") setConverting(true);
+    // Won is not a step someone takes: the customer's confirmation closes the Lead
+    if (target === "converted") message.info(md.wonHint);
     else void setStatus(target);
   }
 
@@ -220,11 +237,15 @@ export function LeadDetailView({
     <div className="flex flex-col gap-4">
       {error && <Alert type="error" showIcon title={error} />}
 
-      {lead.status === "converted" && lead.convertedOpportunity && (
+      {lead.convertedOpportunity && !disqualified && (
         <Alert
-          type="success"
+          type={lead.status === "converted" ? "success" : "info"}
           showIcon
-          title={md.convertedBanner(lead.convertedOpportunity.opportunityCode)}
+          title={
+            lead.status === "converted"
+              ? md.convertedBanner(lead.convertedOpportunity.opportunityCode)
+              : md.dealOpenBanner(lead.convertedOpportunity.opportunityCode)
+          }
           action={
             canSeeDeals ? (
               <Link
@@ -291,9 +312,11 @@ export function LeadDetailView({
             <Button icon={<EditOutlined />} onClick={() => setEditing(true)}>
               {md.edit}
             </Button>
-            <Button type="primary" onClick={() => setConverting(true)}>
-              {m.actions.convert}
-            </Button>
+            {!lead.convertedOpportunity && (
+              <Button type="primary" onClick={() => setConverting(true)}>
+                {m.actions.convert}
+              </Button>
+            )}
             <Button danger onClick={() => setDisqualifying(true)}>
               {m.actions.disqualify}
             </Button>
@@ -407,45 +430,12 @@ export function LeadDetailView({
             )}
           </Card>
 
-          <Card
-            size="small"
-            title={md.contactCard.all(lead.contactName ? "1" : "0")}
-            extra={
-              editable ? (
-                <Button
-                  type="link"
-                  size="small"
-                  icon={<PlusOutlined />}
-                  onClick={() => setEditing(true)}
-                />
-              ) : null
-            }
-          >
-            {lead.contactName ? (
-              <div className="flex items-start gap-2">
-                <Avatar size="small">{initials(lead.contactName)}</Avatar>
-                <div className="min-w-0 text-xs">
-                  <div className="font-medium">
-                    {lead.contactName}{" "}
-                    <Tooltip title={md.contactCard.primary}>
-                      <span className="text-amber-500">★</span>
-                    </Tooltip>
-                  </div>
-                  {lead.contactPosition && (
-                    <Text type="secondary" className="block">
-                      {lead.contactPosition}
-                    </Text>
-                  )}
-                  {lead.email && <div className="truncate">{lead.email}</div>}
-                  {lead.phone && <div>{lead.phone}</div>}
-                </div>
-              </div>
-            ) : (
-              <Text type="secondary" className="text-xs">
-                {md.contactCard.noContact}
-              </Text>
-            )}
-          </Card>
+          <LeadContactsCard
+            leadId={lead.id}
+            leadName={lead.name}
+            contacts={lead.contacts ?? []}
+            editable={editable}
+          />
 
           <LeadFieldsCard
             title={md.sections.company}
@@ -471,6 +461,36 @@ export function LeadDetailView({
                     lead={lead}
                     editable={editable}
                     onEdit={() => setDiscovering(true)}
+                  />
+                  <LeadFocusCard
+                    leadId={lead.id}
+                    research={research}
+                    running={running}
+                    canStart={editable}
+                  />
+                  <LeadProposalCard
+                    leadId={lead.id}
+                    suggestions={productSuggestions}
+                    selected={selectedProduct}
+                    latest={files.find((file) => file.kind === "proposal")}
+                    running={running}
+                    canStart={editable}
+                  />
+                  <LeadQuoteItemsCard
+                    leadId={lead.id}
+                    product={
+                      (typeof selectedProduct === "string" &&
+                        selectedProduct.trim()) ||
+                      lead.subProduct?.trim() ||
+                      null
+                    }
+                    bundleName={
+                      (typeof selectedBundle === "string" &&
+                        selectedBundle.trim()) ||
+                      null
+                    }
+                    listed={listedProducts}
+                    canEdit={editable}
                   />
                   <Card
                     size="small"
@@ -586,7 +606,7 @@ export function LeadDetailView({
           ]}
         />
 
-        {/* ขวา — ปุ่มลัด + กิจกรรมค้าง + Focus */}
+        {/* ขวา — ปุ่มลัด + กิจกรรมค้าง + ไฟล์ + Proposal */}
         <div className="flex flex-col gap-4">
           {editable && (
             <Card size="small">
@@ -687,12 +707,6 @@ export function LeadDetailView({
           </Card>
 
           <LeadFilesCard leadId={lead.id} files={files} canManage={canManage} />
-
-          <LeadFocusCard
-            leadId={lead.id}
-            research={research}
-            canStart={editable}
-          />
         </div>
       </div>
 

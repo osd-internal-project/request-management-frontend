@@ -126,6 +126,54 @@ export interface MarkupRule {
   active: boolean;
 }
 
+/** ชุดรายการของ product (12 พ.ย. 2569) — one item of a bundle, as the screens read it. */
+export interface ProductBundleItem {
+  productCode: string;
+  /** null = the code is not (or no longer) in the SAP catalog. */
+  productName: string | null;
+  unit: string | null;
+  quantity: number;
+  termMonths: number | null;
+  /** false = always quoted; true = the salesperson adds it on the Lead. */
+  optional: boolean;
+  /** true = not multiplied by how many the customer asks for (a one-off fee). */
+  fixedQuantity: boolean;
+  /** Standard price in effect today (THB); null = none. */
+  unitPrice: number | null;
+  priceModel: string | null;
+}
+
+export interface ProductBundle {
+  id: string;
+  name: string;
+  note: string;
+  active: boolean;
+  items: ProductBundleItem[];
+  /** What to know from the customer before quoting (13 พ.ย. 2569). */
+  requirements: ProductBundleRequirement[];
+}
+
+export interface ProductBundleRequirement {
+  key: string;
+  question: string;
+  /** words that count as an answer when no AI reads the reply */
+  hints: string[];
+}
+
+/** The bundle in use for a product name on a Lead — null when none is set up. */
+export async function matchProductBundle(
+  name: string,
+): Promise<ClientResult<{ bundle: ProductBundle | null }>> {
+  return appApi(`pricing/product-bundles/match?name=${encodeURIComponent(name)}`);
+}
+
+/** The bundles a salesperson can pick for a Lead — active ones, by name. */
+export async function getProductBundleOptions(): Promise<
+  ClientResult<{ names: string[] }>
+> {
+  return appApi("pricing/product-bundles/options");
+}
+
 export interface MarkupOptions {
   groups: { code: string; name: string }[];
   segments: { id: string; label: string }[];
@@ -256,12 +304,17 @@ export async function listPricingExceptions(
   return appApi(`pricing/exceptions?${params.toString()}`);
 }
 
-/** CD-206 — a supplier's cost SAP holds for a product, with its date. */
+/**
+ * CD-206 — a supplier's cost for a product, with its date: read from SAP, or
+ * typed in (`manual`) by a company with no ERP connected yet.
+ */
 export interface VendorCost {
+  /** Present on the Pricing list; a `manual` row is edited by it. */
+  id?: string;
   productCode: string;
   vendorCode: string;
   vendorName: string | null;
-  source: "purchase_order" | "special_price";
+  source: "purchase_order" | "special_price" | "manual";
   /** Absent for a viewer who may not see cost. */
   unitCost?: number;
   currency: string;
@@ -282,6 +335,9 @@ export async function lookupVendorCosts(
 
 /** Same words the server stores on the line's cost source. */
 export function vendorCostLabel(cost: VendorCost): string {
+  if (cost.source === "manual") {
+    return `กรอกเอง${cost.docNo ? ` ${cost.docNo}` : ""} · ${cost.vendorName ?? cost.vendorCode}`;
+  }
   const doc =
     cost.source === "purchase_order"
       ? `ใบสั่งซื้อ ${cost.docNo ?? ""}`.trim()

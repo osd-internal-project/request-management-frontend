@@ -53,6 +53,10 @@ export const LOGOUT_PATH = "/api/auth/logout";
  */
 export const SESSION_EXPIRED_PATH = `${LOGOUT_PATH}?reason=session_expired`;
 
+/** The account was switched off in this app (H2); Keycloak still signs it in. */
+export const USER_SUSPENDED_REASON = "user_suspended";
+export const SUSPENDED_LOGOUT_PATH = `${LOGOUT_PATH}?reason=${USER_SUSPENDED_REASON}`;
+
 /**
  * The full CTD screen map (spec §16 mockups).
  *
@@ -133,6 +137,8 @@ export const ROUTES = {
   pricingPrices: `${HOME_PATH}/pricing/prices`,
   /** CD-200 — markup rules. */
   pricingMarkup: `${HOME_PATH}/pricing/markup`,
+  /** ชุดรายการของ product — item ที่ใบเสนอราคาของ product หนึ่งต้องมี. */
+  pricingBundles: `${HOME_PATH}/pricing/bundles`,
   /** CD-205 — ทะเบียนข้อยกเว้นด้านราคา. */
   pricingExceptions: `${HOME_PATH}/pricing/exceptions`,
   /** CD-208 — วิเคราะห์ราคาและกำไร. */
@@ -186,6 +192,12 @@ export const ROUTES = {
   adminAssignmentRules: `${HOME_PATH}/admin/assignment-rules`,
   /** Read-only Keycloak user directory. */
   adminUsers: `${HOME_PATH}/admin/users`,
+  /** P5 ระดับระบบ — ผู้ใช้ทุกบริษัท, บริษัท, role กลาง/ระบบ. */
+  systemUsers: `${HOME_PATH}/system/users`,
+  systemCompanies: `${HOME_PATH}/system/companies`,
+  systemRoles: `${HOME_PATH}/system/roles`,
+  systemIntegrations: `${HOME_PATH}/system/integrations`,
+  systemAudit: `${HOME_PATH}/system/audit`,
   /** SUP-04 — Audit log */
   adminAudit: `${HOME_PATH}/admin/audit`,
   /** บันทึกกระบวนการ End-to-End 7 ขั้น ที่ OSD Workflow เขียนเข้ามา. */
@@ -208,6 +220,7 @@ export const ROUTES = {
   adminAiAudit: `${HOME_PATH}/admin/ai-audit`,
   /** The ผู้ช่วย AI panel's LibreChat host, per company. */
   adminChatWidget: `${HOME_PATH}/admin/chat-widget`,
+  adminSoftphone: `${HOME_PATH}/admin/softphone`,
   /** เอกสารบริษัท — ระบบภายนอกดึงไปผ่าน External API. */
   adminDocuments: `${HOME_PATH}/admin/documents`,
   adminErpSync: `${HOME_PATH}/admin/erp-sync`,

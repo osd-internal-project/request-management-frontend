@@ -242,6 +242,10 @@ export function QuotationDetailView({
       title: quotation.title,
       validUntil: quotation.validUntil,
       paymentTerms: quotation.paymentTerms ?? "",
+      deliveryTime: quotation.deliveryTime ?? "",
+      warranty: quotation.warranty ?? "",
+      partyFax: quotation.partyFax ?? "",
+      sellerMobile: quotation.sellerMobile ?? "",
       note: quotation.note ?? "",
       lines: toDraftLines(quotation),
     }),
@@ -252,6 +256,13 @@ export function QuotationDetailView({
     initial.validUntil ? dayjs(initial.validUntil) : null,
   );
   const [paymentTerms, setPaymentTerms] = useState(initial.paymentTerms);
+  // ช่องที่พิมพ์บนแบบฟอร์มเท่านั้น (Delivery Time, Warranty, โทรสาร, มือถือ)
+  const [printed, setPrinted] = useState({
+    deliveryTime: initial.deliveryTime,
+    warranty: initial.warranty,
+    partyFax: initial.partyFax,
+    sellerMobile: initial.sellerMobile,
+  });
   const [note, setNote] = useState(initial.note);
   const [lines, setLines] = useState<DraftLine[]>(initial.lines);
 
@@ -263,6 +274,10 @@ export function QuotationDetailView({
           ? dayjs(initial.validUntil).format("YYYY-MM-DD")
           : null) ||
       paymentTerms !== initial.paymentTerms ||
+      printed.deliveryTime !== initial.deliveryTime ||
+      printed.warranty !== initial.warranty ||
+      printed.partyFax !== initial.partyFax ||
+      printed.sellerMobile !== initial.sellerMobile ||
       note !== initial.note ||
       JSON.stringify(lines) !== JSON.stringify(initial.lines));
 
@@ -297,6 +312,10 @@ export function QuotationDetailView({
       title: title.trim() || undefined,
       valid_until: validUntil ? validUntil.format("YYYY-MM-DD") : undefined,
       payment_terms: paymentTerms,
+      delivery_time: printed.deliveryTime,
+      warranty: printed.warranty,
+      customer_fax: printed.partyFax,
+      seller_mobile: printed.sellerMobile,
       note,
       ...(canEditLines
         ? {
@@ -842,6 +861,70 @@ export function QuotationDetailView({
                 />
               ) : (
                 (quotation.paymentTerms ?? "—")
+              ),
+            },
+            {
+              key: "deliveryTime",
+              label: md.deliveryTime,
+              children: canEditHeader ? (
+                <Input
+                  value={printed.deliveryTime}
+                  maxLength={500}
+                  placeholder={md.printedOnly}
+                  onChange={(e) =>
+                    setPrinted({ ...printed, deliveryTime: e.target.value })
+                  }
+                />
+              ) : (
+                (quotation.deliveryTime ?? "—")
+              ),
+            },
+            {
+              key: "warranty",
+              label: md.warranty,
+              children: canEditHeader ? (
+                <Input
+                  value={printed.warranty}
+                  maxLength={500}
+                  placeholder={md.printedOnly}
+                  onChange={(e) =>
+                    setPrinted({ ...printed, warranty: e.target.value })
+                  }
+                />
+              ) : (
+                (quotation.warranty ?? "—")
+              ),
+            },
+            {
+              key: "partyFax",
+              label: md.customerFax,
+              children: canEditHeader ? (
+                <Input
+                  value={printed.partyFax}
+                  maxLength={50}
+                  placeholder={md.printedOnly}
+                  onChange={(e) =>
+                    setPrinted({ ...printed, partyFax: e.target.value })
+                  }
+                />
+              ) : (
+                (quotation.partyFax ?? "—")
+              ),
+            },
+            {
+              key: "sellerMobile",
+              label: md.sellerMobile,
+              children: canEditHeader ? (
+                <Input
+                  value={printed.sellerMobile}
+                  maxLength={50}
+                  placeholder={md.printedOnly}
+                  onChange={(e) =>
+                    setPrinted({ ...printed, sellerMobile: e.target.value })
+                  }
+                />
+              ) : (
+                (quotation.sellerMobile ?? "—")
               ),
             },
             {

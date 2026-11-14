@@ -20,6 +20,7 @@ import type {
   RoleRow,
 } from "@/lib/api/types";
 import { adminApi } from "@/lib/api/client";
+import { PermissionOverridesSection } from "./permission-overrides-section";
 import { grantRole, revokeRole, searchUsers } from "@/lib/api/client-roles";
 export type { OrgUnitNode, UnassignedUser, OrgMember } from "@/lib/api/types";
 
@@ -1159,6 +1160,8 @@ function MemberRolesDialog({
           </div>
         ))}
       </div>
+
+      {member && <PermissionOverridesSection userId={member.id} />}
     </Modal>
   );
 }

@@ -14,7 +14,6 @@ import type {
   RoleHolder,
   OrgUnitNode,
   RoleRow,
-  ScopeRuleRow,
 } from "./types";
 
 export function createRole(input: {
@@ -97,16 +96,6 @@ export function replaceHolidayCalendar(
   },
 ): Promise<ClientResult<HolidayCalendarRow>> {
   return adminApi<HolidayCalendarRow>(`holiday-calendars/${companyId}`, {
-    method: "PUT",
-    body: JSON.stringify(input),
-  });
-}
-
-/** SCOPE-01 — the whole table at once, like the SLA screen (SUP-01). */
-export function replaceScopeRules(input: {
-  rules: { role_id: string; resource: string; scope: string }[];
-}): Promise<ClientResult<ScopeRuleRow[]>> {
-  return adminApi<ScopeRuleRow[]>("scope-rules", {
     method: "PUT",
     body: JSON.stringify(input),
   });
