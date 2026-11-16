@@ -53,6 +53,7 @@ export async function POST(
   const result = await leadIntakeFetch<{
     received: boolean;
     status?: string;
+    updated?: boolean;
     online_url?: string | null;
   }>(`forms/${encodeURIComponent(token)}`, {
     method: "POST",
@@ -77,6 +78,7 @@ export async function POST(
   return NextResponse.json({
     received: true,
     status: result.data.status ?? null,
+    updated: result.data.updated === true,
     online_url: result.data.online_url ?? null,
   });
 }
