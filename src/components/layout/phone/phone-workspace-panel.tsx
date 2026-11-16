@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Alert, Button, Spin, Tooltip } from "antd";
-import { DoubleRightOutlined, PhoneOutlined } from "@ant-design/icons";
+import { ArrowLeftOutlined, PhoneOutlined } from "@ant-design/icons";
 import { appApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
 
@@ -59,8 +59,8 @@ function loadWorkspaceScript(): Promise<void> {
 }
 
 /**
- * The phone workspace beside the content. Rendered once by the shell and only
- * resized by CSS: an iframe reloads (and drops the call) whenever its node is
+ * The phone workspace over the whole content area. Rendered once by the shell and
+ * only resized by CSS: an iframe reloads (and drops the call) whenever its node is
  * unmounted or moved, so closing collapses it instead of removing it.
  */
 export function PhoneWorkspacePanel({
@@ -149,27 +149,26 @@ export function PhoneWorkspacePanel({
       inert={!open}
       className={
         open
-          ? "flex w-[380px] shrink-0 flex-col border-l border-[var(--app-border-soft)] bg-white max-lg:fixed max-lg:inset-x-0 max-lg:top-[68px] max-lg:bottom-0 max-lg:z-[1000] max-lg:w-auto"
-          : "flex w-0 shrink-0 flex-col overflow-hidden"
+          ? "absolute inset-0 z-10 flex flex-col bg-white"
+          : "absolute h-0 w-0 overflow-hidden"
       }
     >
-      <div className="flex h-10 shrink-0 items-center justify-between gap-2 border-b border-[var(--app-border-soft)] px-3">
-        <span className="flex min-w-0 items-center gap-2 font-medium">
-          <PhoneOutlined className="text-[var(--app-primary)]" />
-          <span className="truncate">{m.title}</span>
-        </span>
+      <div className="flex h-10 shrink-0 items-center gap-3 border-b border-[var(--app-border-soft)] px-3">
         <Tooltip title={m.collapseHint}>
           <Button
             type="text"
             size="small"
-            icon={<DoubleRightOutlined />}
-            iconPlacement="end"
+            icon={<ArrowLeftOutlined />}
             aria-label={m.collapseHint}
             onClick={onClose}
           >
             {m.collapse}
           </Button>
         </Tooltip>
+        <span className="flex min-w-0 items-center gap-2 font-medium">
+          <PhoneOutlined className="text-[var(--app-primary)]" />
+          <span className="truncate">{m.title}</span>
+        </span>
       </div>
 
       {state.kind === "error" && (

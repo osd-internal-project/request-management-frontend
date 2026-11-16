@@ -26,7 +26,6 @@ import { menuEntryFor, ModuleNav } from "@/components/layout/module-nav";
 import { NavRail } from "@/components/layout/nav-rail";
 import { CompanySwitcher } from "@/components/layout/company-switcher";
 import { NotificationBell } from "@/components/notifications/notification-bell";
-import { PhoneToggleButton } from "@/components/layout/phone/phone-toggle-button";
 import { PhoneWorkspacePanel } from "@/components/layout/phone/phone-workspace-panel";
 import { messages } from "@/lib/messages";
 import { HOME_PATH } from "@/lib/routes";
@@ -81,18 +80,24 @@ export function AppShell({
   const screens = Grid.useBreakpoint();
   const [navOpen, setNavOpen] = useState(false);
   const chat = useChatDock();
-  // The phone and the AI chat share the right side, one at a time.
-  const [phoneOpen, setPhoneOpen] = useState(false);
+  // The phone covers the page it was opened on; any navigation reveals the new
+  // page while the workspace (and a live call) stays mounted underneath.
+  const [phoneOpenedAt, setPhoneOpenedAt] = useState<string | null>(null);
+  const phoneOpen = phoneOpenedAt === pathname;
 
   function togglePhone() {
     if (!phoneOpen) chat.close();
-    setPhoneOpen(!phoneOpen);
+    setPhoneOpenedAt(phoneOpen ? null : pathname);
   }
 
   function toggleChat() {
-    setPhoneOpen(false);
+    setPhoneOpenedAt(null);
     chat.toggle();
   }
+
+  const phoneNav = canUsePhoneWorkspace
+    ? { open: phoneOpen, onToggle: togglePhone }
+    : undefined;
 
   useEffect(() => {
     const entry = menuEntryFor(pathname, menus);
@@ -194,6 +199,7 @@ export function AppShell({
             pathname={pathname}
             onNavigate={(href) => router.push(href)}
             shortcut
+            phone={phoneNav}
           />
         </Sider>
       )}
@@ -213,6 +219,15 @@ export function AppShell({
             setNavOpen(false);
             router.push(href);
           }}
+          phone={
+            phoneNav && {
+              open: phoneNav.open,
+              onToggle: () => {
+                setNavOpen(false);
+                phoneNav.onToggle();
+              },
+            }
+          }
         />
       </Drawer>
 
@@ -236,9 +251,6 @@ export function AppShell({
               activeCompanyId={user.activeCompanyId}
             />
             <div className="flex shrink-0 items-center gap-2 md:gap-3">
-              {canUsePhoneWorkspace && (
-                <PhoneToggleButton open={phoneOpen} onClick={togglePhone} />
-              )}
               <ChatToggleButton open={chat.isOpen} onClick={toggleChat} />
               <span
                 aria-hidden
@@ -262,7 +274,7 @@ export function AppShell({
 
         {/* Both panels always render: swapping the tree on toggle would remount
             `children` (losing form state) and the widget (losing the conversation). */}
-        <div className="flex min-h-0 flex-1">
+        <div className="relative flex min-h-0 flex-1">
           <Splitter
             className="min-w-0 flex-1"
             classNames={{ dragger: chat.isOpen ? undefined : "hidden!" }}
@@ -303,7 +315,7 @@ export function AppShell({
           </Splitter>
 
           {canUsePhoneWorkspace && (
-            <PhoneWorkspacePanel open={phoneOpen} onClose={() => setPhoneOpen(false)} />
+            <PhoneWorkspacePanel open={phoneOpen} onClose={() => setPhoneOpenedAt(null)} />
           )}
         </div>
       </Layout>
