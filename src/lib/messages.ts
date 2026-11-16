@@ -12237,8 +12237,6 @@ export const messages = {
     waitlisted:
       "ที่นั่งเต็ม — คุณอยู่ในรายชื่อสำรอง ทีมงานจะแจ้งเมื่อมีที่ว่าง",
     onlineLink: "ลิงก์เข้าร่วมออนไลน์",
-    // the same e-mail again: the registration now holds what they just sent
-    updated: "อีเมลนี้ลงทะเบียนไว้แล้ว — อัปเดตข้อมูลของคุณเรียบร้อย",
     tooMany: "ส่งหลายครั้งเกินไป กรุณาลองใหม่ภายหลัง",
     failed: "ส่งไม่สำเร็จ กรุณาลองใหม่อีกครั้ง",
   },
