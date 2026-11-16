@@ -62,6 +62,7 @@ export function CampaignLeadForm({
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<{
     status: string | null;
+    updated: boolean;
     online_url: string | null;
   } | null>(null);
 
@@ -107,10 +108,12 @@ export function CampaignLeadForm({
     }
     const answer = (await response.json().catch(() => ({}))) as {
       status?: string | null;
+      updated?: boolean;
       online_url?: string | null;
     };
     setDone({
       status: answer.status ?? null,
+      updated: answer.updated === true,
       online_url: answer.online_url ?? null,
     });
   }
@@ -127,7 +130,9 @@ export function CampaignLeadForm({
                 ? m.waitlisted
                 : m.thanks
           }
-          subTitle={done.status ? undefined : m.thanksHint}
+          subTitle={
+            done.updated ? m.updated : done.status ? undefined : m.thanksHint
+          }
           extra={
             done.online_url ? (
               <a href={done.online_url} target="_blank" rel="noreferrer">
