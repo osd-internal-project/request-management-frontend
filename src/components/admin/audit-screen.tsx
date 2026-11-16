@@ -98,6 +98,7 @@ export async function AuditScreen({
             <AuditFilters
               eventTypes={eventTypes}
               resourceTypes={resourceTypes}
+              companies={companies?.ok ? companies.data : undefined}
             />
 
             <Text type="secondary" className="text-xs">

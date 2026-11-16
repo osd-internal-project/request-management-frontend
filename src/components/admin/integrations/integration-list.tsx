@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -25,14 +25,34 @@ import {
   type IntegrationPreset,
   type IntegrationRow,
 } from "@/lib/api/integrations";
+import type { KeyScope } from "@/lib/api/api-keys";
+import { appApi } from "@/lib/api/client";
+import type { SystemCompany } from "@/lib/api/types";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import { ModeTags, ModesPicker } from "./integration-modes";
 
 const m = messages.integrations;
+const hub = m.hub;
+/** ค่าตัวกรอง "เฉพาะระบบกลาง" — ตรงกับ `company_id=system` ของ backend */
+const SHARED = "system";
 
-/** รายการระบบภายนอกของบริษัท + เพิ่มระบบใหม่ (`admin.integration.manage`). */
-export function IntegrationList() {
+/**
+ * รายการระบบภายนอก + เพิ่มระบบใหม่.
+ * `company` = ของบริษัทที่ทำงานอยู่ (`admin.integration.manage`);
+ * `system` = hub ทุกบริษัท กรองตามบริษัทได้ และเพิ่มได้เฉพาะระบบกลาง.
+ * `companyId` ล็อกตัวกรองไว้ที่บริษัทเดียว (หน้ารายบริษัท)
+ */
+export function IntegrationList({
+  scope = "company",
+  companyId,
+}: {
+  readonly scope?: KeyScope;
+  readonly companyId?: string;
+} = {}) {
+  const system = scope === "system";
+  const [filter, setFilter] = useState<string | undefined>(companyId);
+  const [companies, setCompanies] = useState<SystemCompany[]>([]);
   const { message } = App.useApp();
   const router = useRouter();
   const [rows, setRows] = useState<IntegrationRow[] | null>(null);
@@ -46,19 +66,33 @@ export function IntegrationList() {
 
   const refresh = useCallback(
     () =>
-      listIntegrations().then((result) => {
+      listIntegrations(scope, filter).then((result) => {
         if (result.ok) setRows(result.data);
         else setError(result.message);
       }),
-    [],
+    [scope, filter],
   );
 
   useEffect(() => {
     void refresh();
-    void listIntegrationPresets().then((result) => {
+  }, [refresh]);
+
+  useEffect(() => {
+    void listIntegrationPresets(scope).then((result) => {
       if (result.ok) setPresets(result.data);
     });
-  }, [refresh]);
+    if (!system) return;
+    void appApi<SystemCompany[]>("system/companies").then((result) => {
+      if (result.ok) setCompanies(result.data);
+    });
+  }, [scope, system]);
+
+  const companyName = useMemo(
+    () => new Map(companies.map((company) => [company.id, company.code])),
+    [companies],
+  );
+  const detailHref = (id: string) =>
+    system ? ROUTES.systemIntegrationDetail(id) : ROUTES.adminIntegrationDetail(id);
 
   const ready = name.trim().length > 0 && modes.length > 0;
 
@@ -72,15 +106,18 @@ export function IntegrationList() {
   async function submit() {
     if (!ready) return;
     setBusy(true);
-    const result = await createIntegration({
-      name: name.trim(),
-      ...(description.trim() ? { description: description.trim() } : {}),
-      modes,
-    });
+    const result = await createIntegration(
+      {
+        name: name.trim(),
+        ...(description.trim() ? { description: description.trim() } : {}),
+        modes,
+      },
+      scope,
+    );
     setBusy(false);
     if (!result.ok) return void message.error(result.message);
     message.success(m.created);
-    router.push(ROUTES.adminIntegrationDetail(result.data.id));
+    router.push(detailHref(result.data.id));
   }
 
   if (error) {
@@ -97,24 +134,44 @@ export function IntegrationList() {
 
   return (
     <Card
+      title={
+        system && !companyId ? (
+          <Select<string>
+            className="min-w-56"
+            allowClear
+            placeholder={hub.filterAll}
+            value={filter}
+            onChange={setFilter}
+            options={[
+              { value: SHARED, label: hub.filterShared },
+              ...companies.map((company) => ({
+                value: company.id,
+                label: `${company.code} ${company.name}`,
+              })),
+            ]}
+          />
+        ) : undefined
+      }
       extra={
-        <Button type="primary" onClick={openAdd}>
-          {m.add}
-        </Button>
+        !system || !companyId ? (
+          <Button type="primary" onClick={openAdd}>
+            {system ? hub.add : m.add}
+          </Button>
+        ) : undefined
       }
     >
       <Table<IntegrationRow>
         rowKey="id"
         dataSource={rows}
         pagination={false}
-        locale={{ emptyText: m.empty }}
+        locale={{ emptyText: system ? hub.empty : m.empty }}
         columns={[
           {
             title: m.columnName,
             dataIndex: "name",
             render: (value: string, row) => (
               <div>
-                <Link href={ROUTES.adminIntegrationDetail(row.id)}>{value}</Link>
+                <Link href={detailHref(row.id)}>{value}</Link>
                 {row.description && (
                   <Text type="secondary" className="block text-xs">
                     {row.description}
@@ -123,6 +180,32 @@ export function IntegrationList() {
               </div>
             ),
           },
+          ...(system
+            ? [
+                {
+                  title: hub.columnCompany,
+                  key: "company",
+                  width: 120,
+                  render: (_: unknown, row: IntegrationRow) =>
+                    row.company_id ? (
+                      (companyName.get(row.company_id) ?? row.company_id)
+                    ) : (
+                      <Tag color="blue">{hub.shared}</Tag>
+                    ),
+                },
+                {
+                  title: hub.columnAllowed,
+                  key: "allowed",
+                  width: 120,
+                  render: (_: unknown, row: IntegrationRow) =>
+                    row.company_id
+                      ? "—"
+                      : row.allowed_company_ids.length
+                        ? hub.someCompanies(row.allowed_company_ids.length)
+                        : hub.allCompanies,
+                },
+              ]
+            : []),
           {
             title: m.columnModes,
             key: "modes",

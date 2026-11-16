@@ -1308,6 +1308,10 @@ export const messages = {
     collapse: "ย่อ",
     collapseHint: "ซ่อนแผงโทรศัพท์ (สายยังไม่หลุด)",
     notConfigured: "ยังไม่ได้ตั้งค่า workspace โทรศัพท์",
+    noEmail: "บัญชีของคุณยังไม่มีอีเมล จึงเปิดโทรศัพท์ไม่ได้ ติดต่อผู้ดูแลระบบ",
+    loading: "กำลังเปิดโทรศัพท์",
+    failed: "เปิดโทรศัพท์ไม่สำเร็จ",
+    retry: "ลองใหม่",
   },
   chat: {
     title: "ผู้ช่วย AI",
@@ -1940,6 +1944,38 @@ export const messages = {
       created: "สร้างบริษัทแล้ว",
       saved: "บันทึกแล้ว",
       codeHint: "A-Z 0-9 _ ยาว 2–20 ตัว เปลี่ยนภายหลังไม่ได้",
+      subtitleOverview:
+        "ภาพรวมทุกบริษัทระดับองค์กร — สมาชิก ผู้ดูแล หน่วยงาน และระบบภายนอก ไม่แสดงข้อมูลงานภายในบริษัท",
+      membersActive: (active: number, suspended: number) =>
+        suspended ? `${active} (+${suspended} ถูกปิด)` : String(active),
+      admins: "ผู้ดูแล",
+      noAdmin: "ยังไม่มีผู้ดูแล",
+      orgUnits: "หน่วยงาน",
+      integrations: "ระบบภายนอก",
+      keys: "กุญแจ",
+      statusActive: "เปิดใช้",
+      statusClosed: "ปิดแล้ว",
+      firstAdmin: "ผู้ดูแลคนแรก (ไม่บังคับ)",
+      firstAdminHint: "ได้สมาชิกและ role ผู้ดูแลของบริษัทใหม่ทันที",
+      createdWithSetup: "สร้างบริษัทแล้ว พร้อม role ผู้ดูแลและหน่วยงานราก",
+      back: "บริษัททั้งหมด",
+      notFound: "ไม่พบบริษัทนี้",
+      tabs: {
+        overview: "ภาพรวม",
+        users: "ผู้ใช้",
+        integrations: "ระบบภายนอก",
+        settings: "ตั้งค่า",
+      },
+      currency: "สกุลเงินหลัก",
+      createdOn: "สร้างเมื่อ",
+      adminsList: "ผู้ดูแลบริษัท",
+      auditLink: "ดู audit ของบริษัทนี้",
+      docPrefixWarning:
+        "เปลี่ยนอักษรนำหน้า = เลขเอกสารที่ออกหลังจากนี้ใช้ค่าใหม่ เลขที่ออกไปแล้วไม่เปลี่ยน",
+      save: "บันทึก",
+      close: "ปิดบริษัท",
+      closeConfirm: "ปิดบริษัทนี้? สมาชิกจะเข้าบริษัทนี้ไม่ได้ ข้อมูลเดิมยังอยู่",
+      reopen: "เปิดใช้อีกครั้ง",
     },
     roles: {
       title: "Role กลางและ role ระบบ",
@@ -3988,6 +4024,12 @@ export const messages = {
       "คุณยังไม่ได้เป็นหัวหน้าหน่วยงานใด และยังไม่ได้รับสิทธิ์ scope ให้เห็นงานของหน่วยงานอื่น — หน้านี้จึงแสดงเฉพาะคำขอที่คุณเกี่ยวข้องโดยตรง",
   },
 
+  mainMenu: {
+    title: "เมนูหลัก",
+    description: "ทุกเมนูที่คุณใช้ได้ จัดตามโมดูล — กดเพื่อเปิด",
+    empty: "บัญชีนี้ยังไม่มีสิทธิ์ใช้เมนูใด ติดต่อผู้ดูแลระบบของบริษัท",
+  },
+
   myWork: {
     /* Deciding several approvals at once from the อนุมัติ tab. */
     batch: {
@@ -5004,6 +5046,8 @@ export const messages = {
     systemLevel: "ระดับระบบ",
     systemTitle: "Audit ทั้งระบบ",
     systemSubtitle: "ทุกบริษัทและงานระดับระบบ บันทึกอย่างเดียว แก้ไขหรือลบไม่ได้",
+    anyCompany: "ทุกบริษัทและระดับระบบ",
+    systemOnly: "เฉพาะระดับระบบ (ไม่ผูกบริษัท)",
     empty: "ยังไม่มีเหตุการณ์ในช่วงที่เลือก",
 
     /** §11.7 — only the filters the API actually accepts. */
@@ -5277,6 +5321,7 @@ export const messages = {
     } as Record<string, string>,
     formExpires: "อายุ (วัน)",
     formExpiresHint: "ไม่ระบุ = ไม่หมดอายุ เพิกถอนเอาเท่านั้น",
+    formExpiresRequired: "ต้องระบุ — กุญแจกลางใช้ได้หลายบริษัท จึงต้องหมดอายุเอง",
     save: "ออกกุญแจ",
 
     issuedTitle: "ออกกุญแจแล้ว",
@@ -5409,6 +5454,28 @@ export const messages = {
     loadFailed: "โหลดรายการระบบภายนอกไม่สำเร็จ",
     notFound: "ไม่พบระบบภายนอกนี้ในบริษัทที่กำลังทำงานอยู่",
     back: "ระบบภายนอกทั้งหมด",
+    /** hub ระดับระบบ (14 พ.ย. 2569) */
+    hub: {
+      title: "ระบบภายนอกทุกบริษัท",
+      subtitle:
+        "ระบบกลางใช้ได้หลายบริษัทด้วยกุญแจใบเดียว ส่วนระบบของบริษัทเปิดดูและแก้ได้จากที่นี่โดยไม่ต้องสลับบริษัท",
+      add: "เพิ่มระบบกลาง",
+      filterAll: "ทุกบริษัท",
+      filterShared: "เฉพาะระบบกลาง",
+      columnCompany: "เจ้าของ",
+      columnAllowed: "ใช้ได้กับ",
+      shared: "ระบบกลาง",
+      allCompanies: "ทุกบริษัท",
+      someCompanies: (n: number) => `${n} บริษัท`,
+      empty: "ยังไม่มีระบบภายนอกตามตัวกรองนี้",
+      allowedLabel: "บริษัทที่ใช้ระบบนี้ได้",
+      allowedHint:
+        "ไม่เลือก = ทุกบริษัท · เลือกแล้ว กุญแจกลางต้องส่ง X-Company-Id ของบริษัทในรายการ และ CTD ส่งงาน agent ให้เฉพาะบริษัทเหล่านี้",
+      webhooksElsewhere:
+        "webhook เป็นของแต่ละบริษัท — สลับเข้าบริษัทนั้นเพื่อจัดการ",
+      sharedEndpointsHint:
+        "การเชื่อมต่อกลาง: CTD ส่งงานของทุกบริษัทที่อนุญาตมาที่นี่ พร้อม X-Company-Id และ organization_id ของบริษัทเจ้าของงาน",
+    },
 
     columnName: "ชื่อ",
     columnModes: "เรียกได้แบบ",

@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
-import { Kanit } from "next/font/google";
+import { IBM_Plex_Sans_Thai } from "next/font/google";
 import "./globals.css";
 import { App, ConfigProvider } from "antd";
-import { appTheme } from "./configs/theme";
+import { appTheme, paletteCssVars } from "./configs/theme";
 
-const kanit = Kanit({
+const plexThai = IBM_Plex_Sans_Thai({
   subsets: ["latin", "thai"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600"],
+  variable: "--font-sans",
 });
 
 export const metadata: Metadata = {
@@ -16,8 +17,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="th" className={`h-full antialiased ${kanit.className}`}>
-      <body className="min-h-full flex flex-col bg-background text-foreground">
+    <html
+      lang="th"
+      className={`h-full antialiased ${plexThai.variable}`}
+      style={paletteCssVars}
+    >
+      <body className="min-h-full flex flex-col">
         {/*
           `App` as well as `ConfigProvider`, not instead of it.
 

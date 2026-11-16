@@ -1,22 +1,55 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Alert, App, Button, Card, Input, Space, Switch, Table, Tooltip } from "antd";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { Alert, App, Button, Card, Input, Select, Space, Table, Tag, Tooltip } from "antd";
 import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
 import { appApi } from "@/lib/api/client";
-import type { SystemCompany } from "@/lib/api/types";
+import type { IntegrationRow } from "@/lib/api/integrations";
+import type { Paginated, SystemCompany, SystemUser } from "@/lib/api/types";
 import { messages } from "@/lib/messages";
+import { ROUTES } from "@/lib/routes";
 
 const m = messages.system.companies;
 
-/** P5 — create a company, rename it, switch it off; never delete (its rows stay). */
-export function SystemCompaniesAdmin() {
+interface IntegrationTally {
+  integrations: number;
+  keys: number;
+}
+
+/** ระบบภายนอกและกุญแจต่อบริษัท — นับจาก hub ไม่ใช่ endpoint แยก */
+function tallyByCompany(rows: IntegrationRow[]): Map<string, IntegrationTally> {
+  const tally = new Map<string, IntegrationTally>();
+  for (const row of rows) {
+    if (!row.company_id) continue;
+    const current = tally.get(row.company_id) ?? { integrations: 0, keys: 0 };
+    tally.set(row.company_id, {
+      integrations: current.integrations + 1,
+      keys: current.keys + row.api_key_count,
+    });
+  }
+  return tally;
+}
+
+/**
+ * ภาพรวมทุกบริษัท (ระดับองค์กรเท่านั้น) + สร้างบริษัทพร้อมตั้งต้น — แก้รายบริษัทที่หน้ารายบริษัท.
+ * `canIntegrations` = `system.integration.manage`; `canPickAdmin` = `system.user.read`.
+ */
+export function SystemCompaniesAdmin({
+  canIntegrations,
+  canPickAdmin,
+}: {
+  readonly canIntegrations: boolean;
+  readonly canPickAdmin: boolean;
+}) {
   const { message } = App.useApp();
   const [rows, setRows] = useState<SystemCompany[] | null>(null);
+  const [integrations, setIntegrations] = useState<IntegrationRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [draft, setDraft] = useState({ code: "", name: "", doc_prefix: "" });
-  const [names, setNames] = useState<Record<string, string>>({});
+  const [adminId, setAdminId] = useState<string | undefined>();
+  const [people, setPeople] = useState<SystemUser[]>([]);
   const [busy, setBusy] = useState(false);
   const [reload, setReload] = useState(0);
 
@@ -27,37 +60,45 @@ export function SystemCompaniesAdmin() {
       if (answer.ok) setRows(answer.data);
       else setError(answer.message);
     });
+    if (canIntegrations) {
+      void appApi<IntegrationRow[]>("system/integrations").then((answer) => {
+        if (live && answer.ok) setIntegrations(answer.data);
+      });
+    }
     return () => {
       live = false;
     };
-  }, [reload]);
+  }, [reload, canIntegrations]);
 
-  async function send(path: string, method: "POST" | "PATCH", body: unknown, done: string) {
-    setBusy(true);
-    setError(null);
-    const answer = await appApi<SystemCompany>(path, { method, body: JSON.stringify(body) });
-    setBusy(false);
-    if (!answer.ok) {
-      setError(answer.message);
-      return false;
-    }
-    message.success(done);
-    setReload((n) => n + 1);
-    return true;
+  const tally = useMemo(() => tallyByCompany(integrations), [integrations]);
+
+  function searchPeople(q: string) {
+    if (!q.trim()) return;
+    void appApi<Paginated<SystemUser>>(
+      `system/users?q=${encodeURIComponent(q.trim())}&status=ACTIVE&page=1&page_size=20`,
+    ).then((answer) => {
+      if (answer.ok) setPeople(answer.data.data);
+    });
   }
 
   async function create() {
-    const ok = await send(
-      "system/companies",
-      "POST",
-      {
+    setBusy(true);
+    setError(null);
+    const answer = await appApi<SystemCompany>("system/companies", {
+      method: "POST",
+      body: JSON.stringify({
         code: draft.code.trim().toUpperCase(),
         name: draft.name.trim(),
         doc_prefix: draft.doc_prefix.trim().toUpperCase(),
-      },
-      m.created,
-    );
-    if (ok) setDraft({ code: "", name: "", doc_prefix: "" });
+        ...(adminId ? { admin_user_id: adminId } : {}),
+      }),
+    });
+    setBusy(false);
+    if (!answer.ok) return setError(answer.message);
+    message.success(m.createdWithSetup);
+    setDraft({ code: "", name: "", doc_prefix: "" });
+    setAdminId(undefined);
+    setReload((n) => n + 1);
   }
 
   const ready = draft.code.trim() && draft.name.trim() && draft.doc_prefix.trim();
@@ -68,7 +109,7 @@ export function SystemCompaniesAdmin() {
         <Title level={4} className="mb-0!">
           {m.title}
         </Title>
-        <Text type="secondary">{m.subtitle}</Text>
+        <Text type="secondary">{m.subtitleOverview}</Text>
       </div>
 
       {error && <Alert type="error" showIcon title={error} />}
@@ -98,6 +139,27 @@ export function SystemCompaniesAdmin() {
             className="w-48"
             onChange={(event) => setDraft((d) => ({ ...d, doc_prefix: event.target.value }))}
           />
+          {canPickAdmin && (
+            <Tooltip title={m.firstAdminHint}>
+              <Select<string>
+                showSearch
+                allowClear
+                filterOption={false}
+                className="w-64"
+                placeholder={m.firstAdmin}
+                aria-label={m.firstAdmin}
+                value={adminId}
+                onSearch={searchPeople}
+                onChange={setAdminId}
+                options={people.map((person) => ({
+                  value: person.id,
+                  label: person.email
+                    ? `${person.displayName} (${person.email})`
+                    : person.displayName,
+                }))}
+              />
+            </Tooltip>
+          )}
           <Button type="primary" disabled={!ready} loading={busy} onClick={create}>
             {m.create}
           </Button>
@@ -110,38 +172,54 @@ export function SystemCompaniesAdmin() {
           loading={!rows && !error}
           dataSource={rows ?? []}
           pagination={false}
+          className="tabular-nums"
           columns={[
-            { title: m.code, dataIndex: "code", width: 140 },
             {
-              title: m.name,
-              render: (_, row) => (
-                <Input
-                  value={names[row.id] ?? row.name}
-                  aria-label={`${m.name} ${row.code}`}
-                  onChange={(event) => setNames((n) => ({ ...n, [row.id]: event.target.value }))}
-                  onBlur={() => {
-                    const next = names[row.id]?.trim();
-                    if (next && next !== row.name) {
-                      void send(`system/companies/${row.id}`, "PATCH", { name: next }, m.saved);
-                    }
-                  }}
-                />
+              title: m.code,
+              dataIndex: "code",
+              width: 140,
+              render: (code: string, row) => (
+                <Link href={ROUTES.systemCompanyDetail(row.id)}>{code}</Link>
               ),
             },
-            { title: m.docPrefix, dataIndex: "docPrefix", width: 160 },
-            { title: m.members, render: (_, row) => row._count.users, width: 100 },
+            { title: m.name, dataIndex: "name" },
+            {
+              title: m.members,
+              width: 150,
+              render: (_, row) =>
+                m.membersActive(row._count.users - row.suspendedMembers, row.suspendedMembers),
+            },
+            {
+              title: m.admins,
+              width: 110,
+              render: (_, row) =>
+                row.adminCount ? row.adminCount : <Tag color="warning">{m.noAdmin}</Tag>,
+            },
+            { title: m.orgUnits, width: 100, render: (_, row) => row._count.orgUnits },
+            ...(canIntegrations
+              ? [
+                  {
+                    title: m.integrations,
+                    key: "integrations",
+                    width: 110,
+                    render: (_: unknown, row: SystemCompany) =>
+                      tally.get(row.id)?.integrations ?? 0,
+                  },
+                  {
+                    title: m.keys,
+                    key: "keys",
+                    width: 90,
+                    render: (_: unknown, row: SystemCompany) => tally.get(row.id)?.keys ?? 0,
+                  },
+                ]
+              : []),
             {
               title: m.active,
               width: 100,
               render: (_, row) => (
-                <Switch
-                  checked={row.active}
-                  disabled={busy}
-                  aria-label={`${m.active} ${row.code}`}
-                  onChange={(active) =>
-                    void send(`system/companies/${row.id}`, "PATCH", { active }, m.saved)
-                  }
-                />
+                <Tag color={row.active ? "success" : "default"}>
+                  {row.active ? m.statusActive : m.statusClosed}
+                </Tag>
               ),
             },
           ]}

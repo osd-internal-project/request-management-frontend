@@ -51,11 +51,14 @@ function query(filter: Filter): string {
 /** P5 — everyone in every company; suspend, reactivate, move between companies. */
 export function SystemUsersAdmin({
   canManageRoles,
+  companyId,
 }: {
   /** `system.role.manage` — without it the modal never asks for `/system/roles`. */
   readonly canManageRoles: boolean;
+  /** หน้ารายบริษัท: เริ่มที่ผู้ใช้ของบริษัทนี้ */
+  readonly companyId?: string;
 }) {
-  const [filter, setFilter] = useState<Filter>({ q: "", page: 1 });
+  const [filter, setFilter] = useState<Filter>({ q: "", page: 1, companyId });
   const [search, setSearch] = useState("");
   const [result, setResult] = useState<Paginated<SystemUser> | null>(null);
   const [companies, setCompanies] = useState<SystemCompany[]>([]);

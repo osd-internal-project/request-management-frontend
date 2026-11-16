@@ -31,6 +31,9 @@ import {
   type IntegrationMode,
   type IntegrationRow,
 } from "@/lib/api/integrations";
+import type { KeyScope } from "@/lib/api/api-keys";
+import { appApi } from "@/lib/api/client";
+import type { SystemCompany } from "@/lib/api/types";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import { ModeTags, ModesPicker } from "./integration-modes";
@@ -50,22 +53,26 @@ export function IntegrationDetail({
   mcpEndpoint,
   externalApiBase,
   canAudit,
+  scope = "company",
 }: {
   readonly id: string;
   readonly mcpEndpoint: string | null;
   readonly externalApiBase: string | null;
   readonly canAudit: boolean;
+  /** `system` = เปิดจาก hub ระดับระบบ — ระบบกลางหรือของบริษัทใดก็ได้ */
+  readonly scope?: KeyScope;
 }) {
+  const system = scope === "system";
   const [row, setRow] = useState<IntegrationRow | null | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(
     () =>
-      listIntegrations().then((result) => {
+      listIntegrations(scope).then((result) => {
         if (!result.ok) return setError(result.message);
         setRow(result.data.find((item) => item.id === id) ?? null);
       }),
-    [id],
+    [id, scope],
   );
 
   useEffect(() => {
@@ -89,11 +96,19 @@ export function IntegrationDetail({
   return (
     <div className="space-y-4">
       <div>
-        <Link href={ROUTES.adminIntegrations} className="text-xs">
+        <Link
+          href={system ? ROUTES.systemIntegrations : ROUTES.adminIntegrations}
+          className="text-xs"
+        >
           {m.back}
         </Link>
         <Title level={4} className="mb-0!">
           {row.name}{" "}
+          {system && row.company_id === null && (
+            <Tag color="blue" className="align-middle">
+              {m.hub.shared}
+            </Tag>
+          )}
           {!row.active && <Tag className="align-middle">{m.inactive}</Tag>}
         </Title>
         {row.description && (
@@ -123,7 +138,7 @@ export function IntegrationDetail({
           {
             key: "settings",
             label: m.tabs.settings,
-            children: <SettingsTab row={row} onSaved={refresh} />,
+            children: <SettingsTab row={row} onSaved={refresh} scope={scope} />,
           },
           {
             key: "keys",
@@ -136,6 +151,8 @@ export function IntegrationDetail({
                 <ApiKeyAdmin
                   integrationId={row.id}
                   externalApiBase={externalApiBase}
+                  scope={scope}
+                  requireExpiry={system && row.company_id === null}
                 />
               </>
             ),
@@ -143,7 +160,9 @@ export function IntegrationDetail({
           {
             key: "webhooks",
             label: `${m.tabs.webhooks} (${row.webhook_count})`,
-            children: (
+            children: system ? (
+              <Alert type="info" showIcon title={m.hub.webhooksElsewhere} />
+            ) : (
               <>
                 <Paragraph type="secondary" className="text-xs">
                   {m.webhooksHint}
@@ -158,12 +177,15 @@ export function IntegrationDetail({
             children: (
               <>
                 <Paragraph type="secondary" className="text-xs">
-                  {m.endpointsHint}
+                  {system && row.company_id === null
+                    ? m.hub.sharedEndpointsHint
+                    : m.endpointsHint}
                 </Paragraph>
                 <OutboundConnectionAdmin
                   integrationId={row.id}
                   externalApiBase={externalApiBase}
                   onChanged={refresh}
+                  scope={scope}
                 />
               </>
             ),
@@ -176,7 +198,7 @@ export function IntegrationDetail({
           {
             key: "calls",
             label: m.tabs.calls,
-            children: <CallsTab id={row.id} canAudit={canAudit} />,
+            children: <CallsTab id={row.id} canAudit={canAudit} scope={scope} />,
           },
         ]}
       />
@@ -187,10 +209,22 @@ export function IntegrationDetail({
 function SettingsTab({
   row,
   onSaved,
+  scope,
 }: {
   readonly row: IntegrationRow;
   readonly onSaved: () => Promise<void>;
+  readonly scope: KeyScope;
 }) {
+  const shared = scope === "system" && row.company_id === null;
+  const [allowed, setAllowed] = useState<string[]>(row.allowed_company_ids);
+  const [companies, setCompanies] = useState<SystemCompany[]>([]);
+
+  useEffect(() => {
+    if (!shared) return;
+    void appApi<SystemCompany[]>("system/companies").then((result) => {
+      if (result.ok) setCompanies(result.data.filter((company) => company.active));
+    });
+  }, [shared]);
   const { message } = App.useApp();
   const [name, setName] = useState(row.name);
   const [description, setDescription] = useState(row.description ?? "");
@@ -201,7 +235,7 @@ function SettingsTab({
 
   async function save(payload: Parameters<typeof updateIntegration>[1]) {
     setBusy(true);
-    const result = await updateIntegration(row.id, payload);
+    const result = await updateIntegration(row.id, payload, scope);
     setBusy(false);
     if (!result.ok) {
       return void message.error(
@@ -257,6 +291,23 @@ function SettingsTab({
             />
           </Form.Item>
         )}
+        {shared && (
+          <Form.Item label={m.hub.allowedLabel} extra={m.hub.allowedHint}>
+            <Select<string[]>
+              mode="multiple"
+              className="w-full"
+              allowClear
+              placeholder={m.hub.allCompanies}
+              value={allowed}
+              onChange={setAllowed}
+              optionFilterProp="label"
+              options={companies.map((company) => ({
+                value: company.id,
+                label: `${company.code} ${company.name}`,
+              }))}
+            />
+          </Form.Item>
+        )}
         <Space>
           <Button
             type="primary"
@@ -269,6 +320,7 @@ function SettingsTab({
                 modes,
                 allow_acting_user: actingUser,
                 keycloak_client_ids: clientIds,
+                ...(shared ? { allowed_company_ids: allowed } : {}),
               })
             }
           >
@@ -331,9 +383,11 @@ function McpTab({
 function CallsTab({
   id,
   canAudit,
+  scope,
 }: {
   readonly id: string;
   readonly canAudit: boolean;
+  readonly scope: KeyScope;
 }) {
   const [page, setPage] = useState(1);
   const [rows, setRows] = useState<IntegrationCall[] | null>(null);
@@ -341,12 +395,12 @@ function CallsTab({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    void listIntegrationCalls(id, page, PAGE_SIZE).then((result) => {
+    void listIntegrationCalls(id, page, PAGE_SIZE, scope).then((result) => {
       if (!result.ok) return setError(result.message);
       setRows(result.data.data);
       setTotal(result.data.total);
     });
-  }, [id, page]);
+  }, [id, page, scope]);
 
   if (error) {
     return (
