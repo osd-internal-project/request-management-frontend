@@ -26,7 +26,7 @@ import { menuEntryFor, ModuleNav } from "@/components/layout/module-nav";
 import { NavRail } from "@/components/layout/nav-rail";
 import { CompanySwitcher } from "@/components/layout/company-switcher";
 import { NotificationBell } from "@/components/notifications/notification-bell";
-import { PhoneWorkspacePanel } from "@/components/layout/phone/phone-workspace-panel";
+import { PhoneWidget } from "@/components/layout/phone/phone-widget";
 import { messages } from "@/lib/messages";
 import { HOME_PATH } from "@/lib/routes";
 
@@ -80,25 +80,6 @@ export function AppShell({
   const screens = Grid.useBreakpoint();
   const [navOpen, setNavOpen] = useState(false);
   const chat = useChatDock();
-  // The phone covers the page it was opened on; any navigation reveals the new
-  // page while the workspace (and a live call) stays mounted underneath.
-  const [phoneOpenedAt, setPhoneOpenedAt] = useState<string | null>(null);
-  const phoneOpen = phoneOpenedAt === pathname;
-
-  function togglePhone() {
-    if (!phoneOpen) chat.close();
-    setPhoneOpenedAt(phoneOpen ? null : pathname);
-  }
-
-  function toggleChat() {
-    setPhoneOpenedAt(null);
-    chat.toggle();
-  }
-
-  const phoneNav = canUsePhoneWorkspace
-    ? { open: phoneOpen, onToggle: togglePhone }
-    : undefined;
-
   useEffect(() => {
     const entry = menuEntryFor(pathname, menus);
     const title = entry?.label ?? pathname;
@@ -199,7 +180,6 @@ export function AppShell({
             pathname={pathname}
             onNavigate={(href) => router.push(href)}
             shortcut
-            phone={phoneNav}
           />
         </Sider>
       )}
@@ -219,15 +199,6 @@ export function AppShell({
             setNavOpen(false);
             router.push(href);
           }}
-          phone={
-            phoneNav && {
-              open: phoneNav.open,
-              onToggle: () => {
-                setNavOpen(false);
-                phoneNav.onToggle();
-              },
-            }
-          }
         />
       </Drawer>
 
@@ -251,7 +222,7 @@ export function AppShell({
               activeCompanyId={user.activeCompanyId}
             />
             <div className="flex shrink-0 items-center gap-2 md:gap-3">
-              <ChatToggleButton open={chat.isOpen} onClick={toggleChat} />
+              <ChatToggleButton open={chat.isOpen} onClick={chat.toggle} />
               <span
                 aria-hidden
                 className="h-6 w-px bg-[var(--app-border)] max-md:hidden"
@@ -314,9 +285,8 @@ export function AppShell({
             </Splitter.Panel>
           </Splitter>
 
-          {canUsePhoneWorkspace && (
-            <PhoneWorkspacePanel open={phoneOpen} onClose={() => setPhoneOpenedAt(null)} />
-          )}
+          {/* The Workspace panel (phone-workspace-panel.tsx) is hidden, not deleted: the floating card replaced it. */}
+          {canUsePhoneWorkspace && <PhoneWidget />}
         </div>
       </Layout>
 
