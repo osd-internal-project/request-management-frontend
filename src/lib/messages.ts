@@ -2289,6 +2289,7 @@ export const messages = {
     events: {
       "request.submitted": "ยื่นคำขอ",
       "request.resubmitted": "ยื่นใหม่หลังแก้ไข",
+      "request.receiver_auto_assigned": "ระบบเลือกผู้รับเรื่อง (งานค้างน้อยสุดในทีม)",
       RECEIVED: "รับเรื่อง",
       ASSIGNED: "มอบหมายผู้ดำเนินการ",
       HANDOVER: "ส่งต่อผู้ดำเนินการ",
