@@ -818,6 +818,11 @@ export interface RequestRow {
   } | null;
   /** CD-67 — ระดับความรุนแรง (เฉพาะเคส). */
   severity?: RequestSeverity | null;
+  /**
+   * หน้าลูกค้าเท่านั้น — เป็นเคส: มีระดับความรุนแรง หรือเป็นใบสั่งงานบริการ
+   * (ใบที่ผูกจากคำขอเดิมไม่มีระดับความรุนแรง).
+   */
+  isCase?: boolean;
   approvalCases?: {
     /** The decision endpoint addresses the case, not the request. */
     id?: string;
@@ -1189,6 +1194,8 @@ export interface CustomerSummary {
   opportunities: { open: number; openAmount: number } | null;
   /** null = viewer has no request.read — hide the card (C360-04). */
   requests: { total: number; open: number | null } | null;
+  /** เคสของลูกค้า — นับชุดเดียวกับแท็บเคส; null เมื่อไม่มี request.read. */
+  cases?: { total: number; open: number | null } | null;
   /** C360-02 — cached from SAP by the hourly sync; null = never synced. */
   financials: {
     outstanding: number;

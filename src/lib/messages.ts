@@ -9068,6 +9068,7 @@ export const messages = {
         openOpportunitiesAmount: (amount: string) => `มูลค่ารวม ${amount} บาท`,
         openRequests: "คำขอค้าง",
         totalRequestsSuffix: (total: string) => `จากทั้งหมด ${total}`,
+        openCases: "เคสค้าง",
         contacts: "ผู้ติดต่อ",
         locations: "ที่อยู่/ไซต์",
         branchCustomers: "สาขาในเครือ",

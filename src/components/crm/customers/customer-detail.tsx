@@ -157,8 +157,9 @@ export function CustomerDetailView({
   const contractRows = (relatedRequests ?? []).filter(
     (row) => row.typeCode === contractRequestTypeCode,
   );
-  const caseRows = (relatedRequests ?? []).filter((row) =>
-    Boolean(row.severity),
+  // a service work order is a case too, with or without a severity
+  const caseRows = (relatedRequests ?? []).filter(
+    (row) => row.isCase ?? Boolean(row.severity),
   );
   const editable = canManage && !isAlias;
 
@@ -382,6 +383,21 @@ export function CustomerDetailView({
               <Text type="secondary" className="text-xs">
                 {m.detail.cards.totalRequestsSuffix(
                   String(summary.requests.total),
+                )}
+              </Text>
+            </Card>
+          )}
+          {summary.cases && (
+            <Card size="small">
+              <Text type="secondary" className="block text-xs">
+                {m.detail.cards.openCases}
+              </Text>
+              <div className="text-xl font-semibold">
+                {summary.cases.open ?? 0}
+              </div>
+              <Text type="secondary" className="text-xs">
+                {m.detail.cards.totalRequestsSuffix(
+                  String(summary.cases.total),
                 )}
               </Text>
             </Card>
