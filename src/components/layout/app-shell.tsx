@@ -26,8 +26,7 @@ import { menuEntryFor, ModuleNav } from "@/components/layout/module-nav";
 import { NavRail } from "@/components/layout/nav-rail";
 import { CompanySwitcher } from "@/components/layout/company-switcher";
 import { NotificationBell } from "@/components/notifications/notification-bell";
-import { PhoneToggleButton } from "@/components/layout/phone/phone-toggle-button";
-import { PhoneWorkspacePanel } from "@/components/layout/phone/phone-workspace-panel";
+import { PhoneWidget } from "@/components/layout/phone/phone-widget";
 import { messages } from "@/lib/messages";
 import { HOME_PATH } from "@/lib/routes";
 
@@ -81,19 +80,6 @@ export function AppShell({
   const screens = Grid.useBreakpoint();
   const [navOpen, setNavOpen] = useState(false);
   const chat = useChatDock();
-  // The phone and the AI chat share the right side, one at a time.
-  const [phoneOpen, setPhoneOpen] = useState(false);
-
-  function togglePhone() {
-    if (!phoneOpen) chat.close();
-    setPhoneOpen(!phoneOpen);
-  }
-
-  function toggleChat() {
-    setPhoneOpen(false);
-    chat.toggle();
-  }
-
   useEffect(() => {
     const entry = menuEntryFor(pathname, menus);
     const title = entry?.label ?? pathname;
@@ -236,10 +222,7 @@ export function AppShell({
               activeCompanyId={user.activeCompanyId}
             />
             <div className="flex shrink-0 items-center gap-2 md:gap-3">
-              {canUsePhoneWorkspace && (
-                <PhoneToggleButton open={phoneOpen} onClick={togglePhone} />
-              )}
-              <ChatToggleButton open={chat.isOpen} onClick={toggleChat} />
+              <ChatToggleButton open={chat.isOpen} onClick={chat.toggle} />
               <span
                 aria-hidden
                 className="h-6 w-px bg-[var(--app-border)] max-md:hidden"
@@ -262,7 +245,7 @@ export function AppShell({
 
         {/* Both panels always render: swapping the tree on toggle would remount
             `children` (losing form state) and the widget (losing the conversation). */}
-        <div className="flex min-h-0 flex-1">
+        <div className="relative flex min-h-0 flex-1">
           <Splitter
             className="min-w-0 flex-1"
             classNames={{ dragger: chat.isOpen ? undefined : "hidden!" }}
@@ -302,9 +285,8 @@ export function AppShell({
             </Splitter.Panel>
           </Splitter>
 
-          {canUsePhoneWorkspace && (
-            <PhoneWorkspacePanel open={phoneOpen} onClose={() => setPhoneOpen(false)} />
-          )}
+          {/* The Workspace panel (phone-workspace-panel.tsx) is hidden, not deleted: the floating card replaced it. */}
+          {canUsePhoneWorkspace && <PhoneWidget />}
         </div>
       </Layout>
 

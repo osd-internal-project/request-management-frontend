@@ -1,6 +1,7 @@
 "use client";
 
 import { Menu, Select, Tooltip, type MenuProps } from "antd";
+import { PhoneOutlined } from "@ant-design/icons";
 import type { RefSelectProps } from "antd/es/select";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { GROUP_ICONS, type MenuEntry } from "@/app/configs/menu";
@@ -51,12 +52,15 @@ export function ModuleNav({
   pathname,
   onNavigate,
   shortcut = false,
+  phone,
 }: {
   menus: MenuEntry[];
   pathname: string;
   onNavigate: (href: string) => void;
   /** Ctrl/⌘+K focuses the search. Only one mounted instance should take it. */
   shortcut?: boolean;
+  /** `phone.workspace.use` only: the phone sits above the modules, apart from them. */
+  phone?: { open: boolean; onToggle: () => void };
 }) {
   const searchRef = useRef<RefSelectProps>(null);
   const modules = useMemo(
@@ -123,8 +127,28 @@ export function ModuleNav({
 
   return (
     <div className="flex min-h-0 flex-1">
-      {modules.size > 1 && (
+      {(modules.size > 1 || phone) && (
         <nav className="flex w-16 shrink-0 flex-col items-center gap-1 overflow-y-auto border-r border-[var(--app-border-soft)] py-2">
+          {phone && (
+            <>
+              <Tooltip title={messages.phone.title} placement="right">
+                <button
+                  type="button"
+                  aria-label={messages.phone.toggle}
+                  aria-pressed={phone.open}
+                  onClick={phone.onToggle}
+                  className={`flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-lg text-lg ${
+                    phone.open
+                      ? "bg-[var(--app-primary-soft)] text-[var(--app-primary)]"
+                      : "text-[var(--app-text-secondary)] hover:bg-[var(--app-primary-pale)]"
+                  }`}
+                >
+                  <PhoneOutlined />
+                </button>
+              </Tooltip>
+              <hr className="my-1 w-8 border-[var(--app-border-soft)]" />
+            </>
+          )}
           {[...modules.keys()].map((group) => {
             const active = group === activeGroup;
             return (
