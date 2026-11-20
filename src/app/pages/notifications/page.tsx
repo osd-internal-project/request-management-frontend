@@ -3,7 +3,6 @@ import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
 import { NotificationsView } from "@/components/notifications/notifications-view";
 import {
-  getLineLink,
   getNotificationPreferences,
   getNotifications,
   getUnreadCount,
@@ -18,7 +17,7 @@ const PAGE_SIZE = 20;
 export default async function NotificationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ unread?: string; page?: string; line?: string }>;
+  searchParams: Promise<{ unread?: string; page?: string }>;
 }) {
   const session = await getSession();
   if (!can(session, "notification.read")) redirect(HOME_PATH);
@@ -27,13 +26,11 @@ export default async function NotificationsPage({
   const unreadOnly = query.unread === "true";
   const page = Number(query.page) || 1;
 
-  const [listResult, countResult, preferencesResult, lineResult] =
-    await Promise.all([
-      getNotifications({ unread: unreadOnly, page, page_size: PAGE_SIZE }),
-      getUnreadCount(),
-      getNotificationPreferences(),
-      getLineLink(),
-    ]);
+  const [listResult, countResult, preferencesResult] = await Promise.all([
+    getNotifications({ unread: unreadOnly, page, page_size: PAGE_SIZE }),
+    getUnreadCount(),
+    getNotificationPreferences(),
+  ]);
 
   return (
     <div className="space-y-4">
@@ -55,8 +52,6 @@ export default async function NotificationsPage({
         page={page}
         pageSize={PAGE_SIZE}
         preferences={preferencesResult.ok ? preferencesResult.data : null}
-        line={lineResult.ok ? lineResult.data : null}
-        lineResult={query.line ?? null}
       />
     </div>
   );

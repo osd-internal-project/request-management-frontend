@@ -28,7 +28,7 @@ import { CompanySwitcher } from "@/components/layout/company-switcher";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { PhoneWidget } from "@/components/layout/phone/phone-widget";
 import { messages } from "@/lib/messages";
-import { HOME_PATH } from "@/lib/routes";
+import { HOME_PATH, ROUTES } from "@/lib/routes";
 
 const { Header, Content, Footer, Sider } = Layout;
 
@@ -112,6 +112,10 @@ export function AppShell({
   }
 
   const avatarDropdownItems = [
+    {
+      key: "my-line",
+      label: <Link href={ROUTES.myLine}>{messages.nav.myLine}</Link>,
+    },
     {
       key: "logout",
       label: (
