@@ -91,6 +91,8 @@ Skipping the call, not hiding the error, is the fix: an empty result for
 someone who cannot decide is the truthful answer. And hide the UI it feeds —
 a tab that can only ever read `· 0` looks like a page that failed to load.
 
+**A self-service screen (the user's own settings, e.g. linking LINE) sits behind login only, never a role permission** — the LINE card on `/pages/notifications` (`notification.read`) was unreachable for users without a role; it lives at avatar menu → `/pages/me/line` (20 Nov 2026).
+
 ## Shell layout (antd `Layout`)
 
 Swapping `<Sider>` for a custom element (e.g. `NavRail`) silently flips antd `Layout` to a
