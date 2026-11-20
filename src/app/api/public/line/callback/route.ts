@@ -12,14 +12,14 @@ const FORWARDED = ["code", "state", "error", "friendship_status_changed"];
 /**
  * LINE Login redirects the browser here after a user links their LINE. The
  * signed `state` is the credential (core-service checks it), so there is no
- * session; the answer is always a redirect to the notifications page with
+ * session; the answer is always a redirect to LINE ของฉัน with
  * `?line=ok` or the reason it failed.
  */
 export async function GET(request: NextRequest) {
   const back = (result: string) =>
     NextResponse.redirect(
       new URL(
-        `${ROUTES.notifications}?line=${encodeURIComponent(result)}`,
+        `${ROUTES.myLine}?line=${encodeURIComponent(result)}`,
         appOrigin(request),
       ),
     );

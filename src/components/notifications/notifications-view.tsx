@@ -17,8 +17,6 @@ import {
   notificationHref,
 } from "@/components/notifications/notification-list";
 import { NotificationPreferencesCard } from "@/components/notifications/notification-preferences";
-import { LineLinkCard } from "@/components/notifications/line-link-card";
-import type { LineLinkStatus } from "@/lib/api/line";
 import { appApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
@@ -44,8 +42,6 @@ export function NotificationsView({
   page,
   pageSize,
   preferences,
-  line,
-  lineResult,
 }: {
   rows: AppNotification[];
   total: number;
@@ -56,8 +52,6 @@ export function NotificationsView({
   pageSize: number;
   /** null = could not be read; the card is hidden rather than shown wrong. */
   preferences: NotificationPreferences | null;
-  line: LineLinkStatus | null;
-  lineResult: string | null;
 }) {
   const router = useRouter();
   const { message } = App.useApp();
@@ -147,12 +141,9 @@ export function NotificationsView({
         )}
       </Card>
 
-      <div className="flex flex-col gap-4">
-        {line && <LineLinkCard status={line} result={lineResult} />}
-        {preferences && (
-          <NotificationPreferencesCard initial={preferences} onError={setError} />
-        )}
-      </div>
+      {preferences && (
+        <NotificationPreferencesCard initial={preferences} onError={setError} />
+      )}
     </div>
   );
 }

@@ -1265,6 +1265,7 @@ export const messages = {
     adminWorkflowTriggers: "เริ่ม Workflow อัตโนมัติ",
     adminMailSettings: "อีเมลงานขาย",
     adminLineSettings: "LINE ของบริษัท",
+    myLine: "LINE ของฉัน",
     adminErpSync: "คิวส่ง SAP",
     adminLlm: "LLM Gateway",
     adminAiAudit: "บันทึกการใช้ AI",
@@ -7486,6 +7487,11 @@ export const messages = {
     title: "การแจ้งเตือน",
     line: {
       title: "LINE",
+      pageTitle: "LINE ของฉัน",
+      pageSubtitle: (company: string) =>
+        company
+          ? `ผูก LINE ของคุณกับ OA ของ ${company} — อยู่หลายบริษัท ให้สลับบริษัทแล้วผูกทีละที่`
+          : "ผูก LINE ของคุณกับ OA ของบริษัทที่เลือกอยู่",
       intro:
         "ผูก LINE ของคุณกับ OA ของบริษัท เพื่อรับการ์ดอนุมัติและกดตอบใน LINE ได้เลย",
       notConfigured:
