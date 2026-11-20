@@ -128,6 +128,8 @@ export const ROUTES = {
   /** SUP-03 กล่องแจ้งเตือน */
   notifications: `${HOME_PATH}/notifications`,
   myLine: `${HOME_PATH}/me/line`,
+  /** D-Callcenter Workspace in its own window — outside the app shell. */
+  phone: "/phone",
   /** CD-76 ใบเสนอราคา — ทะเบียน และหน้ารายละเอียดต่อเวอร์ชัน (แก้ร่างในหน้าเดียวกัน). */
   quotations: `${HOME_PATH}/quotations`,
   saleOrders: `${HOME_PATH}/sale-orders`,
