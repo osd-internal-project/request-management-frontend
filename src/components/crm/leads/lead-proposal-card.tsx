@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Alert, Button, Card, Divider, Radio, Spin, Typography } from "antd";
+import { Alert, Button, Card, Divider, Spin, Typography } from "antd";
 import { CheckCircleFilled, DownloadOutlined } from "@ant-design/icons";
 import { appApi } from "@/lib/api/client";
 import type {
@@ -14,23 +14,19 @@ import type { LeadFile } from "@/lib/api/sales";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import { useAgentRecordStream } from "@/components/agent-records/use-agent-record-stream";
+import { SelectedProductPicker, type ProductOption } from "./selected-product-picker";
 
 const { Text } = Typography;
 const mp = messages.sales.leads.proposal;
 /** Vuvagent's download link stops working 7 days after it is made. */
 const LINK_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000;
 
-interface Suggestion {
-  product: string;
-  reason: string;
-}
-
 type Job =
   | { kind: "suggest"; recordId: string }
   | { kind: "write"; recordId: string; product: string };
 
 /** `intakeData.product_suggestions` is written by the agent; keep only well-formed rows. */
-function suggestionsOf(value: unknown): Suggestion[] {
+export function suggestionsOf(value: unknown): ProductOption[] {
   if (typeof value !== "object" || value === null) return [];
   const products: unknown = (value as { products?: unknown }).products;
   if (!Array.isArray(products)) return [];
@@ -89,8 +85,6 @@ export function LeadProposalCard({
     suggestions.some((row) => row.product === selected)
       ? selected
       : null;
-  const [choice, setChoice] = useState<string | null>(saved);
-  const [saving, setSaving] = useState(false);
   const [job, setJob] = useState<Job | null>(() => runningJob(runningRows));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -145,22 +139,6 @@ export function LeadProposalCard({
     setJob(next(result.data.id));
   }
 
-  async function save() {
-    if (!choice) return;
-    setSaving(true);
-    setError(null);
-    const result = await appApi(`leads/${leadId}/intake-data`, {
-      method: "PATCH",
-      body: JSON.stringify({ data: { selected_product: choice } }),
-    });
-    setSaving(false);
-    if (!result.ok) {
-      setError(result.message);
-      return;
-    }
-    router.refresh();
-  }
-
   const running = job !== null;
 
   return (
@@ -189,37 +167,13 @@ export function LeadProposalCard({
     >
       <div className="flex flex-col gap-2">
         {suggestions.length > 0 && (
-          <Radio.Group
-            value={choice}
-            disabled={!canStart || running}
-            onChange={(e) => setChoice(e.target.value as string)}
-            className="flex! flex-col gap-2"
-          >
-            {suggestions.map((row) => (
-              <Radio key={row.product} value={row.product}>
-                <div className="flex min-w-0 flex-col">
-                  <Text strong>{row.product}</Text>
-                  {row.reason && (
-                    <Text type="secondary" className="text-xs">
-                      {row.reason}
-                    </Text>
-                  )}
-                </div>
-              </Radio>
-            ))}
-          </Radio.Group>
-        )}
-        {suggestions.length > 0 && canStart && (
-          <div className="flex justify-end">
-            <Button
-              size="small"
-              loading={saving}
-              disabled={!choice || choice === saved || running}
-              onClick={() => void save()}
-            >
-              {mp.save}
-            </Button>
-          </div>
+          <SelectedProductPicker
+            leadId={leadId}
+            options={suggestions}
+            saved={saved}
+            disabled={running}
+            canEdit={canStart}
+          />
         )}
         {suggestions.length > 0 && (
           <>
