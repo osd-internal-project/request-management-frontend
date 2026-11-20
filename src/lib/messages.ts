@@ -1264,6 +1264,7 @@ export const messages = {
     adminIntegrations: "ระบบภายนอก",
     adminWorkflowTriggers: "เริ่ม Workflow อัตโนมัติ",
     adminMailSettings: "อีเมลงานขาย",
+    adminLineSettings: "LINE ของบริษัท",
     adminErpSync: "คิวส่ง SAP",
     adminLlm: "LLM Gateway",
     adminAiAudit: "บันทึกการใช้ AI",
@@ -5739,6 +5740,31 @@ export const messages = {
     columnReason: "ที่มา",
     noHistory: "ยังไม่มีการจัดคน",
   },
+  lineSettings: {
+    title: "LINE ของบริษัท",
+    subtitle:
+      "LINE Login channel ที่พนักงานใช้ผูก LINE ของตัวเองกับ OA ของบริษัท เพื่อรับการ์ดอนุมัติใน LINE — ตั้งแยกต่อบริษัท",
+    loadFailed: "โหลดการตั้งค่าไม่สำเร็จ",
+    notReady:
+      "ยังผูก LINE ไม่ได้ — ต้องกรอก Channel ID และ Channel secret ให้ครบ",
+    ready: "พร้อมใช้ — พนักงานผูก LINE ได้จากหน้าแจ้งเตือน",
+    channelTitle: "LINE Login channel",
+    channelHint:
+      "สร้างใน LINE Developers ภายใต้ Provider เดียวกับ OA ของบริษัท ถ้าคนละ Provider LINE userId จะไม่ตรงกับที่ OA ใช้ส่งการ์ด",
+    channelId: "Channel ID",
+    channelSecret: "Channel secret",
+    channelSecretKeep: "ตั้งแล้ว •••• — เว้นว่างเพื่อใช้ค่าเดิม",
+    channelSecretHint: "เก็บแบบเข้ารหัส ไม่แสดงกลับ",
+    oaBasicId: "Basic ID ของ OA",
+    oaBasicIdHint: "เช่น @osd — ใช้ทำลิงก์แอดเพื่อนให้คนที่ยังไม่ได้แอด OA",
+    callbackUrl: "Callback URL",
+    callbackUrlHint:
+      "ใส่ค่านี้ใน LINE Developers → LINE Login → Callback URL และเลือก Linked OA เป็น OA ของบริษัท",
+    copy: "คัดลอก",
+    copied: "คัดลอกแล้ว",
+    save: "บันทึก",
+    saved: "บันทึกแล้ว",
+  },
   mailSettings: {
     title: "อีเมลงานขาย",
     subtitle:
@@ -7458,6 +7484,36 @@ export const messages = {
   /** SUP-03 กล่องแจ้งเตือน */
   notifications: {
     title: "การแจ้งเตือน",
+    line: {
+      title: "LINE",
+      intro:
+        "ผูก LINE ของคุณกับ OA ของบริษัท เพื่อรับการ์ดอนุมัติและกดตอบใน LINE ได้เลย",
+      notConfigured:
+        "บริษัทนี้ยังไม่ได้ตั้งค่า LINE — แจ้งผู้ดูแลระบบให้ตั้งที่ ตั้งค่า → LINE ของบริษัท",
+      link: "ผูก LINE",
+      linking: "กำลังไปหน้า LINE…",
+      linkedAt: (date: string) => `ผูกเมื่อ ${date}`,
+      notFriend: (oa: string) =>
+        oa
+          ? `ยังไม่ได้แอด ${oa} เป็นเพื่อน — การ์ดจะส่งไม่ถึงจนกว่าจะแอด`
+          : "ยังไม่ได้แอด OA ของบริษัทเป็นเพื่อน — การ์ดจะส่งไม่ถึงจนกว่าจะแอด",
+      addFriend: "แอดเพื่อน",
+      unlink: "ยกเลิกผูก",
+      unlinkConfirm: "ยกเลิกผูก LINE? การ์ดอนุมัติจะไม่ส่งมาที่ LINE นี้อีก",
+      unlinked: "ยกเลิกผูก LINE แล้ว",
+      results: {
+        ok: "ผูก LINE แล้ว",
+        STATE_EXPIRED: "ลิงก์หมดอายุ (เกิน 10 นาที) — กดผูก LINE ใหม่",
+        STATE_INVALID: "ลิงก์ไม่ถูกต้อง — กดผูก LINE ใหม่จากหน้านี้",
+        LINE_DENIED: "ยังไม่ได้ผูก — คุณยกเลิกที่หน้า LINE",
+        LINE_ALREADY_LINKED:
+          "LINE นี้ผูกกับคนอื่นในบริษัทแล้ว — ใช้ LINE ของคุณเอง หรือให้เจ้าของเดิมยกเลิกก่อน",
+        LINE_NOT_CONFIGURED:
+          "บริษัทนี้ยังไม่ได้ตั้งค่า LINE — แจ้งผู้ดูแลระบบ",
+        LINE_ERROR: "LINE ตอบกลับไม่สำเร็จ — ลองผูกใหม่อีกครั้ง",
+        UNAVAILABLE: "ระบบไม่ตอบ — ลองผูกใหม่อีกครั้ง",
+      } as Record<string, string>,
+    },
     bellLabel: "การแจ้งเตือน",
     latest: "การแจ้งเตือนล่าสุด",
     viewAll: "ดูทั้งหมด",

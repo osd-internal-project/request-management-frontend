@@ -216,6 +216,7 @@ export const ROUTES = {
   adminWorkflowTriggers: `${HOME_PATH}/admin/workflow-triggers`,
   /** งานขายอัตโนมัติ — mailbox + Microsoft Graph ต่อบริษัท. */
   adminMailSettings: `${HOME_PATH}/admin/mail-settings`,
+  adminLineSettings: `${HOME_PATH}/admin/line-settings`,
   /** CD-275 */
   adminLlm: `${HOME_PATH}/admin/llm`,
   /** CD-279 */

@@ -157,6 +157,7 @@ const MENU_ICONS: Record<MenuIconKey, LucideIcon> = {
   apiKey: Plug,
   workflowTrigger: Zap,
   salesMail: Mail,
+  lineSettings: MessageCircle,
   erpSync: RefreshCw,
   runNumber: Hash,
   dashboard: LayoutDashboard,
