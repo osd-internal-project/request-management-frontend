@@ -7,6 +7,7 @@ import { canSystem } from "@/lib/session-shape";
 export type MenuIconKey =
   | "inbox"
   | "salesMail"
+  | "lineSettings"
   | "obligation"
   | "newRequest"
   | "allWork"
@@ -941,6 +942,14 @@ const MENU_ITEMS: readonly MenuEntry[] = [
     label: messages.nav.adminMailSettings,
     href: ROUTES.adminMailSettings,
     icon: "salesMail",
+    permissions: ["admin.integration.manage"],
+    group: messages.nav.adminGroup,
+    section: messages.nav.adminSectionIntegrations,
+  },
+  {
+    label: messages.nav.adminLineSettings,
+    href: ROUTES.adminLineSettings,
+    icon: "lineSettings",
     permissions: ["admin.integration.manage"],
     group: messages.nav.adminGroup,
     section: messages.nav.adminSectionIntegrations,

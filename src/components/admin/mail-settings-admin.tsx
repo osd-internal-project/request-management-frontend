@@ -35,7 +35,8 @@ function dateTime(iso: string): string {
   });
 }
 
-function Field({
+/** Label + control + hint, the settings forms' field layout. */
+export function Field({
   label,
   hint,
   children,
