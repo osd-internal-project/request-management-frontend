@@ -7829,7 +7829,22 @@ export const messages = {
         viewJob: "ดูงาน",
         failed: "Agent วิจัยไม่สำเร็จ เปิดหน้างานเพื่อดูเหตุผล",
         empty: "ยังไม่มีผลวิจัย กดวิจัยเพื่อให้ agent หาข้อมูลของ Lead นี้",
-        expand: "Expand",
+        expand: "ดูทั้งหมด",
+        fitScore: (score: number) => `ความเหมาะ ${score}/5`,
+        notListed: "ไม่อยู่ในรายการแนะนำ (เลือกไม่ได้)",
+        suggestFirst: "กดแนะนำสินค้าในการ์ด Proposal ก่อนจึงเลือกได้",
+        evidence: "หลักฐาน",
+        sections: {
+          summary: "สรุป",
+          business: "ธุรกิจ",
+          products: "สินค้าที่เหมาะ",
+          talkingPoints: "ประเด็นคุย",
+          painPoints: "ปัญหาของลูกค้า",
+          signals: "สัญญาณล่าสุด",
+          decisionMakers: "ผู้ตัดสินใจ",
+          channels: "ช่องทางติดต่อ",
+          sources: "แหล่งที่มา",
+        },
       },
       /** การ์ด Proposal — Proposal Writer ของ Vuvagent (docs/lead-proposal.md ฝั่ง backend). */
       quoteItems: {
