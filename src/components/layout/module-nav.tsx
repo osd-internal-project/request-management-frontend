@@ -63,6 +63,7 @@ export function ModuleNav({
   phone?: { open: boolean; onToggle: () => void };
 }) {
   const searchRef = useRef<RefSelectProps>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const modules = useMemo(
     () => bucketBy(menus, (entry) => entry.group),
     [menus],
@@ -112,6 +113,14 @@ export function ModuleNav({
       })),
     [modules],
   );
+
+  // A long module (ผู้ดูแลระบบ has 24 entries) leaves the open page's entry below the fold.
+  const currentHref = current?.href;
+  useEffect(() => {
+    panelRef.current
+      ?.querySelector(".ant-menu-item-selected")
+      ?.scrollIntoView({ block: "nearest" });
+  }, [currentHref, activeGroup]);
 
   useEffect(() => {
     if (!shortcut) return;
@@ -172,7 +181,7 @@ export function ModuleNav({
         </nav>
       )}
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div ref={panelRef} className="flex min-w-0 flex-1 flex-col">
         <div className="shrink-0 px-3 pt-3 pb-2">
           <Select
             ref={searchRef}

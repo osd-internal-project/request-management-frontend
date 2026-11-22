@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { Alert, App, Button, Card, Empty, Input, Modal, Space, Spin, Tag, Tooltip } from "antd";
+import { Alert, App, Button, Card, Empty, Input, Modal, Popconfirm, Space, Spin, Tag, Tooltip } from "antd";
 import Text from "antd/es/typography/Text";
 import Paragraph from "antd/es/typography/Paragraph";
 import {
@@ -405,11 +405,20 @@ export function RolePermissionAdmin({
                   {messages.roleAdmin.undeletable(selected._count.users)}
                 </Tag>
               </Tooltip>
-              <Button size="small" onClick={() => void toggleActive()}>
-                {selected.active
-                  ? messages.roleAdmin.disable
-                  : messages.roleAdmin.enable}
-              </Button>
+              <Popconfirm
+                title={messages.roleAdmin.confirmDisable}
+                disabled={!selected.active}
+                onConfirm={() => void toggleActive()}
+              >
+                <Button
+                  size="small"
+                  onClick={selected.active ? undefined : () => void toggleActive()}
+                >
+                  {selected.active
+                    ? messages.roleAdmin.disable
+                    : messages.roleAdmin.enable}
+                </Button>
+              </Popconfirm>
               <Button
                 size="small"
                 type="primary"
@@ -544,15 +553,14 @@ export function RolePermissionAdmin({
                     </Tag>
 
                     {holder.source === "MANUAL" ? (
-                      <Button
-                        size="small"
-                        type="link"
-                        danger
-                        disabled={busy}
-                        onClick={() => void revoke(holder)}
+                      <Popconfirm
+                        title={messages.roleAdmin.confirmRevoke}
+                        onConfirm={() => void revoke(holder)}
                       >
-                        {messages.roleAdmin.revoke}
-                      </Button>
+                        <Button size="small" type="link" danger disabled={busy}>
+                          {messages.roleAdmin.revoke}
+                        </Button>
+                      </Popconfirm>
                     ) : (
                       <Tooltip
                         title={messages.roleAdmin.keycloakNotRevocable}
