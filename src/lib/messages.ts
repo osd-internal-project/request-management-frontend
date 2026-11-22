@@ -8280,6 +8280,9 @@ export const messages = {
         openSaleOrderTitle: "เปิดใบสั่งขายจากโอกาสการขายนี้",
         openSaleOrderHint:
           "เปิดใบสั่งขายถือว่าปิดโอกาสการขายแบบชนะ และเป็นจุดเดียวที่ระบบสร้างทะเบียนลูกค้า",
+        // 22 พ.ย. 2569 — a quotation emailed to the customer needs their confirming email
+        saleOrderAwaitingConfirm: (no: string) =>
+          `ใบเสนอราคา ${no} ส่งให้ลูกค้าแล้ว — ถ้าส่งทางอีเมล เปิดใบสั่งขายได้เมื่อลูกค้าตอบอีเมลยืนยันหรือส่ง PO และระบบจะใช้รายการของใบนั้นเอง ไม่ต้องกรอกรายการ`,
         saleOrderAmount: "มูลค่าใบสั่งขาย (THB) — ว่าง = ใช้มูลค่าโอกาสการขาย",
         saleOrderNote: "หมายเหตุ",
         customerToCreate: "ลูกค้าที่จะสร้างในทะเบียน",

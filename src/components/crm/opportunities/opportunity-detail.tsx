@@ -171,6 +171,8 @@ export function OpportunityDetailView({
 
   // CD-77: ใบสั่งขายเปิดตามใบเสนอราคาที่ลูกค้ายอมรับ — ค่าตั้งต้นคือใบล่าสุดที่ยอมรับ
   const acceptedQuotations = quotations.filter((q) => q.status === "accepted");
+  // sent but not yet answered — opening may wait for the customer's email
+  const sentQuotation = quotations.find((q) => q.status === "sent");
   const [soQuotationId, setSoQuotationId] = useState<string | undefined>(
     acceptedQuotations[0]?.id,
   );
@@ -902,6 +904,15 @@ export function OpportunityDetailView({
             </Card>
           )}
 
+          {!acceptedQuotations.length && sentQuotation && (
+            <Alert
+              type="info"
+              showIcon
+              title={md.saleOrderAwaitingConfirm(
+                `${sentQuotation.quotationNo} ${mq.version(sentQuotation.version)}`,
+              )}
+            />
+          )}
           {acceptedQuotations.length > 0 && (
             <div>
               <Text className="mb-1 block text-xs">
