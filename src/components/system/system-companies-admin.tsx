@@ -3,13 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Alert, App, Button, Card, Input, Select, Space, Table, Tag, Tooltip } from "antd";
-import Title from "antd/es/typography/Title";
-import Text from "antd/es/typography/Text";
 import { appApi } from "@/lib/api/client";
 import type { IntegrationRow } from "@/lib/api/integrations";
 import type { Paginated, SystemCompany, SystemUser } from "@/lib/api/types";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
+import { PageHeader } from "@/components/admin/page-header";
 
 const m = messages.system.companies;
 
@@ -105,12 +104,7 @@ export function SystemCompaniesAdmin({
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <Title level={4} className="mb-0!">
-          {m.title}
-        </Title>
-        <Text type="secondary">{m.subtitleOverview}</Text>
-      </div>
+      <PageHeader title={m.title} subtitle={m.subtitleOverview} />
 
       {error && <Alert type="error" showIcon title={error} />}
 

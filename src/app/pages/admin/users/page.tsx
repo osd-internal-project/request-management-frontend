@@ -1,11 +1,11 @@
-import { Alert, Card, Empty, Tag } from "antd";
+import { Alert, Button, Card, Empty, Input, Tag } from "antd";
 import Link from "next/link";
-import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
 import users from "@/lib/api/users";
 import type { KeycloakUser } from "@/lib/api/types";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
+import { PageHeader } from "@/components/admin/page-header";
 
 const PAGE_SIZE = 25;
 
@@ -43,31 +43,24 @@ export default async function AdminUsersPage({
   });
 
   return (
-    <div className="space-y-4">
-      <div>
-        <Title level={4} className="mb-0!">
-          {messages.users.title}
-        </Title>
-        <Text type="secondary">{messages.users.subtitle}</Text>
-      </div>
+    <div className="flex flex-col gap-4">
+      <PageHeader title={messages.users.title} subtitle={messages.users.subtitle} />
 
       <Card>
         {/* No `page` field: a new search starts at the first page, which is
             what dropping the parameter means. */}
         <form className="mb-4 flex max-w-xl gap-2" action={ROUTES.adminUsers}>
-          <input
+          <Input
             type="search"
             name="q"
             defaultValue={query}
             placeholder={messages.users.searchPlaceholder}
-            className="min-w-0 flex-1 rounded-md border border-gray-300 px-3 py-2 outline-none focus:border-[#ff6600]"
+            aria-label={messages.users.searchPlaceholder}
+            className="min-w-0 flex-1"
           />
-          <button
-            type="submit"
-            // className="rounded-md bg-[#ff6600] px-4 py-2 font-medium text-white hover:bg-[#e65c00]"
-          >
+          <Button type="primary" htmlType="submit">
             {messages.users.search}
-          </button>
+          </Button>
         </form>
 
         {!result.ok ? (
@@ -209,7 +202,7 @@ function Pagination({
         {page > 1 && (
           <Link
             href={href(page - 1)}
-            className="rounded-md border border-gray-300 px-3 py-1 text-sm hover:border-[#ff6600]"
+            className="rounded-md border border-gray-300 px-3 py-1 text-sm hover:border-[var(--app-primary)]"
           >
             {messages.users.prev}
           </Link>
@@ -217,7 +210,7 @@ function Pagination({
         {!last && (
           <Link
             href={href(page + 1)}
-            className="rounded-md border border-gray-300 px-3 py-1 text-sm hover:border-[#ff6600]"
+            className="rounded-md border border-gray-300 px-3 py-1 text-sm hover:border-[var(--app-primary)]"
           >
             {messages.users.next}
           </Link>

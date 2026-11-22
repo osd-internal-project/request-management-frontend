@@ -19,7 +19,7 @@ import type { NotificationLogRow } from "@/lib/api/notification-log";
 import { messages } from "@/lib/messages";
 
 const m = messages.notificationLog;
-const when = (iso: string) => dayjs(iso).format("DD/MM/YY HH:mm:ss");
+const when = (iso: string) => new Date(iso).toLocaleString("th-TH");
 
 const STATUS_COLOR: Record<string, string> = {
   sent: "green",

@@ -1,13 +1,12 @@
 import { redirect } from "next/navigation";
 import { Alert, Card } from "antd";
-import Title from "antd/es/typography/Title";
-import Text from "antd/es/typography/Text";
 import Paragraph from "antd/es/typography/Paragraph";
 import { ProcessLogView } from "@/components/admin/process-log-view";
 import processLogs from "@/lib/api/process-logs";
 import { messages } from "@/lib/messages";
 import { HOME_PATH } from "@/lib/routes";
 import { can, getSession } from "@/lib/session";
+import { PageHeader } from "@/components/admin/page-header";
 
 /** Only the filters the API accepts — anything else is dropped. */
 function toQuery(params: Record<string, string | string[] | undefined>) {
@@ -47,13 +46,8 @@ export default async function AdminProcessLogsPage({
   ]);
 
   return (
-    <div className="space-y-4">
-      <div>
-        <Title level={4} className="mb-0!">
-          {messages.processLogs.title}
-        </Title>
-        <Text type="secondary">{messages.processLogs.subtitle}</Text>
-      </div>
+    <div className="flex flex-col gap-4">
+      <PageHeader title={messages.processLogs.title} subtitle={messages.processLogs.subtitle} />
 
       {!result.ok ? (
         <Alert

@@ -1,10 +1,9 @@
 import { Alert } from "antd";
-import Title from "antd/es/typography/Title";
-import Text from "antd/es/typography/Text";
 import { WorkingHoursAdmin } from "@/components/admin/working-hours-admin";
 import slaApi from "@/lib/api/sla";
 import { messages } from "@/lib/messages";
 import { getSession } from "@/lib/session";
+import { PageHeader } from "@/components/admin/page-header";
 
 /**
  * SUP-01 — เวลาทำการและวันหยุด.
@@ -45,13 +44,8 @@ export default async function SlaSettingsPage() {
     calendars.data.find((entry) => entry.companyId === companyId) ?? null;
 
   return (
-    <div className="space-y-4">
-      <div>
-        <Title level={4} className="mb-0!">
-          {messages.slaAdmin.title}
-        </Title>
-        <Text type="secondary">{messages.slaAdmin.subtitle}</Text>
-      </div>
+    <div className="flex flex-col gap-4">
+      <PageHeader title={messages.slaAdmin.title} subtitle={messages.slaAdmin.subtitle} />
 
       <WorkingHoursAdmin
         companyId={companyId}

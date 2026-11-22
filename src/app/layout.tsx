@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { IBM_Plex_Sans_Thai } from "next/font/google";
 import "./globals.css";
 import { App, ConfigProvider } from "antd";
+import thTH from "antd/locale/th_TH";
 import { appTheme, paletteCssVars } from "./configs/theme";
 
 const plexThai = IBM_Plex_Sans_Thai({
@@ -32,7 +33,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           `message.success(…)`, which sits outside the provider entirely — antd
           warns about it, and the toast renders unthemed.
         */}
-        <ConfigProvider theme={appTheme}>
+        <ConfigProvider theme={appTheme} locale={thTH}>
           <App>{children}</App>
         </ConfigProvider>
       </body>

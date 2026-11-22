@@ -23,6 +23,8 @@ import {
 } from "@/components/layout/chat/librechat-widget";
 import { useChatDock } from "@/components/layout/chat/use-chat-dock";
 import { menuEntryFor, ModuleNav } from "@/components/layout/module-nav";
+
+const APP_NAME = "Connect the Dot";
 import { NavRail } from "@/components/layout/nav-rail";
 import { CompanySwitcher } from "@/components/layout/company-switcher";
 import { NotificationBell } from "@/components/notifications/notification-bell";
@@ -97,6 +99,8 @@ export function AppShell({
   useEffect(() => {
     const entry = menuEntryFor(pathname, menus);
     const title = entry?.label ?? pathname;
+    // Every page shared one tab title; the menu already knows each page's name.
+    document.title = entry ? `${entry.label} | ${APP_NAME}` : APP_NAME;
     const lines = [
       messages.chat.context.page(title),
       entry?.group ? messages.chat.context.group(entry.group) : null,

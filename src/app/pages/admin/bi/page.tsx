@@ -4,7 +4,6 @@ import { ExportOutlined, PlusOutlined } from "@ant-design/icons";
 import { Alert, App, Button, Card, Form, Input, InputNumber, Modal, Popconfirm, Space, Spin, Switch, Table, Tag, Tooltip } from "antd";
 import Paragraph from "antd/es/typography/Paragraph";
 import Text from "antd/es/typography/Text";
-import Title from "antd/es/typography/Title";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   createBiDashboard,
@@ -22,6 +21,7 @@ import { SearchTreeSelect } from "@/components/ui/search-select";
 import { buildUnitTree } from "@/lib/org/org-tree";
 import { DataMartCard } from "@/components/admin/data-mart-card";
 import { DataLakeCard } from "@/components/admin/data-lake-card";
+import { PageHeader } from "@/components/admin/page-header";
 
 /**
  * CD-92 v2 — the "ตั้งค่า Dashboard" admin screen.
@@ -166,20 +166,14 @@ export default function AdminBiPage() {
   }
 
   return (
-    <div className="space-y-4">
-      <div>
-        <Title level={4} className="mb-0!">
-          {messages.bi.manageTitle}
-        </Title>
-        <Text type="secondary">{messages.bi.manageSubtitle}</Text>
-      </div>
+    <div className="flex flex-col gap-4">
+      <PageHeader title={messages.bi.manageTitle} subtitle={messages.bi.manageSubtitle} />
 
       {dashboards.length === 0 && (
         <Alert type="info" showIcon title={messages.bi.envFallbackNotice} />
       )}
 
       <Card
-        title={messages.bi.manageTitle}
         extra={
           <Button
             type="primary"
