@@ -1,7 +1,5 @@
 import { redirect } from "next/navigation";
 import { Alert } from "antd";
-import Title from "antd/es/typography/Title";
-import Text from "antd/es/typography/Text";
 import { CrmAdmin } from "@/components/admin/crm-admin";
 import { apiGet } from "@/lib/api/core";
 import customers from "@/lib/api/customers";
@@ -16,6 +14,7 @@ import type {
   KycWatchlistEntry,
   TradeTermStandard,
 } from "@/lib/api/types";
+import { PageHeader } from "@/components/admin/page-header";
 
 /**
  * ตั้งค่า CRM (admin.crm.manage) — CM-07 segment dimensions/values, CM-03
@@ -53,34 +52,27 @@ export default async function CrmAdminPage() {
     can(session, "user.read") ? getAllDirectoryUsers() : Promise.resolve(null),
   ]);
 
-  const failed = !dimensionsResult.ok
-    ? dimensionsResult
-    : !configResult.ok
-      ? configResult
-      : null;
+  const loadError = (message: string) => (
+    <Alert
+      type="error"
+      showIcon
+      title={messages.common.loadError}
+      description={message}
+    />
+  );
 
   return (
-    <div className="space-y-4">
-      <div>
-        <Title level={4} className="mb-0!">
-          {messages.customers.admin.title}
-        </Title>
-        <Text type="secondary" className="text-xs">
-          {messages.customers.admin.segmentsHint}
-        </Text>
-      </div>
+    <div className="flex flex-col gap-4">
+      <PageHeader title={messages.customers.admin.title} subtitle={messages.customers.admin.segmentsHint} />
 
-      {failed && !failed.ok && (
-        <Alert
-          type="error"
-          showIcon
-          title={messages.common.loadError}
-          description={failed.error.message}
-        />
-      )}
-
-      <CrmAdmin
-        dimensions={dimensionsResult.ok ? dimensionsResult.data : []}
+      {/* No form without the real config: defaults in an editable form could be saved over it. */}
+      {!dimensionsResult.ok ? (
+        loadError(dimensionsResult.error.message)
+      ) : !configResult.ok ? (
+        loadError(configResult.error.message)
+      ) : (
+        <CrmAdmin
+        dimensions={dimensionsResult.data}
         kycProducts={kycProductsResult.ok ? kycProductsResult.data : []}
         tradeTerms={tradeTermsResult.ok ? tradeTermsResult.data : []}
         kycWatchlist={kycWatchlistResult.ok ? kycWatchlistResult.data : []}
@@ -90,30 +82,9 @@ export default async function CrmAdminPage() {
           id: user.id,
           name: user.displayName,
         }))}
-        config={
-          configResult.ok
-            ? configResult.data
-            : {
-                dedupThreshold: 0.85,
-                minMarginPct: 15,
-                quotationValidityDays: 30,
-                vatPct: 7,
-                quotationApprovalTypeCode: "DSC",
-                staleOpportunityDays: 14,
-                letterheadNameTh: null,
-                letterheadNameEn: null,
-                letterheadTaxId: null,
-                letterheadBranch: null,
-                letterheadAddress: null,
-                letterheadPhone: null,
-                letterheadFax: null,
-                letterheadEmail: null,
-                letterheadWebsite: null,
-                letterheadLogo: null,
-                quotationTerms: null,
-              }
-        }
+        config={configResult.data}
       />
+      )}
     </div>
   );
 }

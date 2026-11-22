@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Alert, App, Button, Card, Input, Modal, Radio, Switch, Table, Tag } from "antd";
-import Title from "antd/es/typography/Title";
+import { Alert, App, Button, Card, Input, Modal, Popconfirm, Radio, Switch, Table, Tag } from "antd";
 import Text from "antd/es/typography/Text";
 import { RolePermissionMatrix } from "@/components/admin/org/role-permission-matrix";
 import { appApi } from "@/lib/api/client";
 import type { PermissionRow, SharedRole } from "@/lib/api/types";
 import { messages } from "@/lib/messages";
+import { PageHeader } from "@/components/admin/page-header";
 
 const m = messages.system.roles;
 
@@ -95,12 +95,7 @@ export function SystemRolesAdmin() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-start justify-between gap-4">
-        <div>
-          <Title level={4} className="mb-0!">
-            {m.title}
-          </Title>
-          <Text type="secondary">{m.subtitle}</Text>
-        </div>
+        <PageHeader title={m.title} subtitle={m.subtitle} />
         <Button
           type="primary"
           onClick={() =>
@@ -149,12 +144,21 @@ export function SystemRolesAdmin() {
             {
               title: m.active,
               render: (_, role) => (
-                <Switch
-                  checked={role.active}
-                  disabled={busy}
-                  aria-label={`${m.active} ${role.code}`}
-                  onChange={(active) => void send(`system/roles/${role.id}`, "PATCH", { active })}
-                />
+                // Turning a role off asks first; the Switch stays controlled, so it does not flip until confirmed.
+                <Popconfirm
+                  title={m.confirmDeactivate}
+                  disabled={!role.active}
+                  onConfirm={() => void send(`system/roles/${role.id}`, "PATCH", { active: false })}
+                >
+                  <Switch
+                    checked={role.active}
+                    disabled={busy}
+                    aria-label={`${m.active} ${role.code}`}
+                    onChange={(active) => {
+                      if (active) void send(`system/roles/${role.id}`, "PATCH", { active });
+                    }}
+                  />
+                </Popconfirm>
               ),
             },
             {

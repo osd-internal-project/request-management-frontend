@@ -1,6 +1,4 @@
 import { Alert, Card } from "antd";
-import Title from "antd/es/typography/Title";
-import Text from "antd/es/typography/Text";
 import Paragraph from "antd/es/typography/Paragraph";
 import { NotificationLog } from "@/components/admin/notification-log";
 import {
@@ -9,6 +7,7 @@ import {
   type NotificationLogQuery,
 } from "@/lib/api/notification-log";
 import { messages } from "@/lib/messages";
+import { PageHeader } from "@/components/admin/page-header";
 
 /** Only the filters the API declares — anything else in the URL is dropped. */
 function toQuery(
@@ -38,13 +37,8 @@ export default async function NotificationLogPage({
   const eventTypes = [...new Set(rows.map((row) => row.event_type))].sort();
 
   return (
-    <div className="space-y-4">
-      <div>
-        <Title level={4} className="mb-0!">
-          {messages.notificationLog.title}
-        </Title>
-        <Text type="secondary">{messages.notificationLog.subtitle}</Text>
-      </div>
+    <div className="flex flex-col gap-4">
+      <PageHeader title={messages.notificationLog.title} subtitle={messages.notificationLog.subtitle} />
 
       {result.ok ? (
         <Card>

@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Alert, App, Button, Card, Input, Space, Switch, Table, Typography } from "antd";
+import { Alert, App, Button, Card, Input, Space, Switch, Table } from "antd";
 import { appApi } from "@/lib/api/client";
 import { messages } from "@/lib/messages";
+import { PageHeader } from "@/components/admin/page-header";
 
 const m = messages.costCenters;
 
@@ -64,8 +65,9 @@ export function CostCentersAdmin() {
   }
 
   return (
-    <Card title={m.title}>
-      <Typography.Paragraph type="secondary">{m.hint}</Typography.Paragraph>
+    <div className="flex flex-col gap-4">
+      <PageHeader title={m.title} subtitle={m.hint} />
+      <Card>
       <Space wrap className="mb-4">
         <Input
           placeholder={m.code}
@@ -135,6 +137,7 @@ export function CostCentersAdmin() {
           },
         ]}
       />
-    </Card>
+      </Card>
+    </div>
   );
 }

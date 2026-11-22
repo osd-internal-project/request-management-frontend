@@ -1,12 +1,11 @@
 import { Alert } from "antd";
-import Title from "antd/es/typography/Title";
-import Text from "antd/es/typography/Text";
 import { RequestTypeAdmin } from "@/components/admin/request-types/request-type-admin";
 import admin, { getAdminRequestTypes } from "@/lib/api/admin";
 import orgUnitsApi from "@/lib/api/org-units";
 import { getAllDirectoryUsers } from "@/lib/api/users";
 import { messages } from "@/lib/messages";
 import { can, getSession } from "@/lib/session";
+import { PageHeader } from "@/components/admin/page-header";
 
 /**
  * Screen §16 A2 — ประเภทคำขอ (ผู้ดูแล), with §16 A1 folded in.
@@ -59,13 +58,8 @@ export default async function AdminRequestTypesPage() {
   }
 
   return (
-    <div className="space-y-4">
-      <div>
-        <Title level={4} className="mb-0!">
-          {messages.requestTypes.title}
-        </Title>
-        <Text type="secondary">{messages.requestTypes.subtitle}</Text>
-      </div>
+    <div className="flex flex-col gap-4">
+      <PageHeader title={messages.requestTypes.title} subtitle={messages.requestTypes.subtitle} />
 
       {/*
         The company is named on the list card §16 heads with it

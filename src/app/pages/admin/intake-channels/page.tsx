@@ -1,12 +1,11 @@
 import { Alert } from "antd";
-import Title from "antd/es/typography/Title";
-import Text from "antd/es/typography/Text";
 import { IntakeChannelsAdmin } from "@/components/admin/intake-channels-admin";
 import { getAdminRequestTypes } from "@/lib/api/admin";
 import { getIntakeChannels } from "@/lib/api/intake-channels";
 import { getAllDirectoryUsers } from "@/lib/api/users";
 import { messages } from "@/lib/messages";
 import { getSession } from "@/lib/session";
+import { PageHeader } from "@/components/admin/page-header";
 
 /**
  * CD-66 — ช่องทางรับคำขอจากลูกค้า of the company selected in the header: which
@@ -24,15 +23,8 @@ export default async function IntakeChannelsPage() {
   );
 
   return (
-    <div className="space-y-4">
-      <div>
-        <Title level={4} className="mb-0!">
-          {messages.intakeChannels.title}
-        </Title>
-        <Text type="secondary">
-          {messages.intakeChannels.subtitle(company?.name ?? "")}
-        </Text>
-      </div>
+    <div className="flex flex-col gap-4">
+      <PageHeader title={messages.intakeChannels.title} subtitle={messages.intakeChannels.subtitle(company?.name ?? "")} />
       {result.ok ? (
         <IntakeChannelsAdmin
           initial={result.data}

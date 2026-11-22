@@ -1,8 +1,15 @@
 "use client";
 
-import { Table, Tag } from "antd";
+import { Table } from "antd";
 import { useRouter, useSearchParams } from "next/navigation";
+import { CodeLabel } from "@/components/admin/code-label";
 import { messages } from "@/lib/messages";
+
+// The two event-name lists that already exist; an event in neither shows its code.
+const EVENT_LABELS: Record<string, string | undefined> = {
+  ...messages.requestDetail.events,
+  ...messages.webhooks.eventLabel,
+};
 
 import type {
   AuditLogRow,
@@ -86,7 +93,9 @@ export function AuditTable({
         {
           title: messages.audit.columns.event,
           dataIndex: "eventType",
-          render: (value: string) => <Tag>{value}</Tag>,
+          render: (value: string) => (
+            <CodeLabel code={value} label={EVENT_LABELS[value]} />
+          ),
         },
         {
           title: messages.audit.columns.resource,

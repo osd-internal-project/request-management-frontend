@@ -1,10 +1,9 @@
 import { Alert } from "antd";
-import Title from "antd/es/typography/Title";
-import Text from "antd/es/typography/Text";
 import { NotificationTemplatesAdmin } from "@/components/admin/notification-templates-admin";
 import { getNotificationTemplates } from "@/lib/api/notification-templates";
 import { messages } from "@/lib/messages";
 import { getSession } from "@/lib/session";
+import { PageHeader } from "@/components/admin/page-header";
 
 /**
  * CD-54 — ถ้อยคำการแจ้งเตือนของบริษัทที่เลือกอยู่ (`admin.notification.manage`).
@@ -20,15 +19,8 @@ export default async function NotificationTemplatesPage() {
   );
 
   return (
-    <div className="space-y-4">
-      <div>
-        <Title level={4} className="mb-0!">
-          {messages.notificationTemplates.title}
-        </Title>
-        <Text type="secondary">
-          {messages.notificationTemplates.subtitle(company?.name ?? "")}
-        </Text>
-      </div>
+    <div className="flex flex-col gap-4">
+      <PageHeader title={messages.notificationTemplates.title} subtitle={messages.notificationTemplates.subtitle(company?.name ?? "")} />
       {result.ok ? (
         <NotificationTemplatesAdmin
           initial={result.data}

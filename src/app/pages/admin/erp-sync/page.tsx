@@ -1,10 +1,9 @@
 import { redirect } from "next/navigation";
-import Title from "antd/es/typography/Title";
-import Text from "antd/es/typography/Text";
 import { ErpSyncAdmin, ProductCatalogCard } from "@/components/admin/erp-sync-admin";
 import { messages } from "@/lib/messages";
 import { HOME_PATH } from "@/lib/routes";
 import { can, getSession } from "@/lib/session";
+import { PageHeader } from "@/components/admin/page-header";
 
 /**
  * คิวส่ง SAP (`admin.integration.manage`) — CM-06 / CD-88.
@@ -17,15 +16,8 @@ export default async function AdminErpSyncPage() {
   if (!can(session, "admin.integration.manage")) redirect(HOME_PATH);
 
   return (
-    <div className="space-y-4">
-      <div>
-        <Title level={4} className="mb-0!">
-          {messages.erpSync.title}
-        </Title>
-        <Text type="secondary" className="text-xs">
-          {messages.erpSync.subtitle}
-        </Text>
-      </div>
+    <div className="flex flex-col gap-4">
+      <PageHeader title={messages.erpSync.title} subtitle={messages.erpSync.subtitle} />
 
       <ErpSyncAdmin />
 

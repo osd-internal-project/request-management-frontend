@@ -1,12 +1,11 @@
 import { redirect } from "next/navigation";
-import Title from "antd/es/typography/Title";
-import Text from "antd/es/typography/Text";
 import { AssignmentRulesAdmin } from "@/components/admin/assignment-rules-admin";
 import { getOrgUnits } from "@/lib/api/org-units";
 import { getAllDirectoryUsers } from "@/lib/api/users";
 import { messages } from "@/lib/messages";
 import { HOME_PATH } from "@/lib/routes";
 import { can, getSession } from "@/lib/session";
+import { PageHeader } from "@/components/admin/page-header";
 
 /** ตารางทีม — งานของแต่ละบทบาทไปทีมไหน (`admin.org.manage`). */
 export default async function AdminAssignmentRulesPage() {
@@ -19,15 +18,8 @@ export default async function AdminAssignmentRulesPage() {
   ]);
 
   return (
-    <div className="space-y-4">
-      <div>
-        <Title level={4} className="mb-0!">
-          {messages.assignmentRules.title}
-        </Title>
-        <Text type="secondary" className="text-xs">
-          {messages.assignmentRules.subtitle}
-        </Text>
-      </div>
+    <div className="flex flex-col gap-4">
+      <PageHeader title={messages.assignmentRules.title} subtitle={messages.assignmentRules.subtitle} />
 
       <AssignmentRulesAdmin
         units={(units.ok ? units.data : [])

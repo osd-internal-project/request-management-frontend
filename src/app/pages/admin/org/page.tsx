@@ -1,5 +1,4 @@
 import { Alert } from "antd";
-import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
 import { KeycloakMappingAdmin } from "@/components/admin/org/keycloak-mapping-admin";
 import { OrgAdmin } from "@/components/admin/org/org-admin";
@@ -15,6 +14,7 @@ import users from "@/lib/api/users";
 import { messages } from "@/lib/messages";
 import { toOrgTab } from "@/lib/org/org-tabs";
 import { can, getSession } from "@/lib/session";
+import { PageHeader } from "@/components/admin/page-header";
 
 /**
  * Screen §16 A3 — ผังทีมและสิทธิ์, and Screen §16 A4 — Role และ Permission.
@@ -132,20 +132,18 @@ export default async function AdminOrgPage({
   );
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <Title level={4} className="mb-0!">
-          {messages.org.title}{" "}
-          <Text type="secondary" className="text-base font-normal">
-            — {messages.org.subtitle}
-          </Text>
-        </Title>
-        {activeCompany && (
-          <Text type="secondary">
-            {messages.nav.company}: {activeCompany.name}
-          </Text>
-        )}
-      </div>
+    <div className="flex flex-col gap-4">
+      <PageHeader
+        title={messages.org.title}
+        subtitle={messages.org.subtitle}
+        extra={
+          activeCompany && (
+            <Text type="secondary">
+              {messages.nav.company}: {activeCompany.name}
+            </Text>
+          )
+        }
+      />
 
       <OrgPermissionTabs
         initialTab={initialTab}
