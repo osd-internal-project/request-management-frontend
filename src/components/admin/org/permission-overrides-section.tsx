@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Alert, Button, DatePicker, Divider, Input, Radio, Tag } from "antd";
+import { Alert, Button, DatePicker, Divider, Input, Popconfirm, Radio, Tag } from "antd";
 import Text from "antd/es/typography/Text";
 import dayjs, { type Dayjs } from "dayjs";
 import { SearchSelect } from "@/components/ui/search-select";
@@ -133,9 +133,11 @@ export function PermissionOverridesSection({ userId }: { readonly userId: string
               </div>
               <div className="text-xs">{row.reason}</div>
             </span>
-            <Button size="small" disabled={busy} onClick={() => void revoke(row.id)}>
-              {m.remove}
-            </Button>
+            <Popconfirm title={m.confirmRemove} onConfirm={() => void revoke(row.id)}>
+              <Button size="small" disabled={busy}>
+                {m.remove}
+              </Button>
+            </Popconfirm>
           </li>
         ))}
       </ul>

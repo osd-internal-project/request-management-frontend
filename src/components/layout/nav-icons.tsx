@@ -157,6 +157,7 @@ const MENU_ICONS: Record<MenuIconKey, LucideIcon> = {
   apiKey: Plug,
   workflowTrigger: Zap,
   salesMail: Mail,
+  lineSettings: MessageCircle,
   erpSync: RefreshCw,
   runNumber: Hash,
   dashboard: LayoutDashboard,
@@ -217,8 +218,17 @@ const MENU_ICONS: Record<MenuIconKey, LucideIcon> = {
   esignAuthority: BadgeCheck,
 };
 
-export function MenuIcon({ name }: { name?: MenuIconKey }) {
+export function MenuIcon({
+  name,
+  className,
+}: {
+  name?: MenuIconKey;
+  /** antd `Menu` clones its icon with `ant-menu-item-icon`; dropping it loses the gap before the label. */
+  className?: string;
+}) {
   const Icon = name ? MENU_ICONS[name] : LayoutGrid;
   // 1em, like antd icons, so the rail's text-lg and the Menu's font size still set it
-  return <Icon size="1em" strokeWidth={1.75} aria-hidden />;
+  return (
+    <Icon size="1em" strokeWidth={1.75} aria-hidden className={className} />
+  );
 }

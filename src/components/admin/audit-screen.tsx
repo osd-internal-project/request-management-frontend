@@ -1,5 +1,4 @@
 import { Alert, Card, Empty, Space } from "antd";
-import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
 import Paragraph from "antd/es/typography/Paragraph";
 import { AuditFilters } from "@/components/admin/audit-filters";
@@ -8,6 +7,7 @@ import audit from "@/lib/api/audit";
 import { apiGet } from "@/lib/api/core";
 import type { SystemCompany } from "@/lib/api/types";
 import { messages } from "@/lib/messages";
+import { PageHeader } from "@/components/admin/page-header";
 
 /** Only the filters §11.7 declares — anything else is dropped, not passed on. */
 function toQuery(params: Record<string, string | string[] | undefined>) {
@@ -76,14 +76,7 @@ export async function AuditScreen({
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <Title level={4} className="mb-0!">
-          {scope === "system" ? messages.audit.systemTitle : messages.audit.title}
-        </Title>
-        <Text type="secondary">
-          {scope === "system" ? messages.audit.systemSubtitle : messages.audit.subtitle}
-        </Text>
-      </div>
+      <PageHeader title={scope === "system" ? messages.audit.systemTitle : messages.audit.title} subtitle={scope === "system" ? messages.audit.systemSubtitle : messages.audit.subtitle} />
 
       {!result.ok ? (
         <Alert

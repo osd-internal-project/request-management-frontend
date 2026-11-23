@@ -1,10 +1,9 @@
 import { Alert } from "antd";
-import Title from "antd/es/typography/Title";
-import Text from "antd/es/typography/Text";
 import { NotificationRulesAdmin } from "@/components/admin/notification-rules-admin";
 import { getNotificationRules } from "@/lib/api/notification-rules";
 import { messages } from "@/lib/messages";
 import { getSession } from "@/lib/session";
+import { PageHeader } from "@/components/admin/page-header";
 
 /**
  * CD-53 — กติกาแจ้งเตือนจากเหตุการณ์ของบริษัทที่เลือกอยู่
@@ -21,15 +20,8 @@ export default async function NotificationRulesPage() {
   );
 
   return (
-    <div className="space-y-4">
-      <div>
-        <Title level={4} className="mb-0!">
-          {messages.notificationRules.title}
-        </Title>
-        <Text type="secondary">
-          {messages.notificationRules.subtitle(company?.name ?? "")}
-        </Text>
-      </div>
+    <div className="flex flex-col gap-4">
+      <PageHeader title={messages.notificationRules.title} subtitle={messages.notificationRules.subtitle(company?.name ?? "")} />
       {result.ok ? (
         <NotificationRulesAdmin initial={result.data} />
       ) : (

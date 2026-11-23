@@ -158,6 +158,7 @@ export const CORE_SERVICE_PREFIXES = [
   "/admin/outbound-connections",
   "/admin/workflow-triggers",
   "/admin/mail-settings",
+  "/admin/line-settings",
   "/admin/assignment-rules",
   "/process-logs",
   // งานขายอัตโนมัติ — simulate a customer reply (MAIL_MODE=mock)

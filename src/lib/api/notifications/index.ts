@@ -11,6 +11,7 @@ import type {
   NotificationPreferences,
   Paginated,
 } from "../types";
+import type { LineLinkStatus } from "../line";
 
 /** My notifications in the active company, newest first. */
 export async function getNotifications(options?: {
@@ -23,6 +24,11 @@ export async function getNotifications(options?: {
   params.set("page", String(options?.page ?? 1));
   params.set("page_size", String(options?.page_size ?? 20));
   return apiGet(`/notifications?${params.toString()}`);
+}
+
+/** My LINE link in the active company. */
+export async function getLineLink(): Promise<ApiResult<LineLinkStatus>> {
+  return apiGet("/notifications/line");
 }
 
 export async function getUnreadCount(): Promise<ApiResult<{ count: number }>> {

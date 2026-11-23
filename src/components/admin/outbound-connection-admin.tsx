@@ -11,6 +11,7 @@ import {
   Input,
   InputNumber,
   Modal,
+  Popconfirm,
   Space,
   Switch,
   Tag,
@@ -246,11 +247,19 @@ function AgentBox({
           <Text type="secondary" className="text-xs">
             {m.active}
           </Text>
-          <Switch
-            size="small"
-            checked={row.active}
-            onChange={(active) => void setActive(active)}
-          />
+          <Popconfirm
+            title={m.confirmDeactivate}
+            disabled={!row.active}
+            onConfirm={() => void setActive(false)}
+          >
+            <Switch
+              size="small"
+              checked={row.active}
+              onChange={(active) => {
+                if (active) void setActive(active);
+              }}
+            />
+          </Popconfirm>
           <Button size="small" onClick={() => void test()} loading={testing}>
             {m.test}
           </Button>

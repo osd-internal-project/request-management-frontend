@@ -1264,6 +1264,8 @@ export const messages = {
     adminIntegrations: "ระบบภายนอก",
     adminWorkflowTriggers: "เริ่ม Workflow อัตโนมัติ",
     adminMailSettings: "อีเมลงานขาย",
+    adminLineSettings: "LINE ของบริษัท",
+    myLine: "LINE ของฉัน",
     adminErpSync: "คิวส่ง SAP",
     adminLlm: "LLM Gateway",
     adminAiAudit: "บันทึกการใช้ AI",
@@ -1399,6 +1401,7 @@ export const messages = {
       noExpiry: "ไม่มีวันหมดอายุ",
       lapsed: "(หมดอายุแล้ว)",
       remove: "ถอน",
+      confirmRemove: "ถอนสิทธิ์พิเศษนี้? มีผลทันที",
       permission: "เลือกสิทธิ์",
       reason: "เหตุผล (บังคับ)",
       expires: "วันหมดอายุ (ไม่บังคับ)",
@@ -1574,6 +1577,7 @@ export const messages = {
     undeletable: (count: number) => `ลบไม่ได้ — มีผู้ใช้ ${count} คน`,
     deletableNote: "ลบไม่ได้ — role ปิดใช้งานได้อย่างเดียว (ROLE-02)",
     disable: "ปิดใช้งาน",
+    confirmDisable: "ปิด role นี้? มีผลกับทุกคนที่ถือ role นี้ทันที",
     enable: "เปิดใช้งาน",
     save: "บันทึก",
     saved: "บันทึกแล้ว — มีผลทันทีกับ API call ถัดไป",
@@ -1803,6 +1807,7 @@ export const messages = {
     fromKeycloak: "จาก Keycloak",
     manual: "ผูกมือ",
     revoke: "ถอน",
+    confirmRevoke: "ถอน role นี้จากผู้ใช้คนนี้? มีผลทันที",
     revoked: "ถอน role แล้ว",
     seeAll: (count: number) => `ดูทั้งหมด ${count} คน`,
     noHolders: "ยังไม่มีใครถือ role นี้ในบริษัทนี้",
@@ -1921,6 +1926,7 @@ export const messages = {
       systemRolesSection: "Role ระบบ",
       addSystemRole: "เพิ่ม role ระบบ",
       removeSystemRole: "เอาออก",
+      confirmRemoveSystemRole: "เอา role ระบบนี้ออกจากผู้ใช้? มีผลทันที",
       systemRoleGranted: "เพิ่ม role ระบบแล้ว",
       systemRoleRevoked: "เอา role ระบบออกแล้ว",
       suspendSection: "ปิดบัญชี",
@@ -1990,6 +1996,7 @@ export const messages = {
       description: "คำอธิบาย",
       level: "ระดับ",
       active: "ใช้งาน",
+      confirmDeactivate: "ปิด role นี้? มีผลกับทุกคนที่ถือ role นี้ทันที",
       save: "บันทึก role",
       saved: "บันทึก role แล้ว",
       empty: "ยังไม่มี role ที่ไม่ผูกบริษัท",
@@ -5385,6 +5392,7 @@ export const messages = {
     edit: "แก้ไข",
     loadFailed: "โหลดการเชื่อมต่อไม่สำเร็จ",
     active: "เปิดใช้",
+    confirmDeactivate: "ปิดการเชื่อมต่อนี้? มีผลทันที",
     url: "URL",
     key: "x-api-key",
     keyHint: "กดดูหรือคัดลอก — ทุกครั้งลงบันทึกตรวจสอบ",
@@ -5707,6 +5715,7 @@ export const messages = {
     active: "ใช้อยู่",
     inactive: "ปิด",
     deactivate: "ปิดกฎ",
+    confirmDeactivate: "ปิดกฎนี้? มีผลกับงานใหม่ทันที",
     activate: "เปิดกฎ",
     name: "ชื่อกฎ",
     namePlaceholder: "เช่น ลูกค้าธนาคาร → ทีมขายองค์กร",
@@ -5738,6 +5747,31 @@ export const messages = {
     columnPerson: "ผู้ได้รับ",
     columnReason: "ที่มา",
     noHistory: "ยังไม่มีการจัดคน",
+  },
+  lineSettings: {
+    title: "LINE ของบริษัท",
+    subtitle:
+      "LINE Login channel ที่พนักงานใช้ผูก LINE ของตัวเองกับ OA ของบริษัท เพื่อรับการ์ดอนุมัติใน LINE — ตั้งแยกต่อบริษัท",
+    loadFailed: "โหลดการตั้งค่าไม่สำเร็จ",
+    notReady:
+      "ยังผูก LINE ไม่ได้ — ต้องกรอก Channel ID และ Channel secret ให้ครบ",
+    ready: "พร้อมใช้ — พนักงานผูก LINE ได้จากหน้าแจ้งเตือน",
+    channelTitle: "LINE Login channel",
+    channelHint:
+      "สร้างใน LINE Developers ภายใต้ Provider เดียวกับ OA ของบริษัท ถ้าคนละ Provider LINE userId จะไม่ตรงกับที่ OA ใช้ส่งการ์ด",
+    channelId: "Channel ID",
+    channelSecret: "Channel secret",
+    channelSecretKeep: "ตั้งแล้ว •••• — เว้นว่างเพื่อใช้ค่าเดิม",
+    channelSecretHint: "เก็บแบบเข้ารหัส ไม่แสดงกลับ",
+    oaBasicId: "Basic ID ของ OA",
+    oaBasicIdHint: "เช่น @osd — ใช้ทำลิงก์แอดเพื่อนให้คนที่ยังไม่ได้แอด OA",
+    callbackUrl: "Callback URL",
+    callbackUrlHint:
+      "ใส่ค่านี้ใน LINE Developers → LINE Login → Callback URL และเลือก Linked OA เป็น OA ของบริษัท",
+    copy: "คัดลอก",
+    copied: "คัดลอกแล้ว",
+    save: "บันทึก",
+    saved: "บันทึกแล้ว",
   },
   mailSettings: {
     title: "อีเมลงานขาย",
@@ -7458,6 +7492,41 @@ export const messages = {
   /** SUP-03 กล่องแจ้งเตือน */
   notifications: {
     title: "การแจ้งเตือน",
+    line: {
+      title: "LINE",
+      pageTitle: "LINE ของฉัน",
+      pageSubtitle: (company: string) =>
+        company
+          ? `ผูก LINE ของคุณกับ OA ของ ${company} — อยู่หลายบริษัท ให้สลับบริษัทแล้วผูกทีละที่`
+          : "ผูก LINE ของคุณกับ OA ของบริษัทที่เลือกอยู่",
+      intro:
+        "ผูก LINE ของคุณกับ OA ของบริษัท เพื่อรับการ์ดอนุมัติและกดตอบใน LINE ได้เลย",
+      notConfigured:
+        "บริษัทนี้ยังไม่ได้ตั้งค่า LINE — แจ้งผู้ดูแลระบบให้ตั้งที่ ตั้งค่า → LINE ของบริษัท",
+      link: "ผูก LINE",
+      linking: "กำลังไปหน้า LINE…",
+      linkedAt: (date: string) => `ผูกเมื่อ ${date}`,
+      notFriend: (oa: string) =>
+        oa
+          ? `ยังไม่ได้แอด ${oa} เป็นเพื่อน — การ์ดจะส่งไม่ถึงจนกว่าจะแอด`
+          : "ยังไม่ได้แอด OA ของบริษัทเป็นเพื่อน — การ์ดจะส่งไม่ถึงจนกว่าจะแอด",
+      addFriend: "แอดเพื่อน",
+      unlink: "ยกเลิกผูก",
+      unlinkConfirm: "ยกเลิกผูก LINE? การ์ดอนุมัติจะไม่ส่งมาที่ LINE นี้อีก",
+      unlinked: "ยกเลิกผูก LINE แล้ว",
+      results: {
+        ok: "ผูก LINE แล้ว",
+        STATE_EXPIRED: "ลิงก์หมดอายุ (เกิน 10 นาที) — กดผูก LINE ใหม่",
+        STATE_INVALID: "ลิงก์ไม่ถูกต้อง — กดผูก LINE ใหม่จากหน้านี้",
+        LINE_DENIED: "ยังไม่ได้ผูก — คุณยกเลิกที่หน้า LINE",
+        LINE_ALREADY_LINKED:
+          "LINE นี้ผูกกับคนอื่นในบริษัทแล้ว — ใช้ LINE ของคุณเอง หรือให้เจ้าของเดิมยกเลิกก่อน",
+        LINE_NOT_CONFIGURED:
+          "บริษัทนี้ยังไม่ได้ตั้งค่า LINE — แจ้งผู้ดูแลระบบ",
+        LINE_ERROR: "LINE ตอบกลับไม่สำเร็จ — ลองผูกใหม่อีกครั้ง",
+        UNAVAILABLE: "ระบบไม่ตอบ — ลองผูกใหม่อีกครั้ง",
+      } as Record<string, string>,
+    },
     bellLabel: "การแจ้งเตือน",
     latest: "การแจ้งเตือนล่าสุด",
     viewAll: "ดูทั้งหมด",
@@ -7767,7 +7836,22 @@ export const messages = {
         viewJob: "ดูงาน",
         failed: "Agent วิจัยไม่สำเร็จ เปิดหน้างานเพื่อดูเหตุผล",
         empty: "ยังไม่มีผลวิจัย กดวิจัยเพื่อให้ agent หาข้อมูลของ Lead นี้",
-        expand: "Expand",
+        expand: "ดูทั้งหมด",
+        fitScore: (score: number) => `ความเหมาะ ${score}/5`,
+        notListed: "ไม่อยู่ในรายการแนะนำ (เลือกไม่ได้)",
+        suggestFirst: "กดแนะนำสินค้าในการ์ด Proposal ก่อนจึงเลือกได้",
+        evidence: "หลักฐาน",
+        sections: {
+          summary: "สรุป",
+          business: "ธุรกิจ",
+          products: "สินค้าที่เหมาะ",
+          talkingPoints: "ประเด็นคุย",
+          painPoints: "ปัญหาของลูกค้า",
+          signals: "สัญญาณล่าสุด",
+          decisionMakers: "ผู้ตัดสินใจ",
+          channels: "ช่องทางติดต่อ",
+          sources: "แหล่งที่มา",
+        },
       },
       /** การ์ด Proposal — Proposal Writer ของ Vuvagent (docs/lead-proposal.md ฝั่ง backend). */
       quoteItems: {
@@ -8203,6 +8287,9 @@ export const messages = {
         openSaleOrderTitle: "เปิดใบสั่งขายจากโอกาสการขายนี้",
         openSaleOrderHint:
           "เปิดใบสั่งขายถือว่าปิดโอกาสการขายแบบชนะ และเป็นจุดเดียวที่ระบบสร้างทะเบียนลูกค้า",
+        // 22 พ.ย. 2569 — a quotation emailed to the customer needs their confirming email
+        saleOrderAwaitingConfirm: (no: string) =>
+          `ใบเสนอราคา ${no} ส่งให้ลูกค้าแล้ว — ถ้าส่งทางอีเมล เปิดใบสั่งขายได้เมื่อลูกค้าตอบอีเมลยืนยันหรือส่ง PO และระบบจะใช้รายการของใบนั้นเอง ไม่ต้องกรอกรายการ`,
         saleOrderAmount: "มูลค่าใบสั่งขาย (THB) — ว่าง = ใช้มูลค่าโอกาสการขาย",
         saleOrderNote: "หมายเหตุ",
         customerToCreate: "ลูกค้าที่จะสร้างในทะเบียน",

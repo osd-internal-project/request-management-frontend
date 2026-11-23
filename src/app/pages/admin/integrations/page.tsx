@@ -1,10 +1,9 @@
 import { redirect } from "next/navigation";
-import Title from "antd/es/typography/Title";
-import Text from "antd/es/typography/Text";
 import { IntegrationList } from "@/components/admin/integrations/integration-list";
 import { messages } from "@/lib/messages";
 import { HOME_PATH } from "@/lib/routes";
 import { can, getSession } from "@/lib/session";
+import { PageHeader } from "@/components/admin/page-header";
 
 /** ระบบภายนอก — ที่เดียวของกุญแจ API, webhook และ MCP (`admin.integration.manage`). */
 export default async function AdminIntegrationsPage() {
@@ -12,15 +11,8 @@ export default async function AdminIntegrationsPage() {
   if (!can(session, "admin.integration.manage")) redirect(HOME_PATH);
 
   return (
-    <div className="space-y-4">
-      <div>
-        <Title level={4} className="mb-0!">
-          {messages.integrations.title}
-        </Title>
-        <Text type="secondary" className="text-xs">
-          {messages.integrations.subtitle}
-        </Text>
-      </div>
+    <div className="flex flex-col gap-4">
+      <PageHeader title={messages.integrations.title} subtitle={messages.integrations.subtitle} />
 
       <IntegrationList />
     </div>

@@ -26,6 +26,7 @@ import type {
   SystemUser,
 } from "@/lib/api/types";
 import { messages } from "@/lib/messages";
+import { PageHeader } from "@/components/admin/page-header";
 
 const m = messages.system.users;
 const PAGE_SIZE = 25;
@@ -99,12 +100,7 @@ export function SystemUsersAdmin({
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <Title level={4} className="mb-0!">
-          {m.title}
-        </Title>
-        <Text type="secondary">{m.subtitle}</Text>
-      </div>
+      <PageHeader title={m.title} subtitle={m.subtitle} />
 
       <Card>
         <Space wrap className="mb-4">
@@ -246,7 +242,7 @@ function ManageUserModal({
   readonly onChanged: (user: SystemUser) => void;
   readonly onClose: () => void;
 }) {
-  const { message } = App.useApp();
+  const { message, modal } = App.useApp();
   const [memberOf, setMemberOf] = useState<string[]>(
     user.companies.map((row) => row.company.id),
   );
@@ -382,12 +378,17 @@ function ManageUserModal({
                 closeIcon={<span aria-label={m.removeSystemRole}>×</span>}
                 onClose={(event) => {
                   event.preventDefault();
-                  void run(
-                    `system/users/${user.id}/system-roles/${role.id}`,
-                    "DELETE",
-                    undefined,
-                    m.systemRoleRevoked,
-                  );
+                  modal.confirm({
+                    title: m.confirmRemoveSystemRole,
+                    content: role.name,
+                    onOk: () =>
+                      run(
+                        `system/users/${user.id}/system-roles/${role.id}`,
+                        "DELETE",
+                        undefined,
+                        m.systemRoleRevoked,
+                      ),
+                  });
                 }}
               >
                 {role.name}

@@ -127,6 +127,9 @@ export const ROUTES = {
   opportunityDetail: (id: string) => `${HOME_PATH}/opportunities/${id}`,
   /** SUP-03 กล่องแจ้งเตือน */
   notifications: `${HOME_PATH}/notifications`,
+  myLine: `${HOME_PATH}/me/line`,
+  /** D-Callcenter Workspace in its own window — outside the app shell. */
+  phone: "/phone",
   /** CD-76 ใบเสนอราคา — ทะเบียน และหน้ารายละเอียดต่อเวอร์ชัน (แก้ร่างในหน้าเดียวกัน). */
   quotations: `${HOME_PATH}/quotations`,
   saleOrders: `${HOME_PATH}/sale-orders`,
@@ -216,6 +219,7 @@ export const ROUTES = {
   adminWorkflowTriggers: `${HOME_PATH}/admin/workflow-triggers`,
   /** งานขายอัตโนมัติ — mailbox + Microsoft Graph ต่อบริษัท. */
   adminMailSettings: `${HOME_PATH}/admin/mail-settings`,
+  adminLineSettings: `${HOME_PATH}/admin/line-settings`,
   /** CD-275 */
   adminLlm: `${HOME_PATH}/admin/llm`,
   /** CD-279 */

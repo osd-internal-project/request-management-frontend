@@ -1,10 +1,9 @@
 import { redirect } from "next/navigation";
-import Title from "antd/es/typography/Title";
-import Text from "antd/es/typography/Text";
 import { LlmAdmin } from "@/components/admin/llm/llm-admin";
 import { messages } from "@/lib/messages";
 import { HOME_PATH } from "@/lib/routes";
 import { can, getSession } from "@/lib/session";
+import { PageHeader } from "@/components/admin/page-header";
 
 const m = messages.llm;
 
@@ -13,13 +12,8 @@ export default async function LlmAdminPage() {
   const session = await getSession();
   if (!can(session, "admin.llm.manage")) redirect(HOME_PATH);
   return (
-    <div className="space-y-4">
-      <div>
-        <Title level={4} className="mb-0!">
-          {m.title}
-        </Title>
-        <Text type="secondary">{m.subtitle}</Text>
-      </div>
+    <div className="flex flex-col gap-4">
+      <PageHeader title={m.title} subtitle={m.subtitle} />
       <LlmAdmin />
     </div>
   );

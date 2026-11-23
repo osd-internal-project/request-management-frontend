@@ -465,6 +465,8 @@ export function LeadDetailView({
                   <LeadFocusCard
                     leadId={lead.id}
                     research={research}
+                    suggestions={productSuggestions}
+                    selected={selectedProduct}
                     running={running}
                     canStart={editable}
                   />

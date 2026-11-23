@@ -1,10 +1,9 @@
 import { redirect } from "next/navigation";
-import Title from "antd/es/typography/Title";
-import Text from "antd/es/typography/Text";
 import { IntegrationList } from "@/components/admin/integrations/integration-list";
 import { messages } from "@/lib/messages";
 import { HOME_PATH } from "@/lib/routes";
 import { canSystem, getSession } from "@/lib/session";
+import { PageHeader } from "@/components/admin/page-header";
 
 /** Hub — every company's integrations and the shared ones (`system.integration.manage`). */
 export default async function SystemIntegrationsPage() {
@@ -13,14 +12,7 @@ export default async function SystemIntegrationsPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <Title level={4} className="mb-0!">
-          {messages.integrations.hub.title}
-        </Title>
-        <Text type="secondary" className="text-xs">
-          {messages.integrations.hub.subtitle}
-        </Text>
-      </div>
+      <PageHeader title={messages.integrations.hub.title} subtitle={messages.integrations.hub.subtitle} />
       <IntegrationList scope="system" />
     </div>
   );

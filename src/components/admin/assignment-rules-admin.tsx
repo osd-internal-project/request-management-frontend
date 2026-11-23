@@ -11,6 +11,7 @@ import {
   Form,
   Input,
   InputNumber,
+  Popconfirm,
   Select,
   Space,
   Spin,
@@ -319,9 +320,18 @@ function RolePanel({
                   <Button size="small" onClick={() => open(rule)}>
                     {m.edit}
                   </Button>
-                  <Button size="small" onClick={() => void toggle(rule)}>
-                    {rule.active ? m.deactivate : m.activate}
-                  </Button>
+                  <Popconfirm
+                    title={m.confirmDeactivate}
+                    disabled={!rule.active}
+                    onConfirm={() => void toggle(rule)}
+                  >
+                    <Button
+                      size="small"
+                      onClick={rule.active ? undefined : () => void toggle(rule)}
+                    >
+                      {rule.active ? m.deactivate : m.activate}
+                    </Button>
+                  </Popconfirm>
                 </Space>
               ),
             },

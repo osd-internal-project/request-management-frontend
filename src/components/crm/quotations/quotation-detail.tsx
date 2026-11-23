@@ -1003,7 +1003,16 @@ export function QuotationDetailView({
           pagination={false}
           // Fixed: a long picked product name must not squeeze the description.
           tableLayout="fixed"
-          scroll={{ x: 1050 }}
+          // The description takes what is left, so the table must be wider
+          // than the fixed columns together or it collapses to nothing.
+          scroll={{
+            x:
+              860 +
+              (canEditLines ? 180 : 130) +
+              (costVisible ? 260 : 0) +
+              (canEditLines ? 60 : 0) +
+              260,
+          }}
           locale={{ emptyText: md.noLines }}
           dataSource={canEditHeader ? lines : toDraftLines(quotation)}
           columns={[
@@ -1042,6 +1051,7 @@ export function QuotationDetailView({
             {
               title: md.line.description,
               dataIndex: "description",
+              className: "whitespace-pre-wrap break-words",
               render: (value: string, row) =>
                 canEditLines ? (
                   <Input.TextArea

@@ -23,14 +23,26 @@ import {
 } from "@/components/layout/chat/librechat-widget";
 import { useChatDock } from "@/components/layout/chat/use-chat-dock";
 import { menuEntryFor, ModuleNav } from "@/components/layout/module-nav";
+
+const APP_NAME = "Connect the Dot";
 import { NavRail } from "@/components/layout/nav-rail";
 import { CompanySwitcher } from "@/components/layout/company-switcher";
 import { NotificationBell } from "@/components/notifications/notification-bell";
-import { PhoneWidget } from "@/components/layout/phone/phone-widget";
 import { messages } from "@/lib/messages";
-import { HOME_PATH } from "@/lib/routes";
+import { HOME_PATH, ROUTES } from "@/lib/routes";
 
 const { Header, Content, Footer, Sider } = Layout;
+
+const PHONE_WINDOW = "ctd-phone";
+
+/** One phone window: a second click focuses it instead of reloading it, which would drop a live call. */
+function openPhoneWindow() {
+  const win = window.open("", PHONE_WINDOW, "popup,width=1200,height=800");
+  // Null only when the browser blocks popups; a click is a user gesture, so it does not by default.
+  if (!win) return;
+  if (win.location.href === "about:blank") win.location.href = ROUTES.phone;
+  win.focus();
+}
 
 const currentYear = new Date().getFullYear();
 
@@ -80,9 +92,15 @@ export function AppShell({
   const screens = Grid.useBreakpoint();
   const [navOpen, setNavOpen] = useState(false);
   const chat = useChatDock();
+  const phoneNav = canUsePhoneWorkspace
+    ? { open: false, onToggle: openPhoneWindow }
+    : undefined;
+
   useEffect(() => {
     const entry = menuEntryFor(pathname, menus);
     const title = entry?.label ?? pathname;
+    // Every page shared one tab title; the menu already knows each page's name.
+    document.title = entry ? `${entry.label} | ${APP_NAME}` : APP_NAME;
     const lines = [
       messages.chat.context.page(title),
       entry?.group ? messages.chat.context.group(entry.group) : null,
@@ -112,6 +130,10 @@ export function AppShell({
   }
 
   const avatarDropdownItems = [
+    {
+      key: "my-line",
+      label: <Link href={ROUTES.myLine}>{messages.nav.myLine}</Link>,
+    },
     {
       key: "logout",
       label: (
@@ -180,6 +202,7 @@ export function AppShell({
             pathname={pathname}
             onNavigate={(href) => router.push(href)}
             shortcut
+            phone={phoneNav}
           />
         </Sider>
       )}
@@ -199,6 +222,15 @@ export function AppShell({
             setNavOpen(false);
             router.push(href);
           }}
+          phone={
+            phoneNav && {
+              open: false,
+              onToggle: () => {
+                setNavOpen(false);
+                openPhoneWindow();
+              },
+            }
+          }
         />
       </Drawer>
 
@@ -285,8 +317,7 @@ export function AppShell({
             </Splitter.Panel>
           </Splitter>
 
-          {/* The Workspace panel (phone-workspace-panel.tsx) is hidden, not deleted: the floating card replaced it. */}
-          {canUsePhoneWorkspace && <PhoneWidget />}
+          {/* The floating card (phone-widget.tsx) is hidden, not deleted: the phone opens in its own window (/phone). */}
         </div>
       </Layout>
 

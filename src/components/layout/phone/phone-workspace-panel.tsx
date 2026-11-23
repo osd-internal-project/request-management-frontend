@@ -68,7 +68,8 @@ export function PhoneWorkspacePanel({
   onClose,
 }: {
   open: boolean;
-  onClose: () => void;
+  /** Absent in the phone window (/phone), which has no page to go back to. */
+  onClose?: () => void;
 }) {
   const host = useRef<HTMLDivElement>(null);
   // Each session is one ticket and one mount; the ticket works once, for 2 minutes.
@@ -154,17 +155,19 @@ export function PhoneWorkspacePanel({
       }
     >
       <div className="flex h-10 shrink-0 items-center gap-3 border-b border-[var(--app-border-soft)] px-3">
-        <Tooltip title={m.collapseHint}>
-          <Button
-            type="text"
-            size="small"
-            icon={<ArrowLeftOutlined />}
-            aria-label={m.collapseHint}
-            onClick={onClose}
-          >
-            {m.collapse}
-          </Button>
-        </Tooltip>
+        {onClose && (
+          <Tooltip title={m.collapseHint}>
+            <Button
+              type="text"
+              size="small"
+              icon={<ArrowLeftOutlined />}
+              aria-label={m.collapseHint}
+              onClick={onClose}
+            >
+              {m.collapse}
+            </Button>
+          </Tooltip>
+        )}
         <span className="flex min-w-0 items-center gap-2 font-medium">
           <PhoneOutlined className="text-[var(--app-primary)]" />
           <span className="truncate">{m.title}</span>

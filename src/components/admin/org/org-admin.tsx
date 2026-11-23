@@ -755,7 +755,12 @@ export function OrgAdmin({
 
                       <div className="mt-1 flex flex-wrap items-center gap-1">
                         {member.roles.map((role) => (
-                          <Tag key={role.code}>{role.code}</Tag>
+                          <Tag key={role.code}>
+                            {role.name}{" "}
+                            <span className="text-xs text-[var(--app-text-secondary)]">
+                              {role.code}
+                            </span>
+                          </Tag>
                         ))}
                         {keycloak.map((role) => (
                           <Tag key={role} color="gold">
