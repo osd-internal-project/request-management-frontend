@@ -1,10 +1,27 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Checkbox, Empty, Input, Space, Table, Tag } from "antd";
+import {
+  Badge,
+  Button,
+  Checkbox,
+  Empty,
+  Form,
+  Input,
+  Select,
+  Space,
+  Table,
+  Tag,
+} from "antd";
 import Text from "antd/es/typography/Text";
 import { SearchSelect } from "@/components/ui/search-select";
+import { appApi } from "@/lib/api/client";
+import {
+  CUSTOMER_FIELD_FILTERS,
+  type CustomerFieldFilter,
+} from "@/lib/api/customers/filters";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
 import type { CustomerRow, SegmentOption } from "@/lib/api/types";
@@ -22,7 +39,42 @@ export interface CustomerFilters {
   status?: string;
   segmentValueId?: string;
   mineOnly?: boolean;
+  /** ค้นหาเพิ่มเติม — each one narrows the list further. */
+  fields?: Partial<Record<CustomerFieldFilter, string>>;
 }
+
+type FieldValues = Partial<Record<CustomerFieldFilter, string>>;
+type Option = { value: string; label: string };
+
+/** The text boxes of ค้นหาเพิ่มเติม, in screen order. */
+const TEXT_FIELDS: {
+  key: Exclude<CustomerFieldFilter, "head_office_id">;
+  label: string;
+  maxLength: number;
+}[] = [
+  {
+    key: "customer_code",
+    label: messages.customers.advanced.customerCode,
+    maxLength: 64,
+  },
+  { key: "name", label: messages.customers.advanced.name, maxLength: 255 },
+  {
+    key: "branch_code",
+    label: messages.customers.advanced.branchCode,
+    maxLength: 5,
+  },
+  {
+    key: "branch_name",
+    label: messages.customers.advanced.branchName,
+    maxLength: 255,
+  },
+  { key: "tax_id", label: messages.customers.advanced.taxId, maxLength: 13 },
+  {
+    key: "external_code",
+    label: messages.customers.advanced.externalCode,
+    maxLength: 64,
+  },
+];
 
 /**
  * The register table (CM-01) — filters are URL parameters the server applies,
@@ -37,6 +89,7 @@ export function CustomerList({
   pageSize,
   segmentOptions,
   filters,
+  headOffice,
 }: {
   rows: CustomerRow[];
   total: number;
@@ -44,10 +97,51 @@ export function CustomerList({
   pageSize: number;
   segmentOptions: SegmentOption[];
   filters: CustomerFilters;
+  /** The head office named by `fields.head_office_id`, for the picker's label. */
+  headOffice?: { id: string; label: string };
 }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+
+  const applied = filters.fields ?? {};
+  const appliedCount = CUSTOMER_FIELD_FILTERS.filter(
+    (key) => applied[key],
+  ).length;
+  const [advancedOpen, setAdvancedOpen] = useState(appliedCount > 0);
+  const [draft, setDraft] = useState<FieldValues>(applied);
+  const [headOfficeOptions, setHeadOfficeOptions] = useState<Option[]>(
+    headOffice ? [{ value: headOffice.id, label: headOffice.label }] : [],
+  );
+
+  /** Head offices only (customers that have branches), searched on the server. */
+  async function searchHeadOffices(text: string) {
+    if (text.trim().length < 2) return;
+    const result = await appApi<{
+      data: { id: string; customerCode: string; nameTh: string }[];
+    }>(
+      `customers?search=${encodeURIComponent(text.trim())}&has_branches=true&page_size=20`,
+    );
+    if (!result.ok) return;
+    setHeadOfficeOptions(
+      result.data.data.map((row) => ({
+        value: row.id,
+        label: `${row.customerCode} · ${row.nameTh}`,
+      })),
+    );
+  }
+
+  /** ค้นหาเพิ่มเติม replaces all its fields at once and goes back to page 1. */
+  function applyFields(next: FieldValues) {
+    const params = new URLSearchParams(searchParams.toString());
+    for (const key of CUSTOMER_FIELD_FILTERS) {
+      const value = next[key]?.trim();
+      if (value) params.set(key, value);
+      else params.delete(key);
+    }
+    params.delete("page");
+    router.replace(`${pathname}?${params.toString()}`);
+  }
 
   function apply(next: Partial<CustomerFilters & { page?: number }>) {
     const params = new URLSearchParams(searchParams.toString());
@@ -204,7 +298,69 @@ export function CustomerList({
         >
           {messages.customers.viewMineOnly}
         </Checkbox>
+        <Badge count={appliedCount} size="small">
+          <Button onClick={() => setAdvancedOpen((open) => !open)}>
+            {messages.customers.advanced.toggle}
+          </Button>
+        </Badge>
       </Space>
+
+      {advancedOpen && (
+        <Form
+          layout="vertical"
+          className="rounded-md border border-gray-200 p-3"
+          onFinish={() => applyFields(draft)}
+        >
+          <div className="grid grid-cols-1 gap-x-3 md:grid-cols-2 xl:grid-cols-4">
+            <Form.Item
+              label={messages.customers.advanced.headOffice}
+              extra={messages.customers.advanced.headOfficeHint}
+              className="mb-3! md:col-span-2"
+            >
+              <Select
+                allowClear
+                showSearch
+                filterOption={false}
+                value={draft.head_office_id}
+                placeholder={messages.customers.advanced.headOfficePlaceholder}
+                options={headOfficeOptions}
+                onSearch={(text) => void searchHeadOffices(text)}
+                onChange={(value: string | undefined) =>
+                  setDraft((current) => ({ ...current, head_office_id: value }))
+                }
+              />
+            </Form.Item>
+            {TEXT_FIELDS.map((field) => (
+              <Form.Item key={field.key} label={field.label} className="mb-3!">
+                <Input
+                  allowClear
+                  maxLength={field.maxLength}
+                  value={draft[field.key] ?? ""}
+                  onChange={(event) =>
+                    setDraft((current) => ({
+                      ...current,
+                      [field.key]: event.target.value,
+                    }))
+                  }
+                />
+              </Form.Item>
+            ))}
+          </div>
+          <Space>
+            <Button type="primary" htmlType="submit">
+              {messages.customers.advanced.apply}
+            </Button>
+            <Button
+              onClick={() => {
+                setDraft({});
+                applyFields({});
+              }}
+            >
+              {messages.customers.advanced.clear}
+            </Button>
+          </Space>
+        </Form>
+      )}
 
       <Table<CustomerRow>
         rowKey="id"

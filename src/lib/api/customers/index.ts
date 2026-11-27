@@ -10,6 +10,7 @@
  */
 
 import { apiGet, type ApiResult } from "../core";
+import { CUSTOMER_FIELD_FILTERS } from "./filters";
 import type {
   RequestRow,
   ContactConsentStatus,
@@ -30,6 +31,13 @@ export async function getCustomers(options?: {
   status?: string;
   segment_value_id?: string;
   view?: "mine";
+  customer_code?: string;
+  name?: string;
+  branch_code?: string;
+  branch_name?: string;
+  tax_id?: string;
+  external_code?: string;
+  head_office_id?: string;
   page?: number;
   page_size?: number;
 }): Promise<ApiResult<Paginated<CustomerRow>>> {
@@ -40,6 +48,10 @@ export async function getCustomers(options?: {
     params.set("segment_value_id", options.segment_value_id);
   }
   if (options?.view) params.set("view", options.view);
+  for (const key of CUSTOMER_FIELD_FILTERS) {
+    const value = options?.[key]?.trim();
+    if (value) params.set(key, value);
+  }
   params.set("page", String(options?.page ?? 1));
   params.set("page_size", String(options?.page_size ?? 50));
   return apiGet<Paginated<CustomerRow>>(`/customers?${params.toString()}`);
@@ -91,7 +103,9 @@ export async function getCustomerSummary(
  * of its deals or quotations. `contractRequestTypeCode` splits out the
  * contracts tab. Needs `request.read` — the page asks only then.
  */
-export async function getCustomerRequests(id: string): Promise<
+export async function getCustomerRequests(
+  id: string,
+): Promise<
   ApiResult<{ contractRequestTypeCode: string | null; rows: RequestRow[] }>
 > {
   return apiGet(`customers/${id}/requests`);
@@ -103,9 +117,7 @@ export async function getCustomerRequests(id: string): Promise<
  * also shows inactive rows and edits them) is a different endpoint behind
  * `admin.crm.manage`.
  */
-export async function getSegmentOptions(): Promise<
-  ApiResult<SegmentOption[]>
-> {
+export async function getSegmentOptions(): Promise<ApiResult<SegmentOption[]>> {
   return apiGet<SegmentOption[]>(`/customers/segment-options`);
 }
 
