@@ -14,13 +14,17 @@ import {
   Space,
   Table,
   Tag,
+  type TableColumnsType,
 } from "antd";
 import Text from "antd/es/typography/Text";
 import { SearchSelect } from "@/components/ui/search-select";
 import { appApi } from "@/lib/api/client";
 import {
   CUSTOMER_FIELD_FILTERS,
+  customerSortParam,
   type CustomerFieldFilter,
+  type CustomerSort,
+  type CustomerSortField,
 } from "@/lib/api/customers/filters";
 import { messages } from "@/lib/messages";
 import { ROUTES } from "@/lib/routes";
@@ -89,6 +93,7 @@ export function CustomerList({
   pageSize,
   segmentOptions,
   filters,
+  sort,
   headOffice,
 }: {
   rows: CustomerRow[];
@@ -97,6 +102,8 @@ export function CustomerList({
   pageSize: number;
   segmentOptions: SegmentOption[];
   filters: CustomerFilters;
+  /** The order the server applied; none = newest first. */
+  sort?: CustomerSort;
   /** The head office named by `fields.head_office_id`, for the picker's label. */
   headOffice?: { id: string; label: string };
 }) {
@@ -164,10 +171,37 @@ export function CustomerList({
     router.replace(`${pathname}?${params.toString()}`);
   }
 
-  const columns = [
+  /**
+   * Ordering is the server's, like the filters: sorting the fetched page in the
+   * browser would order 50 rows of a register that runs to thousands.
+   */
+  function applySort(next?: CustomerSort) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (next) params.set("sort", customerSortParam(next));
+    else params.delete("sort");
+    params.delete("page");
+    router.replace(`${pathname}?${params.toString()}`);
+  }
+
+  /** `sorter: true` = the header is clickable, the ordering is not antd's. */
+  function sortable(field: CustomerSortField) {
+    return {
+      key: field,
+      sorter: true,
+      sortOrder:
+        sort?.field === field
+          ? sort.descending
+            ? ("descend" as const)
+            : ("ascend" as const)
+          : null,
+    };
+  }
+
+  const columns: TableColumnsType<CustomerRow> = [
     {
       title: messages.customers.columns.code,
       dataIndex: "customerCode",
+      ...sortable("customerCode"),
       render: (code: string, row: CustomerRow) => (
         <Link href={ROUTES.customerDetail(row.id)}>{code}</Link>
       ),
@@ -175,6 +209,7 @@ export function CustomerList({
     {
       title: messages.customers.columns.name,
       dataIndex: "nameTh",
+      ...sortable("nameTh"),
       render: (nameTh: string, row: CustomerRow) => (
         <div>
           <div>{nameTh}</div>
@@ -188,6 +223,7 @@ export function CustomerList({
     {
       title: messages.customers.columns.branchCode,
       dataIndex: "branchCode",
+      ...sortable("branchCode"),
       render: (branchCode: string) => (
         <span className="whitespace-nowrap">{branchCode}</span>
       ),
@@ -195,6 +231,7 @@ export function CustomerList({
     {
       title: messages.customers.columns.branchName,
       dataIndex: "branchName",
+      ...sortable("branchName"),
       render: (branchName: string | null | undefined) =>
         branchName ?? <Text type="secondary">—</Text>,
     },
@@ -231,6 +268,7 @@ export function CustomerList({
     {
       title: messages.customers.columns.status,
       dataIndex: "status",
+      ...sortable("status"),
       render: (status: string, row: CustomerRow) => (
         <Space size={4}>
           <Tag color={CUSTOMER_STATUS_COLOR[status]}>
@@ -245,6 +283,7 @@ export function CustomerList({
     {
       title: messages.customers.columns.updatedAt,
       dataIndex: "updatedAt",
+      ...sortable("updatedAt"),
       render: (value: string) => (
         <Text type="secondary" className="text-xs">
           {new Date(value).toLocaleDateString("th-TH", {
@@ -380,6 +419,19 @@ export function CustomerList({
           total,
           showSizeChanger: false,
           onChange: (nextPage) => apply({ page: nextPage }),
+        }}
+        onChange={(_pagination, _filters, sorter, extra) => {
+          // Paging has its own handler; this one would otherwise reset it.
+          if (extra.action !== "sort") return;
+          const picked = Array.isArray(sorter) ? sorter[0] : sorter;
+          applySort(
+            picked?.order
+              ? {
+                  field: picked.columnKey as CustomerSortField,
+                  descending: picked.order === "descend",
+                }
+              : undefined,
+          );
         }}
         size="middle"
       />
