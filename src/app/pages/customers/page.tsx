@@ -5,6 +5,10 @@ import Title from "antd/es/typography/Title";
 import Text from "antd/es/typography/Text";
 import { CustomerList } from "@/components/crm/customers/customer-list";
 import customers from "@/lib/api/customers";
+import {
+  CUSTOMER_FIELD_FILTERS,
+  type CustomerFieldFilter,
+} from "@/lib/api/customers/filters";
 import { messages } from "@/lib/messages";
 import { HOME_PATH, ROUTES } from "@/lib/routes";
 import { can, getSession } from "@/lib/session";
@@ -26,6 +30,13 @@ export default async function CustomersPage({
     segment_value_id?: string;
     view?: string;
     page?: string;
+    customer_code?: string;
+    name?: string;
+    branch_code?: string;
+    branch_name?: string;
+    tax_id?: string;
+    external_code?: string;
+    head_office_id?: string;
   }>;
 }) {
   const session = await getSession();
@@ -34,16 +45,25 @@ export default async function CustomersPage({
   const query = await searchParams;
   const page = Number(query.page) || 1;
 
-  const [listResult, optionsResult] = await Promise.all([
+  const fields = Object.fromEntries(
+    CUSTOMER_FIELD_FILTERS.map((key) => [key, query[key]?.trim() || undefined]),
+  ) as Partial<Record<CustomerFieldFilter, string>>;
+
+  const [listResult, optionsResult, headOfficeResult] = await Promise.all([
     customers.getCustomers({
       search: query.search,
       status: query.status,
       segment_value_id: query.segment_value_id,
       view: query.view === "mine" ? "mine" : undefined,
+      ...fields,
       page,
       page_size: 50,
     }),
     customers.getSegmentOptions(),
+    // The picked head office's name, so the picker shows it after a reload.
+    fields.head_office_id
+      ? customers.getCustomer(fields.head_office_id)
+      : Promise.resolve(null),
   ]);
 
   return (
@@ -93,7 +113,16 @@ export default async function CustomersPage({
           status: query.status,
           segmentValueId: query.segment_value_id,
           mineOnly: query.view === "mine",
+          fields,
         }}
+        headOffice={
+          headOfficeResult?.ok
+            ? {
+                id: headOfficeResult.data.id,
+                label: `${headOfficeResult.data.customerCode} · ${headOfficeResult.data.nameTh}`,
+              }
+            : undefined
+        }
       />
     </div>
   );
