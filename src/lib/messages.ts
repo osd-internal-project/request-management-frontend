@@ -8864,6 +8864,8 @@ export const messages = {
     columns: {
       code: "รหัสลูกค้า",
       name: "ชื่อลูกค้า",
+      branchCode: "รหัสสาขา",
+      branchName: "ชื่อสาขา",
       taxId: "เลขผู้เสียภาษี",
       segments: "กลุ่ม",
       owner: "ผู้รับผิดชอบ",
