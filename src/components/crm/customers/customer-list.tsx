@@ -83,21 +83,26 @@ export function CustomerList({
       dataIndex: "nameTh",
       render: (nameTh: string, row: CustomerRow) => (
         <div>
-          <div>
-            {nameTh}
-            {row.branchCode !== "00000" && (
-              <Tag className="ml-2">
-                {`${messages.customers.detail.branch} ${row.branchCode}`}
-                {row.branchName ? ` · ${row.branchName}` : ""}
-              </Tag>
-            )}
-          </div>
+          <div>{nameTh}</div>
           <Text type="secondary" className="text-xs">
             {messages.customers.type[row.type]}
             {row.nameEn ? ` · ${row.nameEn}` : ""}
           </Text>
         </div>
       ),
+    },
+    {
+      title: messages.customers.columns.branchCode,
+      dataIndex: "branchCode",
+      render: (branchCode: string) => (
+        <span className="whitespace-nowrap">{branchCode}</span>
+      ),
+    },
+    {
+      title: messages.customers.columns.branchName,
+      dataIndex: "branchName",
+      render: (branchName: string | null | undefined) =>
+        branchName ?? <Text type="secondary">—</Text>,
     },
     {
       title: messages.customers.columns.taxId,
