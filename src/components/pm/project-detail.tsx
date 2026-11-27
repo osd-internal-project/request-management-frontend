@@ -482,7 +482,7 @@ export function ProjectDetailView({
 
       {budget && (
         <ProjectBudgetCard
-          key={`${budget.current?.id ?? "none"}-${budget.current?.status ?? ""}`}
+          key={`budget-${budget.current?.id ?? "none"}-${budget.current?.status ?? ""}`}
           projectId={project.id}
           view={budget}
         />
@@ -647,7 +647,7 @@ export function ProjectDetailView({
 
       {closeout && (
         <ProjectCloseoutCard
-          key={`${closeout.closeout?.status ?? "none"}-${closeout.closeout?.summary ?? ""}`}
+          key={`closeout-${closeout.closeout?.status ?? "none"}-${closeout.closeout?.summary ?? ""}`}
           projectId={project.id}
           view={closeout}
           currentUserId={currentUserId}

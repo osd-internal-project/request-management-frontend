@@ -66,12 +66,13 @@ export interface ProjectBaseline {
     title: string;
     versionNo: number | null;
   } | null;
+  /** null on projects brought over from the old system — no scope was copied. */
   scope: {
     inScope: string[];
     outOfScope: string[];
     deliverables: BaselineDeliverable[];
     assumptions: { category: string; text: string }[];
-  };
+  } | null;
   boq: BaselineBoqLine[];
   labor: { role: string; mandays: number; rate: number; note?: string }[];
   cost: {

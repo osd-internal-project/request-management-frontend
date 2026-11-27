@@ -34,7 +34,14 @@ export function ProjectBaselineView({
 }: {
   readonly baseline: ProjectBaseline;
 }) {
-  const { scope, cost } = baseline;
+  const { cost } = baseline;
+  // A project brought over from the old system has no scope copied.
+  const scope = baseline.scope ?? {
+    inScope: [],
+    outOfScope: [],
+    deliverables: [],
+    assumptions: [],
+  };
   const costOf = new Map(cost?.lines.map((line) => [line.index, line]) ?? []);
 
   return (
