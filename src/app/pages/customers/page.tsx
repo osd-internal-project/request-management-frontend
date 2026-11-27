@@ -7,6 +7,8 @@ import { CustomerList } from "@/components/crm/customers/customer-list";
 import customers from "@/lib/api/customers";
 import {
   CUSTOMER_FIELD_FILTERS,
+  customerSortParam,
+  parseCustomerSort,
   type CustomerFieldFilter,
 } from "@/lib/api/customers/filters";
 import { messages } from "@/lib/messages";
@@ -37,6 +39,7 @@ export default async function CustomersPage({
     tax_id?: string;
     external_code?: string;
     head_office_id?: string;
+    sort?: string;
   }>;
 }) {
   const session = await getSession();
@@ -44,6 +47,9 @@ export default async function CustomersPage({
 
   const query = await searchParams;
   const page = Number(query.page) || 1;
+  // Only a column the table offers — a hand-typed `sort` is dropped here, so
+  // the arrow on screen and the order of the rows cannot disagree.
+  const sort = parseCustomerSort(query.sort);
 
   const fields = Object.fromEntries(
     CUSTOMER_FIELD_FILTERS.map((key) => [key, query[key]?.trim() || undefined]),
@@ -56,6 +62,7 @@ export default async function CustomersPage({
       segment_value_id: query.segment_value_id,
       view: query.view === "mine" ? "mine" : undefined,
       ...fields,
+      sort: sort ? customerSortParam(sort) : undefined,
       page,
       page_size: 50,
     }),
@@ -115,6 +122,7 @@ export default async function CustomersPage({
           mineOnly: query.view === "mine",
           fields,
         }}
+        sort={sort}
         headOffice={
           headOfficeResult?.ok
             ? {

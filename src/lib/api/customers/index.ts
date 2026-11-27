@@ -38,6 +38,8 @@ export async function getCustomers(options?: {
   tax_id?: string;
   external_code?: string;
   head_office_id?: string;
+  /** `field` ascending, `-field` descending — see `CUSTOMER_SORT_FIELDS`. */
+  sort?: string;
   page?: number;
   page_size?: number;
 }): Promise<ApiResult<Paginated<CustomerRow>>> {
@@ -52,6 +54,7 @@ export async function getCustomers(options?: {
     const value = options?.[key]?.trim();
     if (value) params.set(key, value);
   }
+  if (options?.sort) params.set("sort", options.sort);
   params.set("page", String(options?.page ?? 1));
   params.set("page_size", String(options?.page_size ?? 50));
   return apiGet<Paginated<CustomerRow>>(`/customers?${params.toString()}`);
