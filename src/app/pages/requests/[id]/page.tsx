@@ -987,7 +987,7 @@ function RequestPeople({ request }: { request: RequestDetail }) {
   return (
     <Descriptions
       size="small"
-      labelStyle={{ width: "30%" }}
+      styles={{ label: { width: "30%" } }}
       column={{ xs: 1, md: known.length > 1 ? 1 : 1 }}
       items={known.map(({ label, person }) => ({
         key: label,
