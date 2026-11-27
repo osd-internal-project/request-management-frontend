@@ -275,7 +275,7 @@ export function PartnerDetailView({ partner }: { partner: PartnerDetail }) {
             <Text strong>{mp.brands}</Text>
             <Table
               className="mt-1"
-              rowKey={(_, index) => String(index)}
+              rowKey={(row) => String(brands.indexOf(row))}
               size="small"
               pagination={false}
               dataSource={brands}
@@ -358,7 +358,7 @@ export function PartnerDetailView({ partner }: { partner: PartnerDetail }) {
             <Text strong>{mp.certifications}</Text>
             <Table
               className="mt-1"
-              rowKey={(_, index) => String(index)}
+              rowKey={(row) => String(certs.indexOf(row))}
               size="small"
               pagination={false}
               dataSource={certs}
@@ -439,7 +439,7 @@ export function PartnerDetailView({ partner }: { partner: PartnerDetail }) {
             <Text strong>{mp.contacts}</Text>
             <Table
               className="mt-1"
-              rowKey={(_, index) => String(index)}
+              rowKey={(row) => String(contacts.indexOf(row))}
               size="small"
               pagination={false}
               dataSource={contacts}

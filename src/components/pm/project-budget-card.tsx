@@ -362,7 +362,7 @@ export function ProjectBudgetCard({
         <>
           <Table<BudgetLineView>
             size="small"
-            rowKey={(_, index) => String(index)}
+            rowKey={(line) => String(current.lines.indexOf(line))}
             pagination={false}
             scroll={{ x: 760 }}
             dataSource={current.lines}

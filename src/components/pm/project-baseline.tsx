@@ -108,7 +108,7 @@ export function ProjectBaselineView({
             <div className="space-y-2">
               <Table
                 size="small"
-                rowKey={(_, index) => String(index)}
+                rowKey="index"
                 pagination={false}
                 scroll={{ x: 640 }}
                 dataSource={baseline.boq.map((line, index) => ({
